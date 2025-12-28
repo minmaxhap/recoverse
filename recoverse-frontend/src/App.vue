@@ -6,17 +6,13 @@
         <div class="logo">R</div>
         <div>
           <h1>Recoverse</h1>
-          <p>회고 아카이브</p>
+          <p>회고 아카이브 (로컬 저장)</p>
         </div>
       </div>
 
       <nav class="tabs">
-        <button :class="{ on: mode === 'year' }" @click="setMode('year')">
-          연도 보기
-        </button>
-        <button :class="{ on: mode === 'compare' }" @click="setMode('compare')">
-          질문 비교
-        </button>
+        <button :class="{ on: mode === 'year' }" @click="setMode('year')">연도 보기</button>
+        <button :class="{ on: mode === 'compare' }" @click="setMode('compare')">질문 비교</button>
         <button :class="{ on: mode === 'add' }" @click="setMode('add')">빠른 입력</button>
       </nav>
 
@@ -26,9 +22,7 @@
           JSON 가져오기
           <input type="file" accept="application/json" @change="onImportFile" />
         </label>
-        <button class="danger" @click="clearAll" :disabled="entries.length === 0">
-          전체 삭제
-        </button>
+        <button class="danger" @click="clearAll" :disabled="entries.length === 0">전체 삭제</button>
       </div>
     </header>
 
@@ -59,7 +53,9 @@
             <button class="ghost" @click="onClonePrevYear">
               {{ selectedYear - 1 }} → {{ selectedYear }} 질문 복제
             </button>
-            <p class="hint">답은 빈칸으로 생성되고, 이미 있는 질문은 건너뜁니다.</p>
+            <p class="hint">
+              답은 빈칸(리스트)으로 생성되고, 이미 있는 질문은 건너뜁니다.
+            </p>
           </div>
         </aside>
 
@@ -80,10 +76,11 @@
             >
               <div class="rowTop">
                 <span class="q">{{ e.q }}</span>
-                <span class="badge" v-if="!e.a.trim()">빈 답</span>
+                <span class="badge" v-if="e.answers.length === 0">빈 답</span>
+                <span class="badge" v-else>{{ e.answers.length }}개</span>
               </div>
               <div class="rowSub">
-                <span class="subText">{{ preview(e.a) }}</span>
+                <span class="subText">{{ previewAnswers(e.answers) }}</span>
               </div>
             </button>
 
@@ -98,11 +95,7 @@
           <div class="panelHead">
             <h2>상세</h2>
             <div class="headBtns">
-              <button
-                class="ghost"
-                :disabled="!selectedEntry"
-                @click="openCompareFromSelected"
-              >
+              <button class="ghost" :disabled="!selectedEntry" @click="openCompareFromSelected">
                 같은 질문 비교
               </button>
               <button class="danger" :disabled="!selectedEntry" @click="onDeleteSelected">
@@ -130,7 +123,14 @@
 
               <div class="kv">
                 <div class="k">답</div>
-                <div class="v pre">{{ selectedEntry.a || "(빈 답)" }}</div>
+                <div class="v">
+                  <ol v-if="selectedEntry.answers.length" class="answerList">
+                    <li v-for="(a, i) in selectedEntry.answers" :key="i" class="answerItem">
+                      {{ a }}
+                    </li>
+                  </ol>
+                  <div v-else class="muted">(빈 답)</div>
+                </div>
               </div>
             </div>
 
@@ -154,22 +154,32 @@
                 </label>
 
                 <label class="wide">
-                  <span>답</span>
-                  <textarea
-                    v-model="form.a"
-                    rows="6"
-                    placeholder="짧은 문장들"
-                  ></textarea>
+                  <span>답(여러 개 가능)</span>
+
+                  <div class="answersEditor">
+                    <div v-for="(ans, idx) in form.answers" :key="idx" class="answerRow">
+                      <div class="num">{{ idx + 1 }}</div>
+                      <input v-model="form.answers[idx]" placeholder="답 입력" />
+                      <button class="small danger" @click="removeAnswer(idx)" :disabled="form.answers.length <= 1">
+                        삭제
+                      </button>
+                    </div>
+
+                    <div class="answerBtns">
+                      <button class="small ghost" @click="addAnswer">+ 답 추가</button>
+                      <button class="small ghost" @click="clearEmptyAnswers">빈칸 정리</button>
+                    </div>
+
+                    <p class="hint" style="margin: 6px 0 0;">
+                      저장 시 빈칸 답은 자동으로 제거돼요.
+                    </p>
+                  </div>
                 </label>
               </div>
 
               <div class="btnRow">
-                <button class="primary" @click="onSaveEdit" :disabled="!editingId">
-                  수정 저장
-                </button>
-                <button class="ghost" @click="cancelEdit" :disabled="!editingId">
-                  수정 취소
-                </button>
+                <button class="primary" @click="onSaveEdit" :disabled="!editingId">수정 저장</button>
+                <button class="ghost" @click="cancelEdit" :disabled="!editingId">수정 취소</button>
               </div>
 
               <p v-if="errorMsg" class="error">{{ errorMsg }}</p>
@@ -233,7 +243,13 @@
                   <span class="tlYear">{{ t.year }}</span>
                   <button class="small" @click="jumpToEdit(t.id)">이 답 수정</button>
                 </div>
-                <div class="tlBody pre">{{ t.a || "(빈 답)" }}</div>
+
+                <div class="tlBody">
+                  <ol v-if="t.answers.length" class="answerList">
+                    <li v-for="(a, i) in t.answers" :key="i" class="answerItem">{{ a }}</li>
+                  </ol>
+                  <div v-else class="muted">(빈 답)</div>
+                </div>
               </div>
 
               <div v-if="compareTimeline.length === 0" class="empty">
@@ -244,7 +260,7 @@
         </section>
       </section>
 
-      <!-- Mode: ADD (Quick input - laptop friendly) -->
+      <!-- Mode: ADD -->
       <section v-else class="layoutAdd">
         <section class="panel">
           <div class="panelHead">
@@ -265,15 +281,29 @@
 
               <label class="wide">
                 <span>질문</span>
-                <input
-                  v-model="form.q"
-                  placeholder="질문을 입력하거나 오른쪽 추천 클릭"
-                />
+                <input v-model="form.q" placeholder="질문을 입력하거나 오른쪽 추천 클릭" />
               </label>
 
               <label class="wide">
-                <span>답</span>
-                <textarea v-model="form.a" rows="5" placeholder="짧은 문장들"></textarea>
+                <span>답(여러 개 가능)</span>
+                <div class="answersEditor">
+                  <div v-for="(ans, idx) in form.answers" :key="idx" class="answerRow">
+                    <div class="num">{{ idx + 1 }}</div>
+                    <input v-model="form.answers[idx]" placeholder="답 입력" />
+                    <button class="small danger" @click="removeAnswer(idx)" :disabled="form.answers.length <= 1">
+                      삭제
+                    </button>
+                  </div>
+
+                  <div class="answerBtns">
+                    <button class="small ghost" @click="addAnswer">+ 답 추가</button>
+                    <button class="small ghost" @click="clearEmptyAnswers">빈칸 정리</button>
+                  </div>
+
+                  <p class="hint" style="margin: 6px 0 0;">
+                    저장 시 빈칸 답은 자동으로 제거돼요.
+                  </p>
+                </div>
               </label>
             </div>
 
@@ -289,11 +319,7 @@
         <aside class="panel">
           <div class="panelHead">
             <h2>질문 추천</h2>
-            <input
-              v-model="addSuggestSearch"
-              class="search"
-              placeholder="추천 질문 검색"
-            />
+            <input v-model="addSuggestSearch" class="search" placeholder="추천 질문 검색" />
           </div>
 
           <div class="chips">
@@ -309,7 +335,9 @@
           </div>
 
           <div class="panelFoot">
-            <p class="hint">질문을 클릭하면 입력 칸에 자동으로 들어가요.</p>
+            <p class="hint">
+              질문을 클릭하면 입력 칸에 자동으로 들어가요.
+            </p>
           </div>
         </aside>
       </section>
@@ -320,7 +348,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import {
-  type ReviewEntry,
+  type ReviewEntryV2 as ReviewEntry,
   addEntry,
   updateEntry,
   deleteEntry,
@@ -344,7 +372,7 @@ const selectedId = ref<string | null>(null);
 const form = reactive({
   year: 2024,
   q: "",
-  a: "",
+  answers: [""] as string[], // ✅ 최소 1칸은 유지
 });
 
 const editingId = ref<string | null>(null);
@@ -363,11 +391,17 @@ onMounted(() => {
   form.year = maxYear;
 });
 
+const START_YEAR = 2016;
+const YEAR_COUNT = 20;
+
 const years = computed(() => {
-  const set = new Set<number>(entries.value.map((e) => e.year));
-  const arr = Array.from(set).sort((a, b) => b - a);
-  return arr.length ? arr : [2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016];
+  const arr: number[] = [];
+  for (let i = 0; i < YEAR_COUNT; i++) {
+    arr.push(START_YEAR + i);
+  }
+  return arr;
 });
+
 
 const yearCountMap = computed(() => {
   const map = new Map<number, number>();
@@ -390,7 +424,11 @@ const yearEntries = computed(() => {
 
   const s = searchText.value.trim().toLowerCase();
   if (!s) return list;
-  return list.filter((e) => e.q.toLowerCase().includes(s) || e.a.toLowerCase().includes(s));
+
+  return list.filter((e) => {
+    const joined = e.answers.join("\n").toLowerCase();
+    return e.q.toLowerCase().includes(s) || joined.includes(s);
+  });
 });
 
 const selectedEntry = computed(() => {
@@ -416,7 +454,6 @@ function setMode(m: Mode) {
   errorMsg.value = "";
 
   if (m === "year") {
-    // 유지
     if (!selectedYear.value) selectedYear.value = years.value[0];
   }
 
@@ -425,9 +462,9 @@ function setMode(m: Mode) {
   }
 
   if (m === "add") {
-    // 빠른 입력: 현재 선택 연도 기준으로
     form.year = selectedYear.value ?? years.value[0];
     editingId.value = null;
+    ensureAtLeastOneAnswerRow();
   }
 }
 
@@ -440,14 +477,14 @@ function selectYear(y: number) {
 function selectEntry(id: string) {
   selectedId.value = id;
   const e = entries.value.find((x) => x.id === id);
-  if (e) startEdit(e); // 노트북 UX: 선택 = 수정폼에 로드
+  if (e) startEdit(e);
 }
 
 function startEdit(e: ReviewEntry) {
   editingId.value = e.id;
   form.year = e.year;
   form.q = e.q;
-  form.a = e.a;
+  form.answers = e.answers.length ? [...e.answers] : [""];
 }
 
 function cancelEdit() {
@@ -460,11 +497,37 @@ function resetForm() {
   editingId.value = null;
   form.year = selectedYear.value ?? years.value[0];
   form.q = "";
-  form.a = "";
+  form.answers = [""];
 }
 
-function validateCommon() {
+function ensureAtLeastOneAnswerRow() {
+  if (!Array.isArray(form.answers) || form.answers.length === 0) form.answers = [""];
+}
+
+function addAnswer() {
+  form.answers.push("");
+}
+
+function removeAnswer(idx: number) {
+  if (form.answers.length <= 1) return;
+  form.answers.splice(idx, 1);
+  ensureAtLeastOneAnswerRow();
+}
+
+function clearEmptyAnswers() {
+  form.answers = form.answers.map((x) => (x ?? "").toString()).map((x) => x.trim()).filter((x) => x.length > 0);
+  ensureAtLeastOneAnswerRow();
+}
+
+function normalizedAnswersForSave(): string[] {
+  return (form.answers ?? [])
+    .map((x) => (x ?? "").toString().trim())
+    .filter((x) => x.length > 0);
+}
+
+function validateCommon(requireAtLeastOneAnswer: boolean) {
   errorMsg.value = "";
+
   if (!Number.isFinite(form.year) || form.year < 1900 || form.year > 3000) {
     errorMsg.value = "연도 값이 이상해요.";
     return false;
@@ -473,49 +536,52 @@ function validateCommon() {
     errorMsg.value = "질문을 입력해줘요.";
     return false;
   }
-  // 답은 빈칸 허용할 수도 있는데, 민희는 “짧은 문장들”이라도 보통 적으니 기본은 필수로 둠
-  if (!form.a.trim()) {
-    errorMsg.value = "답을 입력해줘요. (나중에 채우려면 '빈 답'으로 만들 수 있게 바꿔줄 수도 있어요)";
+
+  const answers = normalizedAnswersForSave();
+  if (requireAtLeastOneAnswer && answers.length === 0) {
+    errorMsg.value = "답을 최소 1개는 입력해줘요.";
     return false;
   }
+
   return true;
 }
 
 function onSaveEdit() {
   if (!editingId.value) return;
-  if (!validateCommon()) return;
+
+  // ✅ 수정은 “빈 답 저장”도 허용 (작년 복제로 빈 답이 생기니까)
+  if (!validateCommon(false)) return;
 
   entries.value = updateEntry(editingId.value, {
     year: Number(form.year),
     q: form.q.trim(),
-    a: form.a.trim(),
+    answers: normalizedAnswersForSave(),
   });
 
-  // 편집 후: 선택 연도/선택 id 상태 동기화
   selectedYear.value = Number(form.year);
   selectedId.value = editingId.value;
 }
 
 function onAdd() {
-  if (!validateCommon()) return;
+  // ✅ 새로 추가는 최소 1개 답 입력을 요구 (원하면 바꿔줄 수 있음)
+  if (!validateCommon(true)) return;
 
   entries.value = addEntry({
     year: Number(form.year),
     q: form.q.trim(),
-    a: form.a.trim(),
+    answers: normalizedAnswersForSave(),
   });
 
   selectedYear.value = Number(form.year);
-  // 방금 추가한 항목은 createdAt 최신이니까 해당 연도의 첫 번째가 됨 (하지만 id를 모름)
-  // 그래서 리스트에서 바로 눈에 보이게: 검색 초기화 & 입력만 비움
   form.q = "";
-  form.a = "";
+  form.answers = [""];
   errorMsg.value = "";
 }
 
 function onDeleteSelected() {
   if (!selectedEntry.value) return;
   if (!confirm("삭제할까요?")) return;
+
   entries.value = deleteEntry(selectedEntry.value.id);
   selectedId.value = null;
   editingId.value = null;
@@ -534,7 +600,7 @@ function onClonePrevYear() {
 
   const ok = confirm(
     `${prevYear}년의 질문들을 ${targetYear}년에 복제할까요?\n` +
-      `답은 빈칸으로 생성되고, 이미 있는 질문은 건너뜁니다.`
+      `답은 빈칸(리스트)으로 생성되고, 이미 있는 질문은 건너뜁니다.`
   );
   if (!ok) return;
 
@@ -553,16 +619,25 @@ function openCompareFromSelected() {
 function jumpToEdit(id: string) {
   const e = entries.value.find((x) => x.id === id);
   if (!e) return;
+
   selectedYear.value = e.year;
   selectedId.value = e.id;
   setMode("year");
   startEdit(e);
 }
 
-function preview(text: string) {
-  const t = (text ?? "").replace(/\s+/g, " ").trim();
-  if (!t) return "—";
-  return t.length > 60 ? t.slice(0, 60) + "…" : t;
+function previewAnswers(answers: string[]) {
+  if (!answers || answers.length === 0) return "—";
+
+  // 첫 1~2개만 보여주고 나머지는 … 처리
+  const trimmed = answers.map((x) => x.trim()).filter(Boolean);
+  if (trimmed.length === 0) return "—";
+
+  const head = trimmed.slice(0, 2).join(" / ");
+  const more = trimmed.length > 2 ? ` 외 ${trimmed.length - 2}개` : "";
+  const text = head + more;
+
+  return text.length > 70 ? text.slice(0, 70) + "…" : text;
 }
 
 function fmtDate(iso: string) {
@@ -574,12 +649,29 @@ function fmtDate(iso: string) {
 }
 
 function downloadBlob(blob: Blob, filename: string) {
+  // (구형 Edge/IE 대응: 필요 없을 수도 있지만 안전장치)
+  // @ts-ignore
+  if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+    // @ts-ignore
+    window.navigator.msSaveOrOpenBlob(blob, filename);
+    return;
+  }
+
   const url = URL.createObjectURL(blob);
+
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
+  a.rel = "noopener";
+
+  // ✅ 핵심: DOM에 붙였다가 클릭 후 제거
+  a.style.display = "none";
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+
+  // ✅ URL 해제는 약간 지연(일부 브라우저에서 너무 빨리 해제하면 실패)
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function onExport() {
@@ -601,6 +693,7 @@ async function onImportFile(e: Event) {
     selectedYear.value = maxYear;
     form.year = maxYear;
     selectedId.value = null;
+    resetForm();
   } catch (err: any) {
     errorMsg.value = `가져오기 실패: ${err?.message ?? "알 수 없는 오류"}`;
   } finally {
@@ -707,9 +800,7 @@ function clearAll() {
   user-select: none;
 }
 
-.file input {
-  display: none;
-}
+.file input { display: none; }
 
 button {
   font: inherit;
@@ -843,13 +934,8 @@ button:disabled {
   box-shadow: 0 0 0 1px #111 inset;
 }
 
-.yearNum {
-  font-weight: 900;
-}
-.yearCount {
-  font-size: 12px;
-  color: #6b7280;
-}
+.yearNum { font-weight: 900; }
+.yearCount { font-size: 12px; color: #6b7280; }
 
 /* middle list */
 .list {
@@ -904,9 +990,7 @@ button:disabled {
   font-size: 12px;
 }
 
-.subText {
-  line-height: 1.3;
-}
+.subText { line-height: 1.3; }
 
 /* right detail */
 .detail {
@@ -942,13 +1026,11 @@ button:disabled {
   color: #111;
 }
 
-.strong {
-  font-weight: 900;
-}
+.strong { font-weight: 900; }
 
-.pre {
-  white-space: pre-wrap;
-  line-height: 1.45;
+.muted {
+  color: #6b7280;
+  font-size: 12px;
 }
 
 .divider {
@@ -983,9 +1065,7 @@ h3 {
   grid-column: 1 / -1;
 }
 
-input,
-textarea,
-select {
+input, textarea, select {
   font: inherit;
   border: 1px solid #d1d5db;
   border-radius: 12px;
@@ -995,9 +1075,7 @@ select {
   color: #111;
 }
 
-textarea {
-  resize: vertical;
-}
+textarea { resize: vertical; }
 
 .btnRow {
   margin-top: 10px;
@@ -1009,6 +1087,51 @@ textarea {
   margin: 10px 0 0;
   color: #b00020;
   font-weight: 700;
+}
+
+/* answers */
+.answerList {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.55;
+}
+
+.answerItem {
+  margin: 2px 0;
+}
+
+.answersEditor {
+  border: 1px solid #eef0f3;
+  border-radius: 14px;
+  padding: 10px;
+  background: #fbfbfc;
+}
+
+.answerRow {
+  display: grid;
+  grid-template-columns: 34px 1fr 64px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.answerRow .num {
+  width: 34px;
+  height: 32px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  color: #111;
+  font-size: 12px;
+}
+
+.answerBtns {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
 }
 
 /* compare */
@@ -1061,11 +1184,6 @@ textarea {
   font-weight: 900;
   font-size: 16px;
   flex: 1;
-}
-
-.tlBody {
-  margin-top: 8px;
-  color: #111;
 }
 
 /* add */
