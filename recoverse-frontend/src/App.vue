@@ -4,9 +4,9 @@
     <header class="topbar">
       <div class="brand">
         <div class="logo">R</div>
-        <div>
-          <h1>Recoverse</h1>
-          <p>회고 아카이브 (로컬 저장)</p>
+        <div class="brandText">
+          <h1 class="noWrap">Recoverse</h1>
+          <p class="noWrap">2016~ 회고 아카이브 (로컬 저장)</p>
         </div>
       </div>
 
@@ -28,12 +28,12 @@
 
     <!-- Main -->
     <main class="main">
-      <!-- Mode: YEAR (Laptop 3-column) -->
+      <!-- Mode: YEAR -->
       <section v-if="mode === 'year'" class="layout3">
         <!-- Left: Years -->
         <aside class="panel">
           <div class="panelHead">
-            <h2>연도</h2>
+            <h2 class="noWrap">연도</h2>
           </div>
 
           <div class="yearList">
@@ -43,9 +43,10 @@
               class="yearBtn"
               :class="{ active: y === selectedYear }"
               @click="selectYear(y)"
+              :title="`${y} (${yearCountMap.get(y) ?? 0}개)`"
             >
-              <span class="yearNum">{{ y }}</span>
-              <span class="yearCount">{{ yearCountMap.get(y) ?? 0 }}개</span>
+              <span class="yearNum noWrap">{{ y }}</span>
+              <span class="yearCount noWrap">{{ yearCountMap.get(y) ?? 0 }}개</span>
             </button>
           </div>
 
@@ -62,7 +63,8 @@
         <!-- Middle: List -->
         <section class="panel">
           <div class="panelHead">
-            <h2>{{ selectedYear }} 질문</h2>
+            <!-- ✅ 여기: “2017 질문” 줄바꿈 금지 -->
+            <h2 class="noWrap">{{ selectedYear }} 질문</h2>
             <input v-model="searchText" class="search" placeholder="검색(질문/답)" />
           </div>
 
@@ -93,7 +95,7 @@
         <!-- Right: Viewer/Editor -->
         <section class="panel">
           <div class="panelHead">
-            <h2>상세</h2>
+            <h2 class="noWrap">상세</h2>
             <div class="headBtns">
               <button class="ghost" :disabled="!selectedEntry" @click="openCompareFromSelected">
                 같은 질문 비교
@@ -110,19 +112,19 @@
 
           <div v-else class="detail">
             <!-- View -->
-            <div class="detailBlock">
+            <div class="detailBlock" @keydown="onFormKeydown">
               <div class="kv">
-                <div class="k">연도</div>
+                <div class="k noWrap">연도</div>
                 <div class="v">{{ selectedEntry.year }}</div>
               </div>
 
               <div class="kv">
-                <div class="k">질문</div>
+                <div class="k noWrap">질문</div>
                 <div class="v strong">{{ selectedEntry.q }}</div>
               </div>
 
               <div class="kv">
-                <div class="k">답</div>
+                <div class="k noWrap">답</div>
                 <div class="v">
                   <ol v-if="selectedEntry.answers.length" class="answerList">
                     <li v-for="(a, i) in selectedEntry.answers" :key="i" class="answerItem">
@@ -138,29 +140,41 @@
 
             <!-- Edit -->
             <div class="detailBlock">
-              <h3>수정</h3>
+              <h3 class="noWrap">수정</h3>
 
               <div class="formGrid">
                 <label>
-                  <span>연도</span>
+                  <span class="noWrap">연도</span>
                   <select v-model.number="form.year">
                     <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
                   </select>
                 </label>
 
                 <label class="wide">
-                  <span>질문</span>
+                  <span class="noWrap">질문</span>
                   <input v-model="form.q" placeholder="질문" />
                 </label>
 
                 <label class="wide">
-                  <span>답(여러 개 가능)</span>
+                  <span class="noWrap">답(여러 개 가능)</span>
 
                   <div class="answersEditor">
                     <div v-for="(ans, idx) in form.answers" :key="idx" class="answerRow">
-                      <div class="num">{{ idx + 1 }}</div>
-                      <input v-model="form.answers[idx]" placeholder="답 입력" />
-                      <button class="small danger" @click="removeAnswer(idx)" :disabled="form.answers.length <= 1">
+                      <div class="num noWrap">{{ idx + 1 }}</div>
+                      <textarea
+                        class="answerTA"
+                        :ref="(el) => setAnswerRef(el as HTMLTextAreaElement, idx)"
+                        v-model="form.answers[idx]"
+                        placeholder="답 입력 (Enter=다음, Shift+Enter=줄바꿈)"
+                        rows="1"
+                        @input="(e) => autoGrow(e.target as HTMLTextAreaElement)"
+                        @keydown="(e) => onAnswerKeydown(e, idx)"
+                      ></textarea>
+                      <button
+                        class="small danger"
+                        @click="removeAnswer(idx)"
+                        :disabled="form.answers.length <= 1"
+                      >
                         삭제
                       </button>
                     </div>
@@ -192,7 +206,7 @@
       <section v-else-if="mode === 'compare'" class="layoutCompare">
         <aside class="panel">
           <div class="panelHead">
-            <h2>질문 선택</h2>
+            <h2 class="noWrap">질문 선택</h2>
             <input v-model="compareSearch" class="search" placeholder="질문 검색" />
           </div>
 
@@ -206,7 +220,7 @@
             >
               <div class="rowTop">
                 <span class="q">{{ q.q }}</span>
-                <span class="count">{{ q.count }}회</span>
+                <span class="count noWrap">{{ q.count }}회</span>
               </div>
               <div class="rowSub">
                 <span class="subText">최근: {{ fmtDate(q.lastAt) }}</span>
@@ -221,7 +235,7 @@
 
         <section class="panel">
           <div class="panelHead">
-            <h2>연도별 답</h2>
+            <h2 class="noWrap">연도별 답</h2>
             <div class="headBtns">
               <button class="ghost" @click="setMode('year')">연도 보기로</button>
             </div>
@@ -233,14 +247,14 @@
 
           <div v-else class="compare">
             <div class="compareTitle">
-              <div class="label">질문</div>
+              <div class="label noWrap">질문</div>
               <div class="value">{{ compareQ }}</div>
             </div>
 
             <div class="timeline">
               <div v-for="t in compareTimeline" :key="t.id" class="tlCard">
                 <div class="tlHead">
-                  <span class="tlYear">{{ t.year }}</span>
+                  <span class="tlYear noWrap">{{ t.year }}</span>
                   <button class="small" @click="jumpToEdit(t.id)">이 답 수정</button>
                 </div>
 
@@ -264,33 +278,45 @@
       <section v-else class="layoutAdd">
         <section class="panel">
           <div class="panelHead">
-            <h2>빠른 입력</h2>
+            <h2 class="noWrap">빠른 입력</h2>
             <div class="headBtns">
               <button class="ghost" @click="setMode('year')">연도 보기로</button>
             </div>
           </div>
 
-          <div class="addWrap">
+          <div class="addWrap" @keydown="onFormKeydown">
             <div class="formGrid">
               <label>
-                <span>연도</span>
+                <span class="noWrap">연도</span>
                 <select v-model.number="form.year">
                   <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
                 </select>
               </label>
 
               <label class="wide">
-                <span>질문</span>
+                <span class="noWrap">질문</span>
                 <input v-model="form.q" placeholder="질문을 입력하거나 오른쪽 추천 클릭" />
               </label>
 
               <label class="wide">
-                <span>답(여러 개 가능)</span>
+                <span class="noWrap">답(여러 개 가능)</span>
                 <div class="answersEditor">
                   <div v-for="(ans, idx) in form.answers" :key="idx" class="answerRow">
-                    <div class="num">{{ idx + 1 }}</div>
-                    <input v-model="form.answers[idx]" placeholder="답 입력" />
-                    <button class="small danger" @click="removeAnswer(idx)" :disabled="form.answers.length <= 1">
+                    <div class="num noWrap">{{ idx + 1 }}</div>
+                    <textarea
+                      class="answerTA"
+                      :ref="(el) => setAnswerRef(el as HTMLTextAreaElement, idx)"
+                      v-model="form.answers[idx]"
+                      placeholder="답 입력 (Enter=다음, Shift+Enter=줄바꿈)"
+                      rows="1"
+                      @input="(e) => autoGrow(e.target as HTMLTextAreaElement)"
+                      @keydown="(e) => onAnswerKeydown(e, idx)"
+                    ></textarea>
+                    <button
+                      class="small danger"
+                      @click="removeAnswer(idx)"
+                      :disabled="form.answers.length <= 1"
+                    >
                       삭제
                     </button>
                   </div>
@@ -318,7 +344,8 @@
 
         <aside class="panel">
           <div class="panelHead">
-            <h2>질문 추천</h2>
+            <!-- ✅ 여기: “질문 추천” 줄바꿈 금지 -->
+            <h2 class="noWrap">질문 추천</h2>
             <input v-model="addSuggestSearch" class="search" placeholder="추천 질문 검색" />
           </div>
 
@@ -335,9 +362,7 @@
           </div>
 
           <div class="panelFoot">
-            <p class="hint">
-              질문을 클릭하면 입력 칸에 자동으로 들어가요.
-            </p>
+            <p class="hint">질문을 클릭하면 입력 칸에 자동으로 들어가요.</p>
           </div>
         </aside>
       </section>
@@ -346,7 +371,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, nextTick } from "vue";
 import {
   type ReviewEntryV2 as ReviewEntry,
   addEntry,
@@ -366,13 +391,13 @@ type Mode = "year" | "compare" | "add";
 const entries = ref<ReviewEntry[]>([]);
 const mode = ref<Mode>("year");
 
-const selectedYear = ref<number>(2024);
+const selectedYear = ref<number>(2016);
 const selectedId = ref<string | null>(null);
 
 const form = reactive({
-  year: 2024,
+  year: 2016,
   q: "",
-  answers: [""] as string[], // ✅ 최소 1칸은 유지
+  answers: [""] as string[],
 });
 
 const editingId = ref<string | null>(null);
@@ -384,24 +409,22 @@ const compareSearch = ref<string>("");
 
 const addSuggestSearch = ref<string>("");
 
-onMounted(() => {
-  entries.value = loadEntries();
-  const maxYear = years.value[0];
-  selectedYear.value = maxYear;
-  form.year = maxYear;
-});
-
+/** ✅ 연도 범위: 2016부터 20년치 */
 const START_YEAR = 2016;
 const YEAR_COUNT = 20;
 
 const years = computed(() => {
   const arr: number[] = [];
-  for (let i = 0; i < YEAR_COUNT; i++) {
-    arr.push(START_YEAR + i);
-  }
+  for (let i = 0; i < YEAR_COUNT; i++) arr.push(START_YEAR + i); // 2016..2035
   return arr;
 });
 
+onMounted(() => {
+  entries.value = loadEntries();
+  // 시작은 2016으로 고정 (원하면: 데이터 있으면 그 연도로 자동 이동도 가능)
+  selectedYear.value = START_YEAR;
+  form.year = START_YEAR;
+});
 
 const yearCountMap = computed(() => {
   const map = new Map<number, number>();
@@ -453,18 +476,14 @@ function setMode(m: Mode) {
   mode.value = m;
   errorMsg.value = "";
 
-  if (m === "year") {
-    if (!selectedYear.value) selectedYear.value = years.value[0];
+  if (m === "add") {
+    form.year = selectedYear.value;
+    editingId.value = null;
+    ensureAtLeastOneAnswerRow();
   }
 
   if (m === "compare") {
     if (!compareQ.value && questionBank.value[0]) compareQ.value = questionBank.value[0].q;
-  }
-
-  if (m === "add") {
-    form.year = selectedYear.value ?? years.value[0];
-    editingId.value = null;
-    ensureAtLeastOneAnswerRow();
   }
 }
 
@@ -472,6 +491,8 @@ function selectYear(y: number) {
   selectedYear.value = y;
   selectedId.value = null;
   searchText.value = "";
+  // 편의: 연도 클릭하면 입력 연도도 따라감
+  form.year = y;
 }
 
 function selectEntry(id: string) {
@@ -495,7 +516,7 @@ function cancelEdit() {
 
 function resetForm() {
   editingId.value = null;
-  form.year = selectedYear.value ?? years.value[0];
+  form.year = selectedYear.value;
   form.q = "";
   form.answers = [""];
 }
@@ -515,7 +536,10 @@ function removeAnswer(idx: number) {
 }
 
 function clearEmptyAnswers() {
-  form.answers = form.answers.map((x) => (x ?? "").toString()).map((x) => x.trim()).filter((x) => x.length > 0);
+  form.answers = (form.answers ?? [])
+    .map((x) => (x ?? "").toString().trim())
+    .filter((x) => x.length > 0);
+
   ensureAtLeastOneAnswerRow();
 }
 
@@ -548,9 +572,7 @@ function validateCommon(requireAtLeastOneAnswer: boolean) {
 
 function onSaveEdit() {
   if (!editingId.value) return;
-
-  // ✅ 수정은 “빈 답 저장”도 허용 (작년 복제로 빈 답이 생기니까)
-  if (!validateCommon(false)) return;
+  if (!validateCommon(false)) return; // 수정은 빈 답 저장 허용
 
   entries.value = updateEntry(editingId.value, {
     year: Number(form.year),
@@ -563,8 +585,7 @@ function onSaveEdit() {
 }
 
 function onAdd() {
-  // ✅ 새로 추가는 최소 1개 답 입력을 요구 (원하면 바꿔줄 수 있음)
-  if (!validateCommon(true)) return;
+  if (!validateCommon(true)) return; // 신규 추가는 최소 1개 답 요구
 
   entries.value = addEntry({
     year: Number(form.year),
@@ -628,8 +649,6 @@ function jumpToEdit(id: string) {
 
 function previewAnswers(answers: string[]) {
   if (!answers || answers.length === 0) return "—";
-
-  // 첫 1~2개만 보여주고 나머지는 … 처리
   const trimmed = answers.map((x) => x.trim()).filter(Boolean);
   if (trimmed.length === 0) return "—";
 
@@ -649,7 +668,6 @@ function fmtDate(iso: string) {
 }
 
 function downloadBlob(blob: Blob, filename: string) {
-  // (구형 Edge/IE 대응: 필요 없을 수도 있지만 안전장치)
   // @ts-ignore
   if (window.navigator && window.navigator.msSaveOrOpenBlob) {
     // @ts-ignore
@@ -658,19 +676,14 @@ function downloadBlob(blob: Blob, filename: string) {
   }
 
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
   a.rel = "noopener";
-
-  // ✅ 핵심: DOM에 붙였다가 클릭 후 제거
   a.style.display = "none";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-
-  // ✅ URL 해제는 약간 지연(일부 브라우저에서 너무 빨리 해제하면 실패)
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
@@ -689,9 +702,8 @@ async function onImportFile(e: Event) {
   try {
     const text = await file.text();
     entries.value = importBackup(text);
-    const maxYear = years.value[0];
-    selectedYear.value = maxYear;
-    form.year = maxYear;
+    selectedYear.value = START_YEAR;
+    form.year = START_YEAR;
     selectedId.value = null;
     resetForm();
   } catch (err: any) {
@@ -709,6 +721,80 @@ function clearAll() {
   editingId.value = null;
   resetForm();
 }
+
+
+const answerRefs = ref<HTMLTextAreaElement[]>([]);
+
+function autoGrow(el: HTMLTextAreaElement) {
+  // 높이를 한번 접었다가(scrollHeight 재계산) 다시 늘림
+  el.style.height = "auto";
+  el.style.height = `${el.scrollHeight}px`;
+}
+
+function setAnswerRef(el: HTMLTextAreaElement | null, idx: number) {
+  if (!el) return;
+  answerRefs.value[idx] = el;
+  // ✅ 처음 렌더/갱신 시에도 자동 높이 맞추기
+  autoGrow(el);
+}
+
+async function focusAnswer(idx: number) {
+  await nextTick();
+  const el = answerRefs.value[idx];
+  if (el) {
+    el.focus();
+    const len = el.value?.length ?? 0;
+    el.setSelectionRange(len, len);
+    autoGrow(el); // 포커스 줄 때도 한 번 맞춰줌
+  }
+}
+
+/**
+ * textarea 키보드 UX
+ * - Enter: 다음 칸 / 마지막이면 새 칸 생성
+ * - Shift+Enter: 줄바꿈 (textarea 기본 동작)
+ * - Backspace: 빈칸에서 누르면 해당 칸 삭제 + 이전 칸으로 포커스 (칸 1개면 유지)
+ */
+async function onAnswerKeydown(e: KeyboardEvent, idx: number) {
+  // Shift+Enter는 줄바꿈 허용 (textarea 기본)
+  if (e.key === "Enter" && e.shiftKey) return;
+
+  // Enter: 다음/새 칸
+  if (e.key === "Enter") {
+    e.preventDefault();
+
+    if (idx === form.answers.length - 1) {
+      form.answers.push("");
+      await focusAnswer(idx + 1);
+      return;
+    }
+    await focusAnswer(idx + 1);
+    return;
+  }
+
+  // Backspace: 빈칸이면 삭제하고 이전으로
+  if (e.key === "Backspace") {
+    const current = (form.answers[idx] ?? "").toString();
+
+    if (current.trim().length === 0 && form.answers.length > 1) {
+      e.preventDefault();
+      form.answers.splice(idx, 1);
+      const nextIdx = Math.max(0, idx - 1);
+      await focusAnswer(nextIdx);
+    }
+  }
+}
+
+/** (선택) Ctrl/Cmd+Enter로 저장 */
+function onFormKeydown(e: KeyboardEvent) {
+  const isSubmit = (e.ctrlKey || e.metaKey) && e.key === "Enter";
+  if (!isSubmit) return;
+
+  e.preventDefault();
+  if (mode.value === "add") onAdd();
+  else if (mode.value === "year" && editingId.value) onSaveEdit();
+}
+
 </script>
 
 <style scoped>
@@ -718,6 +804,13 @@ function clearAll() {
   background: #f6f7f9;
   color: #111;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+}
+
+/* ✅ 한글 텍스트가 글자 단위로 쪼개져 줄바꿈되는 현상 방지 */
+.noWrap {
+  white-space: nowrap;      /* 한 줄 유지 */
+  word-break: keep-all;     /* 한글 단어 단위 줄바꿈 */
+  overflow-wrap: normal;    /* 글자 단위 강제 줄바꿈 방지 */
 }
 
 .topbar {
@@ -737,6 +830,11 @@ function clearAll() {
   display: flex;
   gap: 12px;
   align-items: center;
+  min-width: 0;
+}
+
+.brandText {
+  min-width: 0;
 }
 
 .logo {
@@ -858,12 +956,23 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+}
+
+/* ✅ 패널 헤더 타이틀/라벨 한 줄 유지(안전망) */
+.panelHead h2,
+.panelHead span,
+.panelHead label {
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
 .panelHead h2 {
   margin: 0;
   font-size: 14px;
   font-weight: 800;
+  min-width: 0;
 }
 
 .headBtns {
@@ -886,7 +995,7 @@ button:disabled {
 
 .search {
   margin-left: auto;
-  width: 320px;
+  width: 220px;
   padding: 10px 12px;
   border-radius: 12px;
   border: 1px solid #d1d5db;
@@ -927,6 +1036,15 @@ button:disabled {
   border-radius: 14px;
   border: 1px solid #e5e7eb;
   background: #fff;
+}
+
+/* ✅ 연도 버튼 텍스트 줄바꿈 방지(안전망) */
+.yearBtn,
+.yearNum,
+.yearCount {
+  white-space: nowrap;
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
 .yearBtn.active {
@@ -1215,4 +1333,20 @@ textarea { resize: vertical; }
   color: #6b7280;
   font-size: 13px;
 }
+
+.answerTA {
+  width: 100%;
+  font: inherit;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
+  background: #fff;
+  color: #111;
+
+  resize: none;          /* 사용자가 드래그로 늘리지 않게 */
+  overflow: hidden;      /* 스크롤바 대신 자동 확장(아래 옵션) */
+  line-height: 1.4;
+}
+
 </style>
