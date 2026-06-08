@@ -12,8 +12,112 @@ export type BackupPayloadV2 = {
   entries: ReviewEntryV2[];
 };
 
+export type CapsuleType =
+  | "year"
+  | "life_stage"
+  | "career"
+  | "relationship"
+  | "travel"
+  | "project"
+  | "custom";
+
+export type Capsule = {
+  id: string;
+  title: string;
+  description?: string;
+  type: CapsuleType;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CapsuleCard = {
+  id: string;
+  capsuleId: string;
+  questionText: string;
+  answers: string[];
+  source: "default" | "user" | "imported";
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CapsuleBackup = {
+  schema: "recoverse_capsule_v1";
+  exportedAt: string;
+  capsules: Capsule[];
+  cards: CapsuleCard[];
+};
+
+export type CapsuleTemplate = {
+  id: string;
+  title: string;
+  type: CapsuleType;
+  questions: string[];
+};
+
+export type CapsuleData = {
+  capsules: Capsule[];
+  cards: CapsuleCard[];
+};
+
+export type CapsuleImportResult = {
+  data: CapsuleData;
+  addedCapsules: number;
+  addedCards: number;
+  skippedCapsules: number;
+  skippedCards: number;
+};
+
 const KEY = "recoverse_v2_entries";
 const LEGACY_KEY_V1 = "recoverse_v1_entries"; // 예전 키가 남아있을 수 있어 체크용
+const CAPSULE_KEY = "recoverse_capsule_v1";
+
+export const capsuleTemplates: CapsuleTemplate[] = [
+  {
+    id: "template_year",
+    title: "Year Retrospective",
+    type: "year",
+    questions: [
+      "What moment do I want to remember most?",
+      "What changed me during this time?",
+      "What did I learn about myself?",
+      "What do I want to carry forward?",
+    ],
+  },
+  {
+    id: "template_life_stage",
+    title: "Life Stage Retrospective",
+    type: "life_stage",
+    questions: [
+      "What kind of person was I during this time?",
+      "What did I care about most?",
+      "What did I not understand yet?",
+      "What would I tell myself now?",
+    ],
+  },
+  {
+    id: "template_travel",
+    title: "Travel Retrospective",
+    type: "travel",
+    questions: [
+      "What scene do I still remember clearly?",
+      "Who or what made this trip meaningful?",
+      "What did this place make me feel?",
+      "What would I revisit from this journey?",
+    ],
+  },
+  {
+    id: "template_project",
+    title: "Project Retrospective",
+    type: "project",
+    questions: [
+      "What was the original hope for this project?",
+      "What was harder than expected?",
+      "What am I proud of?",
+      "What would I do differently next time?",
+    ],
+  },
+];
 
 function safeParse<T>(s: string): T | null {
   try {
@@ -25,6 +129,14 @@ function safeParse<T>(s: string): T | null {
 
 function uuid(): string {
   return (crypto as any)?.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+function stableId(prefix: string, value: string): string {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 33) ^ value.charCodeAt(i);
+  }
+  return `${prefix}_${(hash >>> 0).toString(36)}`;
 }
 
 function normalizeAnswers(raw: unknown): string[] {
@@ -209,6 +321,230 @@ export function importBackup(jsonText: string): ReviewEntryV2[] {
   const deduped = Array.from(map.values()).sort(sortNewestFirst);
   saveEntries(deduped);
   return deduped;
+}
+
+function normalizeCapsule(raw: any): Capsule | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const title = String(raw.title ?? "").trim();
+  if (!title) return null;
+
+  const now = new Date().toISOString();
+  const allowedTypes: CapsuleType[] = [
+    "year",
+    "life_stage",
+    "career",
+    "relationship",
+    "travel",
+    "project",
+    "custom",
+  ];
+  const type = allowedTypes.includes(raw.type) ? raw.type : "custom";
+
+  return {
+    id: typeof raw.id === "string" ? raw.id : uuid(),
+    title,
+    description:
+      typeof raw.description === "string" && raw.description.trim()
+        ? raw.description.trim()
+        : undefined,
+    type,
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : now,
+    updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : now,
+  };
+}
+
+function normalizeCapsuleCard(raw: any): CapsuleCard | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const capsuleId = String(raw.capsuleId ?? "").trim();
+  const questionText = String(raw.questionText ?? raw.q ?? raw.question ?? "").trim();
+  if (!capsuleId || !questionText) return null;
+
+  const now = new Date().toISOString();
+  const source =
+    raw.source === "default" || raw.source === "user" || raw.source === "imported"
+      ? raw.source
+      : "user";
+
+  return {
+    id: typeof raw.id === "string" ? raw.id : uuid(),
+    capsuleId,
+    questionText,
+    answers: normalizeAnswers(raw.answers ?? raw.a ?? raw.answer),
+    source,
+    order: Number.isFinite(Number(raw.order)) ? Number(raw.order) : 0,
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : now,
+    updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : now,
+  };
+}
+
+export function buildCapsuleDataFromEntries(entries: ReviewEntryV2[]): CapsuleData {
+  const capsules = new Map<string, Capsule>();
+  const cards: CapsuleCard[] = [];
+
+  for (const entry of entries) {
+    const capsuleId = stableId("capsule_year", String(entry.year));
+    if (!capsules.has(capsuleId)) {
+      capsules.set(capsuleId, {
+        id: capsuleId,
+        title: `${entry.year}년 회고`,
+        type: "year",
+        createdAt: entry.createdAt,
+        updatedAt: entry.createdAt,
+      });
+    }
+
+    cards.push({
+      id: entry.id,
+      capsuleId,
+      questionText: entry.q,
+      answers: [...entry.answers],
+      source: "imported",
+      order: cards.filter((card) => card.capsuleId === capsuleId).length,
+      createdAt: entry.createdAt,
+      updatedAt: entry.createdAt,
+    });
+  }
+
+  return {
+    capsules: Array.from(capsules.values()).sort((a, b) => a.title.localeCompare(b.title)),
+    cards,
+  };
+}
+
+export function loadCapsuleData(): CapsuleData {
+  const raw = localStorage.getItem(CAPSULE_KEY);
+  if (raw) {
+    const parsed = safeParse<any>(raw);
+    const capsules = Array.isArray(parsed?.capsules)
+      ? (parsed.capsules.map(normalizeCapsule).filter(Boolean) as Capsule[])
+      : [];
+    const cards = Array.isArray(parsed?.cards)
+      ? (parsed.cards.map(normalizeCapsuleCard).filter(Boolean) as CapsuleCard[])
+      : [];
+
+    if (parsed && typeof parsed === "object") return { capsules, cards };
+  }
+
+  return buildCapsuleDataFromEntries(loadEntries());
+}
+
+export function saveCapsuleData(data: CapsuleData) {
+  const capsules = data.capsules.map(normalizeCapsule).filter(Boolean) as Capsule[];
+  const capsuleIds = new Set(capsules.map((capsule) => capsule.id));
+  const cards = (data.cards.map(normalizeCapsuleCard).filter(Boolean) as CapsuleCard[]).filter(
+    (card) => capsuleIds.has(card.capsuleId)
+  );
+
+  localStorage.setItem(CAPSULE_KEY, JSON.stringify({ capsules, cards }));
+}
+
+export function createCapsule(input: {
+  title: string;
+  description?: string;
+  type: CapsuleType;
+  templateId?: string;
+}): CapsuleData {
+  const now = new Date().toISOString();
+  const capsule: Capsule = {
+    id: uuid(),
+    title: input.title.trim(),
+    description: input.description?.trim() || undefined,
+    type: input.type,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  if (!capsule.title) throw new Error("Capsule title is required");
+
+  const template = input.templateId
+    ? capsuleTemplates.find((item) => item.id === input.templateId)
+    : undefined;
+
+  const current = loadCapsuleData();
+  const cards: CapsuleCard[] =
+    template?.questions.map((questionText, index) => ({
+      id: uuid(),
+      capsuleId: capsule.id,
+      questionText,
+      answers: [],
+      source: "default",
+      order: index,
+      createdAt: now,
+      updatedAt: now,
+    })) ?? [];
+
+  const next = {
+    capsules: [capsule, ...current.capsules],
+    cards: [...cards, ...current.cards],
+  };
+  saveCapsuleData(next);
+  return next;
+}
+
+export function exportCapsuleBackup(data: CapsuleData, capsuleId?: string): Blob {
+  const capsules = capsuleId
+    ? data.capsules.filter((capsule) => capsule.id === capsuleId)
+    : data.capsules;
+  const capsuleIds = new Set(capsules.map((capsule) => capsule.id));
+  const cards = data.cards.filter((card) => capsuleIds.has(card.capsuleId));
+  const payload: CapsuleBackup = {
+    schema: "recoverse_capsule_v1",
+    exportedAt: new Date().toISOString(),
+    capsules,
+    cards,
+  };
+
+  return new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+}
+
+export function importCapsuleBackup(jsonText: string): CapsuleImportResult {
+  const parsed = safeParse<any>(jsonText);
+  if (!parsed) throw new Error("JSON parsing failed");
+
+  let imported: CapsuleData;
+  if (parsed?.schema === "recoverse_capsule_v1") {
+    imported = {
+      capsules: Array.isArray(parsed.capsules)
+        ? (parsed.capsules.map(normalizeCapsule).filter(Boolean) as Capsule[])
+        : [],
+      cards: Array.isArray(parsed.cards)
+        ? (parsed.cards.map(normalizeCapsuleCard).filter(Boolean) as CapsuleCard[])
+        : [],
+    };
+  } else {
+    const legacyEntries = Array.isArray(parsed) ? parsed : parsed?.entries;
+    if (!Array.isArray(legacyEntries)) throw new Error("Unsupported backup format");
+
+    imported = buildCapsuleDataFromEntries(
+      legacyEntries.map(normalizeEntry).filter(Boolean) as ReviewEntryV2[]
+    );
+  }
+
+  const current = loadCapsuleData();
+  const capsuleIds = new Set(current.capsules.map((capsule) => capsule.id));
+  const cardIds = new Set(current.cards.map((card) => card.id));
+
+  const newCapsules = imported.capsules.filter((capsule) => !capsuleIds.has(capsule.id));
+  const newCapsuleIds = new Set([...capsuleIds, ...newCapsules.map((capsule) => capsule.id)]);
+  const newCards = imported.cards.filter(
+    (card) => !cardIds.has(card.id) && newCapsuleIds.has(card.capsuleId)
+  );
+
+  const data = {
+    capsules: [...newCapsules, ...current.capsules],
+    cards: [...newCards, ...current.cards],
+  };
+  saveCapsuleData(data);
+
+  return {
+    data,
+    addedCapsules: newCapsules.length,
+    addedCards: newCards.length,
+    skippedCapsules: imported.capsules.length - newCapsules.length,
+    skippedCards: imported.cards.length - newCards.length,
+  };
 }
 
 /**
