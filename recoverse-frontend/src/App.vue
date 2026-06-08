@@ -14,6 +14,7 @@
         <button :class="{ on: mode === 'year' }" @click="setMode('year')">연도 보기</button>
         <button :class="{ on: mode === 'compare' }" @click="setMode('compare')">질문 비교</button>
         <button :class="{ on: mode === 'add' }" @click="setMode('add')">빠른 입력</button>
+        <button :class="{ on: mode === 'capsules' }" @click="setMode('capsules')">캡슐</button>
       </nav>
 
       <div class="actions">
@@ -274,8 +275,172 @@
         </section>
       </section>
 
+      <!-- Mode: CAPSULES -->
+      <section v-else-if="mode === 'capsules'" class="layoutAdd">
+        <section class="panel">
+          <div class="panelHead">
+            <h2 class="noWrap">회고 캡슐</h2>
+            <div class="headBtns">
+              <button class="ghost" @click="onExportCapsules" :disabled="capsules.length === 0">
+                캡슐 JSON 내보내기
+              </button>
+              <label class="file smallFile">
+                캡슐 JSON 가져오기
+                <input type="file" accept="application/json" @change="onImportCapsuleFile" />
+              </label>
+              <button class="ghost" @click="refreshCapsules">새로고침</button>
+            </div>
+          </div>
+
+          <div class="list">
+            <button
+              v-for="capsule in capsules"
+              :key="capsule.id"
+              class="rowItem"
+              :class="{ active: capsule.id === selectedCapsuleId }"
+              @click="selectCapsule(capsule.id)"
+            >
+              <div class="rowTop">
+                <span class="q">{{ capsule.title }}</span>
+                <span class="badge">{{ capsule.type }}</span>
+              </div>
+              <div class="rowSub">
+                <span class="subText">
+                  질문 {{ capsuleStats.get(capsule.id)?.cards ?? 0 }}개 /
+                  답변 {{ capsuleStats.get(capsule.id)?.answered ?? 0 }}개
+                </span>
+              </div>
+              <div v-if="capsule.description" class="rowSub">
+                <span class="subText">{{ capsule.description }}</span>
+              </div>
+            </button>
+
+            <div v-if="capsules.length === 0" class="empty">
+              아직 캡슐이 없어요. 오른쪽에서 첫 회고 캡슐을 만들어보세요.
+            </div>
+          </div>
+
+          <div class="panelFoot">
+            <div v-if="discoveryCard" class="discoverBox">
+              <div class="muted">다시 발견하기</div>
+              <div class="strong">{{ discoveryCapsuleTitle }}</div>
+              <div class="q">{{ discoveryCard.questionText }}</div>
+              <div class="rowSub">{{ previewAnswers(discoveryCard.answers) }}</div>
+            </div>
+            <p v-else class="hint">
+              답변이 쌓이면 오래된 질문을 다시 꺼내 보여줄 수 있어요.
+            </p>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <div class="panelHead">
+            <h2 class="noWrap">새 캡슐 만들기</h2>
+          </div>
+
+          <div class="addWrap">
+            <div class="formGrid">
+              <label class="wide">
+                <span class="noWrap">제목</span>
+                <input v-model="capsuleForm.title" placeholder="예: 20대 회고, 여행 회고" />
+              </label>
+
+              <label class="wide">
+                <span class="noWrap">설명</span>
+                <input v-model="capsuleForm.description" placeholder="이 캡슐에 담고 싶은 기억" />
+              </label>
+
+              <label>
+                <span class="noWrap">유형</span>
+                <select v-model="capsuleForm.type">
+                  <option value="year">연도</option>
+                  <option value="life_stage">시기</option>
+                  <option value="career">커리어</option>
+                  <option value="relationship">관계</option>
+                  <option value="travel">여행</option>
+                  <option value="project">프로젝트</option>
+                  <option value="custom">직접 설정</option>
+                </select>
+              </label>
+
+              <label>
+                <span class="noWrap">기본 질문</span>
+                <select v-model="capsuleForm.templateId">
+                  <option value="">없음</option>
+                  <option v-for="template in capsuleTemplates" :key="template.id" :value="template.id">
+                    {{ template.title }}
+                  </option>
+                </select>
+              </label>
+            </div>
+
+            <div class="btnRow">
+              <button class="primary" @click="onCreateCapsule">캡슐 만들기</button>
+              <button class="ghost" @click="resetCapsuleForm">초기화</button>
+            </div>
+
+            <p v-if="capsuleError" class="error">{{ capsuleError }}</p>
+            <p v-if="capsuleNotice" class="hint">{{ capsuleNotice }}</p>
+            <p class="hint">
+              기본 질문을 고르면 캡슐 안에 질문 카드가 함께 만들어져요.
+            </p>
+          </div>
+
+          <div class="divider"></div>
+
+          <div v-if="!selectedCapsule" class="empty">
+            왼쪽에서 캡슐을 선택하면 질문 카드를 볼 수 있어요.
+          </div>
+
+          <div v-else class="addWrap">
+            <div class="detailBlock">
+              <h3 class="noWrap">{{ selectedCapsule.title }}</h3>
+              <div class="chips">
+                <button
+                  v-for="card in selectedCapsuleCards"
+                  :key="card.id"
+                  class="chip"
+                  :class="{ active: card.id === selectedCapsuleCardId }"
+                  @click="selectCapsuleCard(card.id)"
+                >
+                  {{ card.questionText }}
+                </button>
+              </div>
+
+              <div class="btnRow">
+                <button class="ghost" @click="addCapsuleCard">+ 질문 카드</button>
+              </div>
+
+              <div v-if="selectedCapsuleCard" class="formGrid">
+                <label class="wide">
+                  <span class="noWrap">질문</span>
+                  <input v-model="capsuleCardForm.questionText" placeholder="질문을 입력하세요" />
+                </label>
+
+                <label class="wide">
+                  <span class="noWrap">답변</span>
+                  <textarea
+                    v-model="capsuleCardForm.answersText"
+                    rows="7"
+                    placeholder="답변을 한 줄에 하나씩 적어보세요"
+                  ></textarea>
+                </label>
+              </div>
+
+              <div v-if="selectedCapsuleCard" class="btnRow">
+                <button class="primary" @click="saveSelectedCapsuleCard">질문 저장</button>
+              </div>
+
+              <div v-else class="empty">
+                질문 카드를 추가하거나 선택해 주세요.
+              </div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
       <!-- Mode: ADD -->
-      <section v-else class="layoutAdd">
+      <section v-else-if="mode === 'add'" class="layoutAdd">
         <section class="panel">
           <div class="panelHead">
             <h2 class="noWrap">빠른 입력</h2>
@@ -373,6 +538,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
 import {
+  type Capsule,
+  type CapsuleCard,
+  type CapsuleType,
   type ReviewEntryV2 as ReviewEntry,
   addEntry,
   updateEntry,
@@ -384,11 +552,21 @@ import {
   getQuestionBank,
   buildQuestionTimeline,
   clonePrevYearQuestions,
+  capsuleTemplates,
+  createCapsule,
+  exportCapsuleBackup,
+  importCapsuleBackup,
+  loadCapsuleData,
+  saveCapsuleData,
 } from "./lib/recoverseStore";
 
-type Mode = "year" | "compare" | "add";
+type Mode = "year" | "compare" | "add" | "capsules";
 
 const entries = ref<ReviewEntry[]>([]);
+const capsules = ref<Capsule[]>([]);
+const capsuleCards = ref<CapsuleCard[]>([]);
+const selectedCapsuleId = ref<string | null>(null);
+const selectedCapsuleCardId = ref<string | null>(null);
 const mode = ref<Mode>("year");
 
 const selectedYear = ref<number>(2016);
@@ -408,6 +586,25 @@ const compareQ = ref<string>("");
 const compareSearch = ref<string>("");
 
 const addSuggestSearch = ref<string>("");
+const capsuleError = ref<string>("");
+const capsuleNotice = ref<string>("");
+
+const capsuleForm = reactive<{
+  title: string;
+  description: string;
+  type: CapsuleType;
+  templateId: string;
+}>({
+  title: "",
+  description: "",
+  type: "year",
+  templateId: "template_year",
+});
+
+const capsuleCardForm = reactive({
+  questionText: "",
+  answersText: "",
+});
 
 /** ✅ 연도 범위: 2016부터 20년치 */
 const START_YEAR = 2016;
@@ -421,10 +618,22 @@ const years = computed(() => {
 
 onMounted(() => {
   entries.value = loadEntries();
+  refreshCapsules();
   // 시작은 2016으로 고정 (원하면: 데이터 있으면 그 연도로 자동 이동도 가능)
   selectedYear.value = START_YEAR;
   form.year = START_YEAR;
 });
+
+function refreshCapsules() {
+  const data = loadCapsuleData();
+  capsules.value = data.capsules;
+  capsuleCards.value = data.cards;
+
+  if (selectedCapsuleId.value && !capsules.value.some((capsule) => capsule.id === selectedCapsuleId.value)) {
+    selectedCapsuleId.value = null;
+    selectedCapsuleCardId.value = null;
+  }
+}
 
 const yearCountMap = computed(() => {
   const map = new Map<number, number>();
@@ -472,14 +681,61 @@ const addSuggestions = computed(() => {
   return base.filter((x) => x.q.toLowerCase().includes(s)).slice(0, 40);
 });
 
+const capsuleStats = computed(() => {
+  const map = new Map<string, { cards: number; answered: number }>();
+  for (const card of capsuleCards.value) {
+    const prev = map.get(card.capsuleId) ?? { cards: 0, answered: 0 };
+    prev.cards += 1;
+    if (card.answers.length > 0) prev.answered += 1;
+    map.set(card.capsuleId, prev);
+  }
+  return map;
+});
+
+const selectedCapsule = computed(() => {
+  if (!selectedCapsuleId.value) return null;
+  return capsules.value.find((capsule) => capsule.id === selectedCapsuleId.value) ?? null;
+});
+
+const selectedCapsuleCards = computed(() => {
+  if (!selectedCapsuleId.value) return [];
+  return capsuleCards.value
+    .filter((card) => card.capsuleId === selectedCapsuleId.value)
+    .sort((a, b) => a.order - b.order);
+});
+
+const selectedCapsuleCard = computed(() => {
+  if (!selectedCapsuleCardId.value) return null;
+  return capsuleCards.value.find((card) => card.id === selectedCapsuleCardId.value) ?? null;
+});
+
+const discoveryCard = computed(() => {
+  return (
+    capsuleCards.value
+      .filter((card) => card.answers.length > 0)
+      .sort((a, b) => (a.updatedAt > b.updatedAt ? 1 : -1))[0] ?? null
+  );
+});
+
+const discoveryCapsuleTitle = computed(() => {
+  if (!discoveryCard.value) return "";
+  return capsules.value.find((capsule) => capsule.id === discoveryCard.value?.capsuleId)?.title ?? "";
+});
+
 function setMode(m: Mode) {
   mode.value = m;
   errorMsg.value = "";
+  capsuleError.value = "";
+  capsuleNotice.value = "";
 
   if (m === "add") {
     form.year = selectedYear.value;
     editingId.value = null;
     ensureAtLeastOneAnswerRow();
+  }
+
+  if (m === "capsules") {
+    refreshCapsules();
   }
 
   if (m === "compare") {
@@ -519,6 +775,129 @@ function resetForm() {
   form.year = selectedYear.value;
   form.q = "";
   form.answers = [""];
+}
+
+function resetCapsuleForm() {
+  capsuleError.value = "";
+  capsuleNotice.value = "";
+  capsuleForm.title = "";
+  capsuleForm.description = "";
+  capsuleForm.type = "year";
+  capsuleForm.templateId = "template_year";
+}
+
+function syncCapsuleStorage() {
+  saveCapsuleData({
+    capsules: capsules.value,
+    cards: capsuleCards.value,
+  });
+}
+
+function selectCapsule(id: string) {
+  selectedCapsuleId.value = id;
+  const firstCard = capsuleCards.value
+    .filter((card) => card.capsuleId === id)
+    .sort((a, b) => a.order - b.order)[0];
+  selectedCapsuleCardId.value = firstCard?.id ?? null;
+  if (firstCard) startCapsuleCardEdit(firstCard);
+  else resetCapsuleCardForm();
+}
+
+function selectCapsuleCard(id: string) {
+  selectedCapsuleCardId.value = id;
+  const card = capsuleCards.value.find((item) => item.id === id);
+  if (card) startCapsuleCardEdit(card);
+}
+
+function resetCapsuleCardForm() {
+  capsuleCardForm.questionText = "";
+  capsuleCardForm.answersText = "";
+}
+
+function startCapsuleCardEdit(card: CapsuleCard) {
+  capsuleCardForm.questionText = card.questionText;
+  capsuleCardForm.answersText = card.answers.join("\n");
+}
+
+function onCreateCapsule() {
+  capsuleError.value = "";
+  capsuleNotice.value = "";
+
+  try {
+    const data = createCapsule({
+      title: capsuleForm.title,
+      description: capsuleForm.description,
+      type: capsuleForm.type,
+      templateId: capsuleForm.templateId || undefined,
+    });
+    capsules.value = data.capsules;
+    capsuleCards.value = data.cards;
+    selectedCapsuleId.value = data.capsules[0]?.id ?? null;
+    const firstCard = selectedCapsuleId.value
+      ? data.cards
+          .filter((card) => card.capsuleId === selectedCapsuleId.value)
+          .sort((a, b) => a.order - b.order)[0]
+      : null;
+    selectedCapsuleCardId.value = firstCard?.id ?? null;
+    if (firstCard) startCapsuleCardEdit(firstCard);
+    else resetCapsuleCardForm();
+    resetCapsuleForm();
+    capsuleNotice.value = "캡슐을 만들었어요.";
+  } catch (err: any) {
+    capsuleError.value = err?.message ?? "캡슐을 만들 수 없어요.";
+  }
+}
+
+function addCapsuleCard() {
+  if (!selectedCapsule.value) return;
+
+  const now = new Date().toISOString();
+  const card: CapsuleCard = {
+    id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    capsuleId: selectedCapsule.value.id,
+    questionText: "새 질문",
+    answers: [],
+    source: "user",
+    order: selectedCapsuleCards.value.length,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  capsuleCards.value = [card, ...capsuleCards.value];
+  selectedCapsuleCardId.value = card.id;
+  startCapsuleCardEdit(card);
+  syncCapsuleStorage();
+}
+
+function saveSelectedCapsuleCard() {
+  if (!selectedCapsuleCard.value) return;
+
+  const questionText = capsuleCardForm.questionText.trim();
+  if (!questionText) {
+    capsuleError.value = "질문을 입력해 주세요.";
+    capsuleNotice.value = "";
+    return;
+  }
+
+  const answers = capsuleCardForm.answersText
+    .split("\n")
+    .map((answer) => answer.trim())
+    .filter((answer) => answer.length > 0);
+
+  const now = new Date().toISOString();
+  capsuleCards.value = capsuleCards.value.map((card) =>
+    card.id === selectedCapsuleCard.value?.id
+      ? {
+          ...card,
+          questionText,
+          answers,
+          updatedAt: now,
+        }
+      : card
+  );
+  capsuleError.value = "";
+  capsuleNotice.value = "질문 카드를 저장했어요.";
+  syncCapsuleStorage();
 }
 
 function ensureAtLeastOneAnswerRow() {
@@ -691,6 +1070,54 @@ function onExport() {
   const blob = exportBackup(entries.value);
   const yyyyMMdd = new Date().toISOString().slice(0, 10);
   downloadBlob(blob, `recoverse_${yyyyMMdd}.json`);
+}
+
+function onExportCapsules() {
+  capsuleError.value = "";
+  capsuleNotice.value = "";
+
+  const blob = exportCapsuleBackup({
+    capsules: capsules.value,
+    cards: capsuleCards.value,
+  });
+  const yyyyMMdd = new Date().toISOString().slice(0, 10);
+  downloadBlob(blob, `recoverse_capsules_${yyyyMMdd}.json`);
+  capsuleNotice.value = "캡슐 백업 파일을 만들었어요.";
+}
+
+async function onImportCapsuleFile(e: Event) {
+  capsuleError.value = "";
+  capsuleNotice.value = "";
+
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const result = importCapsuleBackup(text);
+    capsules.value = result.data.capsules;
+    capsuleCards.value = result.data.cards;
+    selectedCapsuleId.value = result.data.capsules[0]?.id ?? null;
+
+    const firstCard = selectedCapsuleId.value
+      ? result.data.cards
+          .filter((card) => card.capsuleId === selectedCapsuleId.value)
+          .sort((a, b) => a.order - b.order)[0]
+      : null;
+
+    selectedCapsuleCardId.value = firstCard?.id ?? null;
+    if (firstCard) startCapsuleCardEdit(firstCard);
+    else resetCapsuleCardForm();
+
+    capsuleNotice.value =
+      `가져오기 완료: 캡슐 ${result.addedCapsules}개, 질문 카드 ${result.addedCards}개 추가` +
+      ` / 중복 ${result.skippedCapsules + result.skippedCards}개 건너뜀`;
+  } catch (err: any) {
+    capsuleError.value = `캡슐 가져오기 실패: ${err?.message ?? "알 수 없는 오류"}`;
+  } finally {
+    input.value = "";
+  }
 }
 
 async function onImportFile(e: Event) {
@@ -899,6 +1326,12 @@ function onFormKeydown(e: KeyboardEvent) {
 }
 
 .file input { display: none; }
+
+.smallFile {
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+}
 
 button {
   font: inherit;
@@ -1325,6 +1758,17 @@ textarea { resize: vertical; }
   border-radius: 999px;
   padding: 8px 10px;
   font-size: 12px;
+}
+
+.chip.active {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.discoverBox {
+  display: grid;
+  gap: 6px;
 }
 
 /* general empty */
