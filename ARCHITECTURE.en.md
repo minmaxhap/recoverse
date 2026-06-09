@@ -67,3 +67,37 @@ src/
 ## Sharing Direction
 
 Sharing is outside the MVP. Later, add read-only snapshots and password-protected links as separate structures.
+
+## Read-Only Sharing Data Model Draft
+
+Shared data should not expose the original `CapsuleData` directly. It should be a snapshot captured at publish time.
+
+```ts
+type SharedCapsuleSnapshot = {
+  id: string;
+  sourceCapsuleId: string;
+  title: string;
+  description?: string;
+  visibility: "private" | "link";
+  accessMode: "read_only";
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  cards: SharedCapsuleCardSnapshot[];
+};
+
+type SharedCapsuleCardSnapshot = {
+  id: string;
+  sourceCardId: string;
+  questionText: string;
+  answers: string[];
+  order: number;
+};
+```
+
+Principles:
+
+- Shared snapshots are read-only.
+- Editing the original capsule should not automatically mutate an existing shared version.
+- Shared snapshots are refreshed only when the user explicitly republishes them.
+- When server storage is introduced later, `sourceCapsuleId` and `sourceCardId` link the snapshot back to the original data.

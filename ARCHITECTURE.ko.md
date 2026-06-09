@@ -67,3 +67,37 @@ src/
 ## 공유 확장 방향
 
 공유는 MVP 범위 밖이다. 나중에 읽기 전용 스냅샷과 비밀번호 링크를 별도 구조로 추가한다.
+
+## 읽기 전용 공유 데이터 모델 초안
+
+공유 데이터는 원본 `CapsuleData`를 직접 노출하지 않고, 공유 시점의 스냅샷으로 분리한다.
+
+```ts
+type SharedCapsuleSnapshot = {
+  id: string;
+  sourceCapsuleId: string;
+  title: string;
+  description?: string;
+  visibility: "private" | "link";
+  accessMode: "read_only";
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+  cards: SharedCapsuleCardSnapshot[];
+};
+
+type SharedCapsuleCardSnapshot = {
+  id: string;
+  sourceCardId: string;
+  questionText: string;
+  answers: string[];
+  order: number;
+};
+```
+
+원칙:
+
+- 공유 스냅샷은 읽기 전용이다.
+- 원본 캡슐을 수정해도 기존 공유본은 자동 변경하지 않는다.
+- 공유본 갱신은 사용자가 명시적으로 다시 발행할 때만 수행한다.
+- 나중에 서버 저장소를 도입하면 `sourceCapsuleId`와 `sourceCardId`로 원본과 연결한다.
