@@ -19,25 +19,11 @@
           {{ t.capsules }}
         </button>
         <button
-          :class="{ on: mode === 'quick-entry-archive' }"
-          :title="modePlanById['quick-entry-archive'].note"
-          @click="setMode('quick-entry-archive')"
+          :class="{ on: mode !== 'home-universe' }"
+          :title="activeArchiveModePlan.note"
+          @click="openArchiveSettings()"
         >
-          빠른 입력
-        </button>
-        <button
-          :class="{ on: mode === 'year-archive' }"
-          :title="modePlanById['year-archive'].note"
-          @click="setMode('year-archive')"
-        >
-          연도 보기
-        </button>
-        <button
-          :class="{ on: mode === 'question-compare-archive' }"
-          :title="modePlanById['question-compare-archive'].note"
-          @click="setMode('question-compare-archive')"
-        >
-          질문 비교
+          {{ t.archive }}
         </button>
       </nav>
 
@@ -67,6 +53,11 @@
             @clear-all="clearAll"
           />
         </template>
+        <ArchiveSectionTabs
+          :active-mode="activeArchiveMode"
+          :plans="archiveModePlans"
+          @select="setMode($event)"
+        />
       <section class="layout3">
         <!-- Left: Years -->
         <aside class="panel">
@@ -263,6 +254,11 @@
             @clear-all="clearAll"
           />
         </template>
+        <ArchiveSectionTabs
+          :active-mode="activeArchiveMode"
+          :plans="archiveModePlans"
+          @select="setMode($event)"
+        />
       <section class="layoutCompare">
         <aside class="panel">
           <div class="panelHead">
@@ -425,6 +421,11 @@
             @clear-all="clearAll"
           />
         </template>
+        <ArchiveSectionTabs
+          :active-mode="activeArchiveMode"
+          :plans="archiveModePlans"
+          @select="setMode($event)"
+        />
       <section class="layoutAdd">
         <section class="panel">
           <div class="panelHead">
@@ -523,6 +524,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
+import ArchiveSectionTabs from "./components/ArchiveSectionTabs.vue";
 import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
 import ArchiveSettingsView from "./views/ArchiveSettingsView.vue";
 import HomePage from "./views/HomePage.vue";
@@ -562,7 +564,12 @@ import {
   buildQuestionTimeline,
   clonePrevYearQuestions,
 } from "./lib/reviewEntryActions";
-import { appModePlans, type AppMode } from "./lib/appScreens";
+import {
+  appModePlans,
+  archiveModePlans,
+  type AppMode,
+  type ArchiveModeId,
+} from "./lib/appScreens";
 
 const LANGUAGE_KEY = "recoverse_language";
 
@@ -570,6 +577,7 @@ const messages = {
   ko: {
     language: "언어",
     capsules: "캡슐",
+    archive: "아카이브",
     memoryUniverse: "나의 기억 우주",
     retrospectiveCapsules: "회고 캡슐",
     exportCapsules: "캡슐 JSON 내보내기",
@@ -640,6 +648,7 @@ const messages = {
   en: {
     language: "Language",
     capsules: "Capsules",
+    archive: "Archive",
     memoryUniverse: "My Memory Universe",
     retrospectiveCapsules: "Retrospective Capsules",
     exportCapsules: "Export capsule JSON",
@@ -722,6 +731,10 @@ const modePlanById = Object.fromEntries(appModePlans.map((plan) => [plan.id, pla
   AppMode,
   (typeof appModePlans)[number]
 >;
+const archiveModePlanById = Object.fromEntries(
+  archiveModePlans.map((plan) => [plan.id, plan])
+) as Record<ArchiveModeId, (typeof archiveModePlans)[number]>;
+const lastArchiveMode = ref<ArchiveModeId>("year-archive");
 
 const selectedYear = ref<number>(2016);
 const selectedId = ref<string | null>(null);
@@ -773,6 +786,10 @@ const years = computed(() => {
 });
 
 const t = computed(() => messages[language.value]);
+const activeArchiveMode = computed<ArchiveModeId>(() => {
+  return mode.value === "home-universe" ? lastArchiveMode.value : mode.value;
+});
+const activeArchiveModePlan = computed(() => archiveModePlanById[activeArchiveMode.value]);
 
 const capsuleCreateLabels = computed(() => ({
   title: t.value.title,
@@ -940,6 +957,10 @@ function setMode(m: AppMode) {
   capsuleError.value = "";
   capsuleNotice.value = "";
 
+  if (m !== "home-universe") {
+    lastArchiveMode.value = m;
+  }
+
   if (m === "quick-entry-archive") {
     form.year = selectedYear.value;
     editingId.value = null;
@@ -953,6 +974,10 @@ function setMode(m: AppMode) {
   if (m === "question-compare-archive") {
     if (!compareQ.value && questionBank.value[0]) compareQ.value = questionBank.value[0].q;
   }
+}
+
+function openArchiveSettings() {
+  setMode(lastArchiveMode.value);
 }
 
 function selectYear(y: number) {

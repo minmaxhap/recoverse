@@ -11,6 +11,8 @@ export type AppMode =
   | "year-archive"
   | "question-compare-archive";
 
+export type ArchiveModeId = Exclude<AppMode, "home-universe">;
+
 export type AppModePlan = {
   id: AppMode;
   targetScreen: FutureScreenId;
@@ -45,3 +47,7 @@ export const appModePlans: AppModePlan[] = [
     note: "홈에서 제거하고 시간여행 비교 또는 아카이브 도구로 이동할 대상이다.",
   },
 ];
+
+export const archiveModePlans = appModePlans.filter(
+  (plan): plan is AppModePlan & { id: ArchiveModeId } => plan.targetScreen === "archive-settings"
+);
