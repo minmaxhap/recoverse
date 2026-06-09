@@ -251,3 +251,25 @@ test("imports legacy v2 backups as capsules", () => {
   assert.equal(result.data.capsules[0].title, "2025년 회고");
   assert.equal(result.data.cards[0].questionText, "What did I learn?");
 });
+
+test("keeps legacy yearly array backup import path", () => {
+  localStorage.clear();
+  localStorage.setItem("recoverse_capsule_v1", JSON.stringify({ capsules: [], cards: [] }));
+
+  const result = capsuleImportExport.importCapsuleBackup(
+    JSON.stringify([
+      {
+        id: "legacy-array-1",
+        year: 2026,
+        q: "What should I remember?",
+        answers: ["Small records compound."],
+        createdAt: "2026-01-01T00:00:00.000Z",
+      },
+    ])
+  );
+
+  assert.equal(result.addedCapsules, 1);
+  assert.equal(result.addedCards, 1);
+  assert.equal(result.data.capsules[0].type, "year");
+  assert.equal(result.data.cards[0].id, "legacy-array-1");
+});
