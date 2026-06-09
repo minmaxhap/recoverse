@@ -303,21 +303,13 @@
             @select="selectCapsule"
           />
 
-          <div class="panelFoot">
-            <button
-              v-if="discoveryCard"
-              class="discoverBox discoverButton"
-              @click="jumpToCapsuleCard(discoveryCard.capsuleId, discoveryCard.id)"
-            >
-              <div class="muted">{{ t.rediscover }}</div>
-              <div class="strong">{{ discoveryCapsuleTitle }}</div>
-              <div class="q">{{ discoveryCard.questionText }}</div>
-              <div class="rowSub">{{ previewAnswers(discoveryCard.answers) }}</div>
-            </button>
-            <p v-else class="hint">
-              {{ t.rediscoverEmpty }}
-            </p>
-          </div>
+          <RediscoverCard
+            :card="discoveryCard"
+            :capsule-title="discoveryCapsuleTitle"
+            :answer-preview="discoveryAnswerPreview"
+            :labels="rediscoverLabels"
+            @open="openDiscoveryCard"
+          />
         </section>
 
         <aside class="panel">
@@ -513,6 +505,7 @@ import { computed, onMounted, reactive, ref, nextTick } from "vue";
 import CapsuleCreateForm from "./components/CapsuleCreateForm.vue";
 import CapsuleList from "./components/CapsuleList.vue";
 import LanguageSelector from "./components/LanguageSelector.vue";
+import RediscoverCard from "./components/RediscoverCard.vue";
 import CapsuleToolbar from "./components/CapsuleToolbar.vue";
 import CapsuleProgress from "./components/CapsuleProgress.vue";
 import CapsuleQuestionCompare from "./components/CapsuleQuestionCompare.vue";
@@ -742,6 +735,11 @@ const capsuleListLabels = computed(() => ({
   noSearchResults: t.value.noSearchResults,
 }));
 
+const rediscoverLabels = computed(() => ({
+  rediscover: t.value.rediscover,
+  rediscoverEmpty: t.value.rediscoverEmpty,
+}));
+
 function saveLanguage() {
   localStorage.setItem(LANGUAGE_KEY, language.value);
 }
@@ -873,6 +871,11 @@ const discoveryCapsuleTitle = computed(() => {
   return capsules.value.find((capsule) => capsule.id === discoveryCard.value?.capsuleId)?.title ?? "";
 });
 
+const discoveryAnswerPreview = computed(() => {
+  if (!discoveryCard.value) return "";
+  return previewAnswers(discoveryCard.value.answers);
+});
+
 function setMode(m: Mode) {
   mode.value = m;
   errorMsg.value = "";
@@ -963,6 +966,11 @@ function selectCapsuleCard(id: string) {
 function jumpToCapsuleCard(capsuleId: string, cardId: string) {
   selectedCapsuleId.value = capsuleId;
   selectCapsuleCard(cardId);
+}
+
+function openDiscoveryCard() {
+  if (!discoveryCard.value) return;
+  jumpToCapsuleCard(discoveryCard.value.capsuleId, discoveryCard.value.id);
 }
 
 function resetCapsuleCardForm() {

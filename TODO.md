@@ -35,7 +35,7 @@
 - [x] `CapsuleToolbar` 분리: 캡슐 JSON 내보내기, 가져오기, 새로고침 버튼
 - [x] `CapsuleCreateForm` 분리: 캡슐 제목, 설명, 유형, 기본 질문 템플릿 입력
 - [x] `CapsuleList` 분리: 캡슐 검색 결과 목록과 빈 상태
-- [ ] `RediscoverCard` 분리: 다시 발견하기 카드
+- [x] `RediscoverCard` 분리: 다시 발견하기 카드
 - [ ] `CapsuleDetailEditor` 분리: 선택된 캡슐의 질문 카드와 답변 편집 영역
 
 ## 2단계: 화면 구조 정리
