@@ -6,15 +6,15 @@
         <div class="logo">R</div>
         <div class="brandText">
           <h1 class="noWrap">Recoverse</h1>
-          <p class="noWrap">2016~ 회고 아카이브 (로컬 저장)</p>
+          <p class="noWrap">회고 캡슐 아카이브 (로컬 저장)</p>
         </div>
       </div>
 
       <nav class="tabs">
+        <button :class="{ on: mode === 'capsules' }" @click="setMode('capsules')">{{ t.capsules }}</button>
+        <button :class="{ on: mode === 'add' }" @click="setMode('add')">빠른 입력</button>
         <button :class="{ on: mode === 'year' }" @click="setMode('year')">연도 보기</button>
         <button :class="{ on: mode === 'compare' }" @click="setMode('compare')">질문 비교</button>
-        <button :class="{ on: mode === 'add' }" @click="setMode('add')">빠른 입력</button>
-        <button :class="{ on: mode === 'capsules' }" @click="setMode('capsules')">{{ t.capsules }}</button>
       </nav>
 
       <div class="actions">
@@ -239,7 +239,7 @@
           <div class="panelHead">
             <h2 class="noWrap">연도별 답</h2>
             <div class="headBtns">
-              <button class="ghost" @click="setMode('year')">연도 보기로</button>
+              <button class="ghost" @click="setMode('capsules')">캡슐 홈으로</button>
             </div>
           </div>
 
@@ -365,7 +365,7 @@
           <div class="panelHead">
             <h2 class="noWrap">빠른 입력</h2>
             <div class="headBtns">
-              <button class="ghost" @click="setMode('year')">연도 보기로</button>
+              <button class="ghost" @click="setMode('capsules')">캡슐 홈으로</button>
             </div>
           </div>
 
@@ -619,7 +619,7 @@ const capsules = ref<Capsule[]>([]);
 const capsuleCards = ref<CapsuleCard[]>([]);
 const selectedCapsuleId = ref<string | null>(null);
 const selectedCapsuleCardId = ref<string | null>(null);
-const mode = ref<Mode>("year");
+const mode = ref<Mode>("capsules");
 
 const selectedYear = ref<number>(2016);
 const selectedId = ref<string | null>(null);
