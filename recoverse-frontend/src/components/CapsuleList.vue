@@ -43,18 +43,14 @@
 
 <script setup lang="ts">
 import type { Capsule, CapsuleType } from "../lib/recoverseStore";
-
-type CapsuleStats = {
-  cards: number;
-  answered: number;
-};
+import type { CapsuleHomeStats } from "../lib/capsuleHomeData";
 
 defineProps<{
   search: string;
   capsules: Capsule[];
   filteredCapsules: Capsule[];
   selectedCapsuleId: string | null;
-  stats: Map<string, CapsuleStats>;
+  stats: Map<string, CapsuleHomeStats>;
   typeLabels: Record<CapsuleType, string>;
   labels: {
     searchCapsules: string;

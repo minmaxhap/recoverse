@@ -486,6 +486,13 @@ import {
   importCapsuleBackup,
   previewCapsuleBackupImport,
 } from "./lib/capsuleImportExport";
+import {
+  buildCapsuleHomeItems,
+  buildCapsuleStats,
+  filterCapsules,
+  findMostRecentlyAnsweredCardId,
+  selectDailyDiscoveryCard,
+} from "./lib/capsuleHomeData";
 import { createCapsule } from "./lib/capsuleActions";
 import { capsuleTemplates } from "./lib/capsuleTemplates";
 import {
@@ -809,33 +816,9 @@ const addSuggestions = computed(() => {
   return base.filter((x) => x.q.toLowerCase().includes(s)).slice(0, 40);
 });
 
-const capsuleStats = computed(() => {
-  const map = new Map<string, { cards: number; answered: number }>();
-  for (const card of capsuleCards.value) {
-    const prev = map.get(card.capsuleId) ?? { cards: 0, answered: 0 };
-    prev.cards += 1;
-    if (card.answers.length > 0) prev.answered += 1;
-    map.set(card.capsuleId, prev);
-  }
-  return map;
-});
+const capsuleStats = computed(() => buildCapsuleStats(capsuleCards.value));
 
-const filteredCapsules = computed(() => {
-  const query = capsuleSearch.value.trim().toLowerCase();
-  if (!query) return capsules.value;
-
-  return capsules.value.filter((capsule) => {
-    const haystack = [
-      capsule.title,
-      capsule.description ?? "",
-      capsule.type,
-    ]
-      .join("\n")
-      .toLowerCase();
-
-    return haystack.includes(query);
-  });
-});
+const filteredCapsules = computed(() => filterCapsules(capsules.value, capsuleSearch.value));
 
 const selectedCapsule = computed(() => {
   if (!selectedCapsuleId.value) return null;
@@ -855,27 +838,16 @@ const selectedCapsuleCard = computed(() => {
 });
 
 const recentlyEditedCapsuleCardId = computed(() => {
-  return (
-    selectedCapsuleCards.value
-      .filter((card) => card.answers.length > 0)
-      .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))[0]?.id ?? null
-  );
+  return findMostRecentlyAnsweredCardId(selectedCapsuleCards.value);
 });
 
 const discoveryCard = computed(() => {
-  const candidates = capsuleCards.value
-    .filter((card) => card.answers.length > 0)
-    .sort((a, b) => {
-      if (a.updatedAt !== b.updatedAt) return a.updatedAt > b.updatedAt ? 1 : -1;
-      return a.id.localeCompare(b.id);
-    });
-
-  if (candidates.length === 0) return null;
-
-  const todayKey = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-  const index = Number(todayKey) % candidates.length;
-  return candidates[index];
+  return selectDailyDiscoveryCard(capsuleCards.value);
 });
+
+const homeCapsuleItems = computed(() =>
+  buildCapsuleHomeItems(capsules.value, capsuleStats.value, discoveryCard.value)
+);
 
 const discoveryCapsuleTitle = computed(() => {
   if (!discoveryCard.value) return "";

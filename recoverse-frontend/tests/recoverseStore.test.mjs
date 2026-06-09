@@ -55,9 +55,14 @@ const capsuleImportExportPath = await compileTsModule(
   "capsuleImportExport.mjs",
   [['"./recoverseStore"', '"./recoverseStore.mjs"']]
 );
+const capsuleHomeDataPath = await compileTsModule(
+  new URL("../src/lib/capsuleHomeData.ts", import.meta.url),
+  "capsuleHomeData.mjs"
+);
 
 const store = await import(pathToFileURL(storePath).href);
 const capsuleImportExport = await import(pathToFileURL(capsuleImportExportPath).href);
+const capsuleHomeData = await import(pathToFileURL(capsuleHomeDataPath).href);
 
 globalThis.localStorage = new MemoryStorage();
 
@@ -272,4 +277,100 @@ test("keeps legacy yearly array backup import path", () => {
   assert.equal(result.addedCards, 1);
   assert.equal(result.data.capsules[0].type, "year");
   assert.equal(result.data.cards[0].id, "legacy-array-1");
+});
+
+test("builds capsule home stats for planet map data", () => {
+  const stats = capsuleHomeData.buildCapsuleStats([
+    {
+      id: "card-unanswered",
+      capsuleId: "capsule-1",
+      questionText: "Empty?",
+      answers: [],
+      source: "user",
+      order: 0,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-03-01T00:00:00.000Z",
+    },
+    {
+      id: "card-recent-answer",
+      capsuleId: "capsule-1",
+      questionText: "Recent?",
+      answers: ["Yes."],
+      source: "user",
+      order: 1,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-02-01T00:00:00.000Z",
+    },
+    {
+      id: "card-old-answer",
+      capsuleId: "capsule-1",
+      questionText: "Old?",
+      answers: ["Earlier.", "Again."],
+      source: "user",
+      order: 2,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+    },
+  ]);
+
+  const capsuleStats = stats.get("capsule-1");
+
+  assert.equal(capsuleStats.cards, 3);
+  assert.equal(capsuleStats.answered, 2);
+  assert.equal(capsuleStats.answers, 3);
+  assert.equal(capsuleStats.unanswered, 1);
+  assert.equal(capsuleStats.latestUpdatedAt, "2024-03-01T00:00:00.000Z");
+  assert.equal(capsuleStats.recentCardId, "card-recent-answer");
+});
+
+test("filters capsules and selects a daily discovery card", () => {
+  const capsules = [
+    {
+      id: "capsule-1",
+      title: "Travel Archive",
+      description: "Jeju memories",
+      type: "travel",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+    },
+    {
+      id: "capsule-2",
+      title: "Career Notes",
+      type: "career",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+    },
+  ];
+  const cards = [
+    {
+      id: "card-oldest",
+      capsuleId: "capsule-1",
+      questionText: "First?",
+      answers: ["A."],
+      source: "user",
+      order: 0,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+    },
+    {
+      id: "card-empty",
+      capsuleId: "capsule-2",
+      questionText: "Empty?",
+      answers: [],
+      source: "user",
+      order: 0,
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-02T00:00:00.000Z",
+    },
+  ];
+
+  const filtered = capsuleHomeData.filterCapsules(capsules, "jeju");
+  const discovery = capsuleHomeData.selectDailyDiscoveryCard(
+    cards,
+    new Date("2024-01-02T00:00:00.000Z")
+  );
+
+  assert.equal(filtered.length, 1);
+  assert.equal(filtered[0].id, "capsule-1");
+  assert.equal(discovery.id, "card-oldest");
 });
