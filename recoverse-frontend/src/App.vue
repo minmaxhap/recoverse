@@ -332,7 +332,7 @@
       </ArchiveSettingsView>
 
       <!-- Mode: CAPSULES -->
-      <HomePage
+      <HomeUniverseView
         v-else-if="mode === 'home-universe'"
         v-model:capsule-search="capsuleSearch"
         v-model:show-unanswered-cards-only="showUnansweredCardsOnly"
@@ -527,7 +527,7 @@ import { computed, onMounted, reactive, ref, nextTick } from "vue";
 import ArchiveSectionTabs from "./components/ArchiveSectionTabs.vue";
 import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
 import ArchiveSettingsView from "./views/ArchiveSettingsView.vue";
-import HomePage from "./views/HomePage.vue";
+import HomeUniverseView from "./views/HomeUniverseView.vue";
 import {
   type AppLanguage,
   type Capsule,

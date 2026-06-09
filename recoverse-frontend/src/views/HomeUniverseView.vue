@@ -1,5 +1,6 @@
 <template>
   <HomeView>
+    <!-- Current universe-home shell: map/discovery stay primary while detailed editing remains nearby for now. -->
     <section class="panel">
       <HomeHeader
         :brand-label="brandLabel"
