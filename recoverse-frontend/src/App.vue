@@ -312,7 +312,7 @@
           />
         </section>
 
-        <aside class="panel">
+        <CapsuleDetailView>
           <div class="panelHead">
             <h2 class="noWrap">{{ t.createCapsule }}</h2>
           </div>
@@ -356,7 +356,7 @@
               @open-card="jumpToCapsuleCard"
             />
           </div>
-        </aside>
+        </CapsuleDetailView>
       </HomeView>
 
       <!-- Mode: ADD -->
@@ -465,6 +465,7 @@ import RediscoverCard from "./components/RediscoverCard.vue";
 import CapsuleToolbar from "./components/CapsuleToolbar.vue";
 import CapsuleQuestionCompare from "./components/CapsuleQuestionCompare.vue";
 import HomeView from "./views/HomeView.vue";
+import CapsuleDetailView from "./views/CapsuleDetailView.vue";
 import {
   type AppLanguage,
   type Capsule,
