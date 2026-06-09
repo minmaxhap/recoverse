@@ -34,10 +34,11 @@ defineEmits<{
 
 <style scoped>
 .bridge {
-  padding: 12px;
+  padding: 12px 14px;
   border-top: 1px solid var(--color-soft-border);
   display: grid;
   gap: 12px;
+  background: rgba(255, 249, 234, 0.03);
 }
 
 .copy {

@@ -35,7 +35,7 @@ defineEmits<{
 
 <style scoped>
 .discovery {
-  padding: 12px;
+  padding: 10px 14px 14px;
   border-bottom: 1px solid var(--color-soft-border);
 }
 
@@ -46,18 +46,18 @@ defineEmits<{
   cursor: pointer;
   text-align: left;
   border: 1px solid var(--color-soft-border);
-  border-radius: 16px;
+  border-radius: 18px;
   background:
-    radial-gradient(circle at 16% 8%, rgba(244, 197, 106, 0.24), transparent 28%),
-    linear-gradient(135deg, rgba(255, 249, 234, 0.96), rgba(246, 238, 220, 0.84));
-  box-shadow: 0 14px 34px rgba(30, 24, 18, 0.08);
+    radial-gradient(circle at 16% 8%, rgba(244, 197, 106, 0.22), transparent 28%),
+    linear-gradient(135deg, rgba(109, 90, 141, 0.22), rgba(21, 17, 31, 0.92));
+  box-shadow: 0 18px 40px rgba(8, 7, 15, 0.26);
   display: grid;
   gap: 6px;
   padding: 14px;
 }
 
 .eyebrow {
-  color: var(--color-muted);
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 800;
 }
@@ -75,13 +75,13 @@ defineEmits<{
 }
 
 .answer {
-  color: var(--color-muted);
+  color: rgba(246, 238, 220, 0.78);
   font-size: 12px;
   line-height: 1.45;
 }
 
 .openLabel {
-  color: var(--color-primary);
+  color: #60d0a8;
   font-size: 12px;
   font-weight: 900;
   margin-top: 2px;

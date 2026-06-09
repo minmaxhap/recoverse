@@ -32,6 +32,30 @@
         :labels="archiveBridgeLabels"
         @open-archive="$emit('open-archive')"
       />
+
+      <nav class="bottomNav" :aria-label="bottomNavLabels.home">
+        <button class="navItem active" type="button">
+          <span class="navIcon homeIcon"></span>
+          <span>{{ bottomNavLabels.home }}</span>
+        </button>
+        <button
+          class="navItem"
+          type="button"
+          :disabled="!hasSelectedCapsule"
+          @click="$emit('open-selected-capsule')"
+        >
+          <span class="navIcon planetIcon"></span>
+          <span>{{ bottomNavLabels.planet }}</span>
+        </button>
+        <button class="navItem" type="button" disabled>
+          <span class="navIcon galaxyIcon"></span>
+          <span>{{ bottomNavLabels.galaxy }}</span>
+        </button>
+        <button class="navItem" type="button" @click="$emit('open-archive')">
+          <span class="navIcon archiveIcon"></span>
+          <span>{{ bottomNavLabels.archive }}</span>
+        </button>
+      </nav>
     </section>
   </HomeView>
 </template>
@@ -69,6 +93,7 @@ defineProps<{
     title: string;
     empty: string;
     create: string;
+    galaxy: string;
   };
   archiveBridgeLabels: {
     eyebrow: string;
@@ -77,6 +102,13 @@ defineProps<{
     count: string;
     open: string;
   };
+  bottomNavLabels: {
+    home: string;
+    planet: string;
+    galaxy: string;
+    archive: string;
+  };
+  hasSelectedCapsule: boolean;
 }>();
 
 defineEmits<{
@@ -86,60 +118,122 @@ defineEmits<{
   "open-discovery": [];
   "open-archive": [];
   "open-create-flow": [];
+  "open-selected-capsule": [];
   "select-capsule": [capsuleId: string];
 }>();
 </script>
 
 <style scoped>
 .panel {
+  --color-surface: #0d0a18;
+  --color-paper: rgba(255, 249, 234, 0.08);
+  --color-ink: #fff9ea;
+  --color-muted: #bdb4c8;
+  --color-soft-border: rgba(185, 167, 232, 0.18);
+  --color-border: rgba(185, 167, 232, 0.32);
+  --color-primary: #f4c56a;
+  --color-primary-contrast: #15111f;
+
   background: var(--color-surface);
   border: 1px solid var(--color-soft-border);
-  border-radius: 16px;
+  border-radius: 22px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 92px);
-}
-
-.panelHead {
-  padding: 12px 12px;
-  border-bottom: 1px solid var(--color-soft-border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.panelHead h2,
-.panelHead span,
-.panelHead label {
-  white-space: nowrap;
-  word-break: keep-all;
-  overflow-wrap: normal;
-}
-
-.panelHead h2 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 800;
-  min-width: 0;
-}
-
-.noWrap {
-  white-space: nowrap;
-  word-break: keep-all;
-  overflow-wrap: normal;
-}
-
-.divider {
-  height: 1px;
-  background: var(--color-soft-border);
-  margin: 14px 0;
+  box-shadow: 0 24px 80px rgba(8, 7, 15, 0.28);
 }
 
 @media (max-width: 899px) {
   .panel {
     min-height: auto;
+    border-radius: 0;
   }
+}
+
+.bottomNav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 10px;
+  border-top: 1px solid var(--color-soft-border);
+  background: rgba(8, 7, 15, 0.78);
+}
+
+.navItem {
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background: transparent;
+  color: rgba(255, 249, 234, 0.72);
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 6px 4px;
+  cursor: pointer;
+}
+
+.navItem span:last-child {
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navItem.active {
+  border-color: rgba(244, 197, 106, 0.36);
+  background: rgba(244, 197, 106, 0.12);
+  color: #fff9ea;
+}
+
+.navItem:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.navIcon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.homeIcon {
+  border-radius: 5px;
+  border: 1px solid currentColor;
+  box-shadow: inset 0 -5px 0 rgba(244, 197, 106, 0.28);
+}
+
+.planetIcon {
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 249, 234, 0.95), transparent 19%),
+    linear-gradient(145deg, #f4c56a, #f2a27e 58%, #6d5a8d);
+}
+
+.galaxyIcon {
+  border-radius: 999px;
+  border: 1px solid #60d0a8;
+  box-shadow: 0 0 0 5px rgba(96, 208, 168, 0.12);
+}
+
+.archiveIcon {
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  position: relative;
+}
+
+.archiveIcon::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 5px;
+  height: 1px;
+  background: currentColor;
 }
 </style>

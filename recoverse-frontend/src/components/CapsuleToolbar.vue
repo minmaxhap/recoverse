@@ -42,12 +42,12 @@ defineEmits<{
 
 button {
   font: inherit;
-  border: 1px solid #d1d5db;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-paper);
   border-radius: 12px;
   padding: 10px 12px;
   cursor: pointer;
-  color: #111;
+  color: var(--color-ink);
 }
 
 button:disabled {
@@ -56,7 +56,7 @@ button:disabled {
 }
 
 .ghost {
-  background: #fff;
+  background: var(--color-paper);
 }
 
 .versionBadge {
@@ -69,8 +69,9 @@ button:disabled {
 }
 
 .file {
-  border: 1px solid #d1d5db;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-paper);
+  color: var(--color-ink);
   padding: 10px 12px;
   border-radius: 12px;
   cursor: pointer;

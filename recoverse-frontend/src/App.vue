@@ -377,14 +377,23 @@
           title: t.memoryMap,
           empty: t.memoryMapEmpty,
           create: t.createMemoryPlanet,
+          galaxy: t.galaxyPlaceholder,
         }"
         :archive-bridge-labels="archiveBridgeLabels"
+        :bottom-nav-labels="{
+          home: t.navHome,
+          planet: t.navPlanet,
+          galaxy: t.navGalaxy,
+          archive: t.navArchive,
+        }"
+        :has-selected-capsule="selectedCapsule !== null"
         @export="onExportCapsules"
         @import-file="onImportCapsuleFile"
         @refresh="refreshCapsules"
         @open-discovery="openDiscoveryCard"
         @open-archive="openArchiveSettings"
         @open-create-flow="openCreateFlow"
+        @open-selected-capsule="openSelectedCapsule"
         @select-capsule="selectCapsule"
       />
 
@@ -640,6 +649,11 @@ const messages = {
     createPlanetEntry: "개인 행성 만들기",
     createGalaxyEntry: "그룹 은하 준비 중",
     closeCreateEntry: "입구 닫기",
+    navHome: "홈",
+    navPlanet: "기록",
+    navGalaxy: "은하",
+    navArchive: "아카이브",
+    galaxyPlaceholder: "그룹 은하 준비 중",
     memoryUniverse: "나의 기억 우주",
     retrospectiveCapsules: "회고 캡슐",
     exportCapsules: "캡슐 JSON 내보내기",
@@ -725,6 +739,11 @@ const messages = {
     createPlanetEntry: "Create personal planet",
     createGalaxyEntry: "Group galaxy coming soon",
     closeCreateEntry: "Close entry",
+    navHome: "Home",
+    navPlanet: "Planet",
+    navGalaxy: "Galaxy",
+    navArchive: "Archive",
+    galaxyPlaceholder: "Group galaxy coming soon",
     memoryUniverse: "My Memory Universe",
     retrospectiveCapsules: "Retrospective Capsules",
     exportCapsules: "Export capsule JSON",
@@ -1156,6 +1175,11 @@ function selectCapsule(id: string) {
 
 function openCapsuleFromArchive(id: string) {
   selectCapsule(id);
+}
+
+function openSelectedCapsule() {
+  if (!selectedCapsuleId.value) return;
+  setMode("planet-detail");
 }
 
 function selectCapsuleCard(id: string) {

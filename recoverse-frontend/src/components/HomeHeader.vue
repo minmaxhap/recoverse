@@ -42,7 +42,7 @@ defineEmits<{
 
 <style scoped>
 .homeHeader {
-  padding: 12px;
+  padding: 14px 14px 10px;
   border-bottom: 1px solid var(--color-soft-border);
   display: flex;
   align-items: center;
@@ -57,7 +57,7 @@ defineEmits<{
 }
 
 .eyebrow {
-  color: var(--color-muted);
+  color: var(--color-primary);
   font-size: 11px;
   font-weight: 800;
   line-height: 1;
@@ -67,12 +67,12 @@ defineEmits<{
 h2 {
   margin: 0;
   color: var(--color-ink);
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 900;
   line-height: 1.15;
-  white-space: nowrap;
+  white-space: normal;
   word-break: keep-all;
-  overflow-wrap: normal;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 899px) {

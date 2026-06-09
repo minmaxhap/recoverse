@@ -20,6 +20,15 @@
         {{ labels.empty }}
       </p>
 
+      <button class="galaxyNode" type="button" disabled>
+        <span class="galaxyCore"></span>
+        <span class="galaxyOrbit orbitA"></span>
+        <span class="galaxyOrbit orbitB"></span>
+        <span class="galaxySatellite satelliteA"></span>
+        <span class="galaxySatellite satelliteB"></span>
+        <span class="galaxyLabel">{{ labels.galaxy }}</span>
+      </button>
+
       <CreatePlanetButton :label="labels.create" @start-create="$emit('start-create')" />
     </div>
   </section>
@@ -48,6 +57,7 @@ const props = defineProps<{
     title: string;
     empty: string;
     create: string;
+    galaxy: string;
   };
 }>();
 
@@ -79,7 +89,7 @@ function mapNodeStyle(index: number): Record<string, string> {
 
 <style scoped>
 .galaxyMap {
-  padding: 12px;
+  padding: 12px 14px 14px;
   border-bottom: 1px solid var(--color-soft-border);
 }
 
@@ -92,16 +102,16 @@ function mapNodeStyle(index: number): Record<string, string> {
 h3 {
   margin: 0;
   color: var(--color-ink);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 900;
 }
 
 .mapSurface {
   position: relative;
-  min-height: var(--map-height, 360px);
+  min-height: max(var(--map-height, 360px), 420px);
   overflow: hidden;
   border: 1px solid rgba(185, 167, 232, 0.25);
-  border-radius: 22px;
+  border-radius: 24px;
   background:
     radial-gradient(circle at 20% 18%, rgba(244, 197, 106, 0.18), transparent 22%),
     radial-gradient(circle at 78% 72%, rgba(232, 168, 184, 0.16), transparent 24%),
@@ -118,4 +128,91 @@ h3 {
   line-height: 1.5;
 }
 
+.galaxyNode {
+  position: absolute;
+  z-index: 1;
+  right: 9%;
+  top: 22px;
+  width: 112px;
+  height: 112px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 249, 234, 0.82);
+  cursor: not-allowed;
+  opacity: 0.92;
+}
+
+.galaxyCore {
+  position: absolute;
+  left: 39px;
+  top: 38px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 249, 234, 0.88), transparent 18%),
+    linear-gradient(145deg, #60d0a8, #6d5a8d 66%, #1d2438);
+  box-shadow: 0 0 28px rgba(96, 208, 168, 0.38);
+}
+
+.galaxyOrbit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border: 1px solid rgba(96, 208, 168, 0.28);
+  border-radius: 999px;
+  transform: translate(-50%, -50%) rotate(-18deg);
+}
+
+.orbitA {
+  width: 86px;
+  height: 50px;
+}
+
+.orbitB {
+  width: 104px;
+  height: 68px;
+  transform: translate(-50%, -50%) rotate(24deg);
+}
+
+.galaxySatellite {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #b9a7e8;
+  box-shadow: 0 0 16px rgba(185, 167, 232, 0.54);
+}
+
+.satelliteA {
+  left: 18px;
+  top: 51px;
+}
+
+.satelliteB {
+  right: 15px;
+  top: 36px;
+  background: #60d0a8;
+}
+
+.galaxyLabel {
+  position: absolute;
+  left: 50%;
+  bottom: 1px;
+  max-width: 112px;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  word-break: keep-all;
+}
+
+@media (max-width: 430px) {
+  .galaxyNode {
+    right: 4%;
+    transform: scale(0.88);
+    transform-origin: top right;
+  }
+}
 </style>
