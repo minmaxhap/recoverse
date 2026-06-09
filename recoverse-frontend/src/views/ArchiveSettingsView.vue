@@ -1,9 +1,14 @@
 <template>
   <section class="archiveView">
     <div class="archiveHead">
-      <span class="eyebrow">Archive / Settings</span>
-      <h2>{{ title }}</h2>
-      <p>{{ description }}</p>
+      <div class="copy">
+        <span class="eyebrow">Archive / Settings</span>
+        <h2>{{ title }}</h2>
+        <p>{{ description }}</p>
+      </div>
+      <div class="actions">
+        <slot name="actions" />
+      </div>
     </div>
 
     <slot />
@@ -25,6 +30,13 @@ defineProps<{
 
 .archiveHead {
   padding: 14px 16px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.copy {
   display: grid;
   gap: 4px;
 }
@@ -48,5 +60,20 @@ p {
   color: var(--color-muted);
   font-size: 13px;
   line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 899px) {
+  .archiveHead {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
 }
 </style>

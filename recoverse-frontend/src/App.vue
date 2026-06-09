@@ -41,15 +41,6 @@
         </button>
       </nav>
 
-      <div class="actions">
-        <LanguageSelector v-model="language" :label="t.language" @change="saveLanguage" />
-        <button @click="onExport" :disabled="entries.length === 0">JSON 내보내기</button>
-        <label class="file">
-          JSON 가져오기
-          <input type="file" accept="application/json" @change="onImportFile" />
-        </label>
-        <button class="danger" @click="clearAll" :disabled="entries.length === 0">전체 삭제</button>
-      </div>
     </header>
 
     <!-- Main -->
@@ -60,6 +51,22 @@
         :title="modePlanById['year-archive'].title"
         :description="modePlanById['year-archive'].note"
       >
+        <template #actions>
+          <ArchiveSettingsTools
+            :language="language"
+            :language-label="t.language"
+            export-label="JSON 내보내기"
+            import-label="JSON 가져오기"
+            clear-label="전체 삭제"
+            :export-disabled="entries.length === 0"
+            :clear-disabled="entries.length === 0"
+            @update:language="language = $event"
+            @change-language="saveLanguage"
+            @export="onExport"
+            @import-file="onImportFile"
+            @clear-all="clearAll"
+          />
+        </template>
       <section class="layout3">
         <!-- Left: Years -->
         <aside class="panel">
@@ -240,6 +247,22 @@
         :title="modePlanById['question-compare-archive'].title"
         :description="modePlanById['question-compare-archive'].note"
       >
+        <template #actions>
+          <ArchiveSettingsTools
+            :language="language"
+            :language-label="t.language"
+            export-label="JSON 내보내기"
+            import-label="JSON 가져오기"
+            clear-label="전체 삭제"
+            :export-disabled="entries.length === 0"
+            :clear-disabled="entries.length === 0"
+            @update:language="language = $event"
+            @change-language="saveLanguage"
+            @export="onExport"
+            @import-file="onImportFile"
+            @clear-all="clearAll"
+          />
+        </template>
       <section class="layoutCompare">
         <aside class="panel">
           <div class="panelHead">
@@ -386,6 +409,22 @@
         :title="modePlanById['quick-entry-archive'].title"
         :description="modePlanById['quick-entry-archive'].note"
       >
+        <template #actions>
+          <ArchiveSettingsTools
+            :language="language"
+            :language-label="t.language"
+            export-label="JSON 내보내기"
+            import-label="JSON 가져오기"
+            clear-label="전체 삭제"
+            :export-disabled="entries.length === 0"
+            :clear-disabled="entries.length === 0"
+            @update:language="language = $event"
+            @change-language="saveLanguage"
+            @export="onExport"
+            @import-file="onImportFile"
+            @clear-all="clearAll"
+          />
+        </template>
       <section class="layoutAdd">
         <section class="panel">
           <div class="panelHead">
@@ -484,7 +523,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
-import LanguageSelector from "./components/LanguageSelector.vue";
+import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
 import ArchiveSettingsView from "./views/ArchiveSettingsView.vue";
 import HomePage from "./views/HomePage.vue";
 import {
@@ -1556,7 +1595,7 @@ function onFormKeydown(e: KeyboardEvent) {
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-soft-border);
   display: grid;
-  grid-template-columns: 360px 1fr 520px;
+  grid-template-columns: 360px 1fr;
   gap: 12px;
   align-items: center;
   padding: 12px 16px;
@@ -1615,31 +1654,6 @@ function onFormKeydown(e: KeyboardEvent) {
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: var(--color-primary-contrast);
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.file {
-  border: 1px solid var(--color-border);
-  background: var(--color-paper);
-  padding: 10px 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.file input { display: none; }
-
-.smallFile {
-  padding: 8px 10px;
-  border-radius: 10px;
-  font-size: 12px;
 }
 
 button {
@@ -1778,16 +1792,6 @@ button:disabled {
   .tabs button {
     flex: 0 0 auto;
     padding: 9px 10px;
-  }
-
-  .actions {
-    justify-content: flex-start;
-  }
-
-  .actions > button,
-  .actions > label {
-    flex: 1 1 140px;
-    text-align: center;
   }
 
   .main {
