@@ -1641,6 +1641,50 @@ button:disabled {
   gap: 12px;
 }
 
+@media (max-width: 899px) {
+  .topbar {
+    position: static;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .tabs {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .tabs button {
+    flex: 0 0 auto;
+    padding: 9px 10px;
+  }
+
+  .actions {
+    justify-content: flex-start;
+  }
+
+  .actions > button,
+  .actions > label {
+    flex: 1 1 140px;
+    text-align: center;
+  }
+
+  .main {
+    padding: 10px;
+  }
+
+  .panel {
+    min-height: auto;
+  }
+
+  .layout3,
+  .layoutCompare,
+  .layoutAdd {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* left years */
 .yearList {
   padding: 10px;
