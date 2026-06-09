@@ -410,10 +410,21 @@
           <div v-else class="addWrap">
             <div class="detailBlock">
               <h3 class="noWrap">{{ selectedCapsule.title }}</h3>
+              <div class="progressBox">
+                <div class="rowTop">
+                  <span class="q">진행률</span>
+                  <span class="badge">
+                    {{ selectedCapsuleProgress.answered }} / {{ selectedCapsuleProgress.cards }}
+                  </span>
+                </div>
+                <div class="progressTrack">
+                  <div class="progressFill" :style="{ width: `${selectedCapsuleProgress.percent}%` }"></div>
+                </div>
+              </div>
               <div class="btnRow">
                 <button class="danger" @click="deleteSelectedCapsule">캡슐 삭제</button>
               </div>
-              <div class="chips">
+              <div v-if="selectedCapsuleCards.length" class="chips">
                 <button
                   v-for="card in selectedCapsuleCards"
                   :key="card.id"
@@ -423,6 +434,9 @@
                 >
                   {{ card.questionText }}
                 </button>
+              </div>
+              <div v-else class="empty">
+                아직 질문 카드가 없어요. 첫 질문 카드를 추가해보세요.
               </div>
 
               <div class="btnRow">
@@ -442,6 +456,9 @@
                     rows="7"
                     placeholder="답변을 한 줄에 하나씩 적어보세요"
                   ></textarea>
+                  <span v-if="selectedCapsuleCard.answers.length === 0" class="muted">
+                    아직 저장된 답변이 없어요.
+                  </span>
                 </label>
               </div>
 
@@ -785,6 +802,16 @@ const selectedCapsuleCards = computed(() => {
   return capsuleCards.value
     .filter((card) => card.capsuleId === selectedCapsuleId.value)
     .sort((a, b) => a.order - b.order);
+});
+
+const selectedCapsuleProgress = computed(() => {
+  const cards = selectedCapsuleCards.value.length;
+  const answered = selectedCapsuleCards.value.filter((card) => card.answers.length > 0).length;
+  return {
+    cards,
+    answered,
+    percent: cards === 0 ? 0 : Math.round((answered / cards) * 100),
+  };
 });
 
 const selectedCapsuleCard = computed(() => {
@@ -1949,6 +1976,27 @@ textarea { resize: vertical; }
   width: 100%;
   text-align: left;
   border-radius: 12px;
+}
+
+.progressBox {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.progressTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: #eef0f3;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: #111;
 }
 
 /* general empty */

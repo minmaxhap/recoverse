@@ -18,7 +18,7 @@
 - [x] Add capsule search/filter on the capsule home.
 - [x] Add capsule-level question comparison.
 - [x] Improve the "rediscover" section so it can jump to the surfaced card.
-- [ ] Add empty/progress states for capsule detail.
+- [x] Add empty/progress states for capsule detail.
 - [ ] Split capsule logic out of `App.vue` into focused components.
 - [ ] Add focused tests for capsule data import/export and legacy conversion.
 - [ ] Update README with capsule MVP usage.
