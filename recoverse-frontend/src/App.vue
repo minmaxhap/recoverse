@@ -1334,6 +1334,25 @@ function buildImportPreviewMessage(preview: ReturnType<typeof previewCapsuleBack
   ].join("\n");
 }
 
+function buildImportResultMessage(result: ReturnType<typeof importCapsuleBackup>): string {
+  const duplicates = result.skippedCapsules + result.skippedCards;
+  const added = result.addedCapsules + result.addedCards;
+
+  if (language.value === "ko") {
+    if (added === 0) {
+      return `가져오기 완료: 새로 추가된 항목은 없고 중복 ${duplicates}개를 건너뛰었어요.`;
+    }
+
+    return `가져오기 완료: 캡슐 ${result.addedCapsules}개와 질문 카드 ${result.addedCards}개를 추가했어요. 중복 ${duplicates}개는 건너뛰었어요.`;
+  }
+
+  if (added === 0) {
+    return `Import complete: nothing new was added, and ${duplicates} duplicates were skipped.`;
+  }
+
+  return `Import complete: added ${result.addedCapsules} capsules and ${result.addedCards} question cards. Skipped ${duplicates} duplicates.`;
+}
+
 async function onImportCapsuleFile(e: Event) {
   capsuleError.value = "";
   capsuleNotice.value = "";
@@ -1365,14 +1384,7 @@ async function onImportCapsuleFile(e: Event) {
     if (firstCard) startCapsuleCardEdit(firstCard);
     else resetCapsuleCardForm();
 
-    capsuleNotice.value =
-      language.value === "ko"
-        ? `가져오기 완료: 캡슐 ${result.addedCapsules}개, 질문 카드 ${result.addedCards}개 추가 / 중복 ${
-            result.skippedCapsules + result.skippedCards
-          }개 건너뜀`
-        : `Import complete: ${result.addedCapsules} capsules and ${result.addedCards} question cards added / ${
-            result.skippedCapsules + result.skippedCards
-          } duplicates skipped`;
+    capsuleNotice.value = buildImportResultMessage(result);
   } catch (err: any) {
     capsuleError.value = `${t.value.capsuleImportFailed}: ${
       err?.message ?? t.value.unknownError
