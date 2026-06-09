@@ -4,7 +4,7 @@
       <h3>{{ labels.title }}</h3>
     </div>
 
-    <div class="mapSurface">
+    <div class="mapSurface" :style="mapSurfaceStyle">
       <GalaxyStars />
 
       <CapsulePlanetCard
@@ -26,21 +26,22 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
 import type { CapsuleHomeItem } from "../lib/capsuleHomeData";
 import CapsulePlanetCard from "./CapsulePlanetCard.vue";
 import CreatePlanetButton from "./CreatePlanetButton.vue";
 import GalaxyStars from "./GalaxyStars.vue";
 
 const slots = [
-  { x: "58%", y: "18%", size: "82px" },
-  { x: "20%", y: "33%", size: "68px" },
-  { x: "70%", y: "48%", size: "74px" },
-  { x: "34%", y: "65%", size: "88px" },
-  { x: "78%", y: "75%", size: "62px" },
-  { x: "18%", y: "78%", size: "58px" },
+  { x: "58%", y: 76, size: "82px" },
+  { x: "20%", y: 132, size: "68px" },
+  { x: "70%", y: 188, size: "74px" },
+  { x: "34%", y: 252, size: "88px" },
+  { x: "78%", y: 292, size: "62px" },
+  { x: "18%", y: 304, size: "58px" },
 ];
 
-defineProps<{
+const props = defineProps<{
   items: CapsuleHomeItem[];
   selectedCapsuleId: string | null;
   labels: {
@@ -55,13 +56,22 @@ defineEmits<{
   "start-create": [];
 }>();
 
+const rowHeight = 330;
+
+const mapSurfaceStyle = computed(() => {
+  const rows = Math.max(1, Math.ceil(props.items.length / slots.length));
+  return {
+    "--map-height": `${360 + (rows - 1) * rowHeight}px`,
+  };
+});
+
 function mapNodeStyle(index: number): Record<string, string> {
   const slot = slots[index % slots.length];
-  const rowOffset = Math.floor(index / slots.length) * 56;
+  const rowOffset = Math.floor(index / slots.length) * rowHeight;
 
   return {
     "--x": slot.x,
-    "--y": `calc(${slot.y} + ${rowOffset}px)`,
+    "--y": `${slot.y + rowOffset}px`,
     "--size": slot.size,
   };
 }
@@ -88,7 +98,7 @@ h3 {
 
 .mapSurface {
   position: relative;
-  min-height: 360px;
+  min-height: var(--map-height, 360px);
   overflow: hidden;
   border: 1px solid rgba(185, 167, 232, 0.25);
   border-radius: 22px;
@@ -108,9 +118,4 @@ h3 {
   line-height: 1.5;
 }
 
-@media (max-width: 430px) {
-  .mapSurface {
-    min-height: 340px;
-  }
-}
 </style>
