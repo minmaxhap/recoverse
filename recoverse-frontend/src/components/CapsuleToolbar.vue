@@ -34,7 +34,10 @@ defineEmits<{
 .headBtns {
   margin-left: auto;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
+  min-width: 0;
 }
 
 button {
@@ -82,5 +85,12 @@ button:disabled {
   padding: 8px 10px;
   border-radius: 10px;
   font-size: 12px;
+}
+
+@media (max-width: 899px) {
+  .headBtns {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
 }
 </style>

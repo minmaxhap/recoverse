@@ -111,7 +111,7 @@ h3 {
 .empty {
   position: absolute;
   z-index: 1;
-  inset: auto 20px 24px;
+  inset: auto 20px 72px;
   margin: 0;
   color: rgba(255, 249, 234, 0.78);
   font-size: 13px;
