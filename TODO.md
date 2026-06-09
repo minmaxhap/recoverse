@@ -52,7 +52,7 @@
 
 목표: 공유, 백업, 템플릿 확장을 고려해 도메인 로직을 UI에서 분리한다.
 
-- [ ] `types/recoverse.ts`로 Capsule, CapsuleCard, Backup 타입 이동
+- [x] `types/recoverse.ts`로 Capsule, CapsuleCard, Backup 타입 이동
 - [ ] `lib/capsuleTemplates.ts`로 기본 질문 템플릿 이동
 - [ ] `lib/capsuleImportExport.ts`로 JSON import/export 로직 이동
 - [ ] `recoverseStore.ts`는 저장소 읽기/쓰기와 migration 중심으로 축소

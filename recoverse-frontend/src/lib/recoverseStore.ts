@@ -1,83 +1,33 @@
-export type ReviewEntryV2 = {
-  id: string;
-  year: number;
-  q: string;
-  answers: string[]; // ✅ 핵심: 답 여러 개
-  createdAt: string; // ISO
-};
+import type {
+  AppLanguage,
+  BackupPayloadV2,
+  Capsule,
+  CapsuleBackup,
+  CapsuleCard,
+  CapsuleData,
+  CapsuleImportResult,
+  CapsuleType,
+  LocalizedCapsuleTemplate,
+  ReviewEntryV2,
+} from "../types/recoverse";
 
-export type BackupPayloadV2 = {
-  schema: "recoverse_v2";
-  exportedAt: string;
-  entries: ReviewEntryV2[];
-};
-
-export type CapsuleType =
-  | "year"
-  | "life_stage"
-  | "career"
-  | "relationship"
-  | "travel"
-  | "project"
-  | "custom";
-
-export type Capsule = {
-  id: string;
-  title: string;
-  description?: string;
-  type: CapsuleType;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type CapsuleCard = {
-  id: string;
-  capsuleId: string;
-  questionText: string;
-  answers: string[];
-  source: "default" | "user" | "imported";
-  order: number;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type CapsuleBackup = {
-  schema: "recoverse_capsule_v1";
-  exportedAt: string;
-  capsules: Capsule[];
-  cards: CapsuleCard[];
-};
-
-export type CapsuleTemplate = {
-  id: string;
-  title: string;
-  type: CapsuleType;
-  questions: string[];
-};
-
-export type CapsuleData = {
-  capsules: Capsule[];
-  cards: CapsuleCard[];
-};
-
-export type CapsuleImportResult = {
-  data: CapsuleData;
-  addedCapsules: number;
-  addedCards: number;
-  skippedCapsules: number;
-  skippedCards: number;
-};
-
-export type AppLanguage = "ko" | "en";
+export type {
+  AppLanguage,
+  BackupPayloadV2,
+  Capsule,
+  CapsuleBackup,
+  CapsuleCard,
+  CapsuleData,
+  CapsuleImportResult,
+  CapsuleTemplate,
+  CapsuleType,
+  LocalizedCapsuleTemplate,
+  ReviewEntryV2,
+} from "../types/recoverse";
 
 const KEY = "recoverse_v2_entries";
 const LEGACY_KEY_V1 = "recoverse_v1_entries"; // 예전 키가 남아있을 수 있어 체크용
 const CAPSULE_KEY = "recoverse_capsule_v1";
-
-type LocalizedCapsuleTemplate = Omit<CapsuleTemplate, "title" | "questions"> & {
-  title: Record<AppLanguage, string>;
-  questions: Record<AppLanguage, string[]>;
-};
 
 export const capsuleTemplates: LocalizedCapsuleTemplate[] = [
   {
