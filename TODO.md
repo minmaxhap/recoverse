@@ -46,10 +46,11 @@
 
 목표: 홈에서 제거할 관리 기능을 받을 안전한 목적지를 만든다.
 
-- [ ] `ArchiveSettingsView` skeleton 설계 및 생성
+- [x] `ArchiveSettingsView` skeleton 설계 및 생성
   - 난이도: 중
   - 위험도: 중
   - 내용: 아직 기능을 완전히 옮기지 않고, 아카이브/설정 진입점과 섹션 구조를 먼저 만든다.
+  - 확인: `recoverse-frontend/src/views/ArchiveSettingsView.vue`를 추가하고, 연도/질문 비교/빠른 입력 화면을 공통 아카이브 셸 안에 배치했다.
 - [ ] JSON 가져오기/내보내기, 언어 설정, 전체 삭제의 이동 위치 준비
   - 난이도: 중
   - 위험도: 중

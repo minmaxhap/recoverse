@@ -55,7 +55,12 @@
     <!-- Main -->
     <main class="main">
       <!-- Archive mode: year tools stay available until ArchiveSettingsView is introduced. -->
-      <section v-if="mode === 'year-archive'" class="layout3">
+      <ArchiveSettingsView
+        v-if="mode === 'year-archive'"
+        :title="modePlanById['year-archive'].title"
+        :description="modePlanById['year-archive'].note"
+      >
+      <section class="layout3">
         <!-- Left: Years -->
         <aside class="panel">
           <div class="panelHead">
@@ -227,9 +232,15 @@
           </div>
         </section>
       </section>
+      </ArchiveSettingsView>
 
       <!-- Archive mode: comparison stays intact, but is treated as an archive tool now. -->
-      <section v-else-if="mode === 'question-compare-archive'" class="layoutCompare">
+      <ArchiveSettingsView
+        v-else-if="mode === 'question-compare-archive'"
+        :title="modePlanById['question-compare-archive'].title"
+        :description="modePlanById['question-compare-archive'].note"
+      >
+      <section class="layoutCompare">
         <aside class="panel">
           <div class="panelHead">
             <h2 class="noWrap">질문 선택</h2>
@@ -299,6 +310,7 @@
           </div>
         </section>
       </section>
+      </ArchiveSettingsView>
 
       <!-- Mode: CAPSULES -->
       <HomePage
@@ -369,7 +381,12 @@
 
       <!-- Mode: ADD -->
       <!-- Archive mode: quick entry remains, but is no longer named as a primary screen. -->
-      <section v-else-if="mode === 'quick-entry-archive'" class="layoutAdd">
+      <ArchiveSettingsView
+        v-else-if="mode === 'quick-entry-archive'"
+        :title="modePlanById['quick-entry-archive'].title"
+        :description="modePlanById['quick-entry-archive'].note"
+      >
+      <section class="layoutAdd">
         <section class="panel">
           <div class="panelHead">
             <h2 class="noWrap">빠른 입력</h2>
@@ -460,6 +477,7 @@
           </div>
         </aside>
       </section>
+      </ArchiveSettingsView>
     </main>
   </div>
 </template>
@@ -467,6 +485,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
 import LanguageSelector from "./components/LanguageSelector.vue";
+import ArchiveSettingsView from "./views/ArchiveSettingsView.vue";
 import HomePage from "./views/HomePage.vue";
 import {
   type AppLanguage,
