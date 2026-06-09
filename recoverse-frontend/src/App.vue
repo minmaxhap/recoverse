@@ -853,11 +853,18 @@ const recentlyEditedCapsuleCardId = computed(() => {
 });
 
 const discoveryCard = computed(() => {
-  return (
-    capsuleCards.value
-      .filter((card) => card.answers.length > 0)
-      .sort((a, b) => (a.updatedAt > b.updatedAt ? 1 : -1))[0] ?? null
-  );
+  const candidates = capsuleCards.value
+    .filter((card) => card.answers.length > 0)
+    .sort((a, b) => {
+      if (a.updatedAt !== b.updatedAt) return a.updatedAt > b.updatedAt ? 1 : -1;
+      return a.id.localeCompare(b.id);
+    });
+
+  if (candidates.length === 0) return null;
+
+  const todayKey = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+  const index = Number(todayKey) % candidates.length;
+  return candidates[index];
 });
 
 const discoveryCapsuleTitle = computed(() => {
