@@ -5,6 +5,8 @@
     </div>
 
     <div class="mapSurface">
+      <GalaxyStars />
+
       <button
         v-for="(item, index) in items"
         :key="item.capsule.id"
@@ -33,6 +35,7 @@
 
 <script setup lang="ts">
 import type { CapsuleHomeItem } from "../lib/capsuleHomeData";
+import GalaxyStars from "./GalaxyStars.vue";
 
 const slots = [
   { x: "58%", y: "18%", size: "82px" },
@@ -99,28 +102,13 @@ h3 {
     linear-gradient(160deg, #08070f 0%, #15111f 54%, #1d2438 100%);
 }
 
-.mapSurface::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle, rgba(255, 249, 234, 0.9) 0 1px, transparent 1.5px),
-    radial-gradient(circle, rgba(185, 167, 232, 0.7) 0 1px, transparent 1.4px);
-  background-position:
-    12px 18px,
-    42px 54px;
-  background-size:
-    58px 74px,
-    96px 112px;
-  opacity: 0.54;
-}
-
 .mapNode {
   --x: 50%;
   --y: 50%;
   --size: 72px;
 
   position: absolute;
+  z-index: 1;
   left: var(--x);
   top: var(--y);
   width: max(var(--size), 92px);
@@ -205,6 +193,7 @@ h3 {
 
 .empty {
   position: absolute;
+  z-index: 1;
   inset: auto 20px 24px;
   margin: 0;
   color: rgba(255, 249, 234, 0.78);
