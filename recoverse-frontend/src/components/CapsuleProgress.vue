@@ -1,7 +1,7 @@
 <template>
   <div class="progressBox">
     <div class="rowTop">
-      <span class="q">진행률</span>
+      <span class="q">{{ label }}</span>
       <span class="badge">{{ answered }} / {{ total }}</span>
     </div>
     <div class="progressTrack">
@@ -12,12 +12,14 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import type { CapsuleCard } from "../lib/recoverseStore";
+import type { AppLanguage, CapsuleCard } from "../lib/recoverseStore";
 
 const props = defineProps<{
   cards: CapsuleCard[];
+  language: AppLanguage;
 }>();
 
+const label = computed(() => (props.language === "ko" ? "진행률" : "Progress"));
 const total = computed(() => props.cards.length);
 const answered = computed(() => props.cards.filter((card) => card.answers.length > 0).length);
 const percent = computed(() =>

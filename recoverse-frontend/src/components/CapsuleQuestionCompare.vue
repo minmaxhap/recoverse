@@ -1,6 +1,6 @@
 <template>
   <div class="detailBlock">
-    <h3 class="noWrap">반복 질문 비교</h3>
+    <h3 class="noWrap">{{ text.title }}</h3>
     <div v-if="compareQuestions.length" class="chips">
       <button
         v-for="item in compareQuestions"
@@ -13,7 +13,7 @@
       </button>
     </div>
     <div v-else class="empty">
-      여러 캡슐에 같은 질문이 생기면 여기에서 비교할 수 있어요.
+      {{ text.empty }}
     </div>
 
     <div v-if="timeline.length" class="timeline">
@@ -21,7 +21,7 @@
         <div class="tlHead">
           <span class="tlYear noWrap">{{ item.capsuleTitle }}</span>
           <button class="small" @click="$emit('open-card', item.card.capsuleId, item.card.id)">
-            열기
+            {{ text.open }}
           </button>
         </div>
         <ol v-if="item.card.answers.length" class="answerList">
@@ -29,7 +29,7 @@
             {{ answer }}
           </li>
         </ol>
-        <div v-else class="muted">(아직 답변 없음)</div>
+        <div v-else class="muted">{{ text.noAnswer }}</div>
       </div>
     </div>
   </div>
@@ -37,11 +37,12 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import type { Capsule, CapsuleCard } from "../lib/recoverseStore";
+import type { AppLanguage, Capsule, CapsuleCard } from "../lib/recoverseStore";
 
 const props = defineProps<{
   capsules: Capsule[];
   cards: CapsuleCard[];
+  language: AppLanguage;
 }>();
 
 defineEmits<{
@@ -49,6 +50,22 @@ defineEmits<{
 }>();
 
 const selectedQuestion = ref("");
+
+const text = computed(() =>
+  props.language === "ko"
+    ? {
+        title: "반복 질문 비교",
+        empty: "여러 캡슐에 같은 질문이 생기면 여기에서 비교할 수 있어요.",
+        open: "열기",
+        noAnswer: "(아직 답변 없음)",
+      }
+    : {
+        title: "Repeated Question Comparison",
+        empty: "When the same question appears in multiple capsules, compare it here.",
+        open: "Open",
+        noAnswer: "(No answer yet)",
+      }
+);
 
 const compareQuestions = computed(() => {
   const map = new Map<string, number>();

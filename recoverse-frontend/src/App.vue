@@ -14,10 +14,17 @@
         <button :class="{ on: mode === 'year' }" @click="setMode('year')">연도 보기</button>
         <button :class="{ on: mode === 'compare' }" @click="setMode('compare')">질문 비교</button>
         <button :class="{ on: mode === 'add' }" @click="setMode('add')">빠른 입력</button>
-        <button :class="{ on: mode === 'capsules' }" @click="setMode('capsules')">캡슐</button>
+        <button :class="{ on: mode === 'capsules' }" @click="setMode('capsules')">{{ t.capsules }}</button>
       </nav>
 
       <div class="actions">
+        <label class="languageSelect">
+          <span class="noWrap">{{ t.language }}</span>
+          <select v-model="language" @change="saveLanguage">
+            <option value="ko">한국어</option>
+            <option value="en">English</option>
+          </select>
+        </label>
         <button @click="onExport" :disabled="entries.length === 0">JSON 내보내기</button>
         <label class="file">
           JSON 가져오기
@@ -279,16 +286,16 @@
       <section v-else-if="mode === 'capsules'" class="layoutAdd">
         <section class="panel">
           <div class="panelHead">
-            <h2 class="noWrap">회고 캡슐</h2>
+            <h2 class="noWrap">{{ t.retrospectiveCapsules }}</h2>
             <div class="headBtns">
               <button class="ghost" @click="onExportCapsules" :disabled="capsules.length === 0">
-                캡슐 JSON 내보내기
+                {{ t.exportCapsules }}
               </button>
               <label class="file smallFile">
-                캡슐 JSON 가져오기
+                {{ t.importCapsules }}
                 <input type="file" accept="application/json" @change="onImportCapsuleFile" />
               </label>
-              <button class="ghost" @click="refreshCapsules">새로고침</button>
+              <button class="ghost" @click="refreshCapsules">{{ t.refresh }}</button>
             </div>
           </div>
 
@@ -296,7 +303,7 @@
             <input
               v-model="capsuleSearch"
               class="search capsuleSearch"
-              placeholder="캡슐 검색"
+              :placeholder="t.searchCapsules"
             />
           </div>
 
@@ -310,12 +317,12 @@
             >
               <div class="rowTop">
                 <span class="q">{{ capsule.title }}</span>
-                <span class="badge">{{ capsule.type }}</span>
+                <span class="badge">{{ capsuleTypeLabel(capsule.type) }}</span>
               </div>
               <div class="rowSub">
                 <span class="subText">
-                  질문 {{ capsuleStats.get(capsule.id)?.cards ?? 0 }}개 /
-                  답변 {{ capsuleStats.get(capsule.id)?.answered ?? 0 }}개
+                  {{ t.questions }} {{ capsuleStats.get(capsule.id)?.cards ?? 0 }} /
+                  {{ t.answers }} {{ capsuleStats.get(capsule.id)?.answered ?? 0 }}
                 </span>
               </div>
               <div v-if="capsule.description" class="rowSub">
@@ -324,10 +331,10 @@
             </button>
 
             <div v-if="capsules.length === 0" class="empty">
-              아직 캡슐이 없어요. 오른쪽에서 첫 회고 캡슐을 만들어보세요.
+              {{ t.noCapsules }}
             </div>
             <div v-else-if="filteredCapsules.length === 0" class="empty">
-              검색 결과가 없어요.
+              {{ t.noSearchResults }}
             </div>
           </div>
 
@@ -337,82 +344,82 @@
               class="discoverBox discoverButton"
               @click="jumpToCapsuleCard(discoveryCard.capsuleId, discoveryCard.id)"
             >
-              <div class="muted">다시 발견하기</div>
+              <div class="muted">{{ t.rediscover }}</div>
               <div class="strong">{{ discoveryCapsuleTitle }}</div>
               <div class="q">{{ discoveryCard.questionText }}</div>
               <div class="rowSub">{{ previewAnswers(discoveryCard.answers) }}</div>
             </button>
             <p v-else class="hint">
-              답변이 쌓이면 오래된 질문을 다시 꺼내 보여줄 수 있어요.
+              {{ t.rediscoverEmpty }}
             </p>
           </div>
         </section>
 
         <aside class="panel">
           <div class="panelHead">
-            <h2 class="noWrap">새 캡슐 만들기</h2>
+            <h2 class="noWrap">{{ t.createCapsule }}</h2>
           </div>
 
           <div class="addWrap">
             <div class="formGrid">
               <label class="wide">
-                <span class="noWrap">제목</span>
-                <input v-model="capsuleForm.title" placeholder="예: 20대 회고, 여행 회고" />
+                <span class="noWrap">{{ t.title }}</span>
+                <input v-model="capsuleForm.title" :placeholder="t.titlePlaceholder" />
               </label>
 
               <label class="wide">
-                <span class="noWrap">설명</span>
-                <input v-model="capsuleForm.description" placeholder="이 캡슐에 담고 싶은 기억" />
+                <span class="noWrap">{{ t.description }}</span>
+                <input v-model="capsuleForm.description" :placeholder="t.descriptionPlaceholder" />
               </label>
 
               <label>
-                <span class="noWrap">유형</span>
+                <span class="noWrap">{{ t.type }}</span>
                 <select v-model="capsuleForm.type">
-                  <option value="year">연도</option>
-                  <option value="life_stage">시기</option>
-                  <option value="career">커리어</option>
-                  <option value="relationship">관계</option>
-                  <option value="travel">여행</option>
-                  <option value="project">프로젝트</option>
-                  <option value="custom">직접 설정</option>
+                  <option value="year">{{ capsuleTypeLabel("year") }}</option>
+                  <option value="life_stage">{{ capsuleTypeLabel("life_stage") }}</option>
+                  <option value="career">{{ capsuleTypeLabel("career") }}</option>
+                  <option value="relationship">{{ capsuleTypeLabel("relationship") }}</option>
+                  <option value="travel">{{ capsuleTypeLabel("travel") }}</option>
+                  <option value="project">{{ capsuleTypeLabel("project") }}</option>
+                  <option value="custom">{{ capsuleTypeLabel("custom") }}</option>
                 </select>
               </label>
 
               <label>
-                <span class="noWrap">기본 질문</span>
+                <span class="noWrap">{{ t.defaultQuestions }}</span>
                 <select v-model="capsuleForm.templateId">
-                  <option value="">없음</option>
+                  <option value="">{{ t.none }}</option>
                   <option v-for="template in capsuleTemplates" :key="template.id" :value="template.id">
-                    {{ template.title }}
+                    {{ template.title[language] }}
                   </option>
                 </select>
               </label>
             </div>
 
             <div class="btnRow">
-              <button class="primary" @click="onCreateCapsule">캡슐 만들기</button>
-              <button class="ghost" @click="resetCapsuleForm">초기화</button>
+              <button class="primary" @click="onCreateCapsule">{{ t.createCapsuleButton }}</button>
+              <button class="ghost" @click="resetCapsuleForm">{{ t.reset }}</button>
             </div>
 
             <p v-if="capsuleError" class="error">{{ capsuleError }}</p>
             <p v-if="capsuleNotice" class="hint">{{ capsuleNotice }}</p>
             <p class="hint">
-              기본 질문을 고르면 캡슐 안에 질문 카드가 함께 만들어져요.
+              {{ t.templateHint }}
             </p>
           </div>
 
           <div class="divider"></div>
 
           <div v-if="!selectedCapsule" class="empty">
-            왼쪽에서 캡슐을 선택하면 질문 카드를 볼 수 있어요.
+            {{ t.selectCapsuleHint }}
           </div>
 
           <div v-else class="addWrap">
             <div class="detailBlock">
               <h3 class="noWrap">{{ selectedCapsule.title }}</h3>
-              <CapsuleProgress :cards="selectedCapsuleCards" />
+              <CapsuleProgress :cards="selectedCapsuleCards" :language="language" />
               <div class="btnRow">
-                <button class="danger" @click="deleteSelectedCapsule">캡슐 삭제</button>
+                <button class="danger" @click="deleteSelectedCapsule">{{ t.deleteCapsule }}</button>
               </div>
               <div v-if="selectedCapsuleCards.length" class="chips">
                 <button
@@ -426,39 +433,39 @@
                 </button>
               </div>
               <div v-else class="empty">
-                아직 질문 카드가 없어요. 첫 질문 카드를 추가해보세요.
+                {{ t.noCards }}
               </div>
 
               <div class="btnRow">
-                <button class="ghost" @click="addCapsuleCard">+ 질문 카드</button>
+                <button class="ghost" @click="addCapsuleCard">+ {{ t.questionCard }}</button>
               </div>
 
               <div v-if="selectedCapsuleCard" class="formGrid">
                 <label class="wide">
-                  <span class="noWrap">질문</span>
-                  <input v-model="capsuleCardForm.questionText" placeholder="질문을 입력하세요" />
+                  <span class="noWrap">{{ t.question }}</span>
+                  <input v-model="capsuleCardForm.questionText" :placeholder="t.questionPlaceholder" />
                 </label>
 
                 <label class="wide">
-                  <span class="noWrap">답변</span>
+                  <span class="noWrap">{{ t.answer }}</span>
                   <textarea
                     v-model="capsuleCardForm.answersText"
                     rows="7"
-                    placeholder="답변을 한 줄에 하나씩 적어보세요"
+                    :placeholder="t.answerPlaceholder"
                   ></textarea>
                   <span v-if="selectedCapsuleCard.answers.length === 0" class="muted">
-                    아직 저장된 답변이 없어요.
+                    {{ t.noSavedAnswers }}
                   </span>
                 </label>
               </div>
 
               <div v-if="selectedCapsuleCard" class="btnRow">
-                <button class="primary" @click="saveSelectedCapsuleCard">질문 저장</button>
-                <button class="danger" @click="deleteSelectedCapsuleCard">질문 삭제</button>
+                <button class="primary" @click="saveSelectedCapsuleCard">{{ t.saveQuestion }}</button>
+                <button class="danger" @click="deleteSelectedCapsuleCard">{{ t.deleteQuestion }}</button>
               </div>
 
               <div v-else class="empty">
-                질문 카드를 추가하거나 선택해 주세요.
+                {{ t.selectOrAddQuestion }}
               </div>
             </div>
           </div>
@@ -469,6 +476,7 @@
             <CapsuleQuestionCompare
               :capsules="capsules"
               :cards="capsuleCards"
+              :language="language"
               @open-card="jumpToCapsuleCard"
             />
           </div>
@@ -576,6 +584,7 @@ import { computed, onMounted, reactive, ref, nextTick } from "vue";
 import CapsuleProgress from "./components/CapsuleProgress.vue";
 import CapsuleQuestionCompare from "./components/CapsuleQuestionCompare.vue";
 import {
+  type AppLanguage,
   type Capsule,
   type CapsuleCard,
   type CapsuleType,
@@ -600,7 +609,129 @@ import {
 
 type Mode = "year" | "compare" | "add" | "capsules";
 
+const LANGUAGE_KEY = "recoverse_language";
+
+const messages = {
+  ko: {
+    language: "언어",
+    capsules: "캡슐",
+    retrospectiveCapsules: "회고 캡슐",
+    exportCapsules: "캡슐 JSON 내보내기",
+    importCapsules: "캡슐 JSON 가져오기",
+    refresh: "새로고침",
+    searchCapsules: "캡슐 검색",
+    questions: "질문",
+    answers: "답변",
+    noCapsules: "아직 캡슐이 없어요. 오른쪽에서 첫 회고 캡슐을 만들어보세요.",
+    noSearchResults: "검색 결과가 없어요.",
+    rediscover: "다시 발견하기",
+    rediscoverEmpty: "답변이 쌓이면 오래된 질문을 다시 꺼내 보여줄 수 있어요.",
+    createCapsule: "새 캡슐 만들기",
+    title: "제목",
+    titlePlaceholder: "예: 20대 회고, 여행 회고",
+    description: "설명",
+    descriptionPlaceholder: "이 캡슐에 담고 싶은 기억",
+    type: "유형",
+    defaultQuestions: "기본 질문",
+    none: "없음",
+    createCapsuleButton: "캡슐 만들기",
+    reset: "초기화",
+    templateHint: "기본 질문을 고르면 캡슐 안에 질문 카드가 함께 만들어져요.",
+    selectCapsuleHint: "왼쪽에서 캡슐을 선택하면 질문 카드를 볼 수 있어요.",
+    deleteCapsule: "캡슐 삭제",
+    noCards: "아직 질문 카드가 없어요. 첫 질문 카드를 추가해보세요.",
+    questionCard: "질문 카드",
+    question: "질문",
+    questionPlaceholder: "질문을 입력하세요",
+    answer: "답변",
+    answerPlaceholder: "답변을 한 줄에 하나씩 적어보세요",
+    noSavedAnswers: "아직 저장된 답변이 없어요.",
+    saveQuestion: "질문 저장",
+    deleteQuestion: "질문 삭제",
+    selectOrAddQuestion: "질문 카드를 추가하거나 선택해 주세요.",
+    capsuleCreated: "캡슐을 만들었어요.",
+    capsuleCreateFailed: "캡슐을 만들 수 없어요.",
+    questionRequired: "질문을 입력해 주세요.",
+    questionSaved: "질문 카드를 저장했어요.",
+    questionDeleted: "질문 카드를 삭제했어요.",
+    capsuleDeleted: "캡슐을 삭제했어요.",
+    confirmDeleteQuestion: "이 질문 카드를 삭제할까요?",
+    capsuleImportFailed: "캡슐 가져오기 실패",
+    capsuleExported: "캡슐 백업 파일을 만들었어요.",
+    unknownError: "알 수 없는 오류",
+    typeLabels: {
+      year: "연도 회고",
+      life_stage: "시기 회고",
+      career: "커리어 회고",
+      relationship: "관계 회고",
+      travel: "여행 회고",
+      project: "프로젝트 회고",
+      custom: "직접 만든 회고",
+    },
+  },
+  en: {
+    language: "Language",
+    capsules: "Capsules",
+    retrospectiveCapsules: "Retrospective Capsules",
+    exportCapsules: "Export capsule JSON",
+    importCapsules: "Import capsule JSON",
+    refresh: "Refresh",
+    searchCapsules: "Search capsules",
+    questions: "Questions",
+    answers: "Answers",
+    noCapsules: "No capsules yet. Create your first retrospective capsule on the right.",
+    noSearchResults: "No results found.",
+    rediscover: "Rediscover",
+    rediscoverEmpty: "Once answers build up, old questions can resurface here.",
+    createCapsule: "Create Capsule",
+    title: "Title",
+    titlePlaceholder: "e.g. My twenties, Travel memories",
+    description: "Description",
+    descriptionPlaceholder: "The memories you want to keep here",
+    type: "Type",
+    defaultQuestions: "Default questions",
+    none: "None",
+    createCapsuleButton: "Create capsule",
+    reset: "Reset",
+    templateHint: "Choosing default questions creates question cards inside the capsule.",
+    selectCapsuleHint: "Select a capsule on the left to view its question cards.",
+    deleteCapsule: "Delete capsule",
+    noCards: "No question cards yet. Add the first one.",
+    questionCard: "Question card",
+    question: "Question",
+    questionPlaceholder: "Enter a question",
+    answer: "Answer",
+    answerPlaceholder: "Write one answer per line",
+    noSavedAnswers: "No saved answers yet.",
+    saveQuestion: "Save question",
+    deleteQuestion: "Delete question",
+    selectOrAddQuestion: "Add or select a question card.",
+    capsuleCreated: "Capsule created.",
+    capsuleCreateFailed: "Could not create capsule.",
+    questionRequired: "Please enter a question.",
+    questionSaved: "Question card saved.",
+    questionDeleted: "Question card deleted.",
+    capsuleDeleted: "Capsule deleted.",
+    confirmDeleteQuestion: "Delete this question card?",
+    capsuleImportFailed: "Capsule import failed",
+    capsuleExported: "Capsule backup file created.",
+    unknownError: "Unknown error",
+    typeLabels: {
+      year: "Year retrospective",
+      life_stage: "Life-stage retrospective",
+      career: "Career retrospective",
+      relationship: "Relationship retrospective",
+      travel: "Travel retrospective",
+      project: "Project retrospective",
+      custom: "Custom retrospective",
+    },
+  },
+} satisfies Record<AppLanguage, Record<string, any>>;
+
 const entries = ref<ReviewEntry[]>([]);
+const language = ref<AppLanguage>(
+  localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "ko"
+);
 const capsules = ref<Capsule[]>([]);
 const capsuleCards = ref<CapsuleCard[]>([]);
 const selectedCapsuleId = ref<string | null>(null);
@@ -654,6 +785,16 @@ const years = computed(() => {
   for (let i = 0; i < YEAR_COUNT; i++) arr.push(START_YEAR + i); // 2016..2035
   return arr;
 });
+
+const t = computed(() => messages[language.value]);
+
+function saveLanguage() {
+  localStorage.setItem(LANGUAGE_KEY, language.value);
+}
+
+function capsuleTypeLabel(type: CapsuleType) {
+  return t.value.typeLabels[type] ?? type;
+}
 
 onMounted(() => {
   entries.value = loadEntries();
@@ -890,6 +1031,7 @@ function onCreateCapsule() {
       description: capsuleForm.description,
       type: capsuleForm.type,
       templateId: capsuleForm.templateId || undefined,
+      language: language.value,
     });
     capsules.value = data.capsules;
     capsuleCards.value = data.cards;
@@ -903,9 +1045,9 @@ function onCreateCapsule() {
     if (firstCard) startCapsuleCardEdit(firstCard);
     else resetCapsuleCardForm();
     resetCapsuleForm();
-    capsuleNotice.value = "캡슐을 만들었어요.";
+    capsuleNotice.value = t.value.capsuleCreated;
   } catch (err: any) {
-    capsuleError.value = err?.message ?? "캡슐을 만들 수 없어요.";
+    capsuleError.value = err?.message ?? t.value.capsuleCreateFailed;
   }
 }
 
@@ -935,7 +1077,7 @@ function saveSelectedCapsuleCard() {
 
   const questionText = capsuleCardForm.questionText.trim();
   if (!questionText) {
-    capsuleError.value = "질문을 입력해 주세요.";
+    capsuleError.value = t.value.questionRequired;
     capsuleNotice.value = "";
     return;
   }
@@ -957,14 +1099,14 @@ function saveSelectedCapsuleCard() {
       : card
   );
   capsuleError.value = "";
-  capsuleNotice.value = "질문 카드를 저장했어요.";
+  capsuleNotice.value = t.value.questionSaved;
   syncCapsuleStorage();
 }
 
 function deleteSelectedCapsuleCard() {
   const card = selectedCapsuleCard.value;
   if (!card) return;
-  if (!confirm("이 질문 카드를 삭제할까요?")) return;
+  if (!confirm(t.value.confirmDeleteQuestion)) return;
 
   capsuleCards.value = capsuleCards.value.filter((item) => item.id !== card.id);
   const nextCard = selectedCapsuleCards.value.find((item) => item.id !== card.id) ?? null;
@@ -973,14 +1115,18 @@ function deleteSelectedCapsuleCard() {
   else resetCapsuleCardForm();
 
   capsuleError.value = "";
-  capsuleNotice.value = "질문 카드를 삭제했어요.";
+  capsuleNotice.value = t.value.questionDeleted;
   syncCapsuleStorage();
 }
 
 function deleteSelectedCapsule() {
   const capsule = selectedCapsule.value;
   if (!capsule) return;
-  if (!confirm(`"${capsule.title}" 캡슐과 그 안의 질문 카드를 삭제할까요?`)) return;
+  const message =
+    language.value === "ko"
+      ? `"${capsule.title}" 캡슐과 그 안의 질문 카드를 삭제할까요?`
+      : `Delete "${capsule.title}" and its question cards?`;
+  if (!confirm(message)) return;
 
   capsules.value = capsules.value.filter((item) => item.id !== capsule.id);
   capsuleCards.value = capsuleCards.value.filter((card) => card.capsuleId !== capsule.id);
@@ -997,7 +1143,7 @@ function deleteSelectedCapsule() {
   else resetCapsuleCardForm();
 
   capsuleError.value = "";
-  capsuleNotice.value = "캡슐을 삭제했어요.";
+  capsuleNotice.value = t.value.capsuleDeleted;
   syncCapsuleStorage();
 }
 
@@ -1183,7 +1329,7 @@ function onExportCapsules() {
   });
   const yyyyMMdd = new Date().toISOString().slice(0, 10);
   downloadBlob(blob, `recoverse_capsules_${yyyyMMdd}.json`);
-  capsuleNotice.value = "캡슐 백업 파일을 만들었어요.";
+  capsuleNotice.value = t.value.capsuleExported;
 }
 
 async function onImportCapsuleFile(e: Event) {
@@ -1212,10 +1358,17 @@ async function onImportCapsuleFile(e: Event) {
     else resetCapsuleCardForm();
 
     capsuleNotice.value =
-      `가져오기 완료: 캡슐 ${result.addedCapsules}개, 질문 카드 ${result.addedCards}개 추가` +
-      ` / 중복 ${result.skippedCapsules + result.skippedCards}개 건너뜀`;
+      language.value === "ko"
+        ? `가져오기 완료: 캡슐 ${result.addedCapsules}개, 질문 카드 ${result.addedCards}개 추가 / 중복 ${
+            result.skippedCapsules + result.skippedCards
+          }개 건너뜀`
+        : `Import complete: ${result.addedCapsules} capsules and ${result.addedCards} question cards added / ${
+            result.skippedCapsules + result.skippedCards
+          } duplicates skipped`;
   } catch (err: any) {
-    capsuleError.value = `캡슐 가져오기 실패: ${err?.message ?? "알 수 없는 오류"}`;
+    capsuleError.value = `${t.value.capsuleImportFailed}: ${
+      err?.message ?? t.value.unknownError
+    }`;
   } finally {
     input.value = "";
   }
@@ -1415,6 +1568,19 @@ function onFormKeydown(e: KeyboardEvent) {
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+.languageSelect {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.languageSelect select {
+  padding: 8px 10px;
+  border-radius: 10px;
 }
 
 .file {
