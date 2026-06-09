@@ -292,6 +292,14 @@
             />
           </div>
 
+          <RediscoverCard
+            :card="discoveryCard"
+            :capsule-title="discoveryCapsuleTitle"
+            :answer-preview="discoveryAnswerPreview"
+            :labels="rediscoverLabels"
+            @open="openDiscoveryCard"
+          />
+
           <CapsuleList
             v-model:search="capsuleSearch"
             :capsules="capsules"
@@ -301,14 +309,6 @@
             :type-labels="t.typeLabels"
             :labels="capsuleListLabels"
             @select="selectCapsule"
-          />
-
-          <RediscoverCard
-            :card="discoveryCard"
-            :capsule-title="discoveryCapsuleTitle"
-            :answer-preview="discoveryAnswerPreview"
-            :labels="rediscoverLabels"
-            @open="openDiscoveryCard"
           />
         </section>
 
