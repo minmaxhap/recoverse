@@ -451,6 +451,45 @@
               </div>
             </div>
           </div>
+
+          <div class="divider"></div>
+
+          <div class="addWrap">
+            <div class="detailBlock">
+              <h3 class="noWrap">반복 질문 비교</h3>
+              <div v-if="capsuleCompareQuestions.length" class="chips">
+                <button
+                  v-for="item in capsuleCompareQuestions"
+                  :key="item.questionText"
+                  class="chip"
+                  :class="{ active: item.questionText === capsuleCompareQuestion }"
+                  @click="capsuleCompareQuestion = item.questionText"
+                >
+                  {{ item.questionText }} · {{ item.count }}
+                </button>
+              </div>
+              <div v-else class="empty">
+                여러 캡슐에 같은 질문이 생기면 여기에서 비교할 수 있어요.
+              </div>
+
+              <div v-if="capsuleCompareTimeline.length" class="timeline">
+                <div v-for="item in capsuleCompareTimeline" :key="item.card.id" class="tlCard">
+                  <div class="tlHead">
+                    <span class="tlYear noWrap">{{ item.capsuleTitle }}</span>
+                    <button class="small" @click="jumpToCapsuleCard(item.card.capsuleId, item.card.id)">
+                      열기
+                    </button>
+                  </div>
+                  <ol v-if="item.card.answers.length" class="answerList">
+                    <li v-for="(answer, idx) in item.card.answers" :key="idx" class="answerItem">
+                      {{ answer }}
+                    </li>
+                  </ol>
+                  <div v-else class="muted">(아직 답변 없음)</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </aside>
       </section>
 
@@ -602,6 +641,7 @@ const compareSearch = ref<string>("");
 
 const addSuggestSearch = ref<string>("");
 const capsuleSearch = ref<string>("");
+const capsuleCompareQuestion = ref<string>("");
 const capsuleError = ref<string>("");
 const capsuleNotice = ref<string>("");
 
@@ -648,6 +688,12 @@ function refreshCapsules() {
   if (selectedCapsuleId.value && !capsules.value.some((capsule) => capsule.id === selectedCapsuleId.value)) {
     selectedCapsuleId.value = null;
     selectedCapsuleCardId.value = null;
+  }
+  if (
+    capsuleCompareQuestion.value &&
+    !capsuleCards.value.some((card) => card.questionText.trim() === capsuleCompareQuestion.value)
+  ) {
+    capsuleCompareQuestion.value = "";
   }
 }
 
@@ -740,6 +786,37 @@ const selectedCapsuleCards = computed(() => {
 const selectedCapsuleCard = computed(() => {
   if (!selectedCapsuleCardId.value) return null;
   return capsuleCards.value.find((card) => card.id === selectedCapsuleCardId.value) ?? null;
+});
+
+const capsuleCompareQuestions = computed(() => {
+  const map = new Map<string, number>();
+  for (const card of capsuleCards.value) {
+    const question = card.questionText.trim();
+    if (!question) continue;
+    map.set(question, (map.get(question) ?? 0) + 1);
+  }
+
+  return Array.from(map.entries())
+    .filter(([, count]) => count > 1)
+    .map(([questionText, count]) => ({ questionText, count }))
+    .sort((a, b) => {
+      if (a.count !== b.count) return b.count - a.count;
+      return a.questionText.localeCompare(b.questionText);
+    });
+});
+
+const capsuleCompareTimeline = computed(() => {
+  const question = capsuleCompareQuestion.value.trim();
+  if (!question) return [];
+
+  return capsuleCards.value
+    .filter((card) => card.questionText.trim() === question)
+    .map((card) => ({
+      card,
+      capsuleTitle:
+        capsules.value.find((capsule) => capsule.id === card.capsuleId)?.title ?? "알 수 없는 캡슐",
+    }))
+    .sort((a, b) => a.capsuleTitle.localeCompare(b.capsuleTitle));
 });
 
 const discoveryCard = computed(() => {
@@ -842,6 +919,11 @@ function selectCapsuleCard(id: string) {
   if (card) startCapsuleCardEdit(card);
 }
 
+function jumpToCapsuleCard(capsuleId: string, cardId: string) {
+  selectedCapsuleId.value = capsuleId;
+  selectCapsuleCard(cardId);
+}
+
 function resetCapsuleCardForm() {
   capsuleCardForm.questionText = "";
   capsuleCardForm.answersText = "";
@@ -928,6 +1010,7 @@ function saveSelectedCapsuleCard() {
         }
       : card
   );
+  if (!capsuleCompareQuestion.value) capsuleCompareQuestion.value = questionText;
   capsuleError.value = "";
   capsuleNotice.value = "질문 카드를 저장했어요.";
   syncCapsuleStorage();
@@ -939,6 +1022,9 @@ function deleteSelectedCapsuleCard() {
   if (!confirm("이 질문 카드를 삭제할까요?")) return;
 
   capsuleCards.value = capsuleCards.value.filter((item) => item.id !== card.id);
+  if (capsuleCompareQuestion.value === card.questionText.trim()) {
+    capsuleCompareQuestion.value = "";
+  }
   const nextCard = selectedCapsuleCards.value.find((item) => item.id !== card.id) ?? null;
   selectedCapsuleCardId.value = nextCard?.id ?? null;
   if (nextCard) startCapsuleCardEdit(nextCard);
@@ -956,6 +1042,12 @@ function deleteSelectedCapsule() {
 
   capsules.value = capsules.value.filter((item) => item.id !== capsule.id);
   capsuleCards.value = capsuleCards.value.filter((card) => card.capsuleId !== capsule.id);
+  if (
+    capsuleCompareQuestion.value &&
+    !capsuleCards.value.some((card) => card.questionText.trim() === capsuleCompareQuestion.value)
+  ) {
+    capsuleCompareQuestion.value = "";
+  }
 
   const nextCapsule = capsules.value[0] ?? null;
   selectedCapsuleId.value = nextCapsule?.id ?? null;

@@ -16,7 +16,7 @@
 - [x] Add capsule JSON export/import UI.
 - [x] Add capsule and question card deletion controls.
 - [x] Add capsule search/filter on the capsule home.
-- [ ] Add capsule-level question comparison.
+- [x] Add capsule-level question comparison.
 - [ ] Improve the "rediscover" section so it can jump to the surfaced card.
 - [ ] Add empty/progress states for capsule detail.
 - [ ] Split capsule logic out of `App.vue` into focused components.
