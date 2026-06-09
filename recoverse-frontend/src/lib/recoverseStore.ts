@@ -2,10 +2,8 @@ import type {
   AppLanguage,
   BackupPayloadV2,
   Capsule,
-  CapsuleBackup,
   CapsuleCard,
   CapsuleData,
-  CapsuleImportResult,
   CapsuleType,
   ReviewEntryV2,
 } from "../types/recoverse";
@@ -394,70 +392,6 @@ export function createCapsule(input: {
   };
   saveCapsuleData(next);
   return next;
-}
-
-export function exportCapsuleBackup(data: CapsuleData, capsuleId?: string): Blob {
-  const capsules = capsuleId
-    ? data.capsules.filter((capsule) => capsule.id === capsuleId)
-    : data.capsules;
-  const capsuleIds = new Set(capsules.map((capsule) => capsule.id));
-  const cards = data.cards.filter((card) => capsuleIds.has(card.capsuleId));
-  const payload: CapsuleBackup = {
-    schema: "recoverse_capsule_v1",
-    exportedAt: new Date().toISOString(),
-    capsules,
-    cards,
-  };
-
-  return new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-}
-
-export function importCapsuleBackup(jsonText: string): CapsuleImportResult {
-  const parsed = safeParse<any>(jsonText);
-  if (!parsed) throw new Error("JSON parsing failed");
-
-  let imported: CapsuleData;
-  if (parsed?.schema === "recoverse_capsule_v1") {
-    imported = {
-      capsules: Array.isArray(parsed.capsules)
-        ? (parsed.capsules.map(normalizeCapsule).filter(Boolean) as Capsule[])
-        : [],
-      cards: Array.isArray(parsed.cards)
-        ? (parsed.cards.map(normalizeCapsuleCard).filter(Boolean) as CapsuleCard[])
-        : [],
-    };
-  } else {
-    const legacyEntries = Array.isArray(parsed) ? parsed : parsed?.entries;
-    if (!Array.isArray(legacyEntries)) throw new Error("Unsupported backup format");
-
-    imported = buildCapsuleDataFromEntries(
-      legacyEntries.map(normalizeEntry).filter(Boolean) as ReviewEntryV2[]
-    );
-  }
-
-  const current = loadCapsuleData();
-  const capsuleIds = new Set(current.capsules.map((capsule) => capsule.id));
-  const cardIds = new Set(current.cards.map((card) => card.id));
-
-  const newCapsules = imported.capsules.filter((capsule) => !capsuleIds.has(capsule.id));
-  const newCapsuleIds = new Set([...capsuleIds, ...newCapsules.map((capsule) => capsule.id)]);
-  const newCards = imported.cards.filter(
-    (card) => !cardIds.has(card.id) && newCapsuleIds.has(card.capsuleId)
-  );
-
-  const data = {
-    capsules: [...newCapsules, ...current.capsules],
-    cards: [...newCards, ...current.cards],
-  };
-  saveCapsuleData(data);
-
-  return {
-    data,
-    addedCapsules: newCapsules.length,
-    addedCards: newCards.length,
-    skippedCapsules: imported.capsules.length - newCapsules.length,
-    skippedCards: imported.cards.length - newCards.length,
-  };
 }
 
 /**

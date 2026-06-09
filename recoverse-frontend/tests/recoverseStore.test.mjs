@@ -50,8 +50,14 @@ await compileTsModule(new URL("../src/lib/capsuleTemplates.ts", import.meta.url)
 const storePath = await compileTsModule(new URL("../src/lib/recoverseStore.ts", import.meta.url), "recoverseStore.mjs", [
   ['"./capsuleTemplates"', '"./capsuleTemplates.mjs"'],
 ]);
+const capsuleImportExportPath = await compileTsModule(
+  new URL("../src/lib/capsuleImportExport.ts", import.meta.url),
+  "capsuleImportExport.mjs",
+  [['"./recoverseStore"', '"./recoverseStore.mjs"']]
+);
 
 const store = await import(pathToFileURL(storePath).href);
+const capsuleImportExport = await import(pathToFileURL(capsuleImportExportPath).href);
 
 globalThis.localStorage = new MemoryStorage();
 
@@ -84,7 +90,7 @@ test("converts legacy year entries into year capsules", () => {
 });
 
 test("exports a capsule backup payload", async () => {
-  const blob = store.exportCapsuleBackup({
+  const blob = capsuleImportExport.exportCapsuleBackup({
     capsules: [
       {
         id: "capsule-1",
@@ -144,8 +150,8 @@ test("imports capsule backups by merging and skipping duplicate ids", () => {
     ],
   });
 
-  const first = store.importCapsuleBackup(backup);
-  const second = store.importCapsuleBackup(backup);
+  const first = capsuleImportExport.importCapsuleBackup(backup);
+  const second = capsuleImportExport.importCapsuleBackup(backup);
 
   assert.equal(first.addedCapsules, 1);
   assert.equal(first.addedCards, 1);
@@ -159,7 +165,7 @@ test("imports legacy v2 backups as capsules", () => {
   localStorage.clear();
   localStorage.setItem("recoverse_capsule_v1", JSON.stringify({ capsules: [], cards: [] }));
 
-  const result = store.importCapsuleBackup(
+  const result = capsuleImportExport.importCapsuleBackup(
     JSON.stringify({
       schema: "recoverse_v2",
       exportedAt: "2024-01-01T00:00:00.000Z",

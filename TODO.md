@@ -54,7 +54,7 @@
 
 - [x] `types/recoverse.ts`로 Capsule, CapsuleCard, Backup 타입 이동
 - [x] `lib/capsuleTemplates.ts`로 기본 질문 템플릿 이동
-- [ ] `lib/capsuleImportExport.ts`로 JSON import/export 로직 이동
+- [x] `lib/capsuleImportExport.ts`로 JSON import/export 로직 이동
 - [ ] `recoverseStore.ts`는 저장소 읽기/쓰기와 migration 중심으로 축소
 - [ ] import 실패, 중복 데이터, 버전 불일치 케이스 테스트 보강
 

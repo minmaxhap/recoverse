@@ -484,11 +484,10 @@ import {
   clonePrevYearQuestions,
   capsuleTemplates,
   createCapsule,
-  exportCapsuleBackup,
-  importCapsuleBackup,
   loadCapsuleData,
   saveCapsuleData,
 } from "./lib/recoverseStore";
+import { exportCapsuleBackup, importCapsuleBackup } from "./lib/capsuleImportExport";
 
 type Mode = "year" | "compare" | "add" | "capsules";
 
