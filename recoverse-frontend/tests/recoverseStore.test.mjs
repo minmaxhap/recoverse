@@ -161,6 +161,45 @@ test("imports capsule backups by merging and skipping duplicate ids", () => {
   assert.equal(second.skippedCards, 1);
 });
 
+test("previews capsule backup imports without mutating storage", () => {
+  localStorage.clear();
+  localStorage.setItem("recoverse_capsule_v1", JSON.stringify({ capsules: [], cards: [] }));
+
+  const backup = JSON.stringify({
+    schema: "recoverse_capsule_v1",
+    exportedAt: "2024-01-01T00:00:00.000Z",
+    capsules: [
+      {
+        id: "capsule-preview",
+        title: "Preview",
+        type: "custom",
+        createdAt: "2024-01-01T00:00:00.000Z",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      },
+    ],
+    cards: [
+      {
+        id: "card-preview",
+        capsuleId: "capsule-preview",
+        questionText: "What will be added?",
+        answers: [],
+        source: "user",
+        order: 0,
+        createdAt: "2024-01-01T00:00:00.000Z",
+        updatedAt: "2024-01-01T00:00:00.000Z",
+      },
+    ],
+  });
+
+  const preview = capsuleImportExport.previewCapsuleBackupImport(backup);
+  const stored = store.loadCapsuleData();
+
+  assert.equal(preview.addedCapsules, 1);
+  assert.equal(preview.addedCards, 1);
+  assert.equal(stored.capsules.length, 0);
+  assert.equal(stored.cards.length, 0);
+});
+
 test("rejects invalid capsule backup JSON", () => {
   localStorage.clear();
 

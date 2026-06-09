@@ -3,6 +3,7 @@ import type {
   CapsuleBackup,
   CapsuleCard,
   CapsuleData,
+  CapsuleImportPreview,
   CapsuleImportResult,
   CapsuleType,
   ReviewEntryV2,
@@ -118,13 +119,12 @@ export function exportCapsuleBackup(data: CapsuleData, capsuleId?: string): Blob
   return new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
 }
 
-export function importCapsuleBackup(jsonText: string): CapsuleImportResult {
+function readCapsuleBackup(jsonText: string): CapsuleData {
   const parsed = safeParse<any>(jsonText);
   if (!parsed) throw new Error("JSON parsing failed");
 
-  let imported: CapsuleData;
   if (parsed?.schema === "recoverse_capsule_v1") {
-    imported = {
+    return {
       capsules: Array.isArray(parsed.capsules)
         ? (parsed.capsules.map(normalizeCapsule).filter(Boolean) as Capsule[])
         : [],
@@ -132,16 +132,17 @@ export function importCapsuleBackup(jsonText: string): CapsuleImportResult {
         ? (parsed.cards.map(normalizeCapsuleCard).filter(Boolean) as CapsuleCard[])
         : [],
     };
-  } else {
-    const legacyEntries = Array.isArray(parsed) ? parsed : parsed?.entries;
-    if (!Array.isArray(legacyEntries)) throw new Error("Unsupported backup format");
-
-    imported = buildCapsuleDataFromEntries(
-      legacyEntries.map(normalizeEntry).filter(Boolean) as ReviewEntryV2[]
-    );
   }
 
-  const current = loadCapsuleData();
+  const legacyEntries = Array.isArray(parsed) ? parsed : parsed?.entries;
+  if (!Array.isArray(legacyEntries)) throw new Error("Unsupported backup format");
+
+  return buildCapsuleDataFromEntries(
+    legacyEntries.map(normalizeEntry).filter(Boolean) as ReviewEntryV2[]
+  );
+}
+
+function buildImportResult(imported: CapsuleData, current: CapsuleData): CapsuleImportResult {
   const capsuleIds = new Set(current.capsules.map((capsule) => capsule.id));
   const cardIds = new Set(current.cards.map((card) => card.id));
 
@@ -155,7 +156,6 @@ export function importCapsuleBackup(jsonText: string): CapsuleImportResult {
     capsules: [...newCapsules, ...current.capsules],
     cards: [...newCards, ...current.cards],
   };
-  saveCapsuleData(data);
 
   return {
     data,
@@ -164,4 +164,22 @@ export function importCapsuleBackup(jsonText: string): CapsuleImportResult {
     skippedCapsules: imported.capsules.length - newCapsules.length,
     skippedCards: imported.cards.length - newCards.length,
   };
+}
+
+export function previewCapsuleBackupImport(jsonText: string): CapsuleImportPreview {
+  const imported = readCapsuleBackup(jsonText);
+  const result = buildImportResult(imported, loadCapsuleData());
+  return {
+    addedCapsules: result.addedCapsules,
+    addedCards: result.addedCards,
+    skippedCapsules: result.skippedCapsules,
+    skippedCards: result.skippedCards,
+  };
+}
+
+export function importCapsuleBackup(jsonText: string): CapsuleImportResult {
+  const imported = readCapsuleBackup(jsonText);
+  const result = buildImportResult(imported, loadCapsuleData());
+  saveCapsuleData(result.data);
+  return result;
 }

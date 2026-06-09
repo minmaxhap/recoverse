@@ -480,7 +480,11 @@ import {
   loadCapsuleData,
   saveCapsuleData,
 } from "./lib/recoverseStore";
-import { exportCapsuleBackup, importCapsuleBackup } from "./lib/capsuleImportExport";
+import {
+  exportCapsuleBackup,
+  importCapsuleBackup,
+  previewCapsuleBackupImport,
+} from "./lib/capsuleImportExport";
 import { createCapsule } from "./lib/capsuleActions";
 import { capsuleTemplates } from "./lib/capsuleTemplates";
 import {
@@ -549,6 +553,7 @@ const messages = {
     capsuleDeleted: "캡슐을 삭제했어요.",
     confirmDeleteQuestion: "이 질문 카드를 삭제할까요?",
     capsuleImportFailed: "캡슐 가져오기 실패",
+    capsuleImportCanceled: "캡슐 가져오기를 취소했어요.",
     capsuleExported: "캡슐 백업 파일을 만들었어요.",
     unknownError: "알 수 없는 오류",
     typeLabels: {
@@ -611,6 +616,7 @@ const messages = {
     capsuleDeleted: "Capsule deleted.",
     confirmDeleteQuestion: "Delete this question card?",
     capsuleImportFailed: "Capsule import failed",
+    capsuleImportCanceled: "Capsule import canceled.",
     capsuleExported: "Capsule backup file created.",
     unknownError: "Unknown error",
     typeLabels: {
@@ -1307,6 +1313,27 @@ function onExportCapsules() {
   capsuleNotice.value = t.value.capsuleExported;
 }
 
+function buildImportPreviewMessage(preview: ReturnType<typeof previewCapsuleBackupImport>): string {
+  const duplicates = preview.skippedCapsules + preview.skippedCards;
+  if (language.value === "ko") {
+    return [
+      "가져오기 미리보기",
+      `추가될 캡슐: ${preview.addedCapsules}개`,
+      `추가될 질문 카드: ${preview.addedCards}개`,
+      `중복: ${duplicates}개`,
+      "계속 가져올까요?",
+    ].join("\n");
+  }
+
+  return [
+    "Import preview",
+    `Capsules to add: ${preview.addedCapsules}`,
+    `Question cards to add: ${preview.addedCards}`,
+    `Duplicates: ${duplicates}`,
+    "Continue importing?",
+  ].join("\n");
+}
+
 async function onImportCapsuleFile(e: Event) {
   capsuleError.value = "";
   capsuleNotice.value = "";
@@ -1317,6 +1344,12 @@ async function onImportCapsuleFile(e: Event) {
 
   try {
     const text = await file.text();
+    const preview = previewCapsuleBackupImport(text);
+    if (!confirm(buildImportPreviewMessage(preview))) {
+      capsuleNotice.value = t.value.capsuleImportCanceled;
+      return;
+    }
+
     const result = importCapsuleBackup(text);
     capsules.value = result.data.capsules;
     capsuleCards.value = result.data.cards;

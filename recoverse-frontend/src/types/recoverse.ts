@@ -68,6 +68,8 @@ export type CapsuleImportResult = {
   skippedCards: number;
 };
 
+export type CapsuleImportPreview = Omit<CapsuleImportResult, "data">;
+
 export type AppLanguage = "ko" | "en";
 
 export type LocalizedCapsuleTemplate = Omit<CapsuleTemplate, "title" | "questions"> & {
