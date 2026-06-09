@@ -2,71 +2,82 @@
 
 ## Design Direction
 
-Recoverse is a space archive app for exploring memories.
+Recoverse is a space archive service for exploring memories.
 
-The home screen should feel like a memory map where the user's capsules float as planets. The first impression should not be a productivity tool or a generic retrospective app. It should feel like entering a quiet, warm personal universe.
+The first screen must be the user's memory universe, not a list or management tool. Personal retrospectives are planets, group retrospectives are galaxies, question cards are exploration records/stars, and answers are exploration logs.
 
 Core visual keywords:
 
 - Space archive
 - Memory planets
+- Group galaxies
+- Constellations
+- Observation mode
 - Warm night sky
-- Small exploration
-- Discovery
-- Self-understanding
-- Cosmic garden
+- Quiet exploration
+- Self-understanding and discovery
 
 Avoid:
 
+- Generic card dashboards
+- Capsule-list-first Home
+- Top-tab-first structure
 - Sci-fi game styling
 - Cyberpunk
 - Cold neon
 - Complex 3D
-- Combat-like or mechanical HUDs
-- Flat note-app list screens
+- Social feeds
+- Comment/like-centered UI
 
 ## Colors
 
-The base background should use deep space tones, while accents should come from warm gold, peach, and lavender.
+The base background should use deep space tones while staying emotionally warm through gold, peach, lavender, and teal accents.
 
 | Role | Token | Value | Usage |
 | --- | --- | --- | --- |
 | Space Black | `space.black` | `#08070F` | Global background |
-| Warm Night | `space.warmNight` | `#15111F` | Panels, depth |
+| Warm Night | `space.warmNight` | `#15111F` | Space surface and depth |
 | Archive Navy | `space.archiveNavy` | `#1D2438` | Secondary background |
 | Dust Purple | `space.dustPurple` | `#6D5A8D` | Orbit lines, secondary accents |
 | Soft Lavender | `space.softLavender` | `#B9A7E8` | Selected states, small stars |
-| Memory Gold | `memory.gold` | `#F4C56A` | Primary CTAs, discovery states |
+| Memory Gold | `memory.gold` | `#F4C56A` | Today's Discovery, primary CTAs |
 | Sunset Peach | `memory.peach` | `#F2A27E` | Warm planet surfaces |
 | Rose Fog | `memory.roseFog` | `#E8A8B8` | Emotional highlights |
-| Moon Paper | `text.moonPaper` | `#F6EEDC` | Primary text |
+| Galaxy Teal | `galaxy.teal` | `#60D0A8` | Group galaxies, member states |
+| Moon Paper | `text.moonPaper` | `#F6EEDC` | Body text |
 | Star White | `text.starWhite` | `#FFF9EA` | Titles and emphasis |
 | Muted Star | `text.mutedStar` | `#BDB4C8` | Secondary text |
 
 Usage rules:
 
-- Do not let a screen become only purple. Mix gold, peach, and navy.
+- Do not let a screen become only purple. Mix gold, peach, navy, and teal.
+- Use subtle teal/green accents to distinguish group galaxies from personal planets.
 - Avoid neon blue, fluorescent green, and cyberpunk pink.
-- The background is dark, but the emotional tone must not feel cold.
-- Important actions should use `Memory Gold` or `Sunset Peach`.
+- Do not hide destructive actions inside the space palette; use clear warning colors.
 
 ## Typography
 
 Korean is the default language. English appears only when selected in settings.
 
-Recommended tone:
+Product language should favor exploration over feature explanation.
 
-- Short and emotional
-- Discovery-oriented rather than feature-explaining
-- Calm and non-pressuring
+| Existing Term | New Product Language |
+| --- | --- |
+| Capsule | Personal planet / memory planet |
+| Group retrospective | Galaxy |
+| Question card | Exploration record / star |
+| Answer | Exploration log |
+| Share link | Observation invitation |
+| Shared view | Observation mode |
 
 Example copy:
 
 - `My Memory Universe`
-- `Today's Rediscovered Memory`
+- `Today's Rediscovered Star`
 - `Create a New Memory Planet`
-- `Open this capsule again?`
-- `Unanswered Memory Cards`
+- `Create a Group Galaxy`
+- `Create an Observation Invitation`
+- `Explore this planet again?`
 
 Size rules:
 
@@ -74,192 +85,203 @@ Size rules:
 | --- | --- | --- | --- |
 | Screen title | 24-28px | 28-36px | Defines the home identity |
 | Section title | 17-20px | 20-24px | Short and clear |
-| Card title | 15-18px | 16-20px | Two lines maximum |
-| Body | 14-16px | 15-17px | Prioritize answer readability |
+| Object label | 12-14px | 13-15px | Planet/galaxy names |
+| Body | 14-16px | 15-17px | Prioritize long log readability |
 | Metadata | 12-13px | 12-14px | Dates, progress, type |
 
-Typography rules:
+Rules:
 
 - Use default letter spacing.
 - Allow mobile headings to wrap.
-- Keep button text to one line where possible. On narrow screens, prefer icon + short label.
-- Decorative fonts are allowed only for the logo or very short emotional phrases.
+- Keep button labels short.
+- Do not place long feature explanations on Home.
+
+## Home Universe Rules
+
+Home is a space, not a management screen.
+
+Included:
+
+- Small brand/status area
+- Today's Discovery
+- Personal planets
+- Group galaxies
+- `+` creation entry point
+
+Excluded:
+
+- Capsule-list-first sections
+- Year view
+- Quick entry
+- Question comparison
+- JSON management
+- Destructive actions such as deleting all data
+
+Layout:
+
+```text
+Top brand
+Today's Discovery
+Universe map
+  ├─ Personal planets
+  ├─ Group galaxies
+  └─ + creation entry point
+Bottom navigation or archive entry
+```
+
+On mobile, the first viewport should show Today's Discovery and the beginning of the universe map.
 
 ## Button Rules
-
-Buttons should make commands clear without overplaying the space concept.
 
 ### Primary Buttons
 
 Usage:
 
-- Create a new memory planet
-- Save answer
-- Reopen memory
+- Create memory planet
+- Create group galaxy
+- Save exploration log
+- Explore again
 
 Rules:
 
-- Use `Memory Gold` or `Sunset Peach` backgrounds.
-- Use a dark text color near `#08070F`.
+- Use `Memory Gold`, `Sunset Peach`, or `Galaxy Teal` for group features.
 - Minimum mobile height is 44px.
-- Use either a 999px pill or 12-16px radius.
+- The Home `+` button opens creation choices, not a generic add form.
 
 ### Secondary Buttons
 
 Usage:
 
-- Import
-- Export
+- Archive
+- Settings
 - Filter
-- Refresh
+- Import/export
 
 Rules:
 
+- Keep them out of the center of Home.
 - Use transparent or dark translucent backgrounds.
-- Use low-contrast lavender or gold outlines.
-- If an icon is present, keep the label short.
+- Keep labels short.
 
 ### Destructive Buttons
 
 Usage:
 
-- Delete capsule
-- Delete memory card
+- Delete planet
+- Delete exploration record
+- Delete all data
 
 Rules:
 
-- Do not blend destructive actions into the space theme.
-- Use a clear warning color and confirmation flow.
-- Do not expose destructive actions on the first home screen.
+- Do not expose them on the first Home screen.
+- Use confirmation flows inside Archive / Settings or detail screens.
 
 ## Card Rules
 
-General cards are information surfaces. On the home screen, cards should not dominate the experience. The memory map and planet capsules are the main elements.
-
-Common rules:
-
-- Use translucent dark backgrounds.
-- Use low-contrast lavender or gold borders.
-- Avoid heavy drop shadows. Prefer subtle inner glow.
-- Radius should be between 16px and 24px.
-- Do not nest cards inside cards.
+Cards are information surfaces. On Home, they must not overpower the universe map.
 
 Today's Discovery card:
 
-- It is the emotional entry point of the home screen.
-- Include one old answer fragment, capsule name, and a reopen action.
-- A short quote should be the focus, not long explanatory copy.
-- Small stars, petals, or subtle planet details are allowed.
+- The emotional entry point of Home.
+- Shows one old exploration log fragment and its linked planet/star.
+- Uses short copy and a reopen action.
 
-My Capsules list:
+Archive cards:
 
-- Place it as a supporting area below the map.
-- Avoid a management-tool look. Use planet icons, progress, and recent edit status.
-- On mobile, use a simple list. On desktop, compact card grids are allowed.
+- Lists, filters, and JSON management belong in Archive.
+- They should not leak back into Home.
 
-## Planet Card Rules
+Observation mode cards:
 
-Planet cards are the core home component of Recoverse.
+- Clearly indicate read-only state.
+- Do not include edit, comment, or like actions.
+
+## Planet Rules
 
 Meaning:
 
 ```text
-Planet = Capsule
-Brightness / ring / stars = record state
-Planet click = start exploring the capsule
+Planet = personal retrospective capsule
+Planet click = explore planet detail
+Brightness / rings / stars = record state
 ```
-
-Elements:
-
-- Circular planet visual
-- Capsule title
-- Capsule type
-- Question count / answer count
-- Recent edit state
 
 Visual rules:
 
 - Use CSS gradients only for planet surfaces.
 - Do not use Three.js or complex canvas rendering.
-- Each planet can have a different color while staying inside the palette.
-- Rings should use `border`, `pseudo-element`, and `transform: rotate()`.
-- Capsule types may have slightly different surface colors.
-
-Type directions:
-
-| Type | Visual Direction |
-| --- | --- |
-| Year | Gold / peach planet |
-| Travel | Teal / lavender planet |
-| Project | Navy / gold ring |
-| Relationship | Rose / purple planet |
-| Career | Calm navy / gray planet |
-| Life stage | Soft lavender / moonlit planet |
-
-State expression:
-
-- More answers make the planet slightly brighter.
-- More unanswered cards make the ring softer.
-- Recently edited capsules get one small star.
-- The capsule used for Today's Discovery gets a subtle gold halo.
+- Vary colors and rings lightly by capsule type.
+- Recently edited planets get one small star.
+- Today's Discovery target gets a subtle gold halo.
 
 Interaction:
 
 - On tap/click, scale to about `1.06`.
-- Transition to capsule detail after the expansion.
-- On mobile, show a short press state instead of relying on hover.
-- Animation must stay slow and soft.
+- Transition to planet detail after expansion.
+- Reduce floating and expansion animations with `prefers-reduced-motion`.
 
-## Spacing Rules
+## Galaxy Rules
+
+Meaning:
+
+```text
+Galaxy = group retrospective
+Core = group theme
+Satellite planets = members
+Constellation = shared exploration records
+```
+
+Visual rules:
+
+- A galaxy has a larger orbital structure than a personal planet.
+- Use teal/lavender accents to distinguish it from personal planets.
+- Represent members as small satellite planets.
+- Before real group features exist, prepare only the creation entry point and empty state.
+
+## Observation Mode Rules
+
+Observation mode is the read-only sharing surface.
+
+Rules:
+
+- Clearly show `Observation Mode` and read-only state at the top.
+- Do not expose edit buttons, delete buttons, or input fields.
+- Make the view quieter and more contemplative than the editable app.
+- Call share links `Observation Invitations`.
+
+## Spacing and Layout
 
 Design mobile-first.
-
-Base spacing:
 
 | Role | Value |
 | --- | --- |
 | Screen horizontal padding | 20px |
 | Section gap | 28-40px |
 | Card inner padding | 16-20px |
-| List item gap | 10-14px |
-| Memory map minimum height | 360px |
+| Universe map minimum height | 420px |
 | Touch target minimum size | 44px |
-
-Home order:
-
-```text
-Top brand
-Today's Discovery card
-Memory map
-Create new memory planet
-My Capsules list
-```
 
 Rules:
 
-- The map needs breathing room.
-- Planet placement should feel asymmetric rather than like a strict grid.
-- On mobile, the first viewport should show Today's Discovery and the beginning of the memory map.
-- On desktop, expand the map and place support panels to one side.
+- The Home map needs breathing room.
+- Planet and galaxy placement should feel asymmetric.
+- On desktop, keep the universe map wide and move support tools into Archive or side areas.
 
 ## Animation Rules
-
-Animation should support exploration and discovery.
 
 Allowed:
 
 - Slow planet floating
 - Subtle star opacity changes
-- Short planet expansion on click
-- Cards softly rising from the bottom
-- Subtle glow on Today's Discovery
+- Short expansion on planet/galaxy click
+- Soft fade into observation mode
 
 Forbidden:
 
 - Fast particle explosions
 - Strong neon flicker
 - 3D rotation
-- Game-like combat HUDs
+- Game-like HUDs
 - Repeating motion that interrupts reading
 
 Recommended values:
@@ -271,30 +293,12 @@ tap scale: 160-220ms ease-out
 screen transition: 240-360ms ease
 ```
 
-Accessibility:
-
-- Disable floating and twinkling when `prefers-reduced-motion` is active.
-- Do not rely on animation alone to communicate important information.
-
 ## Dark Mode Direction
 
 Recoverse is dark-mode-first.
 
-Reasons:
-
 - It matches the space archive concept.
-- Planets, stars, and discovery cards become more expressive.
+- Planets, galaxies, stars, and observation mode become more expressive.
 - It fits the likely context of writing retrospectives at night.
 
-Dark mode rules:
-
-- Use a warm near-black background.
-- Prefer `Moon Paper` over pure white for text.
-- Cards and panels should be one step brighter than the background.
-- Primary CTAs must have sufficient contrast against the dark background.
-
-Light mode direction:
-
-- Light mode is not required for the MVP.
-- If added later, treat it as a paper map rather than a daytime dashboard.
-- The planet-map concept should remain intact in light mode.
+Light mode is not required for the MVP. If added later, it should feel like a paper star map rather than a daytime dashboard.

@@ -4,25 +4,174 @@
 
 Recoverse is a localStorage-first Vue 3 MVP.
 
-The product structure is capsule-first.
+The product direction is moving from a capsule management app to a personal/group memory universe archive. Existing data and behavior should remain intact, while the IA and screen boundaries move toward the structure below.
 
 ```text
-Capsule -> Question Card -> Answer
+Home = My Memory Universe
+Personal capsule = Memory planet
+Group retrospective = Galaxy
+Question card = Exploration record / star
+Answer = Exploration log
+Read-only sharing = Observation mode
+Share link = Observation invitation
 ```
 
-## Core Entities
+## Current Structural Problems
 
-### Capsule
+| Area | Problem |
+| --- | --- |
+| `App.vue` | Screen switching, legacy year flows, capsule flows, and import/export still live together. |
+| Top tabs | `Capsules`, `Quick Entry`, `Year View`, and `Question Compare` appear before the product metaphor. |
+| Home | The universe view exists, but list/create/management tools are mixed into the same screen. |
+| Data model | It only covers personal capsules and cards; group galaxies and observation mode do not exist yet. |
+| Supporting tools | JSON management, question comparison, and year view interrupt the home experience. |
 
-The top-level container for a memory theme.
+## Target IA
 
-### CapsuleCard
+```text
+Recoverse
+├─ HomeUniverseView
+│  ├─ TodayDiscovery
+│  ├─ UniverseMap
+│  │  ├─ PlanetNode
+│  │  ├─ GalaxyNode
+│  │  └─ CreateObjectButton
+│  └─ ArchiveEntry
+│
+├─ PlanetDetailView
+│  ├─ PlanetHero
+│  ├─ ExplorationRecordList
+│  ├─ ExplorationLogEditor
+│  ├─ TimeTravelCompare
+│  └─ ObservationInviteEntry
+│
+├─ GalaxyDetailView
+│  ├─ GalaxyHero
+│  ├─ MemberPlanetList
+│  ├─ SharedPromptList
+│  └─ MemberLogMatrix
+│
+├─ ObservationModeView
+│  ├─ ReadOnlyHeader
+│  ├─ SharedPlanetSnapshot
+│  └─ SharedGalaxySnapshot
+│
+└─ ArchiveSettingsView
+   ├─ YearArchive
+   ├─ QuickEntryArchive
+   ├─ QuestionCompareArchive
+   ├─ ImportExportPanel
+   ├─ LanguageSettings
+   └─ DangerZone
+```
 
-A question card with a list of text answers.
+## Existing Feature Mapping
 
-### CapsuleBackup
+| Existing Feature | New Location | Treatment |
+| --- | --- | --- |
+| Capsule home | `HomeUniverseView` | Keep it, but remove list-first emphasis. |
+| `GalaxyMap` | `UniverseMap` | Extend it to support personal planets and group galaxies. |
+| `CapsulePlanetCard` | `PlanetNode` | Keep as personal planet node; rename later if useful. |
+| Today's Discovery | `TodayDiscovery` | Keep as the emotional entry point on Home. |
+| Capsule list | `ArchiveSettingsView` | Move out of Home into Archive. |
+| Capsule create form | `CreateObjectFlow` | Put behind the `+` creation entry point. |
+| Quick entry | `ArchiveSettingsView` or create flow | Remove from top-level tabs. |
+| Year view | `YearArchive` | Move to Archive as a timeline filter. |
+| Question comparison | `TimeTravelCompare` / `QuestionCompareArchive` | Move to detail or Archive. |
+| JSON management | `ImportExportPanel` | Move to Settings / Archive. |
+| Language selector | `LanguageSettings` | Move to Settings. |
 
-The canonical JSON backup/import format.
+## Current Core Entities
+
+```ts
+type Capsule = {
+  id: string;
+  title: string;
+  description?: string;
+  type: CapsuleType;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type CapsuleCard = {
+  id: string;
+  capsuleId: string;
+  questionText: string;
+  answers: string[];
+  source: "default" | "user" | "imported";
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+```
+
+## Next Entity Drafts
+
+### Galaxy
+
+A galaxy contains a group retrospective. In the first MVP refactor, prepare only the local model draft and screen entry points; do not add servers or real-time collaboration.
+
+```ts
+type Galaxy = {
+  id: string;
+  title: string;
+  description?: string;
+  theme: "year" | "trip" | "project" | "relationship" | "career" | "custom";
+  createdAt: string;
+  updatedAt: string;
+};
+
+type GalaxyMember = {
+  id: string;
+  galaxyId: string;
+  displayName: string;
+  colorTone?: string;
+  joinedAt: string;
+};
+
+type GalaxyPrompt = {
+  id: string;
+  galaxyId: string;
+  questionText: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type GalaxyLog = {
+  id: string;
+  galaxyId: string;
+  promptId: string;
+  memberId: string;
+  answers: string[];
+  updatedAt: string;
+};
+```
+
+### Observation Snapshot
+
+Observation mode should show read-only snapshots captured at publish time instead of directly exposing source data.
+
+```ts
+type ObservationSnapshot = {
+  id: string;
+  sourceType: "planet" | "galaxy";
+  sourceId: string;
+  title: string;
+  description?: string;
+  accessMode: "read_only";
+  createdAt: string;
+  publishedAt?: string;
+  records: ObservationRecordSnapshot[];
+};
+
+type ObservationRecordSnapshot = {
+  id: string;
+  title: string;
+  logs: string[];
+  order: number;
+};
+```
 
 ## Storage
 
@@ -32,180 +181,92 @@ Current storage key:
 localStorage["recoverse_capsule_v1"]
 ```
 
-Legacy year-based data should remain convertible into year retrospective capsules.
-
-## Current Important Files
+Candidate future keys:
 
 ```text
-recoverse-frontend/src/App.vue
-recoverse-frontend/src/components/CapsuleProgress.vue
-recoverse-frontend/src/components/CapsuleQuestionCompare.vue
-recoverse-frontend/src/lib/recoverseStore.ts
-recoverse-frontend/tests/recoverseStore.test.mjs
-```
-
-## Future Structure
-
-```text
-src/
-  views/
-    HomeView.vue
-    CapsuleDetailView.vue
-  components/
-    HomeRediscoverCard.vue
-    CapsuleCard.vue
-    AnswerEditor.vue
-    ImportExportPanel.vue
-  lib/
-    recoverseStore.ts
-    capsuleImportExport.ts
-    capsuleTemplates.ts
-  types/
-    recoverse.ts
-```
-
-## Sharing Direction
-
-Sharing is outside the MVP. Later, add read-only snapshots and password-protected links as separate structures.
-
-## Read-Only Sharing Data Model Draft
-
-Shared data should not expose the original `CapsuleData` directly. It should be a snapshot captured at publish time.
-
-```ts
-type SharedCapsuleSnapshot = {
-  id: string;
-  sourceCapsuleId: string;
-  title: string;
-  description?: string;
-  visibility: "private" | "link";
-  accessMode: "read_only";
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string;
-  cards: SharedCapsuleCardSnapshot[];
-};
-
-type SharedCapsuleCardSnapshot = {
-  id: string;
-  sourceCardId: string;
-  questionText: string;
-  answers: string[];
-  order: number;
-};
+localStorage["recoverse_galaxy_v1"]
+localStorage["recoverse_observation_v1"]
+localStorage["recoverse_ui_v1"]
 ```
 
 Principles:
 
-- Shared snapshots are read-only.
-- Editing the original capsule should not automatically mutate an existing shared version.
-- Shared snapshots are refreshed only when the user explicitly republishes them.
-- When server storage is introduced later, `sourceCapsuleId` and `sourceCardId` link the snapshot back to the original data.
+- localStorage remains the single source of truth during the MVP.
+- Legacy year-based data remains convertible into year retrospective planets.
+- New storage keys must not break `recoverse_capsule_v1`.
+- Import/export stays under Archive / Settings.
 
-## Password Link Sharing Field Candidates
-
-Password-protected link sharing should be implemented only after server storage exists. It is not part of the MVP.
-
-```ts
-type ShareLink = {
-  id: string;
-  snapshotId: string;
-  slug: string;
-  visibility: "password_link";
-  passwordHash?: string;
-  passwordSalt?: string;
-  expiresAt?: string;
-  revokedAt?: string;
-  createdAt: string;
-  lastOpenedAt?: string;
-  openCount: number;
-};
-```
-
-Field principles:
-
-- Never store the raw password.
-- `slug` is the URL-visible identifier and must not include the source capsule ID.
-- `expiresAt` and `revokedAt` allow a link to be closed.
-- `openCount` and `lastOpenedAt` are only for future sharing status UI.
-- Initial sharing permissions remain `read_only` only.
-
-## Migration Strategy From localStorage to Cloud Storage
-
-Login and cloud storage should be introduced when sharing requires them. When they are introduced, existing localStorage records must not be overwritten automatically.
-
-Steps:
-
-1. After login, check whether `recoverse_capsule_v1` exists in localStorage.
-2. If local data exists, show an explicit "Import this device's records into my account" choice.
-3. If the user agrees, upload local `CapsuleData` into the user's server-side capsule storage.
-4. If the server already has capsules or cards with the same IDs, skip duplicates using the same rule as the current import flow.
-5. After upload, do not delete local data immediately. Store only the last migration timestamp.
-6. Delete local data only when the user explicitly chooses to clear this device's local records.
-
-Candidate local metadata key:
+## Recommended File Structure
 
 ```text
-localStorage["recoverse_cloud_migration_v1"]
+src/
+  views/
+    HomeUniverseView.vue
+    PlanetDetailView.vue
+    GalaxyDetailView.vue
+    ObservationModeView.vue
+    ArchiveSettingsView.vue
+  components/
+    universe/
+      UniverseMap.vue
+      PlanetNode.vue
+      GalaxyNode.vue
+      CreateObjectButton.vue
+      TodayDiscovery.vue
+    planet/
+      PlanetHero.vue
+      ExplorationRecordList.vue
+      ExplorationLogEditor.vue
+    galaxy/
+      GalaxyHero.vue
+      MemberPlanetList.vue
+      SharedPromptList.vue
+    observation/
+      ReadOnlyHeader.vue
+      ObservationRecordCard.vue
+    archive/
+      ImportExportPanel.vue
+      YearArchive.vue
+      QuestionCompareArchive.vue
+  lib/
+    recoverseStore.ts
+    capsuleImportExport.ts
+    capsuleTemplates.ts
+    universeHomeData.ts
+    galaxyStore.ts
+    observationSnapshots.ts
+  types/
+    recoverse.ts
 ```
 
-```ts
-type CloudMigrationState = {
-  userId: string;
-  migratedAt: string;
-  sourceStorageKey: "recoverse_capsule_v1";
-  uploadedCapsules: number;
-  uploadedCards: number;
-  skippedCapsules: number;
-  skippedCards: number;
-};
-```
+## First Refactor Scope
 
-Cautions:
+Goal:
 
-- Do not automatically upload local data after an account switch.
-- Keep the localStorage source data if migration fails.
-- Until server storage is officially introduced, localStorage remains the single source of truth.
+- Prepare to remove list/management elements from Home.
+- Rename screens around the new IA.
+- Do not delete existing features; create their destination under Archive / Settings.
 
-## Markdown/PDF Export Data Format Draft
+Included:
 
-Markdown and PDF export should share the same intermediate document model. Only the renderer should differ.
+- Align `mode` naming with the new screen concepts.
+- Redefine `HomePage` toward `HomeUniverseView`.
+- Decide where capsule list, JSON tools, and create form move before removing them from Home.
+- Define `PlanetDetailView` and `ArchiveSettingsView` boundaries.
 
-```ts
-type CapsuleExportDocument = {
-  schema: "recoverse_export_document_v1";
-  language: "ko" | "en";
-  exportedAt: string;
-  capsule: {
-    id: string;
-    title: string;
-    description?: string;
-    type: CapsuleType;
-    createdAt: string;
-    updatedAt: string;
-  };
-  sections: CapsuleExportSection[];
-};
+Excluded:
 
-type CapsuleExportSection = {
-  cardId: string;
-  order: number;
-  questionText: string;
-  answers: string[];
-};
-```
+- Login
+- Server storage
+- Actual share-link publishing
+- PDF export
+- Real-time group collaboration
+- Three.js
 
-Markdown rules:
+## Implementation Risks
 
-- Start with `# {Capsule title}`.
-- If a description exists, place it as a short intro paragraph under the title.
-- Render each question as a `## {Question}` heading.
-- Render answers as line-based lists or paragraphs.
-- Exclude unanswered cards by default, with an option to include them later.
-
-PDF rules:
-
-- The PDF renderer receives `CapsuleExportDocument` as input.
-- The cover includes the capsule title, description, and export date.
-- Question cards are rendered in order.
-- Shared PDFs should be generatable from read-only snapshots.
+- `App.vue` has too much state, so changing it all at once has high regression risk.
+- Removing lists from Home requires a reliable alternate path for finding existing capsules.
+- Implementing galaxies too early can expand the MVP too much.
+- Observation mode may look like sharing, but the first pass only needs a read-only screen boundary.
+- Copy changes must not mutate import/export schemas; UI copy and data fields should stay separated.

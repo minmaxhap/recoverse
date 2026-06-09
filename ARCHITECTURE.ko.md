@@ -4,25 +4,174 @@
 
 Recoverse는 Vue 3 기반의 localStorage 우선 MVP다.
 
-제품 구조는 캡슐 중심이다.
+제품 방향은 "캡슐 관리 앱"에서 "개인/그룹 기억 우주 아카이브"로 재정의한다. 기존 데이터와 기능은 유지하되, IA와 화면 경계를 다음 구조로 이동한다.
 
 ```text
-캡슐 -> 질문 카드 -> 답변
+홈 = 내 기억 우주
+개인 캡슐 = 기억 행성
+그룹 회고 = 은하
+질문 카드 = 탐사 기록 / 별
+답변 = 탐사 로그
+공유 읽기 전용 = 관측 모드
+공유 링크 = 관측 초대장
 ```
 
-## 핵심 엔티티
+## 현재 구조의 문제
 
-### Capsule
+| 위치 | 문제 |
+| --- | --- |
+| `App.vue` | 화면 전환, legacy 연도 기능, 캡슐 기능, import/export가 한 파일에 많이 남아 있다. |
+| 상단 탭 | `캡슐`, `빠른 입력`, `연도 보기`, `질문 비교`가 제품 메타포보다 먼저 노출된다. |
+| 홈 | 우주 뷰가 있어도 캡슐 목록/생성/관리 기능이 같은 화면에 섞여 있다. |
+| 데이터 모델 | 개인 캡슐과 카드까지만 있고 그룹 은하와 관측 모드 모델이 없다. |
+| 보조 기능 | JSON 관리, 질문 비교, 연도 보기가 홈 경험을 침범한다. |
 
-기억을 묶는 최상위 단위다.
+## 목표 IA
 
-### CapsuleCard
+```text
+Recoverse
+├─ HomeUniverseView
+│  ├─ TodayDiscovery
+│  ├─ UniverseMap
+│  │  ├─ PlanetNode
+│  │  ├─ GalaxyNode
+│  │  └─ CreateObjectButton
+│  └─ ArchiveEntry
+│
+├─ PlanetDetailView
+│  ├─ PlanetHero
+│  ├─ ExplorationRecordList
+│  ├─ ExplorationLogEditor
+│  ├─ TimeTravelCompare
+│  └─ ObservationInviteEntry
+│
+├─ GalaxyDetailView
+│  ├─ GalaxyHero
+│  ├─ MemberPlanetList
+│  ├─ SharedPromptList
+│  └─ MemberLogMatrix
+│
+├─ ObservationModeView
+│  ├─ ReadOnlyHeader
+│  ├─ SharedPlanetSnapshot
+│  └─ SharedGalaxySnapshot
+│
+└─ ArchiveSettingsView
+   ├─ YearArchive
+   ├─ QuickEntryArchive
+   ├─ QuestionCompareArchive
+   ├─ ImportExportPanel
+   ├─ LanguageSettings
+   └─ DangerZone
+```
 
-캡슐 안의 질문 카드와 답변 목록을 가진다.
+## 기존 기능 매핑
 
-### CapsuleBackup
+| 기존 기능 | 새 위치 | 처리 |
+| --- | --- | --- |
+| 캡슐 홈 | `HomeUniverseView` | 목록 중심을 제거하고 우주 지도 중심으로 유지 |
+| `GalaxyMap` | `UniverseMap` | 개인 행성과 그룹 은하를 함께 담을 수 있게 확장 |
+| `CapsulePlanetCard` | `PlanetNode` | 개인 행성 노드로 유지/이름 변경 후보 |
+| 오늘의 발견 | `TodayDiscovery` | 홈의 감정적 진입점으로 유지 |
+| 캡슐 목록 | `ArchiveSettingsView` | 홈에서 제거하고 아카이브로 이동 |
+| 캡슐 생성 폼 | `CreateObjectFlow` | 홈에 직접 노출하지 않고 `+` 진입점 뒤로 이동 |
+| 빠른 입력 | `ArchiveSettingsView` 또는 생성 플로우 | 최상위 탭에서 제거 |
+| 연도 보기 | `YearArchive` | 아카이브의 타임라인 필터로 이동 |
+| 질문 비교 | `TimeTravelCompare` / `QuestionCompareArchive` | 상세 또는 아카이브로 이동 |
+| JSON 관리 | `ImportExportPanel` | 설정/아카이브로 이동 |
+| 언어 선택 | `LanguageSettings` | 설정으로 이동 |
 
-JSON 백업과 가져오기의 기준 포맷이다.
+## 현재 핵심 엔티티
+
+```ts
+type Capsule = {
+  id: string;
+  title: string;
+  description?: string;
+  type: CapsuleType;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type CapsuleCard = {
+  id: string;
+  capsuleId: string;
+  questionText: string;
+  answers: string[];
+  source: "default" | "user" | "imported";
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+```
+
+## 다음 엔티티 초안
+
+### Galaxy
+
+그룹 회고를 담는 은하 단위다. MVP 1차에서는 서버 없이 localStorage 모델 초안과 화면 진입 위치만 준비한다.
+
+```ts
+type Galaxy = {
+  id: string;
+  title: string;
+  description?: string;
+  theme: "year" | "trip" | "project" | "relationship" | "career" | "custom";
+  createdAt: string;
+  updatedAt: string;
+};
+
+type GalaxyMember = {
+  id: string;
+  galaxyId: string;
+  displayName: string;
+  colorTone?: string;
+  joinedAt: string;
+};
+
+type GalaxyPrompt = {
+  id: string;
+  galaxyId: string;
+  questionText: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type GalaxyLog = {
+  id: string;
+  galaxyId: string;
+  promptId: string;
+  memberId: string;
+  answers: string[];
+  updatedAt: string;
+};
+```
+
+### Observation Snapshot
+
+관측 모드는 원본 데이터를 직접 노출하지 않고 공유 시점의 읽기 전용 스냅샷을 사용한다.
+
+```ts
+type ObservationSnapshot = {
+  id: string;
+  sourceType: "planet" | "galaxy";
+  sourceId: string;
+  title: string;
+  description?: string;
+  accessMode: "read_only";
+  createdAt: string;
+  publishedAt?: string;
+  records: ObservationRecordSnapshot[];
+};
+
+type ObservationRecordSnapshot = {
+  id: string;
+  title: string;
+  logs: string[];
+  order: number;
+};
+```
 
 ## 저장소
 
@@ -32,180 +181,92 @@ JSON 백업과 가져오기의 기준 포맷이다.
 localStorage["recoverse_capsule_v1"]
 ```
 
-기존 연도 기반 데이터는 연도 회고 캡슐로 변환할 수 있어야 한다.
-
-## 현재 주요 파일
+추가 후보:
 
 ```text
-recoverse-frontend/src/App.vue
-recoverse-frontend/src/components/CapsuleProgress.vue
-recoverse-frontend/src/components/CapsuleQuestionCompare.vue
-recoverse-frontend/src/lib/recoverseStore.ts
-recoverse-frontend/tests/recoverseStore.test.mjs
-```
-
-## 향후 구조
-
-```text
-src/
-  views/
-    HomeView.vue
-    CapsuleDetailView.vue
-  components/
-    HomeRediscoverCard.vue
-    CapsuleCard.vue
-    AnswerEditor.vue
-    ImportExportPanel.vue
-  lib/
-    recoverseStore.ts
-    capsuleImportExport.ts
-    capsuleTemplates.ts
-  types/
-    recoverse.ts
-```
-
-## 공유 확장 방향
-
-공유는 MVP 범위 밖이다. 나중에 읽기 전용 스냅샷과 비밀번호 링크를 별도 구조로 추가한다.
-
-## 읽기 전용 공유 데이터 모델 초안
-
-공유 데이터는 원본 `CapsuleData`를 직접 노출하지 않고, 공유 시점의 스냅샷으로 분리한다.
-
-```ts
-type SharedCapsuleSnapshot = {
-  id: string;
-  sourceCapsuleId: string;
-  title: string;
-  description?: string;
-  visibility: "private" | "link";
-  accessMode: "read_only";
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string;
-  cards: SharedCapsuleCardSnapshot[];
-};
-
-type SharedCapsuleCardSnapshot = {
-  id: string;
-  sourceCardId: string;
-  questionText: string;
-  answers: string[];
-  order: number;
-};
+localStorage["recoverse_galaxy_v1"]
+localStorage["recoverse_observation_v1"]
+localStorage["recoverse_ui_v1"]
 ```
 
 원칙:
 
-- 공유 스냅샷은 읽기 전용이다.
-- 원본 캡슐을 수정해도 기존 공유본은 자동 변경하지 않는다.
-- 공유본 갱신은 사용자가 명시적으로 다시 발행할 때만 수행한다.
-- 나중에 서버 저장소를 도입하면 `sourceCapsuleId`와 `sourceCardId`로 원본과 연결한다.
+- MVP에서는 localStorage를 단일 진실 공급원으로 유지한다.
+- 기존 연도 기반 데이터는 계속 연도 회고 행성으로 변환한다.
+- 새 저장 키를 추가하더라도 기존 `recoverse_capsule_v1`을 깨지 않는다.
+- import/export는 아카이브/설정에 남긴다.
 
-## 비밀번호 링크 공유 필드 후보
-
-비밀번호 링크 공유는 서버 저장소 도입 이후에 구현한다. MVP에서는 구현하지 않는다.
-
-```ts
-type ShareLink = {
-  id: string;
-  snapshotId: string;
-  slug: string;
-  visibility: "password_link";
-  passwordHash?: string;
-  passwordSalt?: string;
-  expiresAt?: string;
-  revokedAt?: string;
-  createdAt: string;
-  lastOpenedAt?: string;
-  openCount: number;
-};
-```
-
-필드 원칙:
-
-- 비밀번호 원문은 저장하지 않는다.
-- `slug`는 URL에 노출되는 식별자이고, 원본 캡슐 ID를 포함하지 않는다.
-- `expiresAt`과 `revokedAt`으로 공유 링크를 닫을 수 있게 한다.
-- `openCount`와 `lastOpenedAt`은 나중에 공유 상태 표시용으로만 사용한다.
-- 초기 공유 권한은 `read_only`만 허용한다.
-
-## localStorage에서 클라우드 저장소로의 migration 전략
-
-로그인과 클라우드 저장은 공유 기능이 필요해지는 시점에 도입한다. 도입 시 기존 localStorage 기록을 자동으로 덮어쓰지 않는다.
-
-단계:
-
-1. 로그인 직후 localStorage의 `recoverse_capsule_v1` 존재 여부를 확인한다.
-2. 로컬 데이터가 있으면 "이 기기의 기록을 계정에 가져오기" 선택지를 보여준다.
-3. 사용자가 동의하면 로컬 `CapsuleData`를 서버의 사용자별 capsule 저장소로 업로드한다.
-4. 서버에 이미 같은 ID의 캡슐/카드가 있으면 현재 import와 동일하게 중복을 건너뛴다.
-5. 업로드가 끝나면 로컬 데이터는 즉시 삭제하지 않고, 마지막 동기화 시각만 저장한다.
-6. 사용자가 명시적으로 "이 기기의 로컬 데이터 정리"를 선택할 때만 삭제한다.
-
-필요한 로컬 메타 키 후보:
+## 권장 파일 구조
 
 ```text
-localStorage["recoverse_cloud_migration_v1"]
+src/
+  views/
+    HomeUniverseView.vue
+    PlanetDetailView.vue
+    GalaxyDetailView.vue
+    ObservationModeView.vue
+    ArchiveSettingsView.vue
+  components/
+    universe/
+      UniverseMap.vue
+      PlanetNode.vue
+      GalaxyNode.vue
+      CreateObjectButton.vue
+      TodayDiscovery.vue
+    planet/
+      PlanetHero.vue
+      ExplorationRecordList.vue
+      ExplorationLogEditor.vue
+    galaxy/
+      GalaxyHero.vue
+      MemberPlanetList.vue
+      SharedPromptList.vue
+    observation/
+      ReadOnlyHeader.vue
+      ObservationRecordCard.vue
+    archive/
+      ImportExportPanel.vue
+      YearArchive.vue
+      QuestionCompareArchive.vue
+  lib/
+    recoverseStore.ts
+    capsuleImportExport.ts
+    capsuleTemplates.ts
+    universeHomeData.ts
+    galaxyStore.ts
+    observationSnapshots.ts
+  types/
+    recoverse.ts
 ```
 
-```ts
-type CloudMigrationState = {
-  userId: string;
-  migratedAt: string;
-  sourceStorageKey: "recoverse_capsule_v1";
-  uploadedCapsules: number;
-  uploadedCards: number;
-  skippedCapsules: number;
-  skippedCards: number;
-};
-```
+## 1차 리팩토링 범위
 
-주의사항:
+목표:
 
-- 계정 전환 시 다른 사용자의 로컬 데이터를 자동 업로드하지 않는다.
-- 마이그레이션 실패 시 localStorage 원본은 유지한다.
-- 서버 저장소가 정식 도입되기 전까지는 localStorage를 단일 진실 공급원으로 유지한다.
+- 홈에서 목록/관리 요소를 걷어낼 준비를 한다.
+- 화면 이름을 새 IA 기준으로 정리한다.
+- 기존 기능은 삭제하지 않고 아카이브/설정으로 이동할 위치만 만든다.
 
-## Markdown/PDF 내보내기 데이터 포맷 초안
+포함:
 
-Markdown과 PDF 내보내기는 같은 중간 문서 모델을 사용한다. 렌더러만 다르게 둔다.
+- `mode` 이름을 새 화면 개념에 맞게 정리할 설계 반영
+- `HomePage`를 `HomeUniverseView` 방향으로 재정의
+- 홈의 캡슐 목록/JSON/생성 폼을 아카이브/설정 또는 생성 플로우로 이동할 계획 확정
+- `PlanetDetailView`, `ArchiveSettingsView` 경계 정의
 
-```ts
-type CapsuleExportDocument = {
-  schema: "recoverse_export_document_v1";
-  language: "ko" | "en";
-  exportedAt: string;
-  capsule: {
-    id: string;
-    title: string;
-    description?: string;
-    type: CapsuleType;
-    createdAt: string;
-    updatedAt: string;
-  };
-  sections: CapsuleExportSection[];
-};
+제외:
 
-type CapsuleExportSection = {
-  cardId: string;
-  order: number;
-  questionText: string;
-  answers: string[];
-};
-```
+- 실제 로그인
+- 서버 저장
+- 실제 공유 링크 발행
+- PDF 내보내기
+- 실시간 그룹 협업
+- Three.js
 
-Markdown 출력 규칙:
+## 구현 전 위험 요소
 
-- 첫 줄은 `# {캡슐 제목}`으로 시작한다.
-- 설명이 있으면 제목 아래에 짧은 소개 문단으로 넣는다.
-- 질문은 `## {질문}` 제목으로 출력한다.
-- 답변은 줄 단위 목록 또는 문단으로 출력한다.
-- 빈 답변 카드는 기본적으로 제외하되, 옵션으로 포함할 수 있게 한다.
-
-PDF 출력 규칙:
-
-- PDF 렌더러는 `CapsuleExportDocument`를 입력으로 받는다.
-- 표지에는 캡슐 제목, 설명, 내보낸 날짜를 표시한다.
-- 질문 카드는 순서대로 배치한다.
-- 공유용 PDF는 읽기 전용 스냅샷에서 생성할 수 있어야 한다.
+- `App.vue` 상태가 커서 한 번에 바꾸면 회귀 위험이 크다.
+- 홈에서 목록을 제거하면 사용자가 기존 캡슐을 찾는 보조 경로가 필요하다.
+- 그룹 은하 모델을 성급히 구현하면 MVP 범위가 커진다.
+- 관측 모드는 공유 기능처럼 보이지만 1차에서는 읽기 전용 화면 경계만 필요하다.
+- 문구 변경이 테스트와 import/export 포맷을 흔들지 않도록 UI copy와 데이터 필드를 분리해야 한다.
