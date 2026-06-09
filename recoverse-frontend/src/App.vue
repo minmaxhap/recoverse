@@ -353,53 +353,17 @@
             <h2 class="noWrap">{{ t.createCapsule }}</h2>
           </div>
 
-          <div class="addWrap">
-            <div class="formGrid">
-              <label class="wide">
-                <span class="noWrap">{{ t.title }}</span>
-                <input v-model="capsuleForm.title" :placeholder="t.titlePlaceholder" />
-              </label>
-
-              <label class="wide">
-                <span class="noWrap">{{ t.description }}</span>
-                <input v-model="capsuleForm.description" :placeholder="t.descriptionPlaceholder" />
-              </label>
-
-              <label>
-                <span class="noWrap">{{ t.type }}</span>
-                <select v-model="capsuleForm.type">
-                  <option value="year">{{ capsuleTypeLabel("year") }}</option>
-                  <option value="life_stage">{{ capsuleTypeLabel("life_stage") }}</option>
-                  <option value="career">{{ capsuleTypeLabel("career") }}</option>
-                  <option value="relationship">{{ capsuleTypeLabel("relationship") }}</option>
-                  <option value="travel">{{ capsuleTypeLabel("travel") }}</option>
-                  <option value="project">{{ capsuleTypeLabel("project") }}</option>
-                  <option value="custom">{{ capsuleTypeLabel("custom") }}</option>
-                </select>
-              </label>
-
-              <label>
-                <span class="noWrap">{{ t.defaultQuestions }}</span>
-                <select v-model="capsuleForm.templateId">
-                  <option value="">{{ t.none }}</option>
-                  <option v-for="template in capsuleTemplates" :key="template.id" :value="template.id">
-                    {{ template.title[language] }}
-                  </option>
-                </select>
-              </label>
-            </div>
-
-            <div class="btnRow">
-              <button class="primary" @click="onCreateCapsule">{{ t.createCapsuleButton }}</button>
-              <button class="ghost" @click="resetCapsuleForm">{{ t.reset }}</button>
-            </div>
-
-            <p v-if="capsuleError" class="error">{{ capsuleError }}</p>
-            <p v-if="capsuleNotice" class="hint">{{ capsuleNotice }}</p>
-            <p class="hint">
-              {{ t.templateHint }}
-            </p>
-          </div>
+          <CapsuleCreateForm
+            :form="capsuleForm"
+            :templates="capsuleTemplates"
+            :language="language"
+            :type-labels="t.typeLabels"
+            :labels="capsuleCreateLabels"
+            :error="capsuleError"
+            :notice="capsuleNotice"
+            @create="onCreateCapsule"
+            @reset="resetCapsuleForm"
+          />
 
           <div class="divider"></div>
 
@@ -574,6 +538,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
+import CapsuleCreateForm from "./components/CapsuleCreateForm.vue";
 import LanguageSelector from "./components/LanguageSelector.vue";
 import CapsuleToolbar from "./components/CapsuleToolbar.vue";
 import CapsuleProgress from "./components/CapsuleProgress.vue";
@@ -782,6 +747,19 @@ const years = computed(() => {
 });
 
 const t = computed(() => messages[language.value]);
+
+const capsuleCreateLabels = computed(() => ({
+  title: t.value.title,
+  titlePlaceholder: t.value.titlePlaceholder,
+  description: t.value.description,
+  descriptionPlaceholder: t.value.descriptionPlaceholder,
+  type: t.value.type,
+  defaultQuestions: t.value.defaultQuestions,
+  none: t.value.none,
+  createCapsuleButton: t.value.createCapsuleButton,
+  reset: t.value.reset,
+  templateHint: t.value.templateHint,
+}));
 
 function saveLanguage() {
   localStorage.setItem(LANGUAGE_KEY, language.value);
