@@ -101,3 +101,31 @@ type SharedCapsuleCardSnapshot = {
 - 원본 캡슐을 수정해도 기존 공유본은 자동 변경하지 않는다.
 - 공유본 갱신은 사용자가 명시적으로 다시 발행할 때만 수행한다.
 - 나중에 서버 저장소를 도입하면 `sourceCapsuleId`와 `sourceCardId`로 원본과 연결한다.
+
+## 비밀번호 링크 공유 필드 후보
+
+비밀번호 링크 공유는 서버 저장소 도입 이후에 구현한다. MVP에서는 구현하지 않는다.
+
+```ts
+type ShareLink = {
+  id: string;
+  snapshotId: string;
+  slug: string;
+  visibility: "password_link";
+  passwordHash?: string;
+  passwordSalt?: string;
+  expiresAt?: string;
+  revokedAt?: string;
+  createdAt: string;
+  lastOpenedAt?: string;
+  openCount: number;
+};
+```
+
+필드 원칙:
+
+- 비밀번호 원문은 저장하지 않는다.
+- `slug`는 URL에 노출되는 식별자이고, 원본 캡슐 ID를 포함하지 않는다.
+- `expiresAt`과 `revokedAt`으로 공유 링크를 닫을 수 있게 한다.
+- `openCount`와 `lastOpenedAt`은 나중에 공유 상태 표시용으로만 사용한다.
+- 초기 공유 권한은 `read_only`만 허용한다.

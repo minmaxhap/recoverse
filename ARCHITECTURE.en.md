@@ -101,3 +101,31 @@ Principles:
 - Editing the original capsule should not automatically mutate an existing shared version.
 - Shared snapshots are refreshed only when the user explicitly republishes them.
 - When server storage is introduced later, `sourceCapsuleId` and `sourceCardId` link the snapshot back to the original data.
+
+## Password Link Sharing Field Candidates
+
+Password-protected link sharing should be implemented only after server storage exists. It is not part of the MVP.
+
+```ts
+type ShareLink = {
+  id: string;
+  snapshotId: string;
+  slug: string;
+  visibility: "password_link";
+  passwordHash?: string;
+  passwordSalt?: string;
+  expiresAt?: string;
+  revokedAt?: string;
+  createdAt: string;
+  lastOpenedAt?: string;
+  openCount: number;
+};
+```
+
+Field principles:
+
+- Never store the raw password.
+- `slug` is the URL-visible identifier and must not include the source capsule ID.
+- `expiresAt` and `revokedAt` allow a link to be closed.
+- `openCount` and `lastOpenedAt` are only for future sharing status UI.
+- Initial sharing permissions remain `read_only` only.
