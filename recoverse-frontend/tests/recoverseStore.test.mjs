@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
+import { pathToFileURL } from "node:url";
 import ts from "typescript";
 
 class MemoryStorage {
@@ -23,15 +26,32 @@ class MemoryStorage {
   }
 }
 
-const source = await readFile(new URL("../src/lib/recoverseStore.ts", import.meta.url), "utf8");
-const compiled = ts.transpileModule(source, {
-  compilerOptions: {
-    module: ts.ModuleKind.ESNext,
-    target: ts.ScriptTarget.ES2022,
-  },
-}).outputText;
+const tempDir = await mkdtemp(join(tmpdir(), "recoverse-store-test-"));
 
-const store = await import(`data:text/javascript,${encodeURIComponent(compiled)}`);
+async function compileTsModule(inputUrl, outputName, replacements = []) {
+  let source = await readFile(inputUrl, "utf8");
+  for (const [from, to] of replacements) {
+    source = source.replaceAll(from, to);
+  }
+
+  const compiled = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.ESNext,
+      target: ts.ScriptTarget.ES2022,
+    },
+  }).outputText;
+
+  const outputPath = join(tempDir, outputName);
+  await writeFile(outputPath, compiled, "utf8");
+  return outputPath;
+}
+
+await compileTsModule(new URL("../src/lib/capsuleTemplates.ts", import.meta.url), "capsuleTemplates.mjs");
+const storePath = await compileTsModule(new URL("../src/lib/recoverseStore.ts", import.meta.url), "recoverseStore.mjs", [
+  ['"./capsuleTemplates"', '"./capsuleTemplates.mjs"'],
+]);
+
+const store = await import(pathToFileURL(storePath).href);
 
 globalThis.localStorage = new MemoryStorage();
 
