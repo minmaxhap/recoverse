@@ -337,6 +337,7 @@
             :selected-card="selectedCapsuleCard"
             :selected-card-id="selectedCapsuleCardId"
             :recent-card-id="recentlyEditedCapsuleCardId"
+            v-model:show-unanswered-only="showUnansweredCardsOnly"
             :card-form="capsuleCardForm"
             :language="language"
             :labels="capsuleDetailLabels"
@@ -527,6 +528,7 @@ const messages = {
     noCards: "아직 질문 카드가 없어요. 첫 질문 카드를 추가해보세요.",
     questionCard: "질문 카드",
     recentlyEdited: "최근 수정",
+    unansweredOnly: "미답변만",
     question: "질문",
     questionPlaceholder: "질문을 입력하세요",
     answer: "답변",
@@ -587,6 +589,7 @@ const messages = {
     noCards: "No question cards yet. Add the first one.",
     questionCard: "Question card",
     recentlyEdited: "Recent",
+    unansweredOnly: "Unanswered only",
     question: "Question",
     questionPlaceholder: "Enter a question",
     answer: "Answer",
@@ -649,6 +652,7 @@ const addSuggestSearch = ref<string>("");
 const capsuleSearch = ref<string>("");
 const capsuleError = ref<string>("");
 const capsuleNotice = ref<string>("");
+const showUnansweredCardsOnly = ref<boolean>(false);
 
 const capsuleForm = reactive<{
   title: string;
@@ -711,6 +715,7 @@ const capsuleDetailLabels = computed(() => ({
   noCards: t.value.noCards,
   questionCard: t.value.questionCard,
   recentlyEdited: t.value.recentlyEdited,
+  unansweredOnly: t.value.unansweredOnly,
   question: t.value.question,
   questionPlaceholder: t.value.questionPlaceholder,
   answer: t.value.answer,

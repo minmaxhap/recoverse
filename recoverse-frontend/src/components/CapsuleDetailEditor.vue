@@ -12,11 +12,19 @@
         <button class="danger" type="button" @click="$emit('delete-capsule')">
           {{ labels.deleteCapsule }}
         </button>
+        <label class="filterToggle">
+          <input
+            type="checkbox"
+            :checked="showUnansweredOnly"
+            @change="$emit('update:show-unanswered-only', ($event.target as HTMLInputElement).checked)"
+          />
+          <span>{{ labels.unansweredOnly }}</span>
+        </label>
       </div>
 
-      <div v-if="cards.length" class="chips">
+      <div v-if="visibleCards.length" class="chips">
         <button
-          v-for="card in cards"
+          v-for="card in visibleCards"
           :key="card.id"
           class="chip"
           :class="{ active: card.id === selectedCardId }"
@@ -70,6 +78,7 @@
 
 <script setup lang="ts">
 import type { AppLanguage, Capsule, CapsuleCard } from "../lib/recoverseStore";
+import { computed } from "vue";
 import CapsuleProgress from "./CapsuleProgress.vue";
 
 type CapsuleCardFormState = {
@@ -77,12 +86,13 @@ type CapsuleCardFormState = {
   answersText: string;
 };
 
-defineProps<{
+const props = defineProps<{
   capsule: Capsule | null;
   cards: CapsuleCard[];
   selectedCard: CapsuleCard | null;
   selectedCardId: string | null;
   recentCardId: string | null;
+  showUnansweredOnly: boolean;
   cardForm: CapsuleCardFormState;
   language: AppLanguage;
   labels: {
@@ -91,6 +101,7 @@ defineProps<{
     noCards: string;
     questionCard: string;
     recentlyEdited: string;
+    unansweredOnly: string;
     question: string;
     questionPlaceholder: string;
     answer: string;
@@ -108,7 +119,12 @@ defineEmits<{
   "add-card": [];
   "save-card": [];
   "delete-card": [];
+  "update:show-unanswered-only": [value: boolean];
 }>();
+
+const visibleCards = computed(() =>
+  props.showUnansweredOnly ? props.cards.filter((card) => card.answers.length === 0) : props.cards
+);
 </script>
 
 <style scoped>
@@ -137,6 +153,16 @@ h3 {
   margin-top: 10px;
   display: flex;
   gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filterToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-muted);
 }
 
 button {
