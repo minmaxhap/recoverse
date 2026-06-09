@@ -331,65 +331,20 @@
 
           <div class="divider"></div>
 
-          <div v-if="!selectedCapsule" class="empty">
-            {{ t.selectCapsuleHint }}
-          </div>
-
-          <div v-else class="addWrap">
-            <div class="detailBlock">
-              <h3 class="noWrap">{{ selectedCapsule.title }}</h3>
-              <CapsuleProgress :cards="selectedCapsuleCards" :language="language" />
-              <div class="btnRow">
-                <button class="danger" @click="deleteSelectedCapsule">{{ t.deleteCapsule }}</button>
-              </div>
-              <div v-if="selectedCapsuleCards.length" class="chips">
-                <button
-                  v-for="card in selectedCapsuleCards"
-                  :key="card.id"
-                  class="chip"
-                  :class="{ active: card.id === selectedCapsuleCardId }"
-                  @click="selectCapsuleCard(card.id)"
-                >
-                  {{ card.questionText }}
-                </button>
-              </div>
-              <div v-else class="empty">
-                {{ t.noCards }}
-              </div>
-
-              <div class="btnRow">
-                <button class="ghost" @click="addCapsuleCard">+ {{ t.questionCard }}</button>
-              </div>
-
-              <div v-if="selectedCapsuleCard" class="formGrid">
-                <label class="wide">
-                  <span class="noWrap">{{ t.question }}</span>
-                  <input v-model="capsuleCardForm.questionText" :placeholder="t.questionPlaceholder" />
-                </label>
-
-                <label class="wide">
-                  <span class="noWrap">{{ t.answer }}</span>
-                  <textarea
-                    v-model="capsuleCardForm.answersText"
-                    rows="7"
-                    :placeholder="t.answerPlaceholder"
-                  ></textarea>
-                  <span v-if="selectedCapsuleCard.answers.length === 0" class="muted">
-                    {{ t.noSavedAnswers }}
-                  </span>
-                </label>
-              </div>
-
-              <div v-if="selectedCapsuleCard" class="btnRow">
-                <button class="primary" @click="saveSelectedCapsuleCard">{{ t.saveQuestion }}</button>
-                <button class="danger" @click="deleteSelectedCapsuleCard">{{ t.deleteQuestion }}</button>
-              </div>
-
-              <div v-else class="empty">
-                {{ t.selectOrAddQuestion }}
-              </div>
-            </div>
-          </div>
+          <CapsuleDetailEditor
+            :capsule="selectedCapsule"
+            :cards="selectedCapsuleCards"
+            :selected-card="selectedCapsuleCard"
+            :selected-card-id="selectedCapsuleCardId"
+            :card-form="capsuleCardForm"
+            :language="language"
+            :labels="capsuleDetailLabels"
+            @delete-capsule="deleteSelectedCapsule"
+            @select-card="selectCapsuleCard"
+            @add-card="addCapsuleCard"
+            @save-card="saveSelectedCapsuleCard"
+            @delete-card="deleteSelectedCapsuleCard"
+          />
 
           <div class="divider"></div>
 
@@ -503,11 +458,11 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
 import CapsuleCreateForm from "./components/CapsuleCreateForm.vue";
+import CapsuleDetailEditor from "./components/CapsuleDetailEditor.vue";
 import CapsuleList from "./components/CapsuleList.vue";
 import LanguageSelector from "./components/LanguageSelector.vue";
 import RediscoverCard from "./components/RediscoverCard.vue";
 import CapsuleToolbar from "./components/CapsuleToolbar.vue";
-import CapsuleProgress from "./components/CapsuleProgress.vue";
 import CapsuleQuestionCompare from "./components/CapsuleQuestionCompare.vue";
 import {
   type AppLanguage,
@@ -738,6 +693,21 @@ const capsuleListLabels = computed(() => ({
 const rediscoverLabels = computed(() => ({
   rediscover: t.value.rediscover,
   rediscoverEmpty: t.value.rediscoverEmpty,
+}));
+
+const capsuleDetailLabels = computed(() => ({
+  selectCapsuleHint: t.value.selectCapsuleHint,
+  deleteCapsule: t.value.deleteCapsule,
+  noCards: t.value.noCards,
+  questionCard: t.value.questionCard,
+  question: t.value.question,
+  questionPlaceholder: t.value.questionPlaceholder,
+  answer: t.value.answer,
+  answerPlaceholder: t.value.answerPlaceholder,
+  noSavedAnswers: t.value.noSavedAnswers,
+  saveQuestion: t.value.saveQuestion,
+  deleteQuestion: t.value.deleteQuestion,
+  selectOrAddQuestion: t.value.selectOrAddQuestion,
 }));
 
 function saveLanguage() {
