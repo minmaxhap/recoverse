@@ -1040,7 +1040,14 @@ function saveSelectedCapsuleCard() {
       : card
   );
   capsuleError.value = "";
-  capsuleNotice.value = t.value.questionSaved;
+  const savedTime = new Date().toLocaleTimeString(language.value === "ko" ? "ko-KR" : "en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  capsuleNotice.value =
+    language.value === "ko"
+      ? `${t.value.questionSaved} (${savedTime})`
+      : `${t.value.questionSaved} (${savedTime})`;
   syncCapsuleStorage();
 }
 
