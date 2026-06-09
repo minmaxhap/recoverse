@@ -538,6 +538,8 @@ const messages = {
     questionRequired: "질문을 입력해 주세요.",
     questionSaved: "질문 카드를 저장했어요.",
     questionDeleted: "질문 카드를 삭제했어요.",
+    questionAdded: "새 질문 카드를 추가했어요.",
+    newQuestionTitle: "새 질문 카드",
     capsuleDeleted: "캡슐을 삭제했어요.",
     confirmDeleteQuestion: "이 질문 카드를 삭제할까요?",
     capsuleImportFailed: "캡슐 가져오기 실패",
@@ -595,6 +597,8 @@ const messages = {
     questionRequired: "Please enter a question.",
     questionSaved: "Question card saved.",
     questionDeleted: "Question card deleted.",
+    questionAdded: "Question card added.",
+    newQuestionTitle: "New question card",
     capsuleDeleted: "Capsule deleted.",
     confirmDeleteQuestion: "Delete this question card?",
     capsuleImportFailed: "Capsule import failed",
@@ -993,7 +997,7 @@ function addCapsuleCard() {
   const card: CapsuleCard = {
     id: `${Date.now()}_${Math.random().toString(16).slice(2)}`,
     capsuleId: selectedCapsule.value.id,
-    questionText: "새 질문",
+    questionText: t.value.newQuestionTitle,
     answers: [],
     source: "user",
     order: selectedCapsuleCards.value.length,
@@ -1004,6 +1008,8 @@ function addCapsuleCard() {
   capsuleCards.value = [card, ...capsuleCards.value];
   selectedCapsuleCardId.value = card.id;
   startCapsuleCardEdit(card);
+  capsuleError.value = "";
+  capsuleNotice.value = t.value.questionAdded;
   syncCapsuleStorage();
 }
 
