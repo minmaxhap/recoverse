@@ -7,7 +7,12 @@
 <style scoped>
 .homeView {
   display: grid;
-  grid-template-columns: 1fr 420px;
   gap: 12px;
+}
+
+@media (min-width: 900px) {
+  .homeView {
+    grid-template-columns: minmax(0, 1fr) 420px;
+  }
 }
 </style>
