@@ -277,90 +277,57 @@
       </section>
 
       <!-- Mode: CAPSULES -->
-      <HomeView v-else-if="mode === 'capsules'">
-        <section class="panel">
-          <div class="panelHead">
-            <h2 class="noWrap">{{ t.retrospectiveCapsules }}</h2>
-            <CapsuleToolbar
-              :export-label="t.exportCapsules"
-              :import-label="t.importCapsules"
-              :backup-version-label="t.capsuleBackupVersion"
-              :refresh-label="t.refresh"
-              :export-disabled="capsules.length === 0"
-              @export="onExportCapsules"
-              @import-file="onImportCapsuleFile"
-              @refresh="refreshCapsules"
-            />
-          </div>
-
-          <RediscoverCard
-            :card="discoveryCard"
-            :capsule-title="discoveryCapsuleTitle"
-            :answer-preview="discoveryAnswerPreview"
-            :labels="rediscoverLabels"
-            @open="openDiscoveryCard"
-          />
-
-          <CapsuleList
-            v-model:search="capsuleSearch"
-            :capsules="capsules"
-            :filtered-capsules="filteredCapsules"
-            :selected-capsule-id="selectedCapsuleId"
-            :stats="capsuleStats"
-            :type-labels="t.typeLabels"
-            :labels="capsuleListLabels"
-            @select="selectCapsule"
-          />
-        </section>
-
-        <CapsuleDetailView>
-          <div class="panelHead">
-            <h2 class="noWrap">{{ t.createCapsule }}</h2>
-          </div>
-
-          <CapsuleCreateForm
-            :form="capsuleForm"
-            :templates="capsuleTemplates"
-            :language="language"
-            :type-labels="t.typeLabels"
-            :labels="capsuleCreateLabels"
-            :error="capsuleError"
-            :notice="capsuleNotice"
-            @create="onCreateCapsule"
-            @reset="resetCapsuleForm"
-          />
-
-          <div class="divider"></div>
-
-          <CapsuleDetailEditor
-            :capsule="selectedCapsule"
-            :cards="selectedCapsuleCards"
-            :selected-card="selectedCapsuleCard"
-            :selected-card-id="selectedCapsuleCardId"
-            :recent-card-id="recentlyEditedCapsuleCardId"
-            v-model:show-unanswered-only="showUnansweredCardsOnly"
-            :card-form="capsuleCardForm"
-            :language="language"
-            :labels="capsuleDetailLabels"
-            @delete-capsule="deleteSelectedCapsule"
-            @select-card="selectCapsuleCard"
-            @add-card="addCapsuleCard"
-            @save-card="saveSelectedCapsuleCard"
-            @delete-card="deleteSelectedCapsuleCard"
-          />
-
-          <div class="divider"></div>
-
-          <div class="addWrap">
-            <CapsuleQuestionCompare
-              :capsules="capsules"
-              :cards="capsuleCards"
-              :language="language"
-              @open-card="jumpToCapsuleCard"
-            />
-          </div>
-        </CapsuleDetailView>
-      </HomeView>
+      <HomePage
+        v-else-if="mode === 'capsules'"
+        v-model:capsule-search="capsuleSearch"
+        v-model:show-unanswered-cards-only="showUnansweredCardsOnly"
+        :title="t.retrospectiveCapsules"
+        :create-capsule-title="t.createCapsule"
+        :language="language"
+        :capsules="capsules"
+        :capsule-cards="capsuleCards"
+        :filtered-capsules="filteredCapsules"
+        :home-capsule-items="homeCapsuleItems"
+        :selected-capsule-id="selectedCapsuleId"
+        :selected-capsule="selectedCapsule"
+        :selected-capsule-cards="selectedCapsuleCards"
+        :selected-capsule-card="selectedCapsuleCard"
+        :selected-capsule-card-id="selectedCapsuleCardId"
+        :recently-edited-capsule-card-id="recentlyEditedCapsuleCardId"
+        :capsule-stats="capsuleStats"
+        :discovery-card="discoveryCard"
+        :discovery-capsule-title="discoveryCapsuleTitle"
+        :discovery-answer-preview="discoveryAnswerPreview"
+        :capsule-form="capsuleForm"
+        :capsule-card-form="capsuleCardForm"
+        :capsule-templates="capsuleTemplates"
+        :capsule-error="capsuleError"
+        :capsule-notice="capsuleNotice"
+        :type-labels="t.typeLabels"
+        :toolbar-labels="{
+          exportCapsules: t.exportCapsules,
+          importCapsules: t.importCapsules,
+          capsuleBackupVersion: t.capsuleBackupVersion,
+          refresh: t.refresh,
+        }"
+        :rediscover-labels="rediscoverLabels"
+        :capsule-list-labels="capsuleListLabels"
+        :capsule-create-labels="capsuleCreateLabels"
+        :capsule-detail-labels="capsuleDetailLabels"
+        @export="onExportCapsules"
+        @import-file="onImportCapsuleFile"
+        @refresh="refreshCapsules"
+        @open-discovery="openDiscoveryCard"
+        @select-capsule="selectCapsule"
+        @create-capsule="onCreateCapsule"
+        @reset-capsule-form="resetCapsuleForm"
+        @delete-capsule="deleteSelectedCapsule"
+        @select-card="selectCapsuleCard"
+        @add-card="addCapsuleCard"
+        @save-card="saveSelectedCapsuleCard"
+        @delete-card="deleteSelectedCapsuleCard"
+        @open-card="jumpToCapsuleCard"
+      />
 
       <!-- Mode: ADD -->
       <section v-else-if="mode === 'add'" class="layoutAdd">
@@ -460,15 +427,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
-import CapsuleCreateForm from "./components/CapsuleCreateForm.vue";
-import CapsuleDetailEditor from "./components/CapsuleDetailEditor.vue";
-import CapsuleList from "./components/CapsuleList.vue";
 import LanguageSelector from "./components/LanguageSelector.vue";
-import RediscoverCard from "./components/RediscoverCard.vue";
-import CapsuleToolbar from "./components/CapsuleToolbar.vue";
-import CapsuleQuestionCompare from "./components/CapsuleQuestionCompare.vue";
-import HomeView from "./views/HomeView.vue";
-import CapsuleDetailView from "./views/CapsuleDetailView.vue";
+import HomePage from "./views/HomePage.vue";
 import {
   type AppLanguage,
   type Capsule,
