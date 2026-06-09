@@ -292,9 +292,17 @@
             </div>
           </div>
 
+          <div class="panelHead">
+            <input
+              v-model="capsuleSearch"
+              class="search capsuleSearch"
+              placeholder="캡슐 검색"
+            />
+          </div>
+
           <div class="list">
             <button
-              v-for="capsule in capsules"
+              v-for="capsule in filteredCapsules"
               :key="capsule.id"
               class="rowItem"
               :class="{ active: capsule.id === selectedCapsuleId }"
@@ -317,6 +325,9 @@
 
             <div v-if="capsules.length === 0" class="empty">
               아직 캡슐이 없어요. 오른쪽에서 첫 회고 캡슐을 만들어보세요.
+            </div>
+            <div v-else-if="filteredCapsules.length === 0" class="empty">
+              검색 결과가 없어요.
             </div>
           </div>
 
@@ -590,6 +601,7 @@ const compareQ = ref<string>("");
 const compareSearch = ref<string>("");
 
 const addSuggestSearch = ref<string>("");
+const capsuleSearch = ref<string>("");
 const capsuleError = ref<string>("");
 const capsuleNotice = ref<string>("");
 
@@ -694,6 +706,23 @@ const capsuleStats = computed(() => {
     map.set(card.capsuleId, prev);
   }
   return map;
+});
+
+const filteredCapsules = computed(() => {
+  const query = capsuleSearch.value.trim().toLowerCase();
+  if (!query) return capsules.value;
+
+  return capsules.value.filter((capsule) => {
+    const haystack = [
+      capsule.title,
+      capsule.description ?? "",
+      capsule.type,
+    ]
+      .join("\n")
+      .toLowerCase();
+
+    return haystack.includes(query);
+  });
 });
 
 const selectedCapsule = computed(() => {
@@ -1477,6 +1506,11 @@ button:disabled {
   border-radius: 12px;
   border: 1px solid #d1d5db;
   outline: none;
+}
+
+.capsuleSearch {
+  margin-left: 0;
+  width: 100%;
 }
 
 .layout3 {
