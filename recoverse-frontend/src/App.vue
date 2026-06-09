@@ -472,22 +472,24 @@ import {
   type CapsuleCard,
   type CapsuleType,
   type ReviewEntryV2 as ReviewEntry,
+  loadEntries,
+  saveEntries,
+  loadCapsuleData,
+  saveCapsuleData,
+} from "./lib/recoverseStore";
+import { exportCapsuleBackup, importCapsuleBackup } from "./lib/capsuleImportExport";
+import { createCapsule } from "./lib/capsuleActions";
+import { capsuleTemplates } from "./lib/capsuleTemplates";
+import {
   addEntry,
   updateEntry,
   deleteEntry,
-  loadEntries,
-  saveEntries,
   exportBackup,
   importBackup,
   getQuestionBank,
   buildQuestionTimeline,
   clonePrevYearQuestions,
-  capsuleTemplates,
-  createCapsule,
-  loadCapsuleData,
-  saveCapsuleData,
-} from "./lib/recoverseStore";
-import { exportCapsuleBackup, importCapsuleBackup } from "./lib/capsuleImportExport";
+} from "./lib/reviewEntryActions";
 
 type Mode = "year" | "compare" | "add" | "capsules";
 
