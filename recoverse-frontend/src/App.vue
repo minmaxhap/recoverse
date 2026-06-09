@@ -395,6 +395,9 @@
           <div v-else class="addWrap">
             <div class="detailBlock">
               <h3 class="noWrap">{{ selectedCapsule.title }}</h3>
+              <div class="btnRow">
+                <button class="danger" @click="deleteSelectedCapsule">캡슐 삭제</button>
+              </div>
               <div class="chips">
                 <button
                   v-for="card in selectedCapsuleCards"
@@ -429,6 +432,7 @@
 
               <div v-if="selectedCapsuleCard" class="btnRow">
                 <button class="primary" @click="saveSelectedCapsuleCard">질문 저장</button>
+                <button class="danger" @click="deleteSelectedCapsuleCard">질문 삭제</button>
               </div>
 
               <div v-else class="empty">
@@ -897,6 +901,46 @@ function saveSelectedCapsuleCard() {
   );
   capsuleError.value = "";
   capsuleNotice.value = "질문 카드를 저장했어요.";
+  syncCapsuleStorage();
+}
+
+function deleteSelectedCapsuleCard() {
+  const card = selectedCapsuleCard.value;
+  if (!card) return;
+  if (!confirm("이 질문 카드를 삭제할까요?")) return;
+
+  capsuleCards.value = capsuleCards.value.filter((item) => item.id !== card.id);
+  const nextCard = selectedCapsuleCards.value.find((item) => item.id !== card.id) ?? null;
+  selectedCapsuleCardId.value = nextCard?.id ?? null;
+  if (nextCard) startCapsuleCardEdit(nextCard);
+  else resetCapsuleCardForm();
+
+  capsuleError.value = "";
+  capsuleNotice.value = "질문 카드를 삭제했어요.";
+  syncCapsuleStorage();
+}
+
+function deleteSelectedCapsule() {
+  const capsule = selectedCapsule.value;
+  if (!capsule) return;
+  if (!confirm(`"${capsule.title}" 캡슐과 그 안의 질문 카드를 삭제할까요?`)) return;
+
+  capsules.value = capsules.value.filter((item) => item.id !== capsule.id);
+  capsuleCards.value = capsuleCards.value.filter((card) => card.capsuleId !== capsule.id);
+
+  const nextCapsule = capsules.value[0] ?? null;
+  selectedCapsuleId.value = nextCapsule?.id ?? null;
+  const nextCard = nextCapsule
+    ? capsuleCards.value
+        .filter((card) => card.capsuleId === nextCapsule.id)
+        .sort((a, b) => a.order - b.order)[0]
+    : null;
+  selectedCapsuleCardId.value = nextCard?.id ?? null;
+  if (nextCard) startCapsuleCardEdit(nextCard);
+  else resetCapsuleCardForm();
+
+  capsuleError.value = "";
+  capsuleNotice.value = "캡슐을 삭제했어요.";
   syncCapsuleStorage();
 }
 
