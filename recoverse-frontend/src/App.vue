@@ -281,16 +281,15 @@
         <section class="panel">
           <div class="panelHead">
             <h2 class="noWrap">{{ t.retrospectiveCapsules }}</h2>
-            <div class="headBtns">
-              <button class="ghost" @click="onExportCapsules" :disabled="capsules.length === 0">
-                {{ t.exportCapsules }}
-              </button>
-              <label class="file smallFile">
-                {{ t.importCapsules }}
-                <input type="file" accept="application/json" @change="onImportCapsuleFile" />
-              </label>
-              <button class="ghost" @click="refreshCapsules">{{ t.refresh }}</button>
-            </div>
+            <CapsuleToolbar
+              :export-label="t.exportCapsules"
+              :import-label="t.importCapsules"
+              :refresh-label="t.refresh"
+              :export-disabled="capsules.length === 0"
+              @export="onExportCapsules"
+              @import-file="onImportCapsuleFile"
+              @refresh="refreshCapsules"
+            />
           </div>
 
           <div class="panelHead">
@@ -576,6 +575,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
 import LanguageSelector from "./components/LanguageSelector.vue";
+import CapsuleToolbar from "./components/CapsuleToolbar.vue";
 import CapsuleProgress from "./components/CapsuleProgress.vue";
 import CapsuleQuestionCompare from "./components/CapsuleQuestionCompare.vue";
 import {
@@ -1655,12 +1655,6 @@ button:disabled {
   font-size: 14px;
   font-weight: 800;
   min-width: 0;
-}
-
-.headBtns {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
 }
 
 .panelFoot {
