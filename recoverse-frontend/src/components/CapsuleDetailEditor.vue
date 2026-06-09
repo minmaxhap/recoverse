@@ -252,7 +252,15 @@ textarea {
   color: #111;
 }
 
+input:focus,
+textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(60, 47, 36, 0.12);
+}
+
 textarea {
+  min-height: 180px;
+  line-height: 1.6;
   resize: vertical;
 }
 
