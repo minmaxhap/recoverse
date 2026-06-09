@@ -117,7 +117,7 @@
   - 난이도: 중
   - 위험도: 낮음
   - 내용: 오늘의 발견, 오래된 답변 일부, 다시 열어보기 액션을 담당하게 한다.
-- [ ] `CapsuleListSection`과 `CapsuleListItem` 분리
+- [x] `CapsuleListSection`과 `CapsuleListItem` 분리
   - 난이도: 중
   - 위험도: 낮음
   - 내용: 지도 아래의 내 캡슐 목록을 보조 탐색 영역으로 분리한다.

@@ -19,7 +19,7 @@
         @open="$emit('open-discovery')"
       />
 
-      <CapsuleList
+      <CapsuleListSection
         :search="capsuleSearch"
         :capsules="capsules"
         :filtered-capsules="filteredCapsules"
@@ -86,7 +86,7 @@
 <script setup lang="ts">
 import CapsuleCreateForm from "../components/CapsuleCreateForm.vue";
 import CapsuleDetailEditor from "../components/CapsuleDetailEditor.vue";
-import CapsuleList from "../components/CapsuleList.vue";
+import CapsuleListSection from "../components/CapsuleListSection.vue";
 import CapsuleQuestionCompare from "../components/CapsuleQuestionCompare.vue";
 import DiscoveryCard from "../components/DiscoveryCard.vue";
 import HomeHeader from "../components/HomeHeader.vue";
