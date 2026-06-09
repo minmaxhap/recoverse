@@ -26,18 +26,21 @@
 
 목표: `App.vue`의 기존 모드와 화면 책임을 새 IA 기준으로 매핑한다. 이 단계에서는 기능을 삭제하지 않는다.
 
-- [ ] 현재 `mode` 값(`capsules`, `add`, `year`, `compare`)이 담당하는 UI와 상태를 목록화
+- [x] 현재 `mode` 값(`capsules`, `add`, `year`, `compare`)이 담당하는 UI와 상태를 목록화
   - 난이도: 하
   - 위험도: 낮음
   - 내용: 어떤 기능이 홈, 행성 상세, 아카이브/설정으로 이동해야 하는지 코드 기준으로 확인한다.
-- [ ] 새 화면 이름 후보 확정: `home-universe`, `planet-detail`, `galaxy-detail`, `observation`, `archive-settings`
+  - 확인: `recoverse-frontend/src/lib/appScreens.ts`에 현재 모드와 목표 화면의 매핑을 추가했다.
+- [x] 새 화면 이름 후보 확정: `home-universe`, `planet-detail`, `galaxy-detail`, `observation`, `archive-settings`
   - 난이도: 하
   - 위험도: 낮음
   - 내용: 실제 구현 전 이름과 책임을 먼저 고정한다.
-- [ ] 기존 기능 삭제 없이 이동 대상 표를 코드 주석 또는 문서에 반영
+  - 확인: `AppMode`, `FutureScreenId`, `AppModePlan` 타입으로 이름을 고정했다.
+- [x] 기존 기능 삭제 없이 이동 대상 표를 코드 주석 또는 문서에 반영
   - 난이도: 하
   - 위험도: 낮음
   - 내용: 빠른 입력, 연도 보기, 질문 비교, JSON 관리, 언어 설정의 이동 위치를 명확히 한다.
+  - 확인: `App.vue`에 archive mode 주석과 모드별 이동 설명 title을 반영했다.
 
 ### 14단계: 아카이브/설정 화면 경계 만들기
 

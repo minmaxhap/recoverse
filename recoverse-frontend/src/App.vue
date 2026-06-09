@@ -11,10 +11,34 @@
       </div>
 
       <nav class="tabs">
-        <button :class="{ on: mode === 'capsules' }" @click="setMode('capsules')">{{ t.capsules }}</button>
-        <button :class="{ on: mode === 'add' }" @click="setMode('add')">빠른 입력</button>
-        <button :class="{ on: mode === 'year' }" @click="setMode('year')">연도 보기</button>
-        <button :class="{ on: mode === 'compare' }" @click="setMode('compare')">질문 비교</button>
+        <button
+          :class="{ on: mode === 'home-universe' }"
+          :title="modePlanById['home-universe'].note"
+          @click="setMode('home-universe')"
+        >
+          {{ t.capsules }}
+        </button>
+        <button
+          :class="{ on: mode === 'quick-entry-archive' }"
+          :title="modePlanById['quick-entry-archive'].note"
+          @click="setMode('quick-entry-archive')"
+        >
+          빠른 입력
+        </button>
+        <button
+          :class="{ on: mode === 'year-archive' }"
+          :title="modePlanById['year-archive'].note"
+          @click="setMode('year-archive')"
+        >
+          연도 보기
+        </button>
+        <button
+          :class="{ on: mode === 'question-compare-archive' }"
+          :title="modePlanById['question-compare-archive'].note"
+          @click="setMode('question-compare-archive')"
+        >
+          질문 비교
+        </button>
       </nav>
 
       <div class="actions">
@@ -30,8 +54,8 @@
 
     <!-- Main -->
     <main class="main">
-      <!-- Mode: YEAR -->
-      <section v-if="mode === 'year'" class="layout3">
+      <!-- Archive mode: year tools stay available until ArchiveSettingsView is introduced. -->
+      <section v-if="mode === 'year-archive'" class="layout3">
         <!-- Left: Years -->
         <aside class="panel">
           <div class="panelHead">
@@ -204,8 +228,8 @@
         </section>
       </section>
 
-      <!-- Mode: COMPARE -->
-      <section v-else-if="mode === 'compare'" class="layoutCompare">
+      <!-- Archive mode: comparison stays intact, but is treated as an archive tool now. -->
+      <section v-else-if="mode === 'question-compare-archive'" class="layoutCompare">
         <aside class="panel">
           <div class="panelHead">
             <h2 class="noWrap">질문 선택</h2>
@@ -239,7 +263,7 @@
           <div class="panelHead">
             <h2 class="noWrap">연도별 답</h2>
             <div class="headBtns">
-              <button class="ghost" @click="setMode('capsules')">캡슐 홈으로</button>
+              <button class="ghost" @click="setMode('home-universe')">캡슐 홈으로</button>
             </div>
           </div>
 
@@ -278,7 +302,7 @@
 
       <!-- Mode: CAPSULES -->
       <HomePage
-        v-else-if="mode === 'capsules'"
+        v-else-if="mode === 'home-universe'"
         v-model:capsule-search="capsuleSearch"
         v-model:show-unanswered-cards-only="showUnansweredCardsOnly"
         brand-label="Recoverse"
@@ -344,12 +368,13 @@
       />
 
       <!-- Mode: ADD -->
-      <section v-else-if="mode === 'add'" class="layoutAdd">
+      <!-- Archive mode: quick entry remains, but is no longer named as a primary screen. -->
+      <section v-else-if="mode === 'quick-entry-archive'" class="layoutAdd">
         <section class="panel">
           <div class="panelHead">
             <h2 class="noWrap">빠른 입력</h2>
             <div class="headBtns">
-              <button class="ghost" @click="setMode('capsules')">캡슐 홈으로</button>
+              <button class="ghost" @click="setMode('home-universe')">캡슐 홈으로</button>
             </div>
           </div>
 
@@ -479,8 +504,7 @@ import {
   buildQuestionTimeline,
   clonePrevYearQuestions,
 } from "./lib/reviewEntryActions";
-
-type Mode = "year" | "compare" | "add" | "capsules";
+import { appModePlans, type AppMode } from "./lib/appScreens";
 
 const LANGUAGE_KEY = "recoverse_language";
 
@@ -635,7 +659,11 @@ const capsules = ref<Capsule[]>([]);
 const capsuleCards = ref<CapsuleCard[]>([]);
 const selectedCapsuleId = ref<string | null>(null);
 const selectedCapsuleCardId = ref<string | null>(null);
-const mode = ref<Mode>("capsules");
+const mode = ref<AppMode>("home-universe");
+const modePlanById = Object.fromEntries(appModePlans.map((plan) => [plan.id, plan])) as Record<
+  AppMode,
+  (typeof appModePlans)[number]
+>;
 
 const selectedYear = ref<number>(2016);
 const selectedId = ref<string | null>(null);
@@ -848,23 +876,23 @@ const discoveryAnswerPreview = computed(() => {
   return previewAnswers(discoveryCard.value.answers);
 });
 
-function setMode(m: Mode) {
+function setMode(m: AppMode) {
   mode.value = m;
   errorMsg.value = "";
   capsuleError.value = "";
   capsuleNotice.value = "";
 
-  if (m === "add") {
+  if (m === "quick-entry-archive") {
     form.year = selectedYear.value;
     editingId.value = null;
     ensureAtLeastOneAnswerRow();
   }
 
-  if (m === "capsules") {
+  if (m === "home-universe") {
     refreshCapsules();
   }
 
-  if (m === "compare") {
+  if (m === "question-compare-archive") {
     if (!compareQ.value && questionBank.value[0]) compareQ.value = questionBank.value[0].q;
   }
 }
@@ -1203,7 +1231,7 @@ function onClonePrevYear() {
 function openCompareFromSelected() {
   if (!selectedEntry.value) return;
   compareQ.value = selectedEntry.value.q;
-  setMode("compare");
+  setMode("question-compare-archive");
 }
 
 function jumpToEdit(id: string) {
@@ -1212,7 +1240,7 @@ function jumpToEdit(id: string) {
 
   selectedYear.value = e.year;
   selectedId.value = e.id;
-  setMode("year");
+  setMode("year-archive");
   startEdit(e);
 }
 
@@ -1480,8 +1508,8 @@ function onFormKeydown(e: KeyboardEvent) {
   if (!isSubmit) return;
 
   e.preventDefault();
-  if (mode.value === "add") onAdd();
-  else if (mode.value === "year" && editingId.value) onSaveEdit();
+  if (mode.value === "quick-entry-archive") onAdd();
+  else if (mode.value === "year-archive" && editingId.value) onSaveEdit();
 }
 
 </script>
