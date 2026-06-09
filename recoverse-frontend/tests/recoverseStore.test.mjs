@@ -161,6 +161,32 @@ test("imports capsule backups by merging and skipping duplicate ids", () => {
   assert.equal(second.skippedCards, 1);
 });
 
+test("rejects invalid capsule backup JSON", () => {
+  localStorage.clear();
+
+  assert.throws(
+    () => capsuleImportExport.importCapsuleBackup("{not-json"),
+    /JSON parsing failed/
+  );
+});
+
+test("rejects unsupported capsule backup versions", () => {
+  localStorage.clear();
+
+  assert.throws(
+    () =>
+      capsuleImportExport.importCapsuleBackup(
+        JSON.stringify({
+          schema: "recoverse_capsule_v999",
+          exportedAt: "2024-01-01T00:00:00.000Z",
+          capsules: [],
+          cards: [],
+        })
+      ),
+    /Unsupported backup format/
+  );
+});
+
 test("imports legacy v2 backups as capsules", () => {
   localStorage.clear();
   localStorage.setItem("recoverse_capsule_v1", JSON.stringify({ capsules: [], cards: [] }));
