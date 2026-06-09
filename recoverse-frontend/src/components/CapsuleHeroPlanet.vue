@@ -4,7 +4,6 @@
     <div class="heroText">
       <span class="typeLabel">{{ typeLabel }}</span>
       <h3>{{ capsule.title }}</h3>
-      <p v-if="capsule.description">{{ capsule.description }}</p>
       <div class="progress">
         <span>{{ answered }} / {{ total }}</span>
         <div class="track">
@@ -107,13 +106,6 @@ h3 {
   font-size: 18px;
   line-height: 1.2;
   word-break: keep-all;
-}
-
-p {
-  margin: 0;
-  color: rgba(255, 249, 234, 0.76);
-  font-size: 12px;
-  line-height: 1.45;
 }
 
 .progress {

@@ -317,6 +317,14 @@
           empty: t.memoryMapEmpty,
           create: t.createMemoryPlanet,
         }"
+        :capsule-summary-labels="{
+          type: t.type,
+          description: t.description,
+          noDescription: t.noDescription,
+          recentlyEdited: t.recentlyEdited,
+          questions: t.questions,
+          answers: t.answers,
+        }"
         :capsule-list-labels="capsuleListLabels"
         :capsule-create-labels="capsuleCreateLabels"
         :capsule-detail-labels="capsuleDetailLabels"
@@ -503,6 +511,7 @@ const messages = {
     titlePlaceholder: "예: 20대 회고, 여행 회고",
     description: "설명",
     descriptionPlaceholder: "이 캡슐에 담고 싶은 기억",
+    noDescription: "설명이 없어요.",
     type: "유형",
     defaultQuestions: "기본 질문",
     none: "없음",
@@ -572,6 +581,7 @@ const messages = {
     titlePlaceholder: "e.g. My twenties, Travel memories",
     description: "Description",
     descriptionPlaceholder: "The memories you want to keep here",
+    noDescription: "No description.",
     type: "Type",
     defaultQuestions: "Default questions",
     none: "None",

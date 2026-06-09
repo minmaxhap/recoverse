@@ -65,6 +65,14 @@
         :type-label="selectedCapsule ? typeLabels[selectedCapsule.type] : ''"
       />
 
+      <CapsuleSummary
+        :capsule="selectedCapsule"
+        :stats="selectedCapsule ? capsuleStats.get(selectedCapsule.id) : undefined"
+        :type-label="selectedCapsule ? typeLabels[selectedCapsule.type] : ''"
+        :language="language"
+        :labels="capsuleSummaryLabels"
+      />
+
       <CapsuleDetailEditor
         :capsule="selectedCapsule"
         :cards="selectedCapsuleCards"
@@ -103,6 +111,7 @@ import CapsuleDetailEditor from "../components/CapsuleDetailEditor.vue";
 import CapsuleHeroPlanet from "../components/CapsuleHeroPlanet.vue";
 import CapsuleListSection from "../components/CapsuleListSection.vue";
 import CapsuleQuestionCompare from "../components/CapsuleQuestionCompare.vue";
+import CapsuleSummary from "../components/CapsuleSummary.vue";
 import DiscoveryCard from "../components/DiscoveryCard.vue";
 import GalaxyMap from "../components/GalaxyMap.vue";
 import HomeHeader from "../components/HomeHeader.vue";
@@ -171,6 +180,14 @@ defineProps<{
     title: string;
     empty: string;
     create: string;
+  };
+  capsuleSummaryLabels: {
+    type: string;
+    description: string;
+    noDescription: string;
+    recentlyEdited: string;
+    questions: string;
+    answers: string;
   };
   capsuleListLabels: {
     searchCapsules: string;
