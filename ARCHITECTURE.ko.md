@@ -166,3 +166,46 @@ type CloudMigrationState = {
 - 계정 전환 시 다른 사용자의 로컬 데이터를 자동 업로드하지 않는다.
 - 마이그레이션 실패 시 localStorage 원본은 유지한다.
 - 서버 저장소가 정식 도입되기 전까지는 localStorage를 단일 진실 공급원으로 유지한다.
+
+## Markdown/PDF 내보내기 데이터 포맷 초안
+
+Markdown과 PDF 내보내기는 같은 중간 문서 모델을 사용한다. 렌더러만 다르게 둔다.
+
+```ts
+type CapsuleExportDocument = {
+  schema: "recoverse_export_document_v1";
+  language: "ko" | "en";
+  exportedAt: string;
+  capsule: {
+    id: string;
+    title: string;
+    description?: string;
+    type: CapsuleType;
+    createdAt: string;
+    updatedAt: string;
+  };
+  sections: CapsuleExportSection[];
+};
+
+type CapsuleExportSection = {
+  cardId: string;
+  order: number;
+  questionText: string;
+  answers: string[];
+};
+```
+
+Markdown 출력 규칙:
+
+- 첫 줄은 `# {캡슐 제목}`으로 시작한다.
+- 설명이 있으면 제목 아래에 짧은 소개 문단으로 넣는다.
+- 질문은 `## {질문}` 제목으로 출력한다.
+- 답변은 줄 단위 목록 또는 문단으로 출력한다.
+- 빈 답변 카드는 기본적으로 제외하되, 옵션으로 포함할 수 있게 한다.
+
+PDF 출력 규칙:
+
+- PDF 렌더러는 `CapsuleExportDocument`를 입력으로 받는다.
+- 표지에는 캡슐 제목, 설명, 내보낸 날짜를 표시한다.
+- 질문 카드는 순서대로 배치한다.
+- 공유용 PDF는 읽기 전용 스냅샷에서 생성할 수 있어야 한다.

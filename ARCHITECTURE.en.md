@@ -166,3 +166,46 @@ Cautions:
 - Do not automatically upload local data after an account switch.
 - Keep the localStorage source data if migration fails.
 - Until server storage is officially introduced, localStorage remains the single source of truth.
+
+## Markdown/PDF Export Data Format Draft
+
+Markdown and PDF export should share the same intermediate document model. Only the renderer should differ.
+
+```ts
+type CapsuleExportDocument = {
+  schema: "recoverse_export_document_v1";
+  language: "ko" | "en";
+  exportedAt: string;
+  capsule: {
+    id: string;
+    title: string;
+    description?: string;
+    type: CapsuleType;
+    createdAt: string;
+    updatedAt: string;
+  };
+  sections: CapsuleExportSection[];
+};
+
+type CapsuleExportSection = {
+  cardId: string;
+  order: number;
+  questionText: string;
+  answers: string[];
+};
+```
+
+Markdown rules:
+
+- Start with `# {Capsule title}`.
+- If a description exists, place it as a short intro paragraph under the title.
+- Render each question as a `## {Question}` heading.
+- Render answers as line-based lists or paragraphs.
+- Exclude unanswered cards by default, with an option to include them later.
+
+PDF rules:
+
+- The PDF renderer receives `CapsuleExportDocument` as input.
+- The cover includes the capsule title, description, and export date.
+- Question cards are rendered in order.
+- Shared PDFs should be generatable from read-only snapshots.
