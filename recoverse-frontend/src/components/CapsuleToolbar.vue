@@ -3,6 +3,7 @@
     <button class="ghost" type="button" :disabled="exportDisabled" @click="$emit('export')">
       {{ exportLabel }}
     </button>
+    <span class="versionBadge">{{ backupVersionLabel }}</span>
     <label class="file smallFile">
       {{ importLabel }}
       <input type="file" accept="application/json" @change="$emit('import-file', $event)" />
@@ -17,6 +18,7 @@
 defineProps<{
   exportLabel: string;
   importLabel: string;
+  backupVersionLabel: string;
   refreshLabel: string;
   exportDisabled: boolean;
 }>();
@@ -52,6 +54,15 @@ button:disabled {
 
 .ghost {
   background: #fff;
+}
+
+.versionBadge {
+  align-self: center;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: 11px;
+  padding: 4px 8px;
 }
 
 .file {

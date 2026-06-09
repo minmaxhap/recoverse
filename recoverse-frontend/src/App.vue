@@ -284,6 +284,7 @@
             <CapsuleToolbar
               :export-label="t.exportCapsules"
               :import-label="t.importCapsules"
+              :backup-version-label="t.capsuleBackupVersion"
               :refresh-label="t.refresh"
               :export-disabled="capsules.length === 0"
               @export="onExportCapsules"
@@ -504,6 +505,7 @@ const messages = {
     retrospectiveCapsules: "회고 캡슐",
     exportCapsules: "캡슐 JSON 내보내기",
     importCapsules: "캡슐 JSON 가져오기",
+    capsuleBackupVersion: "백업 v1",
     refresh: "새로고침",
     searchCapsules: "캡슐 검색",
     questions: "질문",
@@ -565,6 +567,7 @@ const messages = {
     retrospectiveCapsules: "Retrospective Capsules",
     exportCapsules: "Export capsule JSON",
     importCapsules: "Import capsule JSON",
+    capsuleBackupVersion: "Backup v1",
     refresh: "Refresh",
     searchCapsules: "Search capsules",
     questions: "Questions",
