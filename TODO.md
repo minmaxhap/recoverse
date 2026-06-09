@@ -1,30 +1,106 @@
-# Recoverse Capsule MVP TODO
+# Recoverse TODO
 
-## Ground Rules
+이 문서는 `PRODUCT_SPEC.ko.md`, `DESIGN_SYSTEM.ko.md`, `ARCHITECTURE.ko.md`를 기준으로 한 작업 목록이다.
 
-- Work one small item at a time.
-- Commit after each completed item.
-- Keep the MVP local-first with `localStorage`.
-- Do not add login, cloud sync, PDF export, or sharing in this MVP pass.
+## 작업 원칙
 
-## MVP Tasks
+- 한 번에 작은 단위만 수정한다.
+- 작업 하나가 끝날 때마다 테스트 가능한 상태로 만들고 커밋한다.
+- MVP는 localStorage 기반으로 유지한다.
+- 로그인, 클라우드 저장, PDF 내보내기, 공유 링크는 현재 구현 범위에서 제외한다.
+- 화면 문구와 기본 질문은 한국어를 우선 지원하고, 제품 설정에서 한국어/영어 선택을 유지한다.
+- 문서와 README를 작성하거나 수정할 때는 한글판과 영어판을 함께 관리한다.
 
-- [x] Add capsule-first data model and localStorage helpers.
-- [x] Convert legacy year-based entries into year retrospective capsules.
-- [x] Add capsule home tab and capsule creation UI.
-- [x] Add capsule question card viewing and editing.
-- [x] Add capsule JSON export/import UI.
-- [x] Add capsule and question card deletion controls.
-- [x] Add capsule search/filter on the capsule home.
-- [x] Add capsule-level question comparison.
-- [x] Improve the "rediscover" section so it can jump to the surfaced card.
-- [x] Add empty/progress states for capsule detail.
-- [x] Split capsule logic out of `App.vue` into focused components.
-- [x] Add focused tests for capsule data import/export and legacy conversion.
-- [x] Update README with capsule MVP usage.
+## 현재 완료된 기반 작업
 
-## Refactor PR 1: Safe App.vue Split
+- [x] 캡슐 중심 데이터 모델과 localStorage 저장 구조 추가
+- [x] 기존 연도별 기록을 연도 회고 캡슐로 변환
+- [x] 캡슐 홈, 캡슐 생성, 질문 카드 편집 기능 추가
+- [x] 캡슐 JSON 내보내기/가져오기 추가
+- [x] 캡슐과 질문 카드 삭제 기능 추가
+- [x] 캡슐 검색/필터 기능 추가
+- [x] 질문별 비교 화면 추가
+- [x] 다시 발견하기 카드에서 해당 질문 카드로 이동
+- [x] 캡슐 상세 진행률/빈 상태 추가
+- [x] 캡슐 import/export와 legacy conversion 테스트 추가
+- [x] 캡슐 MVP README 작성
+- [x] 제품/디자인/아키텍처 문서 한글판과 영어판 작성
+- [x] 제품 언어 선택 설정 추가
+- [x] `LanguageSelector`를 `App.vue`에서 분리
 
-- [x] Extract language selector from `App.vue`.
-- [ ] Extract capsule toolbar controls from `App.vue`.
-- [ ] Extract capsule creation form from `App.vue`.
+## 1단계: App.vue 안전 분리
+
+목표: 기능 변경 없이 `App.vue`의 UI 덩어리를 작은 컴포넌트로 분리한다.
+
+- [ ] `CapsuleToolbar` 분리: 캡슐 JSON 내보내기, 가져오기, 새로고침 버튼
+- [ ] `CapsuleCreateForm` 분리: 캡슐 제목, 설명, 유형, 기본 질문 템플릿 입력
+- [ ] `CapsuleList` 분리: 캡슐 검색 결과 목록과 빈 상태
+- [ ] `RediscoverCard` 분리: 다시 발견하기 카드
+- [ ] `CapsuleDetailEditor` 분리: 선택된 캡슐의 질문 카드와 답변 편집 영역
+
+## 2단계: 화면 구조 정리
+
+목표: 제품 명세의 핵심 화면인 홈과 캡슐 상세를 코드 구조에서도 분리한다.
+
+- [ ] `views/HomeView.vue` 생성
+- [ ] `views/CapsuleDetailView.vue` 생성
+- [ ] 홈 화면에 다시 발견하기 카드와 내 캡슐 목록을 우선 배치
+- [ ] 모바일 우선 레이아웃을 기준으로 PC에서는 목록/상세를 나란히 표시
+- [ ] 기존 연도 보기와 질문 비교 화면의 위치를 재검토하고 캡슐 중심 메뉴로 정리
+
+## 3단계: 데이터/도메인 구조 분리
+
+목표: 공유, 백업, 템플릿 확장을 고려해 도메인 로직을 UI에서 분리한다.
+
+- [ ] `types/recoverse.ts`로 Capsule, CapsuleCard, Backup 타입 이동
+- [ ] `lib/capsuleTemplates.ts`로 기본 질문 템플릿 이동
+- [ ] `lib/capsuleImportExport.ts`로 JSON import/export 로직 이동
+- [ ] `recoverseStore.ts`는 저장소 읽기/쓰기와 migration 중심으로 축소
+- [ ] import 실패, 중복 데이터, 버전 불일치 케이스 테스트 보강
+
+## 4단계: 디자인 시스템 적용
+
+목표: 타임캡슐, 종이 편지, 개인 아카이브 감성을 일관된 UI로 만든다.
+
+- [ ] 색상 토큰 정리: 따뜻한 배경, 종이 느낌 표면, 잉크 계열 텍스트
+- [ ] 카드, 버튼, 입력, 배지, 진행률의 공통 스타일 정리
+- [ ] Home 와이어프레임 기준으로 모바일 첫 화면 재구성
+- [ ] PC 화면에서 목록과 상세 영역의 정보 밀도 조정
+- [ ] 귀여운 캐릭터 요소는 보조 장식으로만 사용할 수 있는 위치 정의
+
+## 5단계: 기록 경험 개선
+
+목표: 기록을 쉽게 남기고 나중에 잊은 기억을 다시 발견하는 경험을 강화한다.
+
+- [ ] 새 질문 카드 추가 흐름 단순화
+- [ ] 답변 저장 피드백 개선
+- [ ] 최근 수정한 질문 카드 표시
+- [ ] 미답변 질문 카드만 보기 필터 추가
+- [ ] 다시 발견하기 카드의 선택 기준 개선
+
+## 6단계: 백업과 가져오기 개선
+
+목표: 사용자가 내려받았던 기록을 안전하게 다시 가져올 수 있게 한다.
+
+- [ ] 백업 파일 버전 표시
+- [ ] 가져오기 전 미리보기: 추가될 캡슐 수, 질문 카드 수, 중복 수 표시
+- [ ] 가져오기 후 결과 메시지 개선
+- [ ] 잘못된 JSON 파일과 지원하지 않는 버전의 오류 메시지 개선
+- [ ] 기존 연도별 백업 파일 import 경로 유지 확인
+
+## 7단계: 후순위 확장 준비
+
+현재 구현하지 않지만 구조가 막히지 않도록 준비한다.
+
+- [ ] 공유용 읽기 전용 데이터 모델 초안 작성
+- [ ] 비밀번호 링크 공유에 필요한 필드 후보 정리
+- [ ] 로그인/클라우드 저장 도입 시 localStorage migration 전략 정리
+- [ ] Markdown/PDF 내보내기 데이터 포맷 초안 작성
+
+## 현재 제외 범위
+
+- [ ] 로그인 구현
+- [ ] 클라우드 저장 구현
+- [ ] 친구 공개/공유 링크 구현
+- [ ] PDF 내보내기 구현
+- [ ] 실시간 동기화 구현
