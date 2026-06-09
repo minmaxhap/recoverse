@@ -28,16 +28,10 @@
         @start-create="$emit('reset-capsule-form')"
       />
 
-      <CapsuleListSection
-        :search="capsuleSearch"
-        :capsules="capsules"
-        :filtered-capsules="filteredCapsules"
-        :selected-capsule-id="selectedCapsuleId"
-        :stats="capsuleStats"
-        :type-labels="typeLabels"
-        :labels="capsuleListLabels"
-        @update:search="$emit('update:capsuleSearch', $event)"
-        @select="$emit('select-capsule', $event)"
+      <HomeArchiveBridge
+        :count="capsules.length"
+        :labels="archiveBridgeLabels"
+        @open-archive="$emit('open-archive')"
       />
     </section>
 
@@ -110,12 +104,12 @@
 import CapsuleCreateForm from "../components/CapsuleCreateForm.vue";
 import CapsuleDetailEditor from "../components/CapsuleDetailEditor.vue";
 import CapsuleHeroPlanet from "../components/CapsuleHeroPlanet.vue";
-import CapsuleListSection from "../components/CapsuleListSection.vue";
 import CapsuleQuestionCompare from "../components/CapsuleQuestionCompare.vue";
 import CapsuleSummary from "../components/CapsuleSummary.vue";
 import DiscoveryCard from "../components/DiscoveryCard.vue";
 import GalaxyMap from "../components/GalaxyMap.vue";
 import HomeHeader from "../components/HomeHeader.vue";
+import HomeArchiveBridge from "../components/HomeArchiveBridge.vue";
 import type {
   AppLanguage,
   Capsule,
@@ -197,6 +191,13 @@ defineProps<{
     noCapsules: string;
     noSearchResults: string;
   };
+  archiveBridgeLabels: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    count: string;
+    open: string;
+  };
   capsuleCreateLabels: {
     title: string;
     titlePlaceholder: string;
@@ -234,6 +235,7 @@ defineEmits<{
   "import-file": [event: Event];
   refresh: [];
   "open-discovery": [];
+  "open-archive": [];
   "select-capsule": [capsuleId: string];
   "create-capsule": [];
   "reset-capsule-form": [];

@@ -58,6 +58,18 @@
           :plans="archiveModePlans"
           @select="setMode($event)"
         />
+        <ArchiveCapsuleShelf
+          :search="capsuleSearch"
+          :capsules="capsules"
+          :filtered-capsules="filteredCapsules"
+          :selected-capsule-id="selectedCapsuleId"
+          :stats="capsuleStats"
+          :type-labels="t.typeLabels"
+          :list-labels="capsuleListLabels"
+          :labels="archiveShelfLabels"
+          @update:search="capsuleSearch = $event"
+          @select="openCapsuleFromArchive"
+        />
       <section class="layout3">
         <!-- Left: Years -->
         <aside class="panel">
@@ -259,6 +271,18 @@
           :plans="archiveModePlans"
           @select="setMode($event)"
         />
+        <ArchiveCapsuleShelf
+          :search="capsuleSearch"
+          :capsules="capsules"
+          :filtered-capsules="filteredCapsules"
+          :selected-capsule-id="selectedCapsuleId"
+          :stats="capsuleStats"
+          :type-labels="t.typeLabels"
+          :list-labels="capsuleListLabels"
+          :labels="archiveShelfLabels"
+          @update:search="capsuleSearch = $event"
+          @select="openCapsuleFromArchive"
+        />
       <section class="layoutCompare">
         <aside class="panel">
           <div class="panelHead">
@@ -381,12 +405,14 @@
           answers: t.answers,
         }"
         :capsule-list-labels="capsuleListLabels"
+        :archive-bridge-labels="archiveBridgeLabels"
         :capsule-create-labels="capsuleCreateLabels"
         :capsule-detail-labels="capsuleDetailLabels"
         @export="onExportCapsules"
         @import-file="onImportCapsuleFile"
         @refresh="refreshCapsules"
         @open-discovery="openDiscoveryCard"
+        @open-archive="openArchiveSettings"
         @select-capsule="selectCapsule"
         @create-capsule="onCreateCapsule"
         @reset-capsule-form="resetCapsuleForm"
@@ -425,6 +451,18 @@
           :active-mode="activeArchiveMode"
           :plans="archiveModePlans"
           @select="setMode($event)"
+        />
+        <ArchiveCapsuleShelf
+          :search="capsuleSearch"
+          :capsules="capsules"
+          :filtered-capsules="filteredCapsules"
+          :selected-capsule-id="selectedCapsuleId"
+          :stats="capsuleStats"
+          :type-labels="t.typeLabels"
+          :list-labels="capsuleListLabels"
+          :labels="archiveShelfLabels"
+          @update:search="capsuleSearch = $event"
+          @select="openCapsuleFromArchive"
         />
       <section class="layoutAdd">
         <section class="panel">
@@ -524,6 +562,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
+import ArchiveCapsuleShelf from "./components/ArchiveCapsuleShelf.vue";
 import ArchiveSectionTabs from "./components/ArchiveSectionTabs.vue";
 import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
 import ArchiveSettingsView from "./views/ArchiveSettingsView.vue";
@@ -578,6 +617,12 @@ const messages = {
     language: "언어",
     capsules: "캡슐",
     archive: "아카이브",
+    archiveCapsulesEyebrow: "행성 보관함",
+    archiveCapsulesTitle: "내 기억 행성은 아카이브에서 관리해요",
+    archiveCapsulesDescription:
+      "행성 검색과 선택은 이 보관함으로 옮기는 중이에요. 행성을 고르면 다시 기억 우주와 상세 편집으로 돌아가요.",
+    archiveCount: "전체 행성",
+    openArchive: "아카이브 열기",
     memoryUniverse: "나의 기억 우주",
     retrospectiveCapsules: "회고 캡슐",
     exportCapsules: "캡슐 JSON 내보내기",
@@ -649,6 +694,12 @@ const messages = {
     language: "Language",
     capsules: "Capsules",
     archive: "Archive",
+    archiveCapsulesEyebrow: "Planet Archive",
+    archiveCapsulesTitle: "Manage memory planets from the archive",
+    archiveCapsulesDescription:
+      "Planet search and selection are moving here. Picking a planet returns you to the universe view and detail editor.",
+    archiveCount: "Planets",
+    openArchive: "Open archive",
     memoryUniverse: "My Memory Universe",
     retrospectiveCapsules: "Retrospective Capsules",
     exportCapsules: "Export capsule JSON",
@@ -810,6 +861,18 @@ const capsuleListLabels = computed(() => ({
   answers: t.value.answers,
   noCapsules: t.value.noCapsules,
   noSearchResults: t.value.noSearchResults,
+}));
+const archiveShelfLabels = computed(() => ({
+  eyebrow: t.value.archiveCapsulesEyebrow,
+  title: t.value.archiveCapsulesTitle,
+  description: t.value.archiveCapsulesDescription,
+}));
+const archiveBridgeLabels = computed(() => ({
+  eyebrow: t.value.archiveCapsulesEyebrow,
+  title: t.value.archiveCapsulesTitle,
+  description: t.value.archiveCapsulesDescription,
+  count: t.value.archiveCount,
+  open: t.value.openArchive,
 }));
 
 const discoveryLabels = computed(() => ({
@@ -1038,6 +1101,11 @@ function selectCapsule(id: string) {
   selectedCapsuleCardId.value = firstCard?.id ?? null;
   if (firstCard) startCapsuleCardEdit(firstCard);
   else resetCapsuleCardForm();
+}
+
+function openCapsuleFromArchive(id: string) {
+  selectCapsule(id);
+  setMode("home-universe");
 }
 
 function selectCapsuleCard(id: string) {
