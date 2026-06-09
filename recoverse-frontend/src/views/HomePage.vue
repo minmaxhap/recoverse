@@ -19,6 +19,13 @@
         @open="$emit('open-discovery')"
       />
 
+      <GalaxyMap
+        :items="homeCapsuleItems"
+        :selected-capsule-id="selectedCapsuleId"
+        :labels="galaxyMapLabels"
+        @select="$emit('select-capsule', $event)"
+      />
+
       <CapsuleListSection
         :search="capsuleSearch"
         :capsules="capsules"
@@ -89,6 +96,7 @@ import CapsuleDetailEditor from "../components/CapsuleDetailEditor.vue";
 import CapsuleListSection from "../components/CapsuleListSection.vue";
 import CapsuleQuestionCompare from "../components/CapsuleQuestionCompare.vue";
 import DiscoveryCard from "../components/DiscoveryCard.vue";
+import GalaxyMap from "../components/GalaxyMap.vue";
 import HomeHeader from "../components/HomeHeader.vue";
 import type {
   AppLanguage,
@@ -150,6 +158,10 @@ defineProps<{
     title: string;
     empty: string;
     open: string;
+  };
+  galaxyMapLabels: {
+    title: string;
+    empty: string;
   };
   capsuleListLabels: {
     searchCapsules: string;

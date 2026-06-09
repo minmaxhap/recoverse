@@ -312,6 +312,7 @@
           refresh: t.refresh,
         }"
         :discovery-labels="discoveryLabels"
+        :galaxy-map-labels="{ title: t.memoryMap, empty: t.memoryMapEmpty }"
         :capsule-list-labels="capsuleListLabels"
         :capsule-create-labels="capsuleCreateLabels"
         :capsule-detail-labels="capsuleDetailLabels"
@@ -488,6 +489,8 @@ const messages = {
     noSearchResults: "검색 결과가 없어요.",
     todayDiscovery: "오늘의 발견",
     openDiscovery: "다시 열어보기",
+    memoryMap: "기억 지도",
+    memoryMapEmpty: "아직 떠 있는 기억 행성이 없어요. 새 캡슐을 만들면 이곳에 나타나요.",
     rediscover: "다시 발견하기",
     rediscoverEmpty: "답변이 쌓이면 오래된 질문을 다시 꺼내 보여줄 수 있어요.",
     createCapsule: "새 캡슐 만들기",
@@ -554,6 +557,8 @@ const messages = {
     noSearchResults: "No results found.",
     todayDiscovery: "Today's Discovery",
     openDiscovery: "Open again",
+    memoryMap: "Memory Map",
+    memoryMapEmpty: "No memory planets yet. Create a capsule and it will appear here.",
     rediscover: "Rediscover",
     rediscoverEmpty: "Once answers build up, old questions can resurface here.",
     createCapsule: "Create Capsule",
