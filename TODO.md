@@ -20,5 +20,5 @@
 - [x] Improve the "rediscover" section so it can jump to the surfaced card.
 - [x] Add empty/progress states for capsule detail.
 - [x] Split capsule logic out of `App.vue` into focused components.
-- [ ] Add focused tests for capsule data import/export and legacy conversion.
+- [x] Add focused tests for capsule data import/export and legacy conversion.
 - [ ] Update README with capsule MVP usage.
