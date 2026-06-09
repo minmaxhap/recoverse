@@ -7,11 +7,12 @@ export type FutureScreenId =
 
 export type AppMode =
   | "home-universe"
+  | "planet-detail"
   | "quick-entry-archive"
   | "year-archive"
   | "question-compare-archive";
 
-export type ArchiveModeId = Exclude<AppMode, "home-universe">;
+export type ArchiveModeId = Exclude<AppMode, "home-universe" | "planet-detail">;
 
 export type AppModePlan = {
   id: AppMode;
@@ -26,7 +27,13 @@ export const appModePlans: AppModePlan[] = [
     id: "home-universe",
     targetScreen: "home-universe",
     title: "기억 우주 홈",
-    note: "현재는 홈 안에 개인 행성 상세가 함께 있지만, 이후 PlanetDetailView로 분리한다.",
+    note: "오늘의 발견, 우주 지도, 아카이브 진입만 남기는 모바일 우선 홈이다.",
+  },
+  {
+    id: "planet-detail",
+    targetScreen: "planet-detail",
+    title: "기억 행성 상세",
+    note: "선택된 개인 행성의 탐사 기록과 탐사 로그를 편집하는 화면이다.",
   },
   {
     id: "quick-entry-archive",

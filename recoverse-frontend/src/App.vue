@@ -12,14 +12,14 @@
 
       <nav class="tabs">
         <button
-          :class="{ on: mode === 'home-universe' }"
+          :class="{ on: mode === 'home-universe' || mode === 'planet-detail' }"
           :title="modePlanById['home-universe'].note"
           @click="setMode('home-universe')"
         >
           {{ t.capsules }}
         </button>
         <button
-          :class="{ on: mode !== 'home-universe' }"
+          :class="{ on: isArchiveMode(mode) }"
           :title="activeArchiveModePlan.note"
           @click="openArchiveSettings()"
         >
@@ -358,33 +358,14 @@
       <!-- Mode: CAPSULES -->
       <HomeUniverseView
         v-else-if="mode === 'home-universe'"
-        v-model:capsule-search="capsuleSearch"
-        v-model:show-unanswered-cards-only="showUnansweredCardsOnly"
         brand-label="Recoverse"
         :title="t.memoryUniverse"
-        :create-capsule-title="t.createCapsule"
-        :show-create-composer="showCreateComposer"
-        :language="language"
         :capsules="capsules"
-        :capsule-cards="capsuleCards"
-        :filtered-capsules="filteredCapsules"
         :home-capsule-items="homeCapsuleItems"
         :selected-capsule-id="selectedCapsuleId"
-        :selected-capsule="selectedCapsule"
-        :selected-capsule-cards="selectedCapsuleCards"
-        :selected-capsule-card="selectedCapsuleCard"
-        :selected-capsule-card-id="selectedCapsuleCardId"
-        :recently-edited-capsule-card-id="recentlyEditedCapsuleCardId"
-        :capsule-stats="capsuleStats"
         :discovery-card="discoveryCard"
         :discovery-capsule-title="discoveryCapsuleTitle"
         :discovery-answer-preview="discoveryAnswerPreview"
-        :capsule-form="capsuleForm"
-        :capsule-card-form="capsuleCardForm"
-        :capsule-templates="capsuleTemplates"
-        :capsule-error="capsuleError"
-        :capsule-notice="capsuleNotice"
-        :type-labels="t.typeLabels"
         :toolbar-labels="{
           exportCapsules: t.exportCapsules,
           importCapsules: t.importCapsules,
@@ -397,6 +378,38 @@
           empty: t.memoryMapEmpty,
           create: t.createMemoryPlanet,
         }"
+        :archive-bridge-labels="archiveBridgeLabels"
+        @export="onExportCapsules"
+        @import-file="onImportCapsuleFile"
+        @refresh="refreshCapsules"
+        @open-discovery="openDiscoveryCard"
+        @open-archive="openArchiveSettings"
+        @open-create-flow="openCreateFlow"
+        @select-capsule="selectCapsule"
+      />
+
+      <PlanetDetailView
+        v-else-if="mode === 'planet-detail'"
+        v-model:show-unanswered-cards-only="showUnansweredCardsOnly"
+        :create-capsule-title="t.createCapsule"
+        :show-create-composer="showCreateComposer"
+        :language="language"
+        :capsules="capsules"
+        :capsule-cards="capsuleCards"
+        :selected-capsule="selectedCapsule"
+        :selected-capsule-cards="selectedCapsuleCards"
+        :selected-capsule-card="selectedCapsuleCard"
+        :selected-capsule-card-id="selectedCapsuleCardId"
+        :recently-edited-capsule-card-id="recentlyEditedCapsuleCardId"
+        :capsule-stats="capsuleStats"
+        :capsule-form="capsuleForm"
+        :capsule-card-form="capsuleCardForm"
+        :capsule-templates="capsuleTemplates"
+        :capsule-error="capsuleError"
+        :capsule-notice="capsuleNotice"
+        :type-labels="t.typeLabels"
+        :create-entry-labels="createEntryLabels"
+        :capsule-create-labels="capsuleCreateLabels"
         :capsule-summary-labels="{
           type: t.type,
           description: t.description,
@@ -405,19 +418,10 @@
           questions: t.questions,
           answers: t.answers,
         }"
-        :capsule-list-labels="capsuleListLabels"
-        :archive-bridge-labels="archiveBridgeLabels"
-        :create-entry-labels="createEntryLabels"
-        :capsule-create-labels="capsuleCreateLabels"
         :capsule-detail-labels="capsuleDetailLabels"
-        @export="onExportCapsules"
-        @import-file="onImportCapsuleFile"
-        @refresh="refreshCapsules"
-        @open-discovery="openDiscoveryCard"
-        @open-archive="openArchiveSettings"
+        @back-home="setMode('home-universe')"
         @open-create-flow="openCreateFlow"
         @close-create-flow="closeCreateFlow"
-        @select-capsule="selectCapsule"
         @create-capsule="onCreateCapsule"
         @reset-capsule-form="resetCapsuleForm"
         @delete-capsule="deleteSelectedCapsule"
@@ -571,6 +575,7 @@ import ArchiveSectionTabs from "./components/ArchiveSectionTabs.vue";
 import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
 import ArchiveSettingsView from "./views/ArchiveSettingsView.vue";
 import HomeUniverseView from "./views/HomeUniverseView.vue";
+import PlanetDetailView from "./views/PlanetDetailView.vue";
 import {
   type AppLanguage,
   type Capsule,
@@ -858,8 +863,13 @@ const years = computed(() => {
 });
 
 const t = computed(() => messages[language.value]);
+
+function isArchiveMode(m: AppMode): m is ArchiveModeId {
+  return m === "quick-entry-archive" || m === "year-archive" || m === "question-compare-archive";
+}
+
 const activeArchiveMode = computed<ArchiveModeId>(() => {
-  return mode.value === "home-universe" ? lastArchiveMode.value : mode.value;
+  return isArchiveMode(mode.value) ? mode.value : lastArchiveMode.value;
 });
 const activeArchiveModePlan = computed(() => archiveModePlanById[activeArchiveMode.value]);
 
@@ -1050,7 +1060,7 @@ function setMode(m: AppMode) {
   capsuleError.value = "";
   capsuleNotice.value = "";
 
-  if (m !== "home-universe") {
+  if (isArchiveMode(m)) {
     lastArchiveMode.value = m;
   }
 
@@ -1060,7 +1070,7 @@ function setMode(m: AppMode) {
     ensureAtLeastOneAnswerRow();
   }
 
-  if (m === "home-universe") {
+  if (m === "home-universe" || m === "planet-detail") {
     refreshCapsules();
   }
 
@@ -1119,6 +1129,7 @@ function resetCapsuleForm() {
 function openCreateFlow() {
   resetCapsuleForm();
   showCreateComposer.value = true;
+  setMode("planet-detail");
 }
 
 function closeCreateFlow() {
@@ -1140,11 +1151,11 @@ function selectCapsule(id: string) {
   selectedCapsuleCardId.value = firstCard?.id ?? null;
   if (firstCard) startCapsuleCardEdit(firstCard);
   else resetCapsuleCardForm();
+  setMode("planet-detail");
 }
 
 function openCapsuleFromArchive(id: string) {
   selectCapsule(id);
-  setMode("home-universe");
 }
 
 function selectCapsuleCard(id: string) {
@@ -1156,6 +1167,7 @@ function selectCapsuleCard(id: string) {
 function jumpToCapsuleCard(capsuleId: string, cardId: string) {
   selectedCapsuleId.value = capsuleId;
   selectCapsuleCard(cardId);
+  setMode("planet-detail");
 }
 
 function openDiscoveryCard() {
@@ -1199,6 +1211,7 @@ function onCreateCapsule() {
     resetCapsuleForm();
     showCreateComposer.value = false;
     capsuleNotice.value = t.value.capsuleCreated;
+    setMode("planet-detail");
   } catch (err: any) {
     capsuleError.value = err?.message ?? t.value.capsuleCreateFailed;
   }
