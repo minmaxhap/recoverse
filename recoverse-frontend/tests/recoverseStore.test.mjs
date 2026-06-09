@@ -205,7 +205,7 @@ test("rejects invalid capsule backup JSON", () => {
 
   assert.throws(
     () => capsuleImportExport.importCapsuleBackup("{not-json"),
-    /JSON parsing failed/
+    /RECOVERSE_IMPORT_INVALID_JSON/
   );
 });
 
@@ -222,7 +222,7 @@ test("rejects unsupported capsule backup versions", () => {
           cards: [],
         })
       ),
-    /Unsupported backup format/
+    /RECOVERSE_IMPORT_UNSUPPORTED_VERSION/
   );
 });
 

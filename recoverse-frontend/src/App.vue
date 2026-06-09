@@ -481,6 +481,7 @@ import {
   saveCapsuleData,
 } from "./lib/recoverseStore";
 import {
+  CAPSULE_IMPORT_ERROR,
   exportCapsuleBackup,
   importCapsuleBackup,
   previewCapsuleBackupImport,
@@ -1353,6 +1354,34 @@ function buildImportResultMessage(result: ReturnType<typeof importCapsuleBackup>
   return `Import complete: added ${result.addedCapsules} capsules and ${result.addedCards} question cards. Skipped ${duplicates} duplicates.`;
 }
 
+function buildCapsuleImportErrorMessage(err: unknown): string {
+  const message = err instanceof Error ? err.message : "";
+
+  if (language.value === "ko") {
+    if (message === CAPSULE_IMPORT_ERROR.invalidJson) {
+      return "JSON 형식이 올바르지 않아요. Recoverse에서 내보낸 JSON 파일인지 확인해 주세요.";
+    }
+    if (message === CAPSULE_IMPORT_ERROR.unsupportedVersion) {
+      return "지원하지 않는 백업 버전이에요. 최신 Recoverse 백업 파일을 사용해 주세요.";
+    }
+    if (message === CAPSULE_IMPORT_ERROR.unsupportedFormat) {
+      return "Recoverse 백업 구조를 찾을 수 없어요. 캡슐 백업 또는 기존 연도별 백업 파일인지 확인해 주세요.";
+    }
+  } else {
+    if (message === CAPSULE_IMPORT_ERROR.invalidJson) {
+      return "This is not valid JSON. Please check that it was exported from Recoverse.";
+    }
+    if (message === CAPSULE_IMPORT_ERROR.unsupportedVersion) {
+      return "This backup version is not supported. Please use a recent Recoverse backup file.";
+    }
+    if (message === CAPSULE_IMPORT_ERROR.unsupportedFormat) {
+      return "Recoverse backup data was not found. Please use a capsule backup or legacy yearly backup file.";
+    }
+  }
+
+  return err instanceof Error ? err.message : t.value.unknownError;
+}
+
 async function onImportCapsuleFile(e: Event) {
   capsuleError.value = "";
   capsuleNotice.value = "";
@@ -1385,10 +1414,8 @@ async function onImportCapsuleFile(e: Event) {
     else resetCapsuleCardForm();
 
     capsuleNotice.value = buildImportResultMessage(result);
-  } catch (err: any) {
-    capsuleError.value = `${t.value.capsuleImportFailed}: ${
-      err?.message ?? t.value.unknownError
-    }`;
+  } catch (err: unknown) {
+    capsuleError.value = `${t.value.capsuleImportFailed}: ${buildCapsuleImportErrorMessage(err)}`;
   } finally {
     input.value = "";
   }

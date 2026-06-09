@@ -10,6 +10,12 @@ import type {
 } from "../types/recoverse";
 import { buildCapsuleDataFromEntries, loadCapsuleData, saveCapsuleData } from "./recoverseStore";
 
+export const CAPSULE_IMPORT_ERROR = {
+  invalidJson: "RECOVERSE_IMPORT_INVALID_JSON",
+  unsupportedVersion: "RECOVERSE_IMPORT_UNSUPPORTED_VERSION",
+  unsupportedFormat: "RECOVERSE_IMPORT_UNSUPPORTED_FORMAT",
+} as const;
+
 function safeParse<T>(s: string): T | null {
   try {
     return JSON.parse(s) as T;
@@ -121,7 +127,7 @@ export function exportCapsuleBackup(data: CapsuleData, capsuleId?: string): Blob
 
 function readCapsuleBackup(jsonText: string): CapsuleData {
   const parsed = safeParse<any>(jsonText);
-  if (!parsed) throw new Error("JSON parsing failed");
+  if (!parsed) throw new Error(CAPSULE_IMPORT_ERROR.invalidJson);
 
   if (parsed?.schema === "recoverse_capsule_v1") {
     return {
@@ -134,8 +140,17 @@ function readCapsuleBackup(jsonText: string): CapsuleData {
     };
   }
 
+  if (
+    typeof parsed?.schema === "string" &&
+    parsed.schema !== "recoverse_v2"
+  ) {
+    throw new Error(CAPSULE_IMPORT_ERROR.unsupportedVersion);
+  }
+
   const legacyEntries = Array.isArray(parsed) ? parsed : parsed?.entries;
-  if (!Array.isArray(legacyEntries)) throw new Error("Unsupported backup format");
+  if (!Array.isArray(legacyEntries)) {
+    throw new Error(CAPSULE_IMPORT_ERROR.unsupportedFormat);
+  }
 
   return buildCapsuleDataFromEntries(
     legacyEntries.map(normalizeEntry).filter(Boolean) as ReviewEntryV2[]
