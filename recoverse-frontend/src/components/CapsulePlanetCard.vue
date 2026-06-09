@@ -48,6 +48,7 @@ defineEmits<{
   width: max(var(--size), 92px);
   min-height: calc(var(--size) + 42px);
   transform: translate(-50%, -50%);
+  transition: transform 180ms ease-out;
   border: 0;
   background: transparent;
   color: #fff9ea;
@@ -57,6 +58,10 @@ defineEmits<{
   gap: 7px;
   padding: 0;
   text-align: center;
+}
+
+.planetCard:active {
+  transform: translate(-50%, -50%) scale(1.06);
 }
 
 .planetWrap {
@@ -108,6 +113,10 @@ defineEmits<{
   outline-offset: 4px;
 }
 
+.selected .planetWrap {
+  animation: planetExpand 220ms ease-out;
+}
+
 .discovered .planet {
   box-shadow: 0 0 42px rgba(244, 197, 106, 0.48);
 }
@@ -145,6 +154,20 @@ defineEmits<{
 @media (max-width: 430px) {
   .planetCard {
     width: max(var(--size), 84px);
+  }
+}
+
+@keyframes planetExpand {
+  0% {
+    transform: scale(1);
+  }
+
+  52% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
   }
 }
 </style>
