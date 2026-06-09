@@ -86,18 +86,21 @@
 
 목표: 지금 당장 서버/공유를 만들지 않고도 확장 경계를 코드 구조에 반영한다.
 
-- [ ] `GalaxyDetailView` placeholder 범위 확정
+- [x] `GalaxyDetailView` placeholder 범위 확정
   - 난이도: 중
   - 위험도: 중
   - 내용: 실제 그룹 협업 없이 은하 화면의 진입점과 빈 상태를 정의한다.
-- [ ] `ObservationModeView` placeholder 범위 확정
+  - 확인: `recoverse-frontend/src/views/GalaxyDetailView.vue` placeholder를 추가해 헤더, 멤버 행성, 공통 탐사 기록 영역 경계를 고정했다.
+- [x] `ObservationModeView` placeholder 범위 확정
   - 난이도: 중
   - 위험도: 중
   - 내용: 실제 공유 링크 없이 읽기 전용 화면 경계와 표시 규칙을 정의한다.
-- [ ] 그룹 은하와 관측 스냅샷 타입 초안의 구현 시점 결정
+  - 확인: `recoverse-frontend/src/views/ObservationModeView.vue` placeholder를 추가해 읽기 전용 헤더, 스냅샷, 권한 안내 범위를 고정했다.
+- [x] 그룹 은하와 관측 스냅샷 타입 초안의 구현 시점 결정
   - 난이도: 중
   - 위험도: 중상
   - 내용: 타입만 먼저 둘지, 화면 skeleton 이후에 둘지 결정한다.
+  - 확인: 현재 MVP 모델과 충돌하지 않도록 `recoverse-frontend/src/types/recoverseFuture.ts`에 draft 타입을 분리했다.
 
 ## 현재 완료된 기반 작업
 
