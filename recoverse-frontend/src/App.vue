@@ -1416,9 +1416,20 @@ function onFormKeydown(e: KeyboardEvent) {
 <style scoped>
 /* ===== Laptop-first (no mobile optimization) ===== */
 .app {
+  --color-page: #f7f3ec;
+  --color-surface: #fffaf2;
+  --color-paper: #ffffff;
+  --color-ink: #1f1b16;
+  --color-muted: #71695f;
+  --color-soft-border: #eadfce;
+  --color-border: #d8cbb8;
+  --color-primary: #3c2f24;
+  --color-primary-contrast: #fffaf2;
+  --color-danger: #9f1d35;
+
   min-height: 100vh;
-  background: #f6f7f9;
-  color: #111;
+  background: var(--color-page);
+  color: var(--color-ink);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }
 
@@ -1433,8 +1444,8 @@ function onFormKeydown(e: KeyboardEvent) {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-soft-border);
   display: grid;
   grid-template-columns: 360px 1fr 520px;
   gap: 12px;
@@ -1457,8 +1468,8 @@ function onFormKeydown(e: KeyboardEvent) {
   width: 36px;
   height: 36px;
   border-radius: 12px;
-  background: #111;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
   display: grid;
   place-items: center;
   font-weight: 800;
@@ -1473,7 +1484,7 @@ function onFormKeydown(e: KeyboardEvent) {
 .brand p {
   margin: 3px 0 0;
   font-size: 12px;
-  color: #4b5563;
+  color: var(--color-muted);
 }
 
 .tabs {
@@ -1484,17 +1495,17 @@ function onFormKeydown(e: KeyboardEvent) {
 
 .tabs button {
   padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-paper);
   border-radius: 999px;
-  color: #111;
+  color: var(--color-ink);
   cursor: pointer;
 }
 
 .tabs button.on {
-  background: #111;
-  border-color: #111;
-  color: #fff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-contrast);
 }
 
 .actions {
@@ -1506,8 +1517,8 @@ function onFormKeydown(e: KeyboardEvent) {
 }
 
 .file {
-  border: 1px solid #d1d5db;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-paper);
   padding: 10px 12px;
   border-radius: 12px;
   cursor: pointer;
@@ -1524,12 +1535,12 @@ function onFormKeydown(e: KeyboardEvent) {
 
 button {
   font: inherit;
-  border: 1px solid #d1d5db;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-paper);
   border-radius: 12px;
   padding: 10px 12px;
   cursor: pointer;
-  color: #111;
+  color: var(--color-ink);
 }
 
 button:disabled {
@@ -1538,18 +1549,18 @@ button:disabled {
 }
 
 .primary {
-  background: #111;
-  border-color: #111;
-  color: #fff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-primary-contrast);
 }
 
 .ghost {
-  background: #fff;
+  background: var(--color-paper);
 }
 
 .danger {
-  border-color: #b00020;
-  color: #b00020;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
 .small {
@@ -1563,8 +1574,8 @@ button:disabled {
 }
 
 .panel {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-surface);
+  border: 1px solid var(--color-soft-border);
   border-radius: 16px;
   overflow: hidden;
   display: flex;
@@ -1574,7 +1585,7 @@ button:disabled {
 
 .panelHead {
   padding: 12px 12px;
-  border-bottom: 1px solid #eef0f3;
+  border-bottom: 1px solid var(--color-soft-border);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1599,13 +1610,13 @@ button:disabled {
 
 .panelFoot {
   padding: 12px;
-  border-top: 1px solid #eef0f3;
+  border-top: 1px solid var(--color-soft-border);
 }
 
 .hint {
   margin: 8px 0 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-muted);
   line-height: 1.35;
 }
 
@@ -1614,7 +1625,7 @@ button:disabled {
   width: 220px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   outline: none;
 }
 
