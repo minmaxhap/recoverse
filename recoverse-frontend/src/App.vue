@@ -336,6 +336,7 @@
             :cards="selectedCapsuleCards"
             :selected-card="selectedCapsuleCard"
             :selected-card-id="selectedCapsuleCardId"
+            :recent-card-id="recentlyEditedCapsuleCardId"
             :card-form="capsuleCardForm"
             :language="language"
             :labels="capsuleDetailLabels"
@@ -525,6 +526,7 @@ const messages = {
     deleteCapsule: "캡슐 삭제",
     noCards: "아직 질문 카드가 없어요. 첫 질문 카드를 추가해보세요.",
     questionCard: "질문 카드",
+    recentlyEdited: "최근 수정",
     question: "질문",
     questionPlaceholder: "질문을 입력하세요",
     answer: "답변",
@@ -584,6 +586,7 @@ const messages = {
     deleteCapsule: "Delete capsule",
     noCards: "No question cards yet. Add the first one.",
     questionCard: "Question card",
+    recentlyEdited: "Recent",
     question: "Question",
     questionPlaceholder: "Enter a question",
     answer: "Answer",
@@ -707,6 +710,7 @@ const capsuleDetailLabels = computed(() => ({
   deleteCapsule: t.value.deleteCapsule,
   noCards: t.value.noCards,
   questionCard: t.value.questionCard,
+  recentlyEdited: t.value.recentlyEdited,
   question: t.value.question,
   questionPlaceholder: t.value.questionPlaceholder,
   answer: t.value.answer,
@@ -833,6 +837,14 @@ const selectedCapsuleCards = computed(() => {
 const selectedCapsuleCard = computed(() => {
   if (!selectedCapsuleCardId.value) return null;
   return capsuleCards.value.find((card) => card.id === selectedCapsuleCardId.value) ?? null;
+});
+
+const recentlyEditedCapsuleCardId = computed(() => {
+  return (
+    selectedCapsuleCards.value
+      .filter((card) => card.answers.length > 0)
+      .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))[0]?.id ?? null
+  );
 });
 
 const discoveryCard = computed(() => {

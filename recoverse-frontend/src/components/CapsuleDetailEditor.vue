@@ -24,6 +24,7 @@
           @click="$emit('select-card', card.id)"
         >
           {{ card.questionText }}
+          <span v-if="card.id === recentCardId" class="chipBadge">{{ labels.recentlyEdited }}</span>
         </button>
       </div>
       <div v-else class="empty">
@@ -81,6 +82,7 @@ defineProps<{
   cards: CapsuleCard[];
   selectedCard: CapsuleCard | null;
   selectedCardId: string | null;
+  recentCardId: string | null;
   cardForm: CapsuleCardFormState;
   language: AppLanguage;
   labels: {
@@ -88,6 +90,7 @@ defineProps<{
     deleteCapsule: string;
     noCards: string;
     questionCard: string;
+    recentlyEdited: string;
     question: string;
     questionPlaceholder: string;
     answer: string;
@@ -176,12 +179,23 @@ button {
   border-radius: 999px;
   padding: 8px 10px;
   font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .chip.active {
   border-color: #111;
   background: #111;
   color: #fff;
+}
+
+.chipBadge {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 2px 5px;
+  font-size: 10px;
+  opacity: 0.8;
 }
 
 .formGrid {
