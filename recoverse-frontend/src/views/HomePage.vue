@@ -1,19 +1,15 @@
 <template>
   <HomeView>
     <section class="panel">
-      <div class="panelHead">
-        <h2 class="noWrap">{{ title }}</h2>
-        <CapsuleToolbar
-          :export-label="toolbarLabels.exportCapsules"
-          :import-label="toolbarLabels.importCapsules"
-          :backup-version-label="toolbarLabels.capsuleBackupVersion"
-          :refresh-label="toolbarLabels.refresh"
-          :export-disabled="capsules.length === 0"
-          @export="$emit('export')"
-          @import-file="$emit('import-file', $event)"
-          @refresh="$emit('refresh')"
-        />
-      </div>
+      <HomeHeader
+        :brand-label="brandLabel"
+        :title="title"
+        :toolbar-labels="toolbarLabels"
+        :export-disabled="capsules.length === 0"
+        @export="$emit('export')"
+        @import-file="$emit('import-file', $event)"
+        @refresh="$emit('refresh')"
+      />
 
       <RediscoverCard
         :card="discoveryCard"
@@ -92,7 +88,7 @@ import CapsuleCreateForm from "../components/CapsuleCreateForm.vue";
 import CapsuleDetailEditor from "../components/CapsuleDetailEditor.vue";
 import CapsuleList from "../components/CapsuleList.vue";
 import CapsuleQuestionCompare from "../components/CapsuleQuestionCompare.vue";
-import CapsuleToolbar from "../components/CapsuleToolbar.vue";
+import HomeHeader from "../components/HomeHeader.vue";
 import RediscoverCard from "../components/RediscoverCard.vue";
 import type {
   AppLanguage,
@@ -119,6 +115,7 @@ type CapsuleCardFormState = {
 
 defineProps<{
   title: string;
+  brandLabel: string;
   createCapsuleTitle: string;
   language: AppLanguage;
   capsules: Capsule[];

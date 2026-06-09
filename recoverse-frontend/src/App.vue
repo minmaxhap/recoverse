@@ -281,7 +281,8 @@
         v-else-if="mode === 'capsules'"
         v-model:capsule-search="capsuleSearch"
         v-model:show-unanswered-cards-only="showUnansweredCardsOnly"
-        :title="t.retrospectiveCapsules"
+        brand-label="Recoverse"
+        :title="t.memoryUniverse"
         :create-capsule-title="t.createCapsule"
         :language="language"
         :capsules="capsules"
@@ -474,6 +475,7 @@ const messages = {
   ko: {
     language: "언어",
     capsules: "캡슐",
+    memoryUniverse: "나의 기억 우주",
     retrospectiveCapsules: "회고 캡슐",
     exportCapsules: "캡슐 JSON 내보내기",
     importCapsules: "캡슐 JSON 가져오기",
@@ -537,6 +539,7 @@ const messages = {
   en: {
     language: "Language",
     capsules: "Capsules",
+    memoryUniverse: "My Memory Universe",
     retrospectiveCapsules: "Retrospective Capsules",
     exportCapsules: "Export capsule JSON",
     importCapsules: "Import capsule JSON",
