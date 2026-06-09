@@ -129,3 +129,40 @@ type ShareLink = {
 - `expiresAt`과 `revokedAt`으로 공유 링크를 닫을 수 있게 한다.
 - `openCount`와 `lastOpenedAt`은 나중에 공유 상태 표시용으로만 사용한다.
 - 초기 공유 권한은 `read_only`만 허용한다.
+
+## localStorage에서 클라우드 저장소로의 migration 전략
+
+로그인과 클라우드 저장은 공유 기능이 필요해지는 시점에 도입한다. 도입 시 기존 localStorage 기록을 자동으로 덮어쓰지 않는다.
+
+단계:
+
+1. 로그인 직후 localStorage의 `recoverse_capsule_v1` 존재 여부를 확인한다.
+2. 로컬 데이터가 있으면 "이 기기의 기록을 계정에 가져오기" 선택지를 보여준다.
+3. 사용자가 동의하면 로컬 `CapsuleData`를 서버의 사용자별 capsule 저장소로 업로드한다.
+4. 서버에 이미 같은 ID의 캡슐/카드가 있으면 현재 import와 동일하게 중복을 건너뛴다.
+5. 업로드가 끝나면 로컬 데이터는 즉시 삭제하지 않고, 마지막 동기화 시각만 저장한다.
+6. 사용자가 명시적으로 "이 기기의 로컬 데이터 정리"를 선택할 때만 삭제한다.
+
+필요한 로컬 메타 키 후보:
+
+```text
+localStorage["recoverse_cloud_migration_v1"]
+```
+
+```ts
+type CloudMigrationState = {
+  userId: string;
+  migratedAt: string;
+  sourceStorageKey: "recoverse_capsule_v1";
+  uploadedCapsules: number;
+  uploadedCards: number;
+  skippedCapsules: number;
+  skippedCards: number;
+};
+```
+
+주의사항:
+
+- 계정 전환 시 다른 사용자의 로컬 데이터를 자동 업로드하지 않는다.
+- 마이그레이션 실패 시 localStorage 원본은 유지한다.
+- 서버 저장소가 정식 도입되기 전까지는 localStorage를 단일 진실 공급원으로 유지한다.

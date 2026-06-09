@@ -129,3 +129,40 @@ Field principles:
 - `expiresAt` and `revokedAt` allow a link to be closed.
 - `openCount` and `lastOpenedAt` are only for future sharing status UI.
 - Initial sharing permissions remain `read_only` only.
+
+## Migration Strategy From localStorage to Cloud Storage
+
+Login and cloud storage should be introduced when sharing requires them. When they are introduced, existing localStorage records must not be overwritten automatically.
+
+Steps:
+
+1. After login, check whether `recoverse_capsule_v1` exists in localStorage.
+2. If local data exists, show an explicit "Import this device's records into my account" choice.
+3. If the user agrees, upload local `CapsuleData` into the user's server-side capsule storage.
+4. If the server already has capsules or cards with the same IDs, skip duplicates using the same rule as the current import flow.
+5. After upload, do not delete local data immediately. Store only the last migration timestamp.
+6. Delete local data only when the user explicitly chooses to clear this device's local records.
+
+Candidate local metadata key:
+
+```text
+localStorage["recoverse_cloud_migration_v1"]
+```
+
+```ts
+type CloudMigrationState = {
+  userId: string;
+  migratedAt: string;
+  sourceStorageKey: "recoverse_capsule_v1";
+  uploadedCapsules: number;
+  uploadedCards: number;
+  skippedCapsules: number;
+  skippedCards: number;
+};
+```
+
+Cautions:
+
+- Do not automatically upload local data after an account switch.
+- Keep the localStorage source data if migration fails.
+- Until server storage is officially introduced, localStorage remains the single source of truth.
