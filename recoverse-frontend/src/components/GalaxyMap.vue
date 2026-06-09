@@ -19,6 +19,8 @@
       <p v-if="items.length === 0" class="empty">
         {{ labels.empty }}
       </p>
+
+      <CreatePlanetButton :label="labels.create" @start-create="$emit('start-create')" />
     </div>
   </section>
 </template>
@@ -26,6 +28,7 @@
 <script setup lang="ts">
 import type { CapsuleHomeItem } from "../lib/capsuleHomeData";
 import CapsulePlanetCard from "./CapsulePlanetCard.vue";
+import CreatePlanetButton from "./CreatePlanetButton.vue";
 import GalaxyStars from "./GalaxyStars.vue";
 
 const slots = [
@@ -43,11 +46,13 @@ defineProps<{
   labels: {
     title: string;
     empty: string;
+    create: string;
   };
 }>();
 
 defineEmits<{
   select: [capsuleId: string];
+  "start-create": [];
 }>();
 
 function mapNodeStyle(index: number): Record<string, string> {

@@ -24,6 +24,7 @@
         :selected-capsule-id="selectedCapsuleId"
         :labels="galaxyMapLabels"
         @select="$emit('select-capsule', $event)"
+        @start-create="$emit('reset-capsule-form')"
       />
 
       <CapsuleListSection
@@ -162,6 +163,7 @@ defineProps<{
   galaxyMapLabels: {
     title: string;
     empty: string;
+    create: string;
   };
   capsuleListLabels: {
     searchCapsules: string;
