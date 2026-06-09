@@ -15,6 +15,24 @@ Core visual keywords:
 
 Cute characters can appear as supporting details, but the user's memories are the main character.
 
+## Character Usage
+
+Characters should not explain the product or dominate the screen. Treat them as small archive markers that support the emotional tone.
+
+Allowed placements:
+
+- Empty capsule list states
+- Import/export completion states
+- Small supporting detail inside the rediscover card
+- Brief celebration after creating the first capsule
+
+Avoid placing characters:
+
+- As the main visual element on the home screen
+- Inside the answer writing area
+- As primary button or menu icons
+- Larger than the shared retrospective content itself
+
 ## Emotional Tone
 
 - Warm
