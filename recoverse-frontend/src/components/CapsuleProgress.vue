@@ -29,7 +29,7 @@ const percent = computed(() =>
 
 <style scoped>
 .progressBox {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-soft-border);
   border-radius: 12px;
   padding: 10px;
   display: grid;
@@ -53,20 +53,20 @@ const percent = computed(() =>
   font-size: 11px;
   padding: 4px 8px;
   border-radius: 999px;
-  border: 1px solid #d1d5db;
-  color: #6b7280;
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
 }
 
 .progressTrack {
   height: 8px;
   border-radius: 999px;
-  background: #eef0f3;
+  background: var(--color-soft-border);
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
   border-radius: inherit;
-  background: #111;
+  background: var(--color-primary);
 }
 </style>

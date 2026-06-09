@@ -74,7 +74,7 @@ defineEmits<{
 <style scoped>
 .panelHead {
   padding: 12px 12px;
-  border-bottom: 1px solid #eef0f3;
+  border-bottom: 1px solid var(--color-soft-border);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -86,7 +86,7 @@ defineEmits<{
   width: 220px;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   outline: none;
 }
 
@@ -104,18 +104,18 @@ defineEmits<{
 
 .rowItem {
   font: inherit;
-  color: #111;
+  color: var(--color-ink);
   cursor: pointer;
   text-align: left;
   border-radius: 14px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--color-soft-border);
+  background: var(--color-paper);
   padding: 10px 12px;
 }
 
 .rowItem.active {
-  border-color: #111;
-  box-shadow: 0 0 0 1px #111 inset;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary) inset;
 }
 
 .rowTop {
@@ -135,13 +135,13 @@ defineEmits<{
   font-size: 11px;
   padding: 4px 8px;
   border-radius: 999px;
-  border: 1px solid #d1d5db;
-  color: #6b7280;
+  border: 1px solid var(--color-border);
+  color: var(--color-muted);
 }
 
 .rowSub {
   margin-top: 6px;
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 12px;
 }
 
@@ -150,7 +150,7 @@ defineEmits<{
 }
 
 .empty {
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 13px;
   padding: 14px;
   line-height: 1.5;

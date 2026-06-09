@@ -1416,17 +1416,6 @@ function onFormKeydown(e: KeyboardEvent) {
 <style scoped>
 /* ===== Laptop-first (no mobile optimization) ===== */
 .app {
-  --color-page: #f7f3ec;
-  --color-surface: #fffaf2;
-  --color-paper: #ffffff;
-  --color-ink: #1f1b16;
-  --color-muted: #71695f;
-  --color-soft-border: #eadfce;
-  --color-border: #d8cbb8;
-  --color-primary: #3c2f24;
-  --color-primary-contrast: #fffaf2;
-  --color-danger: #9f1d35;
-
   min-height: 100vh;
   background: var(--color-page);
   color: var(--color-ink);
