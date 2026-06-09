@@ -59,6 +59,12 @@
 
       <div class="divider"></div>
 
+      <CapsuleHeroPlanet
+        :capsule="selectedCapsule"
+        :stats="selectedCapsule ? capsuleStats.get(selectedCapsule.id) : undefined"
+        :type-label="selectedCapsule ? typeLabels[selectedCapsule.type] : ''"
+      />
+
       <CapsuleDetailEditor
         :capsule="selectedCapsule"
         :cards="selectedCapsuleCards"
@@ -94,6 +100,7 @@
 <script setup lang="ts">
 import CapsuleCreateForm from "../components/CapsuleCreateForm.vue";
 import CapsuleDetailEditor from "../components/CapsuleDetailEditor.vue";
+import CapsuleHeroPlanet from "../components/CapsuleHeroPlanet.vue";
 import CapsuleListSection from "../components/CapsuleListSection.vue";
 import CapsuleQuestionCompare from "../components/CapsuleQuestionCompare.vue";
 import DiscoveryCard from "../components/DiscoveryCard.vue";

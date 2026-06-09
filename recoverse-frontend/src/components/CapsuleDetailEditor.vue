@@ -5,9 +5,6 @@
 
   <div v-else class="addWrap">
     <div class="detailBlock">
-      <h3 class="noWrap">{{ capsule.title }}</h3>
-      <CapsuleProgress :cards="cards" :language="language" />
-
       <div class="btnRow">
         <button class="danger" type="button" @click="$emit('delete-capsule')">
           {{ labels.deleteCapsule }}
@@ -79,7 +76,6 @@
 <script setup lang="ts">
 import type { AppLanguage, Capsule, CapsuleCard } from "../lib/recoverseStore";
 import { computed } from "vue";
-import CapsuleProgress from "./CapsuleProgress.vue";
 
 type CapsuleCardFormState = {
   questionText: string;
