@@ -311,7 +311,7 @@
           capsuleBackupVersion: t.capsuleBackupVersion,
           refresh: t.refresh,
         }"
-        :rediscover-labels="rediscoverLabels"
+        :discovery-labels="discoveryLabels"
         :capsule-list-labels="capsuleListLabels"
         :capsule-create-labels="capsuleCreateLabels"
         :capsule-detail-labels="capsuleDetailLabels"
@@ -486,6 +486,8 @@ const messages = {
     answers: "답변",
     noCapsules: "아직 캡슐이 없어요. 오른쪽에서 첫 회고 캡슐을 만들어보세요.",
     noSearchResults: "검색 결과가 없어요.",
+    todayDiscovery: "오늘의 발견",
+    openDiscovery: "다시 열어보기",
     rediscover: "다시 발견하기",
     rediscoverEmpty: "답변이 쌓이면 오래된 질문을 다시 꺼내 보여줄 수 있어요.",
     createCapsule: "새 캡슐 만들기",
@@ -550,6 +552,8 @@ const messages = {
     answers: "Answers",
     noCapsules: "No capsules yet. Create your first retrospective capsule on the right.",
     noSearchResults: "No results found.",
+    todayDiscovery: "Today's Discovery",
+    openDiscovery: "Open again",
     rediscover: "Rediscover",
     rediscoverEmpty: "Once answers build up, old questions can resurface here.",
     createCapsule: "Create Capsule",
@@ -684,9 +688,10 @@ const capsuleListLabels = computed(() => ({
   noSearchResults: t.value.noSearchResults,
 }));
 
-const rediscoverLabels = computed(() => ({
-  rediscover: t.value.rediscover,
-  rediscoverEmpty: t.value.rediscoverEmpty,
+const discoveryLabels = computed(() => ({
+  title: t.value.todayDiscovery,
+  empty: t.value.rediscoverEmpty,
+  open: t.value.openDiscovery,
 }));
 
 const capsuleDetailLabels = computed(() => ({

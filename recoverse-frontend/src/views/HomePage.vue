@@ -11,11 +11,11 @@
         @refresh="$emit('refresh')"
       />
 
-      <RediscoverCard
+      <DiscoveryCard
         :card="discoveryCard"
         :capsule-title="discoveryCapsuleTitle"
         :answer-preview="discoveryAnswerPreview"
-        :labels="rediscoverLabels"
+        :labels="discoveryLabels"
         @open="$emit('open-discovery')"
       />
 
@@ -88,8 +88,8 @@ import CapsuleCreateForm from "../components/CapsuleCreateForm.vue";
 import CapsuleDetailEditor from "../components/CapsuleDetailEditor.vue";
 import CapsuleList from "../components/CapsuleList.vue";
 import CapsuleQuestionCompare from "../components/CapsuleQuestionCompare.vue";
+import DiscoveryCard from "../components/DiscoveryCard.vue";
 import HomeHeader from "../components/HomeHeader.vue";
-import RediscoverCard from "../components/RediscoverCard.vue";
 import type {
   AppLanguage,
   Capsule,
@@ -146,9 +146,10 @@ defineProps<{
     capsuleBackupVersion: string;
     refresh: string;
   };
-  rediscoverLabels: {
-    rediscover: string;
-    rediscoverEmpty: string;
+  discoveryLabels: {
+    title: string;
+    empty: string;
+    open: string;
   };
   capsuleListLabels: {
     searchCapsules: string;
