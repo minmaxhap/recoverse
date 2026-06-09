@@ -292,44 +292,16 @@
             />
           </div>
 
-          <div class="panelHead">
-            <input
-              v-model="capsuleSearch"
-              class="search capsuleSearch"
-              :placeholder="t.searchCapsules"
-            />
-          </div>
-
-          <div class="list">
-            <button
-              v-for="capsule in filteredCapsules"
-              :key="capsule.id"
-              class="rowItem"
-              :class="{ active: capsule.id === selectedCapsuleId }"
-              @click="selectCapsule(capsule.id)"
-            >
-              <div class="rowTop">
-                <span class="q">{{ capsule.title }}</span>
-                <span class="badge">{{ capsuleTypeLabel(capsule.type) }}</span>
-              </div>
-              <div class="rowSub">
-                <span class="subText">
-                  {{ t.questions }} {{ capsuleStats.get(capsule.id)?.cards ?? 0 }} /
-                  {{ t.answers }} {{ capsuleStats.get(capsule.id)?.answered ?? 0 }}
-                </span>
-              </div>
-              <div v-if="capsule.description" class="rowSub">
-                <span class="subText">{{ capsule.description }}</span>
-              </div>
-            </button>
-
-            <div v-if="capsules.length === 0" class="empty">
-              {{ t.noCapsules }}
-            </div>
-            <div v-else-if="filteredCapsules.length === 0" class="empty">
-              {{ t.noSearchResults }}
-            </div>
-          </div>
+          <CapsuleList
+            v-model:search="capsuleSearch"
+            :capsules="capsules"
+            :filtered-capsules="filteredCapsules"
+            :selected-capsule-id="selectedCapsuleId"
+            :stats="capsuleStats"
+            :type-labels="t.typeLabels"
+            :labels="capsuleListLabels"
+            @select="selectCapsule"
+          />
 
           <div class="panelFoot">
             <button
@@ -539,6 +511,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
 import CapsuleCreateForm from "./components/CapsuleCreateForm.vue";
+import CapsuleList from "./components/CapsuleList.vue";
 import LanguageSelector from "./components/LanguageSelector.vue";
 import CapsuleToolbar from "./components/CapsuleToolbar.vue";
 import CapsuleProgress from "./components/CapsuleProgress.vue";
@@ -759,6 +732,14 @@ const capsuleCreateLabels = computed(() => ({
   createCapsuleButton: t.value.createCapsuleButton,
   reset: t.value.reset,
   templateHint: t.value.templateHint,
+}));
+
+const capsuleListLabels = computed(() => ({
+  searchCapsules: t.value.searchCapsules,
+  questions: t.value.questions,
+  answers: t.value.answers,
+  noCapsules: t.value.noCapsules,
+  noSearchResults: t.value.noSearchResults,
 }));
 
 function saveLanguage() {
