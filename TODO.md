@@ -22,3 +22,9 @@
 - [x] Split capsule logic out of `App.vue` into focused components.
 - [x] Add focused tests for capsule data import/export and legacy conversion.
 - [x] Update README with capsule MVP usage.
+
+## Refactor PR 1: Safe App.vue Split
+
+- [x] Extract language selector from `App.vue`.
+- [ ] Extract capsule toolbar controls from `App.vue`.
+- [ ] Extract capsule creation form from `App.vue`.

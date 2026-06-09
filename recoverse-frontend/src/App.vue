@@ -18,13 +18,7 @@
       </nav>
 
       <div class="actions">
-        <label class="languageSelect">
-          <span class="noWrap">{{ t.language }}</span>
-          <select v-model="language" @change="saveLanguage">
-            <option value="ko">한국어</option>
-            <option value="en">English</option>
-          </select>
-        </label>
+        <LanguageSelector v-model="language" :label="t.language" @change="saveLanguage" />
         <button @click="onExport" :disabled="entries.length === 0">JSON 내보내기</button>
         <label class="file">
           JSON 가져오기
@@ -581,6 +575,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
+import LanguageSelector from "./components/LanguageSelector.vue";
 import CapsuleProgress from "./components/CapsuleProgress.vue";
 import CapsuleQuestionCompare from "./components/CapsuleQuestionCompare.vue";
 import {
@@ -1568,19 +1563,6 @@ function onFormKeydown(e: KeyboardEvent) {
   gap: 8px;
   align-items: center;
   flex-wrap: wrap;
-}
-
-.languageSelect {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #4b5563;
-}
-
-.languageSelect select {
-  padding: 8px 10px;
-  border-radius: 10px;
 }
 
 .file {
