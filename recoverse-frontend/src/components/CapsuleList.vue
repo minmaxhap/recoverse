@@ -96,10 +96,10 @@ defineEmits<{
 }
 
 .list {
-  padding: 10px;
+  padding: 8px;
   overflow: auto;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .rowItem {
@@ -110,7 +110,7 @@ defineEmits<{
   border-radius: 14px;
   border: 1px solid var(--color-soft-border);
   background: var(--color-paper);
-  padding: 10px 12px;
+  padding: 9px 10px;
 }
 
 .rowItem.active {
