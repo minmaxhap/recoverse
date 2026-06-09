@@ -363,6 +363,7 @@
         brand-label="Recoverse"
         :title="t.memoryUniverse"
         :create-capsule-title="t.createCapsule"
+        :show-create-composer="showCreateComposer"
         :language="language"
         :capsules="capsules"
         :capsule-cards="capsuleCards"
@@ -406,6 +407,7 @@
         }"
         :capsule-list-labels="capsuleListLabels"
         :archive-bridge-labels="archiveBridgeLabels"
+        :create-entry-labels="createEntryLabels"
         :capsule-create-labels="capsuleCreateLabels"
         :capsule-detail-labels="capsuleDetailLabels"
         @export="onExportCapsules"
@@ -413,6 +415,8 @@
         @refresh="refreshCapsules"
         @open-discovery="openDiscoveryCard"
         @open-archive="openArchiveSettings"
+        @open-create-flow="openCreateFlow"
+        @close-create-flow="closeCreateFlow"
         @select-capsule="selectCapsule"
         @create-capsule="onCreateCapsule"
         @reset-capsule-form="resetCapsuleForm"
@@ -623,6 +627,14 @@ const messages = {
       "행성 검색과 선택은 이 보관함으로 옮기는 중이에요. 행성을 고르면 다시 기억 우주와 상세 편집으로 돌아가요.",
     archiveCount: "전체 행성",
     openArchive: "아카이브 열기",
+    createEntryEyebrow: "생성 입구",
+    createEntryTitle: "새로운 기억 오브젝트를 시작해요",
+    createEntryDescription:
+      "개인 행성은 지금 바로 만들 수 있고, 그룹 은하는 다음 단계에서 이 자리로 이어질 거예요.",
+    openCreateEntry: "생성 입구 열기",
+    createPlanetEntry: "개인 행성 만들기",
+    createGalaxyEntry: "그룹 은하 준비 중",
+    closeCreateEntry: "입구 닫기",
     memoryUniverse: "나의 기억 우주",
     retrospectiveCapsules: "회고 캡슐",
     exportCapsules: "캡슐 JSON 내보내기",
@@ -700,6 +712,14 @@ const messages = {
       "Planet search and selection are moving here. Picking a planet returns you to the universe view and detail editor.",
     archiveCount: "Planets",
     openArchive: "Open archive",
+    createEntryEyebrow: "Creation Entry",
+    createEntryTitle: "Start a new memory object",
+    createEntryDescription:
+      "Personal planets can be created now, and group galaxies will connect to this entry point next.",
+    openCreateEntry: "Open creation entry",
+    createPlanetEntry: "Create personal planet",
+    createGalaxyEntry: "Group galaxy coming soon",
+    closeCreateEntry: "Close entry",
     memoryUniverse: "My Memory Universe",
     retrospectiveCapsules: "Retrospective Capsules",
     exportCapsules: "Export capsule JSON",
@@ -778,6 +798,7 @@ const capsuleCards = ref<CapsuleCard[]>([]);
 const selectedCapsuleId = ref<string | null>(null);
 const selectedCapsuleCardId = ref<string | null>(null);
 const mode = ref<AppMode>("home-universe");
+const showCreateComposer = ref<boolean>(false);
 const modePlanById = Object.fromEntries(appModePlans.map((plan) => [plan.id, plan])) as Record<
   AppMode,
   (typeof appModePlans)[number]
@@ -873,6 +894,15 @@ const archiveBridgeLabels = computed(() => ({
   description: t.value.archiveCapsulesDescription,
   count: t.value.archiveCount,
   open: t.value.openArchive,
+}));
+const createEntryLabels = computed(() => ({
+  eyebrow: t.value.createEntryEyebrow,
+  title: t.value.createEntryTitle,
+  description: t.value.createEntryDescription,
+  open: t.value.openCreateEntry,
+  createPlanet: t.value.createPlanetEntry,
+  createGalaxy: t.value.createGalaxyEntry,
+  close: t.value.closeCreateEntry,
 }));
 
 const discoveryLabels = computed(() => ({
@@ -1086,6 +1116,15 @@ function resetCapsuleForm() {
   capsuleForm.templateId = "template_year";
 }
 
+function openCreateFlow() {
+  resetCapsuleForm();
+  showCreateComposer.value = true;
+}
+
+function closeCreateFlow() {
+  showCreateComposer.value = false;
+}
+
 function syncCapsuleStorage() {
   saveCapsuleData({
     capsules: capsules.value,
@@ -1158,6 +1197,7 @@ function onCreateCapsule() {
     if (firstCard) startCapsuleCardEdit(firstCard);
     else resetCapsuleCardForm();
     resetCapsuleForm();
+    showCreateComposer.value = false;
     capsuleNotice.value = t.value.capsuleCreated;
   } catch (err: any) {
     capsuleError.value = err?.message ?? t.value.capsuleCreateFailed;

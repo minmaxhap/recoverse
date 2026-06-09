@@ -25,7 +25,7 @@
         :selected-capsule-id="selectedCapsuleId"
         :labels="galaxyMapLabels"
         @select="$emit('select-capsule', $event)"
-        @start-create="$emit('reset-capsule-form')"
+        @start-create="$emit('open-create-flow')"
       />
 
       <HomeArchiveBridge
@@ -40,17 +40,45 @@
         <h2 class="noWrap">{{ createCapsuleTitle }}</h2>
       </div>
 
-      <CapsuleCreateForm
-        :form="capsuleForm"
-        :templates="capsuleTemplates"
-        :language="language"
-        :type-labels="typeLabels"
-        :labels="capsuleCreateLabels"
-        :error="capsuleError"
-        :notice="capsuleNotice"
-        @create="$emit('create-capsule')"
-        @reset="$emit('reset-capsule-form')"
-      />
+      <section class="createEntry">
+        <div class="createEntryHead">
+          <span class="eyebrow">{{ createEntryLabels.eyebrow }}</span>
+          <h3>{{ createEntryLabels.title }}</h3>
+          <p>{{ createEntryLabels.description }}</p>
+        </div>
+
+        <div v-if="!showCreateComposer" class="createEntryActions">
+          <button class="primaryAction" type="button" @click="$emit('open-create-flow')">
+            {{ createEntryLabels.open }}
+          </button>
+        </div>
+
+        <div v-else class="createComposer">
+          <div class="createChoiceRow">
+            <button class="choice active" type="button">
+              {{ createEntryLabels.createPlanet }}
+            </button>
+            <button class="choice muted" type="button" disabled>
+              {{ createEntryLabels.createGalaxy }}
+            </button>
+            <button class="ghostAction" type="button" @click="$emit('close-create-flow')">
+              {{ createEntryLabels.close }}
+            </button>
+          </div>
+
+          <CapsuleCreateForm
+            :form="capsuleForm"
+            :templates="capsuleTemplates"
+            :language="language"
+            :type-labels="typeLabels"
+            :labels="capsuleCreateLabels"
+            :error="capsuleError"
+            :notice="capsuleNotice"
+            @create="$emit('create-capsule')"
+            @reset="$emit('reset-capsule-form')"
+          />
+        </div>
+      </section>
 
       <div class="divider"></div>
 
@@ -137,6 +165,7 @@ defineProps<{
   title: string;
   brandLabel: string;
   createCapsuleTitle: string;
+  showCreateComposer: boolean;
   language: AppLanguage;
   capsules: Capsule[];
   capsuleCards: CapsuleCard[];
@@ -198,6 +227,15 @@ defineProps<{
     count: string;
     open: string;
   };
+  createEntryLabels: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    open: string;
+    createPlanet: string;
+    createGalaxy: string;
+    close: string;
+  };
   capsuleCreateLabels: {
     title: string;
     titlePlaceholder: string;
@@ -236,6 +274,8 @@ defineEmits<{
   refresh: [];
   "open-discovery": [];
   "open-archive": [];
+  "open-create-flow": [];
+  "close-create-flow": [];
   "select-capsule": [capsuleId: string];
   "create-capsule": [];
   "reset-capsule-form": [];
@@ -298,6 +338,78 @@ defineEmits<{
 .addWrap {
   padding: 12px;
   overflow: auto;
+}
+
+.createEntry {
+  padding: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.createEntryHead {
+  display: grid;
+  gap: 4px;
+}
+
+.eyebrow {
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.createEntryHead h3 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.createEntryHead p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.createEntryActions,
+.createComposer {
+  display: grid;
+  gap: 12px;
+}
+
+.createChoiceRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.primaryAction,
+.choice,
+.ghostAction {
+  font: inherit;
+  border-radius: 999px;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.primaryAction,
+.choice.active {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.choice.muted,
+.ghostAction {
+  border: 1px solid var(--color-border);
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.choice.muted[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 899px) {
