@@ -277,7 +277,7 @@
       </section>
 
       <!-- Mode: CAPSULES -->
-      <section v-else-if="mode === 'capsules'" class="layoutAdd">
+      <HomeView v-else-if="mode === 'capsules'">
         <section class="panel">
           <div class="panelHead">
             <h2 class="noWrap">{{ t.retrospectiveCapsules }}</h2>
@@ -357,7 +357,7 @@
             />
           </div>
         </aside>
-      </section>
+      </HomeView>
 
       <!-- Mode: ADD -->
       <section v-else-if="mode === 'add'" class="layoutAdd">
@@ -464,6 +464,7 @@ import LanguageSelector from "./components/LanguageSelector.vue";
 import RediscoverCard from "./components/RediscoverCard.vue";
 import CapsuleToolbar from "./components/CapsuleToolbar.vue";
 import CapsuleQuestionCompare from "./components/CapsuleQuestionCompare.vue";
+import HomeView from "./views/HomeView.vue";
 import {
   type AppLanguage,
   type Capsule,

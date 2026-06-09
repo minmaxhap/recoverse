@@ -42,7 +42,7 @@
 
 목표: 제품 명세의 핵심 화면인 홈과 캡슐 상세를 코드 구조에서도 분리한다.
 
-- [ ] `views/HomeView.vue` 생성
+- [x] `views/HomeView.vue` 생성
 - [ ] `views/CapsuleDetailView.vue` 생성
 - [ ] 홈 화면에 다시 발견하기 카드와 내 캡슐 목록을 우선 배치
 - [ ] 모바일 우선 레이아웃을 기준으로 PC에서는 목록/상세를 나란히 표시
