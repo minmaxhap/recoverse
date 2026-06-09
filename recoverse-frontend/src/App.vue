@@ -332,12 +332,16 @@
           </div>
 
           <div class="panelFoot">
-            <div v-if="discoveryCard" class="discoverBox">
+            <button
+              v-if="discoveryCard"
+              class="discoverBox discoverButton"
+              @click="jumpToCapsuleCard(discoveryCard.capsuleId, discoveryCard.id)"
+            >
               <div class="muted">다시 발견하기</div>
               <div class="strong">{{ discoveryCapsuleTitle }}</div>
               <div class="q">{{ discoveryCard.questionText }}</div>
               <div class="rowSub">{{ previewAnswers(discoveryCard.answers) }}</div>
-            </div>
+            </button>
             <p v-else class="hint">
               답변이 쌓이면 오래된 질문을 다시 꺼내 보여줄 수 있어요.
             </p>
@@ -1939,6 +1943,12 @@ textarea { resize: vertical; }
 .discoverBox {
   display: grid;
   gap: 6px;
+}
+
+.discoverButton {
+  width: 100%;
+  text-align: left;
+  border-radius: 12px;
 }
 
 /* general empty */
