@@ -170,4 +170,18 @@ defineEmits<{
     transform: scale(1);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .planetCard {
+    transition: none;
+  }
+
+  .planetCard:active {
+    transform: translate(-50%, -50%);
+  }
+
+  .selected .planetWrap {
+    animation: none;
+  }
+}
 </style>
