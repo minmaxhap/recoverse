@@ -109,15 +109,15 @@
 
 목표: `App.vue`에 집중된 화면 전환, 폼 상태, import/export, archive 상태를 기능별 모듈로 나눈다.
 
-- [ ] 화면 전환 로직을 별도 composable로 분리한다.
+- [x] 화면 전환 로직을 별도 composable로 분리한다.
   - 확인: `App.vue`에서 mode 변경 함수가 줄어든다.
-- [ ] 개인 행성 편집 상태를 별도 composable로 분리한다.
+- [x] 개인 행성 편집 상태를 별도 composable로 분리한다.
   - 확인: 카드 선택, 편집, 저장, 삭제 로직이 한 곳에 모인다.
-- [ ] 아카이브 상태와 액션을 별도 composable로 분리한다.
+- [x] 아카이브 상태와 액션을 별도 composable로 분리한다.
   - 확인: 보관함/시간여행/정리/설정 상태가 명확히 분리된다.
-- [ ] import/export 핸들러를 UI와 분리한다.
+- [x] import/export 핸들러를 UI와 분리한다.
   - 확인: 파일 처리 로직을 단위 테스트하기 쉬워진다.
-- [ ] 분리 후 기존 테스트와 빌드를 통과시킨다.
+- [x] 분리 후 기존 테스트와 빌드를 통과시킨다.
   - 확인: `recoverseStore.test.mjs`, `vue-tsc`, `vite build`가 통과한다.
 
 ### 31단계: 모바일 UX 검증과 다듬기

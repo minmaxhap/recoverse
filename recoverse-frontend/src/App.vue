@@ -564,6 +564,7 @@
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
 import { useArchiveCapsuleSearch } from "./composables/useArchiveCapsuleSearch";
 import { useAppNavigation } from "./composables/useAppNavigation";
+import { useCapsuleEditorState } from "./composables/useCapsuleEditorState";
 import ArchiveCapsuleShelf from "./components/ArchiveCapsuleShelf.vue";
 import ArchiveSectionTabs from "./components/ArchiveSectionTabs.vue";
 import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
@@ -576,7 +577,6 @@ import {
   type AppLanguage,
   type Capsule,
   type CapsuleCard,
-  type CapsuleType,
   type Galaxy,
   type GalaxyData,
   type GalaxyTheme,
@@ -605,7 +605,6 @@ import {
   buildCapsuleHomeItems,
   buildCapsuleStats,
   type CapsuleArchiveSort,
-  findMostRecentlyAnsweredCardId,
   selectDailyDiscoveryCard,
 } from "./lib/capsuleHomeData";
 import { createCapsule } from "./lib/capsuleActions";
@@ -978,8 +977,20 @@ const galaxyData = ref<GalaxyData>({
 const observationData = ref<ObservationData>({
   snapshots: [],
 });
-const selectedCapsuleId = ref<string | null>(null);
-const selectedCapsuleCardId = ref<string | null>(null);
+const {
+  selectedCapsuleId,
+  selectedCapsuleCardId,
+  showUnansweredCardsOnly,
+  capsuleForm,
+  capsuleCardForm,
+  selectedCapsule,
+  selectedCapsuleCards,
+  selectedCapsuleCard,
+  recentlyEditedCapsuleCardId,
+  resetCapsuleForm: resetCapsuleEditorForm,
+  resetCapsuleCardForm,
+  startCapsuleCardEdit,
+} = useCapsuleEditorState(capsules, capsuleCards);
 const selectedGalaxyId = ref<string | null>(null);
 const selectedObservationId = ref<string | null>(null);
 const selectedUniverseObject = ref<{ type: "planet" | "galaxy"; id: string } | null>(null);
@@ -1012,20 +1023,6 @@ const capsuleError = ref<string>("");
 const capsuleNotice = ref<string>("");
 const galaxyError = ref<string>("");
 const galaxyNotice = ref<string>("");
-const showUnansweredCardsOnly = ref<boolean>(false);
-
-const capsuleForm = reactive<{
-  title: string;
-  description: string;
-  type: CapsuleType;
-  templateId: string;
-}>({
-  title: "",
-  description: "",
-  type: "year",
-  templateId: "template_year",
-});
-
 const galaxyForm = reactive<{
   title: string;
   description: string;
@@ -1052,11 +1049,6 @@ const galaxyPromptForm = reactive({
   questionText: "",
 });
 const galaxyLogDrafts = reactive<Record<string, string>>({});
-
-const capsuleCardForm = reactive({
-  questionText: "",
-  answersText: "",
-});
 
 const {
   capsuleSearch,
@@ -1207,10 +1199,6 @@ function saveLanguage() {
   localStorage.setItem(LANGUAGE_KEY, language.value);
 }
 
-function capsuleTypeLabel(type: CapsuleType) {
-  return t.value.typeLabels[type] ?? type;
-}
-
 onMounted(() => {
   entries.value = loadEntries();
   refreshCapsules();
@@ -1336,27 +1324,6 @@ const addSuggestions = computed(() => {
 
 const capsuleStats = computed(() => buildCapsuleStats(capsuleCards.value));
 
-const selectedCapsule = computed(() => {
-  if (!selectedCapsuleId.value) return null;
-  return capsules.value.find((capsule) => capsule.id === selectedCapsuleId.value) ?? null;
-});
-
-const selectedCapsuleCards = computed(() => {
-  if (!selectedCapsuleId.value) return [];
-  return capsuleCards.value
-    .filter((card) => card.capsuleId === selectedCapsuleId.value)
-    .sort((a, b) => a.order - b.order);
-});
-
-const selectedCapsuleCard = computed(() => {
-  if (!selectedCapsuleCardId.value) return null;
-  return capsuleCards.value.find((card) => card.id === selectedCapsuleCardId.value) ?? null;
-});
-
-const recentlyEditedCapsuleCardId = computed(() => {
-  return findMostRecentlyAnsweredCardId(selectedCapsuleCards.value);
-});
-
 const discoveryCard = computed(() => {
   return selectDailyDiscoveryCard(capsuleCards.value);
 });
@@ -1478,10 +1445,7 @@ function resetForm() {
 function resetCapsuleForm() {
   capsuleError.value = "";
   capsuleNotice.value = "";
-  capsuleForm.title = "";
-  capsuleForm.description = "";
-  capsuleForm.type = "year";
-  capsuleForm.templateId = "template_year";
+  resetCapsuleEditorForm();
 }
 
 function resetGalaxyForm() {
@@ -1728,16 +1692,6 @@ function jumpToCapsuleCard(capsuleId: string, cardId: string) {
 function openDiscoveryCard() {
   if (!discoveryCard.value) return;
   jumpToCapsuleCard(discoveryCard.value.capsuleId, discoveryCard.value.id);
-}
-
-function resetCapsuleCardForm() {
-  capsuleCardForm.questionText = "";
-  capsuleCardForm.answersText = "";
-}
-
-function startCapsuleCardEdit(card: CapsuleCard) {
-  capsuleCardForm.questionText = card.questionText;
-  capsuleCardForm.answersText = card.answers.join("\n");
 }
 
 function onCreateCapsule() {
