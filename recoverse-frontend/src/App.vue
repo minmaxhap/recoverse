@@ -1,41 +1,13 @@
 <template>
   <div class="app">
-    <!-- Top bar -->
-    <header class="topbar">
-      <div class="brand">
-        <div class="logo">R</div>
-        <div class="brandText">
-          <h1 class="noWrap">Recoverse</h1>
-          <p class="noWrap">회고 캡슐 아카이브 (로컬 저장)</p>
-        </div>
-      </div>
-
-      <nav class="tabs">
-        <button
-          :class="{ on: mode === 'home-universe' || mode === 'planet-detail' }"
-          :title="modePlanById['home-universe'].note"
-          @click="setMode('home-universe')"
-        >
-          {{ t.capsules }}
-        </button>
-        <button
-          :class="{ on: isArchiveMode(mode) }"
-          :title="activeArchiveModePlan.note"
-          @click="openArchiveSettings()"
-        >
-          {{ t.archive }}
-        </button>
-      </nav>
-
-    </header>
-
-    <!-- Main -->
     <main class="main">
       <!-- Archive mode: year tools stay available until ArchiveSettingsView is introduced. -->
       <ArchiveSettingsView
         v-if="mode === 'year-archive'"
         :title="modePlanById['year-archive'].title"
         :description="modePlanById['year-archive'].note"
+        :home-label="t.navHome"
+        @back-home="setMode('home-universe')"
       >
         <template #actions>
           <ArchiveSettingsTools
@@ -257,6 +229,8 @@
         v-else-if="mode === 'question-compare-archive'"
         :title="modePlanById['question-compare-archive'].title"
         :description="modePlanById['question-compare-archive'].note"
+        :home-label="t.navHome"
+        @back-home="setMode('home-universe')"
       >
         <template #actions>
           <ArchiveSettingsTools
@@ -454,6 +428,8 @@
         v-else-if="mode === 'quick-entry-archive'"
         :title="modePlanById['quick-entry-archive'].title"
         :description="modePlanById['quick-entry-archive'].note"
+        :home-label="t.navHome"
+        @back-home="setMode('home-universe')"
       >
         <template #actions>
           <ArchiveSettingsTools
@@ -1785,74 +1761,6 @@ function onFormKeydown(e: KeyboardEvent) {
   overflow-wrap: normal;    /* 글자 단위 강제 줄바꿈 방지 */
 }
 
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-soft-border);
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 12px;
-  align-items: center;
-  padding: 12px 16px;
-}
-
-.brand {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  min-width: 0;
-}
-
-.brandText {
-  min-width: 0;
-}
-
-.logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 12px;
-  background: var(--color-primary);
-  color: var(--color-primary-contrast);
-  display: grid;
-  place-items: center;
-  font-weight: 800;
-}
-
-.brand h1 {
-  margin: 0;
-  font-size: 18px;
-  line-height: 1.1;
-}
-
-.brand p {
-  margin: 3px 0 0;
-  font-size: 12px;
-  color: var(--color-muted);
-}
-
-.tabs {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-
-.tabs button {
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  background: var(--color-paper);
-  border-radius: 999px;
-  color: var(--color-ink);
-  cursor: pointer;
-}
-
-.tabs button.on {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: var(--color-primary-contrast);
-}
-
 button {
   font: inherit;
   border: 1px solid var(--color-border);
@@ -1890,7 +1798,7 @@ button:disabled {
 }
 
 .main {
-  padding: 16px;
+  padding: 0;
 }
 
 .panel {
@@ -1973,28 +1881,6 @@ button:disabled {
 }
 
 @media (max-width: 899px) {
-  .topbar {
-    position: static;
-    grid-template-columns: 1fr;
-    gap: 10px;
-    padding: 12px;
-  }
-
-  .tabs {
-    justify-content: flex-start;
-    overflow-x: auto;
-    padding-bottom: 2px;
-  }
-
-  .tabs button {
-    flex: 0 0 auto;
-    padding: 9px 10px;
-  }
-
-  .main {
-    padding: 10px;
-  }
-
   .panel {
     min-height: auto;
   }

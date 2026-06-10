@@ -6,6 +6,9 @@
         <h2>{{ title }}</h2>
         <p>{{ description }}</p>
       </div>
+      <button class="homeButton" type="button" @click="$emit('back-home')">
+        {{ homeLabel }}
+      </button>
       <div class="actions">
         <slot name="actions" />
       </div>
@@ -19,6 +22,11 @@
 defineProps<{
   title: string;
   description: string;
+  homeLabel: string;
+}>();
+
+defineEmits<{
+  "back-home": [];
 }>();
 </script>
 
@@ -63,13 +71,29 @@ p {
 }
 
 .actions {
+  grid-column: 1 / -1;
   display: flex;
-  justify-content: flex-end;
+  justify-content: stretch;
+}
+
+.homeButton {
+  font: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  cursor: pointer;
+  padding: 9px 12px;
+  white-space: nowrap;
 }
 
 @media (max-width: 899px) {
   .archiveHead {
     grid-template-columns: 1fr;
+  }
+
+  .homeButton {
+    width: fit-content;
   }
 
   .actions {
