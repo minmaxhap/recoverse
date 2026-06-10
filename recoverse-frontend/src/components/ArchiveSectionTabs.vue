@@ -27,10 +27,10 @@ defineEmits<{
 
 <style scoped>
 .tabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  padding: 0 16px;
-  flex-wrap: wrap;
+  padding: 0 18px;
 }
 
 button {
@@ -38,14 +38,32 @@ button {
   border: 1px solid var(--color-border);
   background: var(--color-paper);
   color: var(--color-ink);
-  border-radius: 999px;
-  padding: 9px 12px;
+  border-radius: 14px;
+  padding: 12px 10px;
   cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .active {
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: var(--color-primary-contrast);
+}
+
+@media (max-width: 520px) {
+  .tabs {
+    gap: 6px;
+    padding: 0 12px;
+  }
+
+  button {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
 }
 </style>

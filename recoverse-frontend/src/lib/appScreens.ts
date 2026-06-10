@@ -8,9 +8,10 @@ export type FutureScreenId =
 export type AppMode =
   | "home-universe"
   | "planet-detail"
-  | "quick-entry-archive"
-  | "year-archive"
-  | "question-compare-archive";
+  | "archive-library"
+  | "archive-time"
+  | "archive-organize"
+  | "archive-settings";
 
 export type ArchiveModeId = Exclude<AppMode, "home-universe" | "planet-detail">;
 
@@ -36,22 +37,28 @@ export const appModePlans: AppModePlan[] = [
     note: "선택된 개인 행성의 탐사 기록과 탐사 로그를 편집하는 화면이다.",
   },
   {
-    id: "quick-entry-archive",
+    id: "archive-library",
     targetScreen: "archive-settings",
-    title: "빠른 입력 보관 영역",
-    note: "홈에서 제거하고 아카이브/설정 아래의 보조 입력 흐름으로 이동할 대상이다.",
+    title: "보관함",
+    note: "기억 행성을 검색하고 다시 여는 아카이브 기본 화면이다.",
   },
   {
-    id: "year-archive",
+    id: "archive-time",
     targetScreen: "archive-settings",
-    title: "연도 아카이브",
-    note: "홈에서 제거하고 타임라인 기반 아카이브 섹션으로 이동할 대상이다.",
+    title: "시간여행",
+    note: "연도별 기록과 반복 질문 비교를 함께 보는 시간 탐색 화면이다.",
   },
   {
-    id: "question-compare-archive",
+    id: "archive-organize",
     targetScreen: "archive-settings",
-    title: "질문 비교 아카이브",
-    note: "홈에서 제거하고 시간여행 비교 또는 아카이브 도구로 이동할 대상이다.",
+    title: "정리",
+    note: "빠른 입력과 질문 보완으로 누락된 기록을 정리하는 화면이다.",
+  },
+  {
+    id: "archive-settings",
+    targetScreen: "archive-settings",
+    title: "설정",
+    note: "언어, 백업, 가져오기, 위험 작업을 다루는 관리 화면이다.",
   },
 ];
 

@@ -33,11 +33,13 @@ defineEmits<{
 <style scoped>
 .archiveView {
   display: grid;
-  gap: 14px;
+  gap: 16px;
+  padding-bottom: 18px;
+  background: var(--color-page);
 }
 
 .archiveHead {
-  padding: 14px 16px 0;
+  padding: 18px 18px 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
@@ -59,8 +61,9 @@ defineEmits<{
 h2 {
   margin: 0;
   color: var(--color-ink);
-  font-size: 18px;
+  font-size: 28px;
   font-weight: 900;
+  line-height: 1.12;
 }
 
 p {

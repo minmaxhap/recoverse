@@ -1,38 +1,13 @@
 <template>
   <div class="app">
     <main class="main">
-      <!-- Archive mode: year tools stay available until ArchiveSettingsView is introduced. -->
       <ArchiveSettingsView
-        v-if="mode === 'year-archive'"
-        :title="modePlanById['year-archive'].title"
-        :description="modePlanById['year-archive'].note"
+        v-if="mode === 'archive-library'"
+        :title="modePlanById['archive-library'].title"
+        :description="modePlanById['archive-library'].note"
         :home-label="t.navHome"
         @back-home="setMode('home-universe')"
       >
-        <template #actions>
-          <ArchiveSettingsTools
-            :language="language"
-            :language-label="t.language"
-            :capsule-group-label="t.capsuleBackupGroup"
-            :capsule-export-label="t.exportCapsules"
-            :capsule-import-label="t.importCapsules"
-            :capsule-export-disabled="capsules.length === 0"
-            :legacy-group-label="t.legacyBackupGroup"
-            :export-label="t.legacyExportJson"
-            :import-label="t.legacyImportJson"
-            :danger-group-label="t.dangerSettingsGroup"
-            :clear-label="t.clearAllData"
-            :export-disabled="entries.length === 0"
-            :clear-disabled="entries.length === 0"
-            @update:language="language = $event"
-            @change-language="saveLanguage"
-            @capsule-export="onExportCapsules"
-            @capsule-import-file="onImportCapsuleFile"
-            @export="onExport"
-            @import-file="onImportFile"
-            @clear-all="clearAll"
-          />
-        </template>
         <ArchiveSectionTabs
           :active-mode="activeArchiveMode"
           :plans="archiveModePlans"
@@ -49,6 +24,20 @@
           :labels="archiveShelfLabels"
           @update:search="capsuleSearch = $event"
           @select="openCapsuleFromArchive"
+        />
+      </ArchiveSettingsView>
+
+      <ArchiveSettingsView
+        v-else-if="mode === 'archive-time'"
+        :title="modePlanById['archive-time'].title"
+        :description="modePlanById['archive-time'].note"
+        :home-label="t.navHome"
+        @back-home="setMode('home-universe')"
+      >
+        <ArchiveSectionTabs
+          :active-mode="activeArchiveMode"
+          :plans="archiveModePlans"
+          @select="setMode($event)"
         />
       <section class="layout3">
         <!-- Left: Years -->
@@ -222,17 +211,95 @@
           </div>
         </section>
       </section>
+
+      <section class="archiveBand">
+        <div class="archiveBandHead">
+          <span class="eyebrow">반복 질문</span>
+          <h2>같은 질문을 시간순으로 비교해요</h2>
+        </div>
+        <section class="layoutCompare">
+          <aside class="panel">
+            <div class="panelHead">
+              <h2 class="noWrap">질문 선택</h2>
+              <input v-model="compareSearch" class="search" placeholder="질문 검색" />
+            </div>
+
+            <div class="list">
+              <button
+                v-for="q in filteredQuestionBank"
+                :key="q.q"
+                class="rowItem"
+                :class="{ active: q.q === compareQ }"
+                @click="compareQ = q.q"
+              >
+                <div class="rowTop">
+                  <span class="q">{{ q.q }}</span>
+                  <span class="count noWrap">{{ q.count }}회</span>
+                </div>
+                <div class="rowSub">
+                  <span class="subText">최근: {{ fmtDate(q.lastAt) }}</span>
+                </div>
+              </button>
+
+              <div v-if="filteredQuestionBank.length === 0" class="empty">
+                질문이 없어요. 먼저 정리 섹션에서 기록을 보완해 주세요.
+              </div>
+            </div>
+          </aside>
+
+          <section class="panel">
+            <div class="panelHead">
+              <h2 class="noWrap">연도별 답</h2>
+            </div>
+
+            <div v-if="!compareQ" class="empty">
+              왼쪽에서 질문을 선택하면 연도별 답이 펼쳐져요.
+            </div>
+
+            <div v-else class="compare">
+              <div class="compareTitle">
+                <div class="label noWrap">질문</div>
+                <div class="value">{{ compareQ }}</div>
+              </div>
+
+              <div class="timeline">
+                <div v-for="t in compareTimeline" :key="t.id" class="tlCard">
+                  <div class="tlHead">
+                    <span class="tlYear noWrap">{{ t.year }}</span>
+                    <button class="small" @click="jumpToEdit(t.id)">이 답 수정</button>
+                  </div>
+
+                  <div class="tlBody">
+                    <ol v-if="t.answers.length" class="answerList">
+                      <li v-for="(a, i) in t.answers" :key="i" class="answerItem">{{ a }}</li>
+                    </ol>
+                    <div v-else class="muted">(빈 답)</div>
+                  </div>
+                </div>
+
+                <div v-if="compareTimeline.length === 0" class="empty">
+                  아직 이 질문의 답이 없어요.
+                </div>
+              </div>
+            </div>
+          </section>
+        </section>
+      </section>
       </ArchiveSettingsView>
 
-      <!-- Archive mode: comparison stays intact, but is treated as an archive tool now. -->
       <ArchiveSettingsView
-        v-else-if="mode === 'question-compare-archive'"
-        :title="modePlanById['question-compare-archive'].title"
-        :description="modePlanById['question-compare-archive'].note"
+        v-else-if="mode === 'archive-settings'"
+        :title="modePlanById['archive-settings'].title"
+        :description="modePlanById['archive-settings'].note"
         :home-label="t.navHome"
         @back-home="setMode('home-universe')"
       >
-        <template #actions>
+        <ArchiveSectionTabs
+          :active-mode="activeArchiveMode"
+          :plans="archiveModePlans"
+          @select="setMode($event)"
+        />
+        <section class="settingsPanel">
           <ArchiveSettingsTools
             :language="language"
             :language-label="t.language"
@@ -255,94 +322,7 @@
             @import-file="onImportFile"
             @clear-all="clearAll"
           />
-        </template>
-        <ArchiveSectionTabs
-          :active-mode="activeArchiveMode"
-          :plans="archiveModePlans"
-          @select="setMode($event)"
-        />
-        <ArchiveCapsuleShelf
-          :search="capsuleSearch"
-          :capsules="capsules"
-          :filtered-capsules="filteredCapsules"
-          :selected-capsule-id="selectedCapsuleId"
-          :stats="capsuleStats"
-          :type-labels="t.typeLabels"
-          :list-labels="capsuleListLabels"
-          :labels="archiveShelfLabels"
-          @update:search="capsuleSearch = $event"
-          @select="openCapsuleFromArchive"
-        />
-      <section class="layoutCompare">
-        <aside class="panel">
-          <div class="panelHead">
-            <h2 class="noWrap">질문 선택</h2>
-            <input v-model="compareSearch" class="search" placeholder="질문 검색" />
-          </div>
-
-          <div class="list">
-            <button
-              v-for="q in filteredQuestionBank"
-              :key="q.q"
-              class="rowItem"
-              :class="{ active: q.q === compareQ }"
-              @click="compareQ = q.q"
-            >
-              <div class="rowTop">
-                <span class="q">{{ q.q }}</span>
-                <span class="count noWrap">{{ q.count }}회</span>
-              </div>
-              <div class="rowSub">
-                <span class="subText">최근: {{ fmtDate(q.lastAt) }}</span>
-              </div>
-            </button>
-
-            <div v-if="filteredQuestionBank.length === 0" class="empty">
-              질문이 없어요. 먼저 입력부터 해줘요.
-            </div>
-          </div>
-        </aside>
-
-        <section class="panel">
-          <div class="panelHead">
-            <h2 class="noWrap">연도별 답</h2>
-            <div class="headBtns">
-              <button class="ghost" @click="setMode('home-universe')">캡슐 홈으로</button>
-            </div>
-          </div>
-
-          <div v-if="!compareQ" class="empty">
-            왼쪽에서 질문을 선택하면 연도별 답이 펼쳐져요.
-          </div>
-
-          <div v-else class="compare">
-            <div class="compareTitle">
-              <div class="label noWrap">질문</div>
-              <div class="value">{{ compareQ }}</div>
-            </div>
-
-            <div class="timeline">
-              <div v-for="t in compareTimeline" :key="t.id" class="tlCard">
-                <div class="tlHead">
-                  <span class="tlYear noWrap">{{ t.year }}</span>
-                  <button class="small" @click="jumpToEdit(t.id)">이 답 수정</button>
-                </div>
-
-                <div class="tlBody">
-                  <ol v-if="t.answers.length" class="answerList">
-                    <li v-for="(a, i) in t.answers" :key="i" class="answerItem">{{ a }}</li>
-                  </ol>
-                  <div v-else class="muted">(빈 답)</div>
-                </div>
-              </div>
-
-              <div v-if="compareTimeline.length === 0" class="empty">
-                아직 이 질문의 답이 없어요.
-              </div>
-            </div>
-          </div>
         </section>
-      </section>
       </ArchiveSettingsView>
 
       <!-- Mode: CAPSULES -->
@@ -422,63 +402,22 @@
         @open-card="jumpToCapsuleCard"
       />
 
-      <!-- Mode: ADD -->
-      <!-- Archive mode: quick entry remains, but is no longer named as a primary screen. -->
       <ArchiveSettingsView
-        v-else-if="mode === 'quick-entry-archive'"
-        :title="modePlanById['quick-entry-archive'].title"
-        :description="modePlanById['quick-entry-archive'].note"
+        v-else-if="mode === 'archive-organize'"
+        :title="modePlanById['archive-organize'].title"
+        :description="modePlanById['archive-organize'].note"
         :home-label="t.navHome"
         @back-home="setMode('home-universe')"
       >
-        <template #actions>
-          <ArchiveSettingsTools
-            :language="language"
-            :language-label="t.language"
-            :capsule-group-label="t.capsuleBackupGroup"
-            :capsule-export-label="t.exportCapsules"
-            :capsule-import-label="t.importCapsules"
-            :capsule-export-disabled="capsules.length === 0"
-            :legacy-group-label="t.legacyBackupGroup"
-            :export-label="t.legacyExportJson"
-            :import-label="t.legacyImportJson"
-            :danger-group-label="t.dangerSettingsGroup"
-            :clear-label="t.clearAllData"
-            :export-disabled="entries.length === 0"
-            :clear-disabled="entries.length === 0"
-            @update:language="language = $event"
-            @change-language="saveLanguage"
-            @capsule-export="onExportCapsules"
-            @capsule-import-file="onImportCapsuleFile"
-            @export="onExport"
-            @import-file="onImportFile"
-            @clear-all="clearAll"
-          />
-        </template>
         <ArchiveSectionTabs
           :active-mode="activeArchiveMode"
           :plans="archiveModePlans"
           @select="setMode($event)"
         />
-        <ArchiveCapsuleShelf
-          :search="capsuleSearch"
-          :capsules="capsules"
-          :filtered-capsules="filteredCapsules"
-          :selected-capsule-id="selectedCapsuleId"
-          :stats="capsuleStats"
-          :type-labels="t.typeLabels"
-          :list-labels="capsuleListLabels"
-          :labels="archiveShelfLabels"
-          @update:search="capsuleSearch = $event"
-          @select="openCapsuleFromArchive"
-        />
       <section class="layoutAdd">
         <section class="panel">
           <div class="panelHead">
             <h2 class="noWrap">빠른 입력</h2>
-            <div class="headBtns">
-              <button class="ghost" @click="setMode('home-universe')">캡슐 홈으로</button>
-            </div>
           </div>
 
           <div class="addWrap" @keydown="onFormKeydown">
@@ -560,6 +499,12 @@
 
           <div class="panelFoot">
             <p class="hint">질문을 클릭하면 입력 칸에 자동으로 들어가요.</p>
+            <button class="ghost" @click="onClonePrevYear">
+              {{ selectedYear - 1 }} → {{ selectedYear }} 질문 복제
+            </button>
+            <p class="hint">
+              누락된 연도 회고를 채울 때 이전 연도의 질문만 가져올 수 있어요.
+            </p>
           </div>
         </aside>
       </section>
@@ -627,9 +572,9 @@ const messages = {
     capsules: "캡슐",
     archive: "아카이브",
     archiveCapsulesEyebrow: "행성 보관함",
-    archiveCapsulesTitle: "내 기억 행성은 아카이브에서 관리해요",
+    archiveCapsulesTitle: "기억 행성을 찾고 다시 열어요",
     archiveCapsulesDescription:
-      "행성 검색과 선택은 이 보관함으로 옮기는 중이에요. 행성을 고르면 다시 기억 우주와 상세 편집으로 돌아가요.",
+      "검색과 필터로 오래된 회고를 조용히 찾고, 필요한 행성만 다시 탐험해요.",
     archiveCount: "전체 행성",
     openArchive: "아카이브 열기",
     createEntryEyebrow: "생성 입구",
@@ -723,9 +668,9 @@ const messages = {
     capsules: "Capsules",
     archive: "Archive",
     archiveCapsulesEyebrow: "Planet Archive",
-    archiveCapsulesTitle: "Manage memory planets from the archive",
+    archiveCapsulesTitle: "Find and reopen memory planets",
     archiveCapsulesDescription:
-      "Planet search and selection are moving here. Picking a planet returns you to the universe view and detail editor.",
+      "Search and filter older retrospectives, then reopen only the planet you need.",
     archiveCount: "Planets",
     openArchive: "Open archive",
     createEntryEyebrow: "Creation Entry",
@@ -833,7 +778,7 @@ const modePlanById = Object.fromEntries(appModePlans.map((plan) => [plan.id, pla
 const archiveModePlanById = Object.fromEntries(
   archiveModePlans.map((plan) => [plan.id, plan])
 ) as Record<ArchiveModeId, (typeof archiveModePlans)[number]>;
-const lastArchiveMode = ref<ArchiveModeId>("year-archive");
+const lastArchiveMode = ref<ArchiveModeId>("archive-library");
 
 const selectedYear = ref<number>(2016);
 const selectedId = ref<string | null>(null);
@@ -887,7 +832,12 @@ const years = computed(() => {
 const t = computed(() => messages[language.value]);
 
 function isArchiveMode(m: AppMode): m is ArchiveModeId {
-  return m === "quick-entry-archive" || m === "year-archive" || m === "question-compare-archive";
+  return (
+    m === "archive-library" ||
+    m === "archive-time" ||
+    m === "archive-organize" ||
+    m === "archive-settings"
+  );
 }
 
 const activeArchiveMode = computed<ArchiveModeId>(() => {
@@ -1086,7 +1036,7 @@ function setMode(m: AppMode) {
     lastArchiveMode.value = m;
   }
 
-  if (m === "quick-entry-archive") {
+  if (m === "archive-organize") {
     form.year = selectedYear.value;
     editingId.value = null;
     ensureAtLeastOneAnswerRow();
@@ -1096,13 +1046,13 @@ function setMode(m: AppMode) {
     refreshCapsules();
   }
 
-  if (m === "question-compare-archive") {
+  if (m === "archive-time") {
     if (!compareQ.value && questionBank.value[0]) compareQ.value = questionBank.value[0].q;
   }
 }
 
 function openArchiveSettings() {
-  setMode(lastArchiveMode.value);
+  setMode("archive-library");
 }
 
 function selectYear(y: number) {
@@ -1462,7 +1412,7 @@ function onClonePrevYear() {
 function openCompareFromSelected() {
   if (!selectedEntry.value) return;
   compareQ.value = selectedEntry.value.q;
-  setMode("question-compare-archive");
+  setMode("archive-time");
 }
 
 function jumpToEdit(id: string) {
@@ -1471,7 +1421,7 @@ function jumpToEdit(id: string) {
 
   selectedYear.value = e.year;
   selectedId.value = e.id;
-  setMode("year-archive");
+  setMode("archive-time");
   startEdit(e);
 }
 
@@ -1739,8 +1689,8 @@ function onFormKeydown(e: KeyboardEvent) {
   if (!isSubmit) return;
 
   e.preventDefault();
-  if (mode.value === "quick-entry-archive") onAdd();
-  else if (mode.value === "year-archive" && editingId.value) onSaveEdit();
+  if (mode.value === "archive-organize") onAdd();
+  else if (mode.value === "archive-time" && editingId.value) onSaveEdit();
 }
 
 </script>
@@ -1880,6 +1830,42 @@ button:disabled {
   gap: 12px;
 }
 
+.archiveBand,
+.settingsPanel {
+  margin: 0 18px;
+}
+
+.archiveBand {
+  display: grid;
+  gap: 12px;
+}
+
+.archiveBandHead {
+  display: grid;
+  gap: 4px;
+}
+
+.archiveBandHead .eyebrow {
+  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.archiveBandHead h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.settingsPanel {
+  border: 1px solid var(--color-soft-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  padding: 14px;
+}
+
 @media (max-width: 899px) {
   .panel {
     min-height: auto;
@@ -1889,6 +1875,11 @@ button:disabled {
   .layoutCompare,
   .layoutAdd {
     grid-template-columns: 1fr;
+  }
+
+  .archiveBand,
+  .settingsPanel {
+    margin: 0 12px;
   }
 }
 
