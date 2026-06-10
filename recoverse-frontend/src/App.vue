@@ -355,8 +355,33 @@
         @open-discovery="openDiscoveryCard"
         @open-archive="openArchiveSettings"
         @open-create-flow="openCreateFlow"
+        @open-galaxy="openSelectedGalaxy"
         @open-selected-capsule="openSelectedCapsule"
         @select-capsule="selectCapsule"
+        @select-galaxy="selectGalaxy"
+      />
+
+      <GalaxyDetailView
+        v-else-if="mode === 'galaxy-detail'"
+        :galaxy="selectedGalaxy"
+        :members="selectedGalaxyMembers"
+        :prompts="selectedGalaxyPrompts"
+        :logs="selectedGalaxyLogs"
+        :galaxy-form="galaxyEditForm"
+        :member-form="galaxyMemberForm"
+        :prompt-form="galaxyPromptForm"
+        :log-drafts="galaxyLogDrafts"
+        :labels="galaxyDetailLabels"
+        @back-home="setMode('home-universe')"
+        @save-galaxy="saveSelectedGalaxy"
+        @delete-galaxy="deleteSelectedGalaxy"
+        @add-member="addSelectedGalaxyMember"
+        @update-member="updateSelectedGalaxyMember"
+        @delete-member="deleteSelectedGalaxyMember"
+        @add-prompt="addSelectedGalaxyPrompt"
+        @update-prompt="updateSelectedGalaxyPrompt"
+        @delete-prompt="deleteSelectedGalaxyPrompt"
+        @save-log="saveSelectedGalaxyLog"
       />
 
       <PlanetDetailView
@@ -527,6 +552,7 @@ import ArchiveCapsuleShelf from "./components/ArchiveCapsuleShelf.vue";
 import ArchiveSectionTabs from "./components/ArchiveSectionTabs.vue";
 import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
 import ArchiveSettingsView from "./views/ArchiveSettingsView.vue";
+import GalaxyDetailView from "./views/GalaxyDetailView.vue";
 import HomeUniverseView from "./views/HomeUniverseView.vue";
 import PlanetDetailView from "./views/PlanetDetailView.vue";
 import {
@@ -558,7 +584,18 @@ import {
   selectDailyDiscoveryCard,
 } from "./lib/capsuleHomeData";
 import { createCapsule } from "./lib/capsuleActions";
-import { createGalaxy } from "./lib/galaxyActions";
+import {
+  addGalaxyMember,
+  addGalaxyPrompt,
+  createGalaxy,
+  deleteGalaxy,
+  deleteGalaxyMember,
+  deleteGalaxyPrompt,
+  saveGalaxyLog,
+  updateGalaxy,
+  updateGalaxyMember,
+  updateGalaxyPrompt,
+} from "./lib/galaxyActions";
 import { capsuleTemplates } from "./lib/capsuleTemplates";
 import {
   addEntry,
@@ -664,6 +701,34 @@ const messages = {
     galaxyTheme: "은하 유형",
     createGalaxyButton: "그룹 은하 만들기",
     galaxyHint: "기본 멤버와 공통 탐사 기록이 함께 만들어져요. 멤버와 로그 편집은 다음 단계에서 확장합니다.",
+    galaxyEmptyTitle: "그룹 은하가 없어요",
+    galaxyEmptyDescription: "홈에서 새 그룹 은하를 만들면 이곳에서 함께 편집할 수 있어요.",
+    galaxyNoSelected: "선택된 그룹 은하가 없어요.",
+    galaxySettings: "은하 설정",
+    galaxyInfo: "은하 정보",
+    saveGalaxy: "은하 저장",
+    deleteGalaxy: "은하 삭제",
+    memberEyebrow: "멤버 행성",
+    memberTitle: "함께 남기는 기억",
+    memberPlaceholder: "멤버 이름",
+    addMember: "멤버 추가",
+    joined: "합류",
+    promptEyebrow: "공통 탐사 기록",
+    promptTitle: "같은 질문, 다른 로그",
+    promptPlaceholder: "함께 답할 질문",
+    addPrompt: "질문 추가",
+    logPlaceholder: "탐사 로그를 적어보세요",
+    saveLog: "로그 저장",
+    noPrompts: "아직 공통 탐사 기록이 없어요.",
+    delete: "삭제",
+    galaxySaved: "은하를 저장했어요.",
+    galaxyDeleted: "은하를 삭제했어요.",
+    galaxyMemberAdded: "멤버를 추가했어요.",
+    galaxyPromptAdded: "질문을 추가했어요.",
+    galaxyLogSaved: "탐사 로그를 저장했어요.",
+    confirmDeleteGalaxy: "이 그룹 은하를 삭제할까요?",
+    confirmDeleteGalaxyMember: "이 멤버와 관련 로그를 삭제할까요?",
+    confirmDeleteGalaxyPrompt: "이 질문과 관련 로그를 삭제할까요?",
     galaxyThemeLabels: {
       year: "연도 회고",
       trip: "여행",
@@ -777,6 +842,34 @@ const messages = {
     galaxyTheme: "Galaxy type",
     createGalaxyButton: "Create group galaxy",
     galaxyHint: "A default member and shared exploration records are created now. Member and log editing will expand next.",
+    galaxyEmptyTitle: "No group galaxy yet",
+    galaxyEmptyDescription: "Create a group galaxy from Home to edit it here.",
+    galaxyNoSelected: "No group galaxy selected.",
+    galaxySettings: "Galaxy Settings",
+    galaxyInfo: "Galaxy Info",
+    saveGalaxy: "Save galaxy",
+    deleteGalaxy: "Delete galaxy",
+    memberEyebrow: "Member Planets",
+    memberTitle: "Shared memories",
+    memberPlaceholder: "Member name",
+    addMember: "Add member",
+    joined: "joined",
+    promptEyebrow: "Shared Records",
+    promptTitle: "Same questions, different logs",
+    promptPlaceholder: "Question for everyone",
+    addPrompt: "Add question",
+    logPlaceholder: "Write an exploration log",
+    saveLog: "Save log",
+    noPrompts: "No shared exploration records yet.",
+    delete: "Delete",
+    galaxySaved: "Galaxy saved.",
+    galaxyDeleted: "Galaxy deleted.",
+    galaxyMemberAdded: "Member added.",
+    galaxyPromptAdded: "Question added.",
+    galaxyLogSaved: "Exploration log saved.",
+    confirmDeleteGalaxy: "Delete this group galaxy?",
+    confirmDeleteGalaxyMember: "Delete this member and related logs?",
+    confirmDeleteGalaxyPrompt: "Delete this question and related logs?",
     galaxyThemeLabels: {
       year: "Year retrospective",
       trip: "Trip",
@@ -822,6 +915,7 @@ const galaxyData = ref<GalaxyData>({
 });
 const selectedCapsuleId = ref<string | null>(null);
 const selectedCapsuleCardId = ref<string | null>(null);
+const selectedGalaxyId = ref<string | null>(null);
 const mode = ref<AppMode>("home-universe");
 const showCreateComposer = ref<boolean>(false);
 const createMode = ref<"planet" | "galaxy">("planet");
@@ -879,6 +973,23 @@ const galaxyForm = reactive<{
   description: "",
   theme: "year",
 });
+
+const galaxyEditForm = reactive<{
+  title: string;
+  description: string;
+  theme: GalaxyTheme;
+}>({
+  title: "",
+  description: "",
+  theme: "year",
+});
+const galaxyMemberForm = reactive({
+  displayName: "",
+});
+const galaxyPromptForm = reactive({
+  questionText: "",
+});
+const galaxyLogDrafts = reactive<Record<string, string>>({});
 
 const capsuleCardForm = reactive({
   questionText: "",
@@ -965,6 +1076,35 @@ const createEntryLabels = computed(() => ({
   close: t.value.closeCreateEntry,
 }));
 
+const galaxyDetailLabels = computed(() => ({
+  eyebrow: t.value.navGalaxy,
+  emptyTitle: t.value.galaxyEmptyTitle,
+  emptyDescription: t.value.galaxyEmptyDescription,
+  noGalaxy: t.value.galaxyNoSelected,
+  backHome: t.value.navHome,
+  deleteGalaxy: t.value.deleteGalaxy,
+  galaxySettings: t.value.galaxySettings,
+  galaxyInfo: t.value.galaxyInfo,
+  title: t.value.galaxyTitle,
+  description: t.value.galaxyDescription,
+  theme: t.value.galaxyTheme,
+  themeLabels: t.value.galaxyThemeLabels as Record<GalaxyTheme, string>,
+  saveGalaxy: t.value.saveGalaxy,
+  memberEyebrow: t.value.memberEyebrow,
+  memberTitle: t.value.memberTitle,
+  memberPlaceholder: t.value.memberPlaceholder,
+  addMember: t.value.addMember,
+  joined: t.value.joined,
+  promptEyebrow: t.value.promptEyebrow,
+  promptTitle: t.value.promptTitle,
+  promptPlaceholder: t.value.promptPlaceholder,
+  addPrompt: t.value.addPrompt,
+  logPlaceholder: t.value.logPlaceholder,
+  saveLog: t.value.saveLog,
+  noPrompts: t.value.noPrompts,
+  delete: t.value.delete,
+}));
+
 const discoveryLabels = computed(() => ({
   title: t.value.todayDiscovery,
   empty: t.value.rediscoverEmpty,
@@ -1018,6 +1158,46 @@ function refreshCapsules() {
 
 function refreshGalaxies() {
   galaxyData.value = loadGalaxyData();
+  if (selectedGalaxyId.value && !galaxyData.value.galaxies.some((galaxy) => galaxy.id === selectedGalaxyId.value)) {
+    selectedGalaxyId.value = null;
+  }
+}
+
+function galaxyLogKey(promptId: string, memberId: string) {
+  return `${promptId}:${memberId}`;
+}
+
+function resetGalaxyEditForms() {
+  galaxyEditForm.title = "";
+  galaxyEditForm.description = "";
+  galaxyEditForm.theme = "year";
+  galaxyMemberForm.displayName = "";
+  galaxyPromptForm.questionText = "";
+  for (const key of Object.keys(galaxyLogDrafts)) delete galaxyLogDrafts[key];
+}
+
+function syncGalaxyEditForms() {
+  const galaxy = selectedGalaxy.value;
+  if (!galaxy) {
+    resetGalaxyEditForms();
+    return;
+  }
+
+  galaxyEditForm.title = galaxy.title;
+  galaxyEditForm.description = galaxy.description ?? "";
+  galaxyEditForm.theme = galaxy.theme;
+  galaxyMemberForm.displayName = "";
+  galaxyPromptForm.questionText = "";
+
+  for (const key of Object.keys(galaxyLogDrafts)) delete galaxyLogDrafts[key];
+  for (const prompt of selectedGalaxyPrompts.value) {
+    for (const member of selectedGalaxyMembers.value) {
+      const log = selectedGalaxyLogs.value.find(
+        (item) => item.promptId === prompt.id && item.memberId === member.id
+      );
+      galaxyLogDrafts[galaxyLogKey(prompt.id, member.id)] = log?.answers.join("\n") ?? "";
+    }
+  }
 }
 
 const yearCountMap = computed(() => {
@@ -1101,6 +1281,28 @@ const homeCapsuleItems = computed(() =>
 
 const galaxies = computed<Galaxy[]>(() => galaxyData.value.galaxies);
 
+const selectedGalaxy = computed(() => {
+  if (!selectedGalaxyId.value) return null;
+  return galaxyData.value.galaxies.find((galaxy) => galaxy.id === selectedGalaxyId.value) ?? null;
+});
+
+const selectedGalaxyMembers = computed(() => {
+  if (!selectedGalaxyId.value) return [];
+  return galaxyData.value.members.filter((member) => member.galaxyId === selectedGalaxyId.value);
+});
+
+const selectedGalaxyPrompts = computed(() => {
+  if (!selectedGalaxyId.value) return [];
+  return galaxyData.value.prompts
+    .filter((prompt) => prompt.galaxyId === selectedGalaxyId.value)
+    .sort((a, b) => a.order - b.order);
+});
+
+const selectedGalaxyLogs = computed(() => {
+  if (!selectedGalaxyId.value) return [];
+  return galaxyData.value.logs.filter((log) => log.galaxyId === selectedGalaxyId.value);
+});
+
 const discoveryCapsuleTitle = computed(() => {
   if (!discoveryCard.value) return "";
   return capsules.value.find((capsule) => capsule.id === discoveryCard.value?.capsuleId)?.title ?? "";
@@ -1129,7 +1331,7 @@ function setMode(m: AppMode) {
     ensureAtLeastOneAnswerRow();
   }
 
-  if (m === "home-universe" || m === "planet-detail") {
+  if (m === "home-universe" || m === "planet-detail" || m === "galaxy-detail") {
     refreshCapsules();
     refreshGalaxies();
   }
@@ -1234,6 +1436,122 @@ function openSelectedCapsule() {
   setMode("planet-detail");
 }
 
+function selectGalaxy(id: string) {
+  selectedGalaxyId.value = id;
+  syncGalaxyEditForms();
+  setMode("galaxy-detail");
+}
+
+function openSelectedGalaxy() {
+  const id = selectedGalaxyId.value ?? galaxies.value[0]?.id ?? null;
+  if (!id) return;
+  selectGalaxy(id);
+}
+
+function updateGalaxyData(next: GalaxyData) {
+  galaxyData.value = next;
+  syncGalaxyEditForms();
+}
+
+function saveSelectedGalaxy() {
+  const galaxy = selectedGalaxy.value;
+  if (!galaxy) return;
+
+  try {
+    updateGalaxyData(
+      updateGalaxy(
+        galaxy.id,
+        {
+          title: galaxyEditForm.title,
+          description: galaxyEditForm.description,
+          theme: galaxyEditForm.theme,
+        },
+        language.value
+      )
+    );
+    galaxyNotice.value = t.value.galaxySaved;
+  } catch (err: any) {
+    galaxyError.value = err?.message ?? t.value.galaxyCreateFailed;
+  }
+}
+
+function deleteSelectedGalaxy() {
+  const galaxy = selectedGalaxy.value;
+  if (!galaxy) return;
+  if (!confirm(t.value.confirmDeleteGalaxy)) return;
+
+  galaxyData.value = deleteGalaxy(galaxy.id);
+  selectedGalaxyId.value = galaxyData.value.galaxies[0]?.id ?? null;
+  syncGalaxyEditForms();
+  galaxyNotice.value = t.value.galaxyDeleted;
+  setMode(selectedGalaxyId.value ? "galaxy-detail" : "home-universe");
+}
+
+function addSelectedGalaxyMember() {
+  const galaxy = selectedGalaxy.value;
+  if (!galaxy) return;
+
+  try {
+    updateGalaxyData(addGalaxyMember(galaxy.id, galaxyMemberForm.displayName, language.value));
+    galaxyNotice.value = t.value.galaxyMemberAdded;
+  } catch (err: any) {
+    galaxyError.value = err?.message ?? t.value.unknownError;
+  }
+}
+
+function updateSelectedGalaxyMember(payload: { memberId: string; displayName: string }) {
+  try {
+    updateGalaxyData(updateGalaxyMember(payload.memberId, payload.displayName, language.value));
+  } catch (err: any) {
+    galaxyError.value = err?.message ?? t.value.unknownError;
+  }
+}
+
+function deleteSelectedGalaxyMember(memberId: string) {
+  if (!confirm(t.value.confirmDeleteGalaxyMember)) return;
+  updateGalaxyData(deleteGalaxyMember(memberId));
+}
+
+function addSelectedGalaxyPrompt() {
+  const galaxy = selectedGalaxy.value;
+  if (!galaxy) return;
+
+  try {
+    updateGalaxyData(addGalaxyPrompt(galaxy.id, galaxyPromptForm.questionText, language.value));
+    galaxyNotice.value = t.value.galaxyPromptAdded;
+  } catch (err: any) {
+    galaxyError.value = err?.message ?? t.value.unknownError;
+  }
+}
+
+function updateSelectedGalaxyPrompt(payload: { promptId: string; questionText: string }) {
+  try {
+    updateGalaxyData(updateGalaxyPrompt(payload.promptId, payload.questionText, language.value));
+  } catch (err: any) {
+    galaxyError.value = err?.message ?? t.value.unknownError;
+  }
+}
+
+function deleteSelectedGalaxyPrompt(promptId: string) {
+  if (!confirm(t.value.confirmDeleteGalaxyPrompt)) return;
+  updateGalaxyData(deleteGalaxyPrompt(promptId));
+}
+
+function saveSelectedGalaxyLog(payload: { promptId: string; memberId: string }) {
+  const galaxy = selectedGalaxy.value;
+  if (!galaxy) return;
+
+  updateGalaxyData(
+    saveGalaxyLog(
+      galaxy.id,
+      payload.promptId,
+      payload.memberId,
+      galaxyLogDrafts[galaxyLogKey(payload.promptId, payload.memberId)] ?? ""
+    )
+  );
+  galaxyNotice.value = t.value.galaxyLogSaved;
+}
+
 function selectCapsuleCard(id: string) {
   selectedCapsuleCardId.value = id;
   const card = capsuleCards.value.find((item) => item.id === id);
@@ -1304,6 +1622,7 @@ function onCreateGalaxy() {
       theme: galaxyForm.theme,
       language: language.value,
     });
+    selectedGalaxyId.value = galaxyData.value.galaxies[0]?.id ?? null;
     resetGalaxyForm();
     showCreateComposer.value = false;
     createMode.value = "planet";

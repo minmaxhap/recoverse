@@ -2,9 +2,17 @@
   <section class="galaxyView">
     <header class="galaxyHero">
       <div class="heroCopy">
-        <span class="eyebrow">그룹 은하</span>
-        <h2>{{ galaxy.title }}</h2>
-        <p>{{ galaxy.description }}</p>
+        <span class="eyebrow">{{ labels.eyebrow }}</span>
+        <h2>{{ galaxy?.title ?? labels.emptyTitle }}</h2>
+        <p>{{ galaxy?.description || labels.emptyDescription }}</p>
+      </div>
+      <div class="heroActions">
+        <button class="ghostAction" type="button" @click="$emit('back-home')">
+          {{ labels.backHome }}
+        </button>
+        <button v-if="galaxy" class="dangerAction" type="button" @click="$emit('delete-galaxy')">
+          {{ labels.deleteGalaxy }}
+        </button>
       </div>
       <div class="galaxyVisual" aria-hidden="true">
         <span class="orbit orbitA"></span>
@@ -19,127 +27,230 @@
       </div>
     </header>
 
-    <section class="memberSection">
-      <div class="sectionHead">
-        <span class="eyebrow">멤버 행성</span>
-        <h3>함께 남기는 기억</h3>
-      </div>
-      <div class="memberGrid">
-        <article v-for="member in members" :key="member.id" class="memberCard">
-          <span class="memberPlanet" :class="member.colorTone"></span>
-          <div>
-            <h4>{{ member.displayName }}</h4>
-            <p>{{ formatJoinedAt(member.joinedAt) }} 합류</p>
-          </div>
-        </article>
-      </div>
-    </section>
+    <div v-if="!galaxy" class="emptyState">
+      {{ labels.noGalaxy }}
+    </div>
 
-    <section class="promptSection">
-      <div class="sectionHead">
-        <span class="eyebrow">공통 탐사 기록</span>
-        <h3>같은 질문, 다른 로그</h3>
-      </div>
+    <template v-else>
+      <section class="editSection">
+        <div class="sectionHead">
+          <span class="eyebrow">{{ labels.galaxySettings }}</span>
+          <h3>{{ labels.galaxyInfo }}</h3>
+        </div>
+        <div class="formGrid">
+          <label class="wide">
+            <span>{{ labels.title }}</span>
+            <input v-model="galaxyForm.title" />
+          </label>
+          <label class="wide">
+            <span>{{ labels.description }}</span>
+            <input v-model="galaxyForm.description" />
+          </label>
+          <label>
+            <span>{{ labels.theme }}</span>
+            <select v-model="galaxyForm.theme">
+              <option v-for="theme in galaxyThemes" :key="theme" :value="theme">
+                {{ labels.themeLabels[theme] }}
+              </option>
+            </select>
+          </label>
+        </div>
+        <div class="actionRow">
+          <button class="primaryAction" type="button" @click="$emit('save-galaxy')">
+            {{ labels.saveGalaxy }}
+          </button>
+        </div>
+      </section>
 
-      <div class="promptList">
-        <article v-for="prompt in prompts" :key="prompt.id" class="promptCard">
-          <h4>{{ prompt.questionText }}</h4>
-          <div class="logMatrix">
-            <div v-for="member in members" :key="member.id" class="logCell">
-              <span>{{ member.displayName }}</span>
-              <p>{{ logFor(prompt.id, member.id) }}</p>
+      <section class="memberSection">
+        <div class="sectionHead">
+          <span class="eyebrow">{{ labels.memberEyebrow }}</span>
+          <h3>{{ labels.memberTitle }}</h3>
+        </div>
+
+        <div class="inlineForm">
+          <input v-model="memberForm.displayName" :placeholder="labels.memberPlaceholder" />
+          <button class="primaryAction" type="button" @click="$emit('add-member')">
+            {{ labels.addMember }}
+          </button>
+        </div>
+
+        <div class="memberGrid">
+          <article v-for="member in members" :key="member.id" class="memberCard">
+            <span class="memberPlanet" :class="member.colorTone"></span>
+            <div>
+              <input
+                :value="member.displayName"
+                @change="
+                  $emit('update-member', {
+                    memberId: member.id,
+                    displayName: ($event.target as HTMLInputElement).value,
+                  })
+                "
+              />
+              <p>{{ formatJoinedAt(member.joinedAt) }} {{ labels.joined }}</p>
             </div>
+            <button class="smallDanger" type="button" @click="$emit('delete-member', member.id)">
+              {{ labels.delete }}
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <section class="promptSection">
+        <div class="sectionHead">
+          <span class="eyebrow">{{ labels.promptEyebrow }}</span>
+          <h3>{{ labels.promptTitle }}</h3>
+        </div>
+
+        <div class="inlineForm">
+          <input v-model="promptForm.questionText" :placeholder="labels.promptPlaceholder" />
+          <button class="primaryAction" type="button" @click="$emit('add-prompt')">
+            {{ labels.addPrompt }}
+          </button>
+        </div>
+
+        <div class="promptList">
+          <article v-for="prompt in sortedPrompts" :key="prompt.id" class="promptCard">
+            <div class="promptHead">
+              <input
+                :value="prompt.questionText"
+                @change="
+                  $emit('update-prompt', {
+                    promptId: prompt.id,
+                    questionText: ($event.target as HTMLInputElement).value,
+                  })
+                "
+              />
+              <button class="smallDanger" type="button" @click="$emit('delete-prompt', prompt.id)">
+                {{ labels.delete }}
+              </button>
+            </div>
+
+            <div class="logMatrix">
+              <div v-for="member in members" :key="member.id" class="logCell">
+                <span>{{ member.displayName }}</span>
+                <textarea
+                  v-model="logDrafts[logKey(prompt.id, member.id)]"
+                  :placeholder="labels.logPlaceholder"
+                  rows="3"
+                ></textarea>
+                <button
+                  class="smallAction"
+                  type="button"
+                  @click="
+                    $emit('save-log', {
+                      promptId: prompt.id,
+                      memberId: member.id,
+                    })
+                  "
+                >
+                  {{ labels.saveLog }}
+                </button>
+              </div>
+            </div>
+          </article>
+
+          <div v-if="sortedPrompts.length === 0" class="emptyState">
+            {{ labels.noPrompts }}
           </div>
-        </article>
-      </div>
-    </section>
+        </div>
+      </section>
+    </template>
   </section>
 </template>
 
 <script setup lang="ts">
-import type { Galaxy, GalaxyLog, GalaxyMember, GalaxyPrompt } from "../types/recoverseFuture";
+import { computed } from "vue";
+import type {
+  Galaxy,
+  GalaxyLog,
+  GalaxyMember,
+  GalaxyPrompt,
+  GalaxyTheme,
+} from "../types/recoverseFuture";
 
-const galaxy: Galaxy = {
-  id: "draft-galaxy-2025",
-  title: "2025 연말 회고 은하",
-  description: "친구들과 같은 질문을 두고 서로 다른 한 해의 궤도를 남기는 그룹 회고 공간.",
-  theme: "year",
-  createdAt: "2025-12-01T00:00:00.000Z",
-  updatedAt: "2025-12-01T00:00:00.000Z",
+type GalaxyFormState = {
+  title: string;
+  description: string;
+  theme: GalaxyTheme;
 };
 
-const members: GalaxyMember[] = [
-  {
-    id: "member-me",
-    galaxyId: galaxy.id,
-    displayName: "나",
-    colorTone: "toneGold",
-    joinedAt: "2025-12-01T00:00:00.000Z",
-  },
-  {
-    id: "member-friend",
-    galaxyId: galaxy.id,
-    displayName: "이민",
-    colorTone: "toneTeal",
-    joinedAt: "2025-12-02T00:00:00.000Z",
-  },
-  {
-    id: "member-team",
-    galaxyId: galaxy.id,
-    displayName: "지우",
-    colorTone: "toneLavender",
-    joinedAt: "2025-12-03T00:00:00.000Z",
-  },
+type MemberFormState = {
+  displayName: string;
+};
+
+type PromptFormState = {
+  questionText: string;
+};
+
+const galaxyThemes: GalaxyTheme[] = [
+  "year",
+  "trip",
+  "project",
+  "relationship",
+  "career",
+  "custom",
 ];
 
-const prompts: GalaxyPrompt[] = [
-  {
-    id: "prompt-proud",
-    galaxyId: galaxy.id,
-    questionText: "올해 가장 오래 기억하고 싶은 순간은?",
-    order: 0,
-    createdAt: galaxy.createdAt,
-    updatedAt: galaxy.updatedAt,
-  },
-  {
-    id: "prompt-change",
-    galaxyId: galaxy.id,
-    questionText: "작년의 나와 가장 달라진 점은?",
-    order: 1,
-    createdAt: galaxy.createdAt,
-    updatedAt: galaxy.updatedAt,
-  },
-];
+const props = defineProps<{
+  galaxy: Galaxy | null;
+  members: GalaxyMember[];
+  prompts: GalaxyPrompt[];
+  logs: GalaxyLog[];
+  galaxyForm: GalaxyFormState;
+  memberForm: MemberFormState;
+  promptForm: PromptFormState;
+  logDrafts: Record<string, string>;
+  labels: {
+    eyebrow: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    noGalaxy: string;
+    backHome: string;
+    deleteGalaxy: string;
+    galaxySettings: string;
+    galaxyInfo: string;
+    title: string;
+    description: string;
+    theme: string;
+    themeLabels: Record<GalaxyTheme, string>;
+    saveGalaxy: string;
+    memberEyebrow: string;
+    memberTitle: string;
+    memberPlaceholder: string;
+    addMember: string;
+    joined: string;
+    promptEyebrow: string;
+    promptTitle: string;
+    promptPlaceholder: string;
+    addPrompt: string;
+    logPlaceholder: string;
+    saveLog: string;
+    noPrompts: string;
+    delete: string;
+  };
+}>();
 
-const logs: GalaxyLog[] = [
-  {
-    id: "log-1",
-    galaxyId: galaxy.id,
-    promptId: "prompt-proud",
-    memberId: "member-me",
-    answers: ["처음으로 오래 미뤄 둔 일을 끝까지 해냈다."],
-    updatedAt: galaxy.updatedAt,
-  },
-  {
-    id: "log-2",
-    galaxyId: galaxy.id,
-    promptId: "prompt-proud",
-    memberId: "member-friend",
-    answers: ["함께 여행을 준비하던 밤들이 오래 남았다."],
-    updatedAt: galaxy.updatedAt,
-  },
-  {
-    id: "log-3",
-    galaxyId: galaxy.id,
-    promptId: "prompt-change",
-    memberId: "member-team",
-    answers: ["혼자 해결하려 하기보다 더 자주 도움을 요청하게 됐다."],
-    updatedAt: galaxy.updatedAt,
-  },
-];
+defineEmits<{
+  "back-home": [];
+  "save-galaxy": [];
+  "delete-galaxy": [];
+  "add-member": [];
+  "update-member": [payload: { memberId: string; displayName: string }];
+  "delete-member": [memberId: string];
+  "add-prompt": [];
+  "update-prompt": [payload: { promptId: string; questionText: string }];
+  "delete-prompt": [promptId: string];
+  "save-log": [payload: { promptId: string; memberId: string }];
+}>();
 
-function logFor(promptId: string, memberId: string) {
-  return logs.find((log) => log.promptId === promptId && log.memberId === memberId)?.answers[0] ?? "아직 기록 전";
+const sortedPrompts = computed(() => {
+  return [...props.prompts].sort((a, b) => a.order - b.order);
+});
+
+function logKey(promptId: string, memberId: string) {
+  return `${promptId}:${memberId}`;
 }
 
 function formatJoinedAt(iso: string) {
@@ -159,8 +270,10 @@ function formatJoinedAt(iso: string) {
 }
 
 .galaxyHero,
+.editSection,
 .memberSection,
-.promptSection {
+.promptSection,
+.emptyState {
   border: 1px solid var(--color-soft-border);
   border-radius: 18px;
   background: var(--color-surface);
@@ -170,7 +283,7 @@ function formatJoinedAt(iso: string) {
 .galaxyHero {
   min-height: 260px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px;
+  grid-template-columns: minmax(0, 1fr) auto 220px;
   gap: 16px;
   align-items: center;
   padding: 18px;
@@ -182,6 +295,16 @@ function formatJoinedAt(iso: string) {
   gap: 6px;
 }
 
+.heroActions,
+.actionRow,
+.inlineForm,
+.promptHead {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .eyebrow {
   color: var(--color-muted);
   font-size: 11px;
@@ -191,7 +314,6 @@ function formatJoinedAt(iso: string) {
 
 h2,
 h3,
-h4,
 p {
   margin: 0;
 }
@@ -203,10 +325,6 @@ h2 {
 
 h3 {
   font-size: 17px;
-}
-
-h4 {
-  font-size: 14px;
 }
 
 p {
@@ -290,11 +408,85 @@ p {
   background: linear-gradient(145deg, #b9a7e8, #6d5a8d);
 }
 
+.editSection,
 .memberSection,
-.promptSection {
+.promptSection,
+.emptyState {
   padding: 16px;
   display: grid;
   gap: 14px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 10px;
+}
+
+.formGrid label {
+  display: grid;
+  gap: 6px;
+}
+
+.formGrid label span {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+input,
+select,
+textarea {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: rgba(255, 249, 234, 0.96);
+  color: #15111f;
+  font: inherit;
+  padding: 10px 12px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  font: inherit;
+  border-radius: 999px;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.primaryAction,
+.smallAction {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.ghostAction {
+  border: 1px solid var(--color-border);
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.dangerAction,
+.smallDanger {
+  border: 1px solid var(--color-danger);
+  background: transparent;
+  color: var(--color-danger);
+}
+
+.smallAction,
+.smallDanger {
+  border-radius: 12px;
+  padding: 7px 9px;
+  font-size: 12px;
 }
 
 .memberGrid {
@@ -307,7 +499,8 @@ p {
   border: 1px solid var(--color-soft-border);
   border-radius: 14px;
   padding: 12px;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
 }
@@ -332,6 +525,11 @@ p {
   gap: 12px;
 }
 
+.promptHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .logMatrix {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -354,6 +552,7 @@ p {
 
 @media (max-width: 720px) {
   .galaxyHero,
+  .formGrid,
   .memberGrid,
   .logMatrix {
     grid-template-columns: 1fr;
@@ -361,6 +560,11 @@ p {
 
   .galaxyHero {
     min-height: auto;
+  }
+
+  .promptHead,
+  .memberCard {
+    grid-template-columns: 1fr;
   }
 }
 </style>

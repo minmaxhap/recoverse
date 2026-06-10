@@ -59,10 +59,16 @@ const capsuleHomeDataPath = await compileTsModule(
   new URL("../src/lib/capsuleHomeData.ts", import.meta.url),
   "capsuleHomeData.mjs"
 );
+const galaxyActionsPath = await compileTsModule(
+  new URL("../src/lib/galaxyActions.ts", import.meta.url),
+  "galaxyActions.mjs",
+  [['"./recoverseStore"', '"./recoverseStore.mjs"']]
+);
 
 const store = await import(pathToFileURL(storePath).href);
 const capsuleImportExport = await import(pathToFileURL(capsuleImportExportPath).href);
 const capsuleHomeData = await import(pathToFileURL(capsuleHomeDataPath).href);
+const galaxyActions = await import(pathToFileURL(galaxyActionsPath).href);
 
 globalThis.localStorage = new MemoryStorage();
 
@@ -429,4 +435,38 @@ test("saves and loads galaxy data separately from capsule data", () => {
   assert.equal(loaded.logs.length, 1);
   assert.equal(loaded.galaxies[0].title, "Team Galaxy");
   assert.equal(capsules.capsules.length, 0);
+});
+
+test("creates and edits galaxy members prompts and logs", () => {
+  localStorage.clear();
+
+  let data = galaxyActions.createGalaxy({
+    title: "Team Galaxy",
+    description: "Shared memories",
+    theme: "project",
+    language: "en",
+  });
+  const galaxy = data.galaxies[0];
+
+  data = galaxyActions.addGalaxyMember(galaxy.id, "Dana", "en");
+  const member = data.members.find((item) => item.displayName === "Dana");
+  assert.ok(member);
+
+  data = galaxyActions.addGalaxyPrompt(galaxy.id, "What worked?", "en");
+  const prompt = data.prompts.find((item) => item.questionText === "What worked?");
+  assert.ok(prompt);
+
+  data = galaxyActions.saveGalaxyLog(galaxy.id, prompt.id, member.id, "Small scope\nClear roles");
+  let log = data.logs.find((item) => item.promptId === prompt.id && item.memberId === member.id);
+  assert.deepEqual(log.answers, ["Small scope", "Clear roles"]);
+
+  data = galaxyActions.updateGalaxyMember(member.id, "Dana K.", "en");
+  assert.equal(data.members.find((item) => item.id === member.id).displayName, "Dana K.");
+
+  data = galaxyActions.updateGalaxyPrompt(prompt.id, "What should we keep?", "en");
+  assert.equal(data.prompts.find((item) => item.id === prompt.id).questionText, "What should we keep?");
+
+  data = galaxyActions.deleteGalaxyPrompt(prompt.id);
+  log = data.logs.find((item) => item.promptId === prompt.id);
+  assert.equal(log, undefined);
 });

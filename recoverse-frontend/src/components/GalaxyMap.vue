@@ -26,7 +26,7 @@
         class="galaxyNode"
         type="button"
         :style="galaxyNodeStyle(index)"
-        aria-disabled="true"
+        @click="$emit('select-galaxy', galaxy.id)"
       >
         <span class="galaxyCore"></span>
         <span class="galaxyOrbit orbitA"></span>
@@ -93,6 +93,7 @@ const props = defineProps<{
 
 defineEmits<{
   select: [capsuleId: string];
+  "select-galaxy": [galaxyId: string];
   "start-create": [];
 }>();
 
@@ -178,7 +179,7 @@ h3 {
   border: 0;
   background: transparent;
   color: rgba(255, 249, 234, 0.82);
-  cursor: default;
+  cursor: pointer;
   opacity: 0.92;
 }
 

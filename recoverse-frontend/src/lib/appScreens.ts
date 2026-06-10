@@ -8,12 +8,13 @@ export type FutureScreenId =
 export type AppMode =
   | "home-universe"
   | "planet-detail"
+  | "galaxy-detail"
   | "archive-library"
   | "archive-time"
   | "archive-organize"
   | "archive-settings";
 
-export type ArchiveModeId = Exclude<AppMode, "home-universe" | "planet-detail">;
+export type ArchiveModeId = Exclude<AppMode, "home-universe" | "planet-detail" | "galaxy-detail">;
 
 export type AppModePlan = {
   id: AppMode;
@@ -35,6 +36,12 @@ export const appModePlans: AppModePlan[] = [
     targetScreen: "planet-detail",
     title: "기억 행성 상세",
     note: "선택된 개인 행성의 탐사 기록과 탐사 로그를 편집하는 화면이다.",
+  },
+  {
+    id: "galaxy-detail",
+    targetScreen: "galaxy-detail",
+    title: "그룹 은하 상세",
+    note: "그룹 은하의 멤버 행성, 공통 탐사 기록, 멤버별 탐사 로그를 편집하는 화면이다.",
   },
   {
     id: "archive-library",

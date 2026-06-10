@@ -20,6 +20,7 @@
         :selected-capsule-id="selectedCapsuleId"
         :labels="galaxyMapLabels"
         @select="$emit('select-capsule', $event)"
+        @select-galaxy="$emit('select-galaxy', $event)"
         @start-create="$emit('open-create-flow')"
       />
 
@@ -43,7 +44,7 @@
           <span class="navIcon planetIcon"></span>
           <span>{{ bottomNavLabels.planet }}</span>
         </button>
-        <button class="navItem" type="button" disabled>
+        <button class="navItem" type="button" :disabled="galaxies.length === 0" @click="$emit('open-galaxy')">
           <span class="navIcon galaxyIcon"></span>
           <span>{{ bottomNavLabels.galaxy }}</span>
         </button>
@@ -107,8 +108,10 @@ defineEmits<{
   "open-discovery": [];
   "open-archive": [];
   "open-create-flow": [];
+  "open-galaxy": [];
   "open-selected-capsule": [];
   "select-capsule": [capsuleId: string];
+  "select-galaxy": [galaxyId: string];
 }>();
 </script>
 
