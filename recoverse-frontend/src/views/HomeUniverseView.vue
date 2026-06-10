@@ -18,6 +18,7 @@
         :items="homeCapsuleItems"
         :galaxies="galaxies"
         :selected-capsule-id="selectedCapsuleId"
+        :selected-galaxy-id="selectedGalaxyId"
         :labels="galaxyMapLabels"
         @select="$emit('select-capsule', $event)"
         @select-galaxy="$emit('select-galaxy', $event)"
@@ -74,6 +75,7 @@ defineProps<{
   galaxies: Galaxy[];
   homeCapsuleItems: CapsuleHomeItem[];
   selectedCapsuleId: string | null;
+  selectedGalaxyId: string | null;
   discoveryCard: CapsuleCard | null;
   discoveryCapsuleTitle: string;
   discoveryAnswerPreview: string;

@@ -24,6 +24,7 @@
         v-for="(galaxy, index) in galaxies"
         :key="galaxy.id"
         class="galaxyNode"
+        :class="{ selected: galaxy.id === selectedGalaxyId }"
         type="button"
         :style="galaxyNodeStyle(index)"
         @click="$emit('select-galaxy', galaxy.id)"
@@ -83,6 +84,7 @@ const props = defineProps<{
   items: CapsuleHomeItem[];
   galaxies: Galaxy[];
   selectedCapsuleId: string | null;
+  selectedGalaxyId: string | null;
   labels: {
     title: string;
     empty: string;
@@ -185,6 +187,16 @@ h3 {
 
 .galaxyNode.preview {
   opacity: 0.58;
+}
+
+.galaxyNode.selected .galaxyCore {
+  box-shadow:
+    0 0 0 4px rgba(96, 208, 168, 0.22),
+    0 0 36px rgba(96, 208, 168, 0.52);
+}
+
+.galaxyNode.selected .galaxyLabel {
+  color: #fff9ea;
 }
 
 .galaxyCore {

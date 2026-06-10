@@ -334,6 +334,7 @@
         :galaxies="galaxies"
         :home-capsule-items="homeCapsuleItems"
         :selected-capsule-id="selectedCapsuleId"
+        :selected-galaxy-id="selectedGalaxyId"
         :discovery-card="discoveryCard"
         :discovery-capsule-title="discoveryCapsuleTitle"
         :discovery-answer-preview="discoveryAnswerPreview"
@@ -351,7 +352,7 @@
           galaxy: t.navGalaxy,
           archive: t.navArchive,
         }"
-        :has-selected-capsule="selectedCapsule !== null"
+        :has-selected-capsule="selectedUniverseObject?.type === 'planet' && selectedCapsule !== null"
         @open-discovery="openDiscoveryCard"
         @open-archive="openArchiveSettings"
         @open-create-flow="openCreateFlow"
@@ -916,6 +917,7 @@ const galaxyData = ref<GalaxyData>({
 const selectedCapsuleId = ref<string | null>(null);
 const selectedCapsuleCardId = ref<string | null>(null);
 const selectedGalaxyId = ref<string | null>(null);
+const selectedUniverseObject = ref<{ type: "planet" | "galaxy"; id: string } | null>(null);
 const mode = ref<AppMode>("home-universe");
 const showCreateComposer = ref<boolean>(false);
 const createMode = ref<"planet" | "galaxy">("planet");
@@ -1153,6 +1155,7 @@ function refreshCapsules() {
   if (selectedCapsuleId.value && !capsules.value.some((capsule) => capsule.id === selectedCapsuleId.value)) {
     selectedCapsuleId.value = null;
     selectedCapsuleCardId.value = null;
+    if (selectedUniverseObject.value?.type === "planet") selectedUniverseObject.value = null;
   }
 }
 
@@ -1160,6 +1163,7 @@ function refreshGalaxies() {
   galaxyData.value = loadGalaxyData();
   if (selectedGalaxyId.value && !galaxyData.value.galaxies.some((galaxy) => galaxy.id === selectedGalaxyId.value)) {
     selectedGalaxyId.value = null;
+    if (selectedUniverseObject.value?.type === "galaxy") selectedUniverseObject.value = null;
   }
 }
 
@@ -1418,6 +1422,7 @@ function syncCapsuleStorage() {
 
 function selectCapsule(id: string) {
   selectedCapsuleId.value = id;
+  selectedUniverseObject.value = { type: "planet", id };
   const firstCard = capsuleCards.value
     .filter((card) => card.capsuleId === id)
     .sort((a, b) => a.order - b.order)[0];
@@ -1432,18 +1437,22 @@ function openCapsuleFromArchive(id: string) {
 }
 
 function openSelectedCapsule() {
-  if (!selectedCapsuleId.value) return;
+  if (selectedUniverseObject.value?.type !== "planet" || !selectedCapsuleId.value) return;
   setMode("planet-detail");
 }
 
 function selectGalaxy(id: string) {
   selectedGalaxyId.value = id;
+  selectedUniverseObject.value = { type: "galaxy", id };
   syncGalaxyEditForms();
   setMode("galaxy-detail");
 }
 
 function openSelectedGalaxy() {
-  const id = selectedGalaxyId.value ?? galaxies.value[0]?.id ?? null;
+  const id =
+    selectedUniverseObject.value?.type === "galaxy"
+      ? selectedUniverseObject.value.id
+      : selectedGalaxyId.value ?? galaxies.value[0]?.id ?? null;
   if (!id) return;
   selectGalaxy(id);
 }
@@ -1482,6 +1491,9 @@ function deleteSelectedGalaxy() {
 
   galaxyData.value = deleteGalaxy(galaxy.id);
   selectedGalaxyId.value = galaxyData.value.galaxies[0]?.id ?? null;
+  selectedUniverseObject.value = selectedGalaxyId.value
+    ? { type: "galaxy", id: selectedGalaxyId.value }
+    : null;
   syncGalaxyEditForms();
   galaxyNotice.value = t.value.galaxyDeleted;
   setMode(selectedGalaxyId.value ? "galaxy-detail" : "home-universe");
@@ -1623,6 +1635,9 @@ function onCreateGalaxy() {
       language: language.value,
     });
     selectedGalaxyId.value = galaxyData.value.galaxies[0]?.id ?? null;
+    if (selectedGalaxyId.value) {
+      selectedUniverseObject.value = { type: "galaxy", id: selectedGalaxyId.value };
+    }
     resetGalaxyForm();
     showCreateComposer.value = false;
     createMode.value = "planet";
