@@ -4,39 +4,13 @@
       <span class="eyebrow">{{ brandLabel }}</span>
       <h2>{{ title }}</h2>
     </div>
-
-    <CapsuleToolbar
-      :export-label="toolbarLabels.exportCapsules"
-      :import-label="toolbarLabels.importCapsules"
-      :backup-version-label="toolbarLabels.capsuleBackupVersion"
-      :refresh-label="toolbarLabels.refresh"
-      :export-disabled="exportDisabled"
-      @export="$emit('export')"
-      @import-file="$emit('import-file', $event)"
-      @refresh="$emit('refresh')"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import CapsuleToolbar from "./CapsuleToolbar.vue";
-
 defineProps<{
   brandLabel: string;
   title: string;
-  exportDisabled: boolean;
-  toolbarLabels: {
-    exportCapsules: string;
-    importCapsules: string;
-    capsuleBackupVersion: string;
-    refresh: string;
-  };
-}>();
-
-defineEmits<{
-  export: [];
-  "import-file": [event: Event];
-  refresh: [];
 }>();
 </script>
 
@@ -44,8 +18,7 @@ defineEmits<{
 .homeHeader {
   padding: 14px 14px 10px;
   border-bottom: 1px solid var(--color-soft-border);
-  display: flex;
-  align-items: center;
+  display: grid;
   gap: 10px;
   min-width: 0;
 }
@@ -78,7 +51,6 @@ h2 {
 @media (max-width: 899px) {
   .homeHeader {
     align-items: stretch;
-    flex-direction: column;
   }
 }
 </style>

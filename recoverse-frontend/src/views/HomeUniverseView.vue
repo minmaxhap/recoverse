@@ -4,11 +4,6 @@
       <HomeHeader
         :brand-label="brandLabel"
         :title="title"
-        :toolbar-labels="toolbarLabels"
-        :export-disabled="capsules.length === 0"
-        @export="$emit('export')"
-        @import-file="$emit('import-file', $event)"
-        @refresh="$emit('refresh')"
       />
 
       <DiscoveryCard
@@ -78,12 +73,6 @@ defineProps<{
   discoveryCard: CapsuleCard | null;
   discoveryCapsuleTitle: string;
   discoveryAnswerPreview: string;
-  toolbarLabels: {
-    exportCapsules: string;
-    importCapsules: string;
-    capsuleBackupVersion: string;
-    refresh: string;
-  };
   discoveryLabels: {
     title: string;
     empty: string;
@@ -112,9 +101,6 @@ defineProps<{
 }>();
 
 defineEmits<{
-  export: [];
-  "import-file": [event: Event];
-  refresh: [];
   "open-discovery": [];
   "open-archive": [];
   "open-create-flow": [];

@@ -41,13 +41,21 @@
           <ArchiveSettingsTools
             :language="language"
             :language-label="t.language"
-            export-label="JSON 내보내기"
-            import-label="JSON 가져오기"
-            clear-label="전체 삭제"
+            :capsule-group-label="t.capsuleBackupGroup"
+            :capsule-export-label="t.exportCapsules"
+            :capsule-import-label="t.importCapsules"
+            :capsule-export-disabled="capsules.length === 0"
+            :legacy-group-label="t.legacyBackupGroup"
+            :export-label="t.legacyExportJson"
+            :import-label="t.legacyImportJson"
+            :danger-group-label="t.dangerSettingsGroup"
+            :clear-label="t.clearAllData"
             :export-disabled="entries.length === 0"
             :clear-disabled="entries.length === 0"
             @update:language="language = $event"
             @change-language="saveLanguage"
+            @capsule-export="onExportCapsules"
+            @capsule-import-file="onImportCapsuleFile"
             @export="onExport"
             @import-file="onImportFile"
             @clear-all="clearAll"
@@ -254,13 +262,21 @@
           <ArchiveSettingsTools
             :language="language"
             :language-label="t.language"
-            export-label="JSON 내보내기"
-            import-label="JSON 가져오기"
-            clear-label="전체 삭제"
+            :capsule-group-label="t.capsuleBackupGroup"
+            :capsule-export-label="t.exportCapsules"
+            :capsule-import-label="t.importCapsules"
+            :capsule-export-disabled="capsules.length === 0"
+            :legacy-group-label="t.legacyBackupGroup"
+            :export-label="t.legacyExportJson"
+            :import-label="t.legacyImportJson"
+            :danger-group-label="t.dangerSettingsGroup"
+            :clear-label="t.clearAllData"
             :export-disabled="entries.length === 0"
             :clear-disabled="entries.length === 0"
             @update:language="language = $event"
             @change-language="saveLanguage"
+            @capsule-export="onExportCapsules"
+            @capsule-import-file="onImportCapsuleFile"
             @export="onExport"
             @import-file="onImportFile"
             @clear-all="clearAll"
@@ -366,12 +382,6 @@
         :discovery-card="discoveryCard"
         :discovery-capsule-title="discoveryCapsuleTitle"
         :discovery-answer-preview="discoveryAnswerPreview"
-        :toolbar-labels="{
-          exportCapsules: t.exportCapsules,
-          importCapsules: t.importCapsules,
-          capsuleBackupVersion: t.capsuleBackupVersion,
-          refresh: t.refresh,
-        }"
         :discovery-labels="discoveryLabels"
         :galaxy-map-labels="{
           title: t.memoryMap,
@@ -387,9 +397,6 @@
           archive: t.navArchive,
         }"
         :has-selected-capsule="selectedCapsule !== null"
-        @export="onExportCapsules"
-        @import-file="onImportCapsuleFile"
-        @refresh="refreshCapsules"
         @open-discovery="openDiscoveryCard"
         @open-archive="openArchiveSettings"
         @open-create-flow="openCreateFlow"
@@ -452,13 +459,21 @@
           <ArchiveSettingsTools
             :language="language"
             :language-label="t.language"
-            export-label="JSON 내보내기"
-            import-label="JSON 가져오기"
-            clear-label="전체 삭제"
+            :capsule-group-label="t.capsuleBackupGroup"
+            :capsule-export-label="t.exportCapsules"
+            :capsule-import-label="t.importCapsules"
+            :capsule-export-disabled="capsules.length === 0"
+            :legacy-group-label="t.legacyBackupGroup"
+            :export-label="t.legacyExportJson"
+            :import-label="t.legacyImportJson"
+            :danger-group-label="t.dangerSettingsGroup"
+            :clear-label="t.clearAllData"
             :export-disabled="entries.length === 0"
             :clear-disabled="entries.length === 0"
             @update:language="language = $event"
             @change-language="saveLanguage"
+            @capsule-export="onExportCapsules"
+            @capsule-import-file="onImportCapsuleFile"
             @export="onExport"
             @import-file="onImportFile"
             @clear-all="clearAll"
@@ -658,6 +673,12 @@ const messages = {
     retrospectiveCapsules: "회고 캡슐",
     exportCapsules: "캡슐 JSON 내보내기",
     importCapsules: "캡슐 JSON 가져오기",
+    capsuleBackupGroup: "기억 행성 백업",
+    legacyBackupGroup: "연도 아카이브 백업",
+    legacyExportJson: "연도 JSON 내보내기",
+    legacyImportJson: "연도 JSON 가져오기",
+    dangerSettingsGroup: "위험 작업",
+    clearAllData: "전체 데이터 삭제",
     capsuleBackupVersion: "백업 v1",
     refresh: "새로고침",
     searchCapsules: "캡슐 검색",
@@ -748,6 +769,12 @@ const messages = {
     retrospectiveCapsules: "Retrospective Capsules",
     exportCapsules: "Export capsule JSON",
     importCapsules: "Import capsule JSON",
+    capsuleBackupGroup: "Memory Planet Backup",
+    legacyBackupGroup: "Year Archive Backup",
+    legacyExportJson: "Export year JSON",
+    legacyImportJson: "Import year JSON",
+    dangerSettingsGroup: "Danger Zone",
+    clearAllData: "Clear all data",
     capsuleBackupVersion: "Backup v1",
     refresh: "Refresh",
     searchCapsules: "Search capsules",
