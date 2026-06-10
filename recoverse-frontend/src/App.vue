@@ -591,11 +591,16 @@ import {
   loadObservationData,
 } from "./lib/recoverseStore";
 import {
-  CAPSULE_IMPORT_ERROR,
   exportCapsuleBackup,
   importCapsuleBackup,
   previewCapsuleBackupImport,
 } from "./lib/capsuleImportExport";
+import {
+  buildCapsuleImportErrorMessage,
+  buildImportPreviewMessage,
+  buildImportResultMessage,
+} from "./lib/capsuleImportMessages";
+import { downloadBlob } from "./lib/downloadBlob";
 import {
   buildCapsuleHomeItems,
   buildCapsuleStats,
@@ -2049,26 +2054,6 @@ function fmtDate(iso: string) {
   }
 }
 
-function downloadBlob(blob: Blob, filename: string) {
-  // @ts-ignore
-  if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-    // @ts-ignore
-    window.navigator.msSaveOrOpenBlob(blob, filename);
-    return;
-  }
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.rel = "noopener";
-  a.style.display = "none";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 function onExport() {
   const blob = exportBackup(entries.value);
   const yyyyMMdd = new Date().toISOString().slice(0, 10);
@@ -2088,74 +2073,6 @@ function onExportCapsules() {
   capsuleNotice.value = t.value.capsuleExported;
 }
 
-function buildImportPreviewMessage(preview: ReturnType<typeof previewCapsuleBackupImport>): string {
-  const duplicates = preview.skippedCapsules + preview.skippedCards;
-  if (language.value === "ko") {
-    return [
-      "가져오기 미리보기",
-      `추가될 기억 행성: ${preview.addedCapsules}개`,
-      `추가될 탐사 기록: ${preview.addedCards}개`,
-      `중복: ${duplicates}개`,
-      "계속 가져올까요?",
-    ].join("\n");
-  }
-
-  return [
-    "Import preview",
-    `Capsules to add: ${preview.addedCapsules}`,
-    `Question cards to add: ${preview.addedCards}`,
-    `Duplicates: ${duplicates}`,
-    "Continue importing?",
-  ].join("\n");
-}
-
-function buildImportResultMessage(result: ReturnType<typeof importCapsuleBackup>): string {
-  const duplicates = result.skippedCapsules + result.skippedCards;
-  const added = result.addedCapsules + result.addedCards;
-
-  if (language.value === "ko") {
-    if (added === 0) {
-      return `가져오기 완료: 추가 0개 / 중복 건너뜀 ${duplicates}개 / 오류 0개`;
-    }
-
-    return `가져오기 완료: 추가 ${added}개(기억 행성 ${result.addedCapsules}개, 탐사 기록 ${result.addedCards}개) / 중복 건너뜀 ${duplicates}개 / 오류 0개`;
-  }
-
-  if (added === 0) {
-    return `Import complete: added 0 / skipped duplicates ${duplicates} / errors 0.`;
-  }
-
-  return `Import complete: added ${added} (${result.addedCapsules} capsules, ${result.addedCards} question cards) / skipped duplicates ${duplicates} / errors 0.`;
-}
-
-function buildCapsuleImportErrorMessage(err: unknown): string {
-  const message = err instanceof Error ? err.message : "";
-
-  if (language.value === "ko") {
-    if (message === CAPSULE_IMPORT_ERROR.invalidJson) {
-      return "JSON 형식이 올바르지 않아요. Recoverse에서 내보낸 JSON 파일인지 확인해 주세요.";
-    }
-    if (message === CAPSULE_IMPORT_ERROR.unsupportedVersion) {
-      return "지원하지 않는 백업 버전이에요. 최신 Recoverse 백업 파일을 사용해 주세요.";
-    }
-    if (message === CAPSULE_IMPORT_ERROR.unsupportedFormat) {
-      return "Recoverse 백업 구조를 찾을 수 없어요. 기억 행성 백업 또는 기존 연도별 백업 파일인지 확인해 주세요.";
-    }
-  } else {
-    if (message === CAPSULE_IMPORT_ERROR.invalidJson) {
-      return "This is not valid JSON. Please check that it was exported from Recoverse.";
-    }
-    if (message === CAPSULE_IMPORT_ERROR.unsupportedVersion) {
-      return "This backup version is not supported. Please use a recent Recoverse backup file.";
-    }
-    if (message === CAPSULE_IMPORT_ERROR.unsupportedFormat) {
-      return "Recoverse backup data was not found. Please use a capsule backup or legacy yearly backup file.";
-    }
-  }
-
-  return err instanceof Error ? err.message : t.value.unknownError;
-}
-
 async function onImportCapsuleFile(e: Event) {
   capsuleError.value = "";
   capsuleNotice.value = "";
@@ -2167,7 +2084,7 @@ async function onImportCapsuleFile(e: Event) {
   try {
     const text = await file.text();
     const preview = previewCapsuleBackupImport(text);
-    if (!confirm(buildImportPreviewMessage(preview))) {
+    if (!confirm(buildImportPreviewMessage(preview, language.value))) {
       capsuleNotice.value = t.value.capsuleImportCanceled;
       return;
     }
@@ -2187,9 +2104,13 @@ async function onImportCapsuleFile(e: Event) {
     if (firstCard) startCapsuleCardEdit(firstCard);
     else resetCapsuleCardForm();
 
-    capsuleNotice.value = buildImportResultMessage(result);
+    capsuleNotice.value = buildImportResultMessage(result, language.value);
   } catch (err: unknown) {
-    capsuleError.value = `${t.value.capsuleImportFailed}: ${buildCapsuleImportErrorMessage(err)}`;
+    capsuleError.value = `${t.value.capsuleImportFailed}: ${buildCapsuleImportErrorMessage(
+      err,
+      language.value,
+      t.value.unknownError
+    )}`;
   } finally {
     input.value = "";
   }
