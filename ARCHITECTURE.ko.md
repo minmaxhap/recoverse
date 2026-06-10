@@ -57,12 +57,19 @@ Recoverse
 │  └─ SharedGalaxySnapshot
 │
 └─ ArchiveSettingsView
-   ├─ YearArchive
-   ├─ QuickEntryArchive
-   ├─ QuestionCompareArchive
-   ├─ ImportExportPanel
-   ├─ LanguageSettings
-   └─ DangerZone
+   ├─ ArchiveLibrary
+   │  └─ 기억 행성 검색/열기
+   ├─ TimeTravel
+   │  ├─ 연도별 기록
+   │  └─ 반복 질문 비교
+   ├─ Organize
+   │  ├─ 빠른 입력
+   │  ├─ 추천 질문
+   │  └─ 이전 연도 질문 복제
+   └─ Settings
+      ├─ LanguageSettings
+      ├─ ImportExportPanel
+      └─ DangerZone
 ```
 
 ## 기존 기능 매핑
@@ -74,12 +81,13 @@ Recoverse
 | `CapsulePlanetCard` | `PlanetNode` | 개인 행성 노드로 유지/이름 변경 후보 |
 | 오늘의 발견 | `TodayDiscovery` | 홈의 감정적 진입점으로 유지 |
 | 캡슐 목록 | `ArchiveSettingsView` | 홈에서 제거하고 아카이브로 이동 |
+| 캡슐 검색/선택 | `ArchiveLibrary` | 아카이브 기본 진입 화면으로 사용 |
 | 캡슐 생성 폼 | `CreateObjectFlow` | 홈에 직접 노출하지 않고 `+` 진입점 뒤로 이동 |
-| 빠른 입력 | `ArchiveSettingsView` 또는 생성 플로우 | 최상위 탭에서 제거 |
-| 연도 보기 | `YearArchive` | 아카이브의 타임라인 필터로 이동 |
-| 질문 비교 | `TimeTravelCompare` / `QuestionCompareArchive` | 상세 또는 아카이브로 이동 |
-| JSON 관리 | `ImportExportPanel` | 설정/아카이브로 이동 |
-| 언어 선택 | `LanguageSettings` | 설정으로 이동 |
+| 빠른 입력 | `Organize` | 누락된 기록을 보완하는 정리 작업으로 이동 |
+| 연도 보기 | `TimeTravel` | 시간 탐색 섹션으로 이동 |
+| 질문 비교 | `TimeTravel` | 연도별 기록과 같은 시간 탐색 섹션으로 통합 |
+| JSON 관리 | `Settings > ImportExportPanel` | 아카이브 첫 화면에서 숨기고 설정으로 이동 |
+| 언어 선택 | `Settings > LanguageSettings` | 설정으로 이동 |
 
 ## 현재 핵심 엔티티
 

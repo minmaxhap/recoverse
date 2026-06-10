@@ -1,6 +1,29 @@
 # Recoverse
 
-Choose a language:
+Recoverse는 개인과 그룹의 회고를 행성/은하처럼 기록하고, 시간이 지난 뒤 다시 탐험하는 기억 우주 아카이브 앱입니다.
 
-- [한국어 README](./README.ko.md)
-- [English README](./README.en.md)
+현재 구현은 Vue 3 기반 프론트엔드 MVP이며, 데이터는 브라우저 localStorage에 저장됩니다.
+
+## 핵심 흐름
+
+- 홈: 오늘의 발견과 기억 행성 지도를 보여주는 우주 뷰
+- 행성 상세: 개인 회고 행성의 탐사 기록과 탐사 로그 작성
+- 아카이브: 기억 행성 보관함, 시간여행, 기록 정리, 설정
+- 은하: 그룹 회고 화면 골격
+- 관측 모드: 공유 스냅샷을 읽기 전용으로 보는 화면 골격
+
+## 주요 문서
+
+- [제품 명세](./PRODUCT_SPEC.ko.md)
+- [디자인 시스템](./DESIGN_SYSTEM.ko.md)
+- [아키텍처](./ARCHITECTURE.ko.md)
+- [작업 목록](./TODO.md)
+- [프론트엔드 실행 방법](./recoverse-frontend/README.md)
+
+## MVP 제외 범위
+
+- 로그인
+- 클라우드 저장
+- 실제 공유 링크 발행
+- PDF 내보내기
+- 실시간 동기화
