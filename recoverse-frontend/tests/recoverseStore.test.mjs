@@ -387,6 +387,56 @@ test("filters capsules and selects a daily discovery card", () => {
   assert.equal(discovery.id, "card-oldest");
 });
 
+test("builds archive results from title question and answer matches", () => {
+  const capsules = [
+    {
+      id: "capsule-1",
+      title: "Travel Archive",
+      description: "Jeju memories",
+      type: "travel",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-01-01T00:00:00.000Z",
+    },
+    {
+      id: "capsule-2",
+      title: "Career Notes",
+      type: "career",
+      createdAt: "2024-02-01T00:00:00.000Z",
+      updatedAt: "2024-02-01T00:00:00.000Z",
+    },
+  ];
+  const cards = [
+    {
+      id: "card-answer",
+      capsuleId: "capsule-2",
+      questionText: "What worked?",
+      answers: ["A careful launch."],
+      source: "user",
+      order: 0,
+      createdAt: "2024-02-01T00:00:00.000Z",
+      updatedAt: "2024-02-01T00:00:00.000Z",
+    },
+  ];
+
+  const answerResults = capsuleHomeData.buildArchiveCapsuleResults(
+    capsules,
+    cards,
+    "launch",
+    "updated"
+  );
+  const titleResults = capsuleHomeData.buildArchiveCapsuleResults(
+    capsules,
+    cards,
+    "travel",
+    "title"
+  );
+
+  assert.equal(answerResults.length, 1);
+  assert.equal(answerResults[0].capsule.id, "capsule-2");
+  assert.match(answerResults[0].matchReason, /답변/);
+  assert.equal(titleResults[0].capsule.id, "capsule-1");
+});
+
 test("saves and loads galaxy data separately from capsule data", () => {
   localStorage.clear();
 

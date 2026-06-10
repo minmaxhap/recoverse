@@ -15,14 +15,17 @@
         />
         <ArchiveCapsuleShelf
           :search="capsuleSearch"
+          :sort="capsuleArchiveSort"
           :capsules="capsules"
           :filtered-capsules="filteredCapsules"
           :selected-capsule-id="selectedCapsuleId"
           :stats="capsuleStats"
+          :match-reasons="capsuleMatchReasons"
           :type-labels="t.typeLabels"
           :list-labels="capsuleListLabels"
           :labels="archiveShelfLabels"
           @update:search="capsuleSearch = $event"
+          @update:sort="capsuleArchiveSort = $event"
           @select="openCapsuleFromArchive"
         />
       </ArchiveSettingsView>
@@ -581,6 +584,7 @@ import {
   saveEntries,
   loadCapsuleData,
   saveCapsuleData,
+  buildCapsuleDataFromEntries,
   loadGalaxyData,
   loadObservationData,
 } from "./lib/recoverseStore";
@@ -593,7 +597,8 @@ import {
 import {
   buildCapsuleHomeItems,
   buildCapsuleStats,
-  filterCapsules,
+  buildArchiveCapsuleResults,
+  type CapsuleArchiveSort,
   findMostRecentlyAnsweredCardId,
   selectDailyDiscoveryCard,
 } from "./lib/capsuleHomeData";
@@ -671,6 +676,11 @@ const messages = {
     capsuleBackupVersion: "백업 v1",
     refresh: "새로고침",
     searchCapsules: "캡슐 검색",
+    archiveSort: "정렬",
+    archiveSortUpdated: "최근 수정순",
+    archiveSortCreated: "생성순",
+    archiveSortTitle: "제목순",
+    archiveMatch: "매칭",
     questions: "질문",
     answers: "답변",
     noCapsules: "아직 캡슐이 없어요. 오른쪽에서 첫 회고 캡슐을 만들어보세요.",
@@ -824,6 +834,11 @@ const messages = {
     capsuleBackupVersion: "Backup v1",
     refresh: "Refresh",
     searchCapsules: "Search capsules",
+    archiveSort: "Sort",
+    archiveSortUpdated: "Recently updated",
+    archiveSortCreated: "Created",
+    archiveSortTitle: "Title",
+    archiveMatch: "Match",
     questions: "Questions",
     answers: "Answers",
     noCapsules: "No capsules yet. Create your first retrospective capsule on the right.",
@@ -993,6 +1008,7 @@ const compareSearch = ref<string>("");
 
 const addSuggestSearch = ref<string>("");
 const capsuleSearch = ref<string>("");
+const capsuleArchiveSort = ref<CapsuleArchiveSort>("updated");
 const capsuleError = ref<string>("");
 const capsuleNotice = ref<string>("");
 const galaxyError = ref<string>("");
@@ -1100,6 +1116,13 @@ const capsuleListLabels = computed(() => ({
   answers: t.value.answers,
   noCapsules: t.value.noCapsules,
   noSearchResults: t.value.noSearchResults,
+  sort: t.value.archiveSort,
+  match: t.value.archiveMatch,
+  sortLabels: {
+    updated: t.value.archiveSortUpdated,
+    created: t.value.archiveSortCreated,
+    title: t.value.archiveSortTitle,
+  } as Record<CapsuleArchiveSort, string>,
 }));
 const archiveShelfLabels = computed(() => ({
   eyebrow: t.value.archiveCapsulesEyebrow,
@@ -1321,7 +1344,22 @@ const addSuggestions = computed(() => {
 
 const capsuleStats = computed(() => buildCapsuleStats(capsuleCards.value));
 
-const filteredCapsules = computed(() => filterCapsules(capsules.value, capsuleSearch.value));
+const archiveCapsuleResults = computed(() =>
+  buildArchiveCapsuleResults(
+    capsules.value,
+    capsuleCards.value,
+    capsuleSearch.value,
+    capsuleArchiveSort.value
+  )
+);
+
+const filteredCapsules = computed(() => archiveCapsuleResults.value.map((result) => result.capsule));
+
+const capsuleMatchReasons = computed(() => {
+  return new Map(
+    archiveCapsuleResults.value.map((result) => [result.capsule.id, result.matchReason])
+  );
+});
 
 const selectedCapsule = computed(() => {
   if (!selectedCapsuleId.value) return null;
@@ -1501,6 +1539,35 @@ function syncCapsuleStorage() {
     capsules: capsules.value,
     cards: capsuleCards.value,
   });
+}
+
+function syncEntryToCapsule(entry: ReviewEntry) {
+  const converted = buildCapsuleDataFromEntries([entry]);
+  const convertedCapsule = converted.capsules[0];
+  const convertedCard = converted.cards[0];
+  if (!convertedCapsule || !convertedCard) return;
+
+  const existingCapsule = capsules.value.find((capsule) => capsule.id === convertedCapsule.id);
+  capsules.value = existingCapsule
+    ? capsules.value.map((capsule) =>
+        capsule.id === convertedCapsule.id
+          ? {
+              ...capsule,
+              updatedAt:
+                capsule.updatedAt > convertedCard.updatedAt ? capsule.updatedAt : convertedCard.updatedAt,
+            }
+          : capsule
+      )
+    : [convertedCapsule, ...capsules.value];
+  capsuleCards.value = [
+    convertedCard,
+    ...capsuleCards.value.filter((card) => card.id !== convertedCard.id),
+  ];
+  syncCapsuleStorage();
+  selectedCapsuleId.value = convertedCapsule.id;
+  selectedCapsuleCardId.value = convertedCard.id;
+  selectedUniverseObject.value = { type: "planet", id: convertedCapsule.id };
+  startCapsuleCardEdit(convertedCard);
 }
 
 function selectCapsule(id: string) {
@@ -1930,16 +1997,22 @@ function onSaveEdit() {
 function onAdd() {
   if (!validateCommon(true)) return; // 신규 추가는 최소 1개 답 요구
 
-  entries.value = addEntry({
+  const nextEntries = addEntry({
     year: Number(form.year),
     q: form.q.trim(),
     answers: normalizedAnswersForSave(),
   });
+  entries.value = nextEntries;
 
   selectedYear.value = Number(form.year);
+  const createdEntry = nextEntries[0];
   form.q = "";
   form.answers = [""];
   errorMsg.value = "";
+  if (createdEntry) {
+    syncEntryToCapsule(createdEntry);
+    setMode("planet-detail");
+  }
 }
 
 function onDeleteSelected() {
@@ -2076,17 +2149,17 @@ function buildImportResultMessage(result: ReturnType<typeof importCapsuleBackup>
 
   if (language.value === "ko") {
     if (added === 0) {
-      return `가져오기 완료: 새로 추가된 항목은 없고 중복 ${duplicates}개를 건너뛰었어요.`;
+      return `가져오기 완료: 추가 0개 / 중복 건너뜀 ${duplicates}개 / 오류 0개`;
     }
 
-    return `가져오기 완료: 캡슐 ${result.addedCapsules}개와 질문 카드 ${result.addedCards}개를 추가했어요. 중복 ${duplicates}개는 건너뛰었어요.`;
+    return `가져오기 완료: 추가 ${added}개(캡슐 ${result.addedCapsules}개, 질문 카드 ${result.addedCards}개) / 중복 건너뜀 ${duplicates}개 / 오류 0개`;
   }
 
   if (added === 0) {
-    return `Import complete: nothing new was added, and ${duplicates} duplicates were skipped.`;
+    return `Import complete: added 0 / skipped duplicates ${duplicates} / errors 0.`;
   }
 
-  return `Import complete: added ${result.addedCapsules} capsules and ${result.addedCards} question cards. Skipped ${duplicates} duplicates.`;
+  return `Import complete: added ${added} (${result.addedCapsules} capsules, ${result.addedCards} question cards) / skipped duplicates ${duplicates} / errors 0.`;
 }
 
 function buildCapsuleImportErrorMessage(err: unknown): string {

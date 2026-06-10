@@ -18,6 +18,9 @@
     <div v-if="capsule.description" class="rowSub">
       <span class="subText">{{ capsule.description }}</span>
     </div>
+    <div v-if="matchReason" class="rowSub match">
+      <span class="subText">{{ labels.match }}: {{ matchReason }}</span>
+    </div>
   </button>
 </template>
 
@@ -29,10 +32,12 @@ defineProps<{
   capsule: Capsule;
   selected: boolean;
   stats: CapsuleHomeStats | undefined;
+  matchReason: string;
   typeLabels: Record<CapsuleType, string>;
   labels: {
     questions: string;
     answers: string;
+    match: string;
   };
 }>();
 
@@ -87,5 +92,9 @@ defineEmits<{
 
 .subText {
   line-height: 1.3;
+}
+
+.match {
+  color: var(--color-primary);
 }
 </style>

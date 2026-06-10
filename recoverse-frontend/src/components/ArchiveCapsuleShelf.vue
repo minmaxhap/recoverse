@@ -8,13 +8,16 @@
 
     <CapsuleListSection
       :search="search"
+      :sort="sort"
       :capsules="capsules"
       :filtered-capsules="filteredCapsules"
       :selected-capsule-id="selectedCapsuleId"
       :stats="stats"
+      :match-reasons="matchReasons"
       :type-labels="typeLabels"
       :labels="listLabels"
       @update:search="$emit('update:search', $event)"
+      @update:sort="$emit('update:sort', $event)"
       @select="$emit('select', $event)"
     />
   </section>
@@ -22,15 +25,17 @@
 
 <script setup lang="ts">
 import type { Capsule, CapsuleType } from "../lib/recoverseStore";
-import type { CapsuleHomeStats } from "../lib/capsuleHomeData";
+import type { CapsuleArchiveSort, CapsuleHomeStats } from "../lib/capsuleHomeData";
 import CapsuleListSection from "./CapsuleListSection.vue";
 
 defineProps<{
   search: string;
+  sort: CapsuleArchiveSort;
   capsules: Capsule[];
   filteredCapsules: Capsule[];
   selectedCapsuleId: string | null;
   stats: Map<string, CapsuleHomeStats>;
+  matchReasons: Map<string, string>;
   typeLabels: Record<CapsuleType, string>;
   listLabels: {
     searchCapsules: string;
@@ -38,6 +43,9 @@ defineProps<{
     answers: string;
     noCapsules: string;
     noSearchResults: string;
+    sort: string;
+    match: string;
+    sortLabels: Record<CapsuleArchiveSort, string>;
   };
   labels: {
     eyebrow: string;
@@ -48,6 +56,7 @@ defineProps<{
 
 defineEmits<{
   "update:search": [value: string];
+  "update:sort": [value: CapsuleArchiveSort];
   select: [capsuleId: string];
 }>();
 </script>

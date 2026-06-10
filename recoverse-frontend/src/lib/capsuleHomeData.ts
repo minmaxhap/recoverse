@@ -30,6 +30,13 @@ export type CapsuleHomeItem = {
   isDiscoveryTarget: boolean;
 };
 
+export type CapsuleArchiveSort = "updated" | "created" | "title";
+
+export type CapsuleArchiveResult = {
+  capsule: Capsule;
+  matchReason: string;
+};
+
 export const capsuleTypeDisplays: Record<CapsuleType, CapsuleTypeDisplay> = {
   year: { tone: "gold", sortRank: 10 },
   travel: { tone: "teal", sortRank: 20 },
@@ -88,6 +95,61 @@ export function filterCapsules(capsules: Capsule[], query: string): Capsule[] {
       .toLowerCase();
 
     return haystack.includes(normalizedQuery);
+  });
+}
+
+function includesQuery(value: string | undefined, query: string) {
+  return (value ?? "").toLowerCase().includes(query);
+}
+
+export function buildArchiveCapsuleResults(
+  capsules: Capsule[],
+  cards: CapsuleCard[],
+  query: string,
+  sort: CapsuleArchiveSort
+): CapsuleArchiveResult[] {
+  const normalizedQuery = query.trim().toLowerCase();
+  const results: CapsuleArchiveResult[] = [];
+
+  for (const capsule of capsules) {
+    const capsuleCards = cards.filter((card) => card.capsuleId === capsule.id);
+    const questionMatch = capsuleCards.find((card) =>
+      includesQuery(card.questionText, normalizedQuery)
+    );
+    const answerMatch = capsuleCards.find((card) =>
+      card.answers.some((answer) => includesQuery(answer, normalizedQuery))
+    );
+    const titleMatched = includesQuery(capsule.title, normalizedQuery);
+    const descriptionMatched = includesQuery(capsule.description, normalizedQuery);
+    const typeMatched = includesQuery(capsule.type, normalizedQuery);
+
+    if (
+      normalizedQuery &&
+      !titleMatched &&
+      !descriptionMatched &&
+      !typeMatched &&
+      !questionMatch &&
+      !answerMatch
+    ) {
+      continue;
+    }
+
+    let matchReason = "";
+    if (normalizedQuery) {
+      if (titleMatched) matchReason = `제목: ${capsule.title}`;
+      else if (descriptionMatched) matchReason = `설명: ${capsule.description}`;
+      else if (questionMatch) matchReason = `질문: ${questionMatch.questionText}`;
+      else if (answerMatch) matchReason = `답변: ${answerMatch.answers[0] ?? ""}`;
+      else if (typeMatched) matchReason = `유형: ${capsule.type}`;
+    }
+
+    results.push({ capsule, matchReason });
+  }
+
+  return results.sort((a, b) => {
+    if (sort === "title") return a.capsule.title.localeCompare(b.capsule.title);
+    if (sort === "created") return a.capsule.createdAt < b.capsule.createdAt ? 1 : -1;
+    return a.capsule.updatedAt < b.capsule.updatedAt ? 1 : -1;
   });
 }
 
