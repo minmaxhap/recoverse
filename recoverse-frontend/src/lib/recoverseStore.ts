@@ -5,6 +5,14 @@ import type {
   CapsuleType,
   ReviewEntryV2,
 } from "../types/recoverse";
+import type {
+  Galaxy,
+  GalaxyData,
+  GalaxyLog,
+  GalaxyMember,
+  GalaxyPrompt,
+  GalaxyTheme,
+} from "../types/recoverseFuture";
 
 export type {
   AppLanguage,
@@ -19,10 +27,19 @@ export type {
   LocalizedCapsuleTemplate,
   ReviewEntryV2,
 } from "../types/recoverse";
+export type {
+  Galaxy,
+  GalaxyData,
+  GalaxyLog,
+  GalaxyMember,
+  GalaxyPrompt,
+  GalaxyTheme,
+} from "../types/recoverseFuture";
 
 const KEY = "recoverse_v2_entries";
 const LEGACY_KEY_V1 = "recoverse_v1_entries"; // 예전 키가 남아있을 수 있어 체크용
 const CAPSULE_KEY = "recoverse_capsule_v1";
+const GALAXY_KEY = "recoverse_galaxy_v1";
 
 function safeParse<T>(s: string): T | null {
   try {
@@ -167,6 +184,90 @@ function normalizeCapsuleCard(raw: any): CapsuleCard | null {
   };
 }
 
+const allowedGalaxyThemes: GalaxyTheme[] = [
+  "year",
+  "trip",
+  "project",
+  "relationship",
+  "career",
+  "custom",
+];
+
+function normalizeGalaxy(raw: any): Galaxy | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const title = String(raw.title ?? "").trim();
+  if (!title) return null;
+
+  const now = new Date().toISOString();
+  const theme = allowedGalaxyThemes.includes(raw.theme) ? raw.theme : "custom";
+
+  return {
+    id: typeof raw.id === "string" ? raw.id : uuid(),
+    title,
+    description:
+      typeof raw.description === "string" && raw.description.trim()
+        ? raw.description.trim()
+        : undefined,
+    theme,
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : now,
+    updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : now,
+  };
+}
+
+function normalizeGalaxyMember(raw: any): GalaxyMember | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const galaxyId = String(raw.galaxyId ?? "").trim();
+  const displayName = String(raw.displayName ?? "").trim();
+  if (!galaxyId || !displayName) return null;
+
+  return {
+    id: typeof raw.id === "string" ? raw.id : uuid(),
+    galaxyId,
+    displayName,
+    colorTone: typeof raw.colorTone === "string" ? raw.colorTone : undefined,
+    joinedAt: typeof raw.joinedAt === "string" ? raw.joinedAt : new Date().toISOString(),
+  };
+}
+
+function normalizeGalaxyPrompt(raw: any): GalaxyPrompt | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const galaxyId = String(raw.galaxyId ?? "").trim();
+  const questionText = String(raw.questionText ?? raw.q ?? raw.question ?? "").trim();
+  if (!galaxyId || !questionText) return null;
+
+  const now = new Date().toISOString();
+
+  return {
+    id: typeof raw.id === "string" ? raw.id : uuid(),
+    galaxyId,
+    questionText,
+    order: Number.isFinite(Number(raw.order)) ? Number(raw.order) : 0,
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : now,
+    updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : now,
+  };
+}
+
+function normalizeGalaxyLog(raw: any): GalaxyLog | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const galaxyId = String(raw.galaxyId ?? "").trim();
+  const promptId = String(raw.promptId ?? "").trim();
+  const memberId = String(raw.memberId ?? "").trim();
+  if (!galaxyId || !promptId || !memberId) return null;
+
+  return {
+    id: typeof raw.id === "string" ? raw.id : uuid(),
+    galaxyId,
+    promptId,
+    memberId,
+    answers: normalizeAnswers(raw.answers ?? raw.a ?? raw.answer),
+    updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : new Date().toISOString(),
+  };
+}
+
 export function buildCapsuleDataFromEntries(entries: ReviewEntryV2[]): CapsuleData {
   const capsules = new Map<string, Capsule>();
   const cards: CapsuleCard[] = [];
@@ -226,4 +327,54 @@ export function saveCapsuleData(data: CapsuleData) {
   );
 
   localStorage.setItem(CAPSULE_KEY, JSON.stringify({ capsules, cards }));
+}
+
+export function loadGalaxyData(): GalaxyData {
+  const raw = localStorage.getItem(GALAXY_KEY);
+  if (!raw) return { galaxies: [], members: [], prompts: [], logs: [] };
+
+  const parsed = safeParse<any>(raw);
+  const galaxies = Array.isArray(parsed?.galaxies)
+    ? (parsed.galaxies.map(normalizeGalaxy).filter(Boolean) as Galaxy[])
+    : [];
+  const galaxyIds = new Set(galaxies.map((galaxy) => galaxy.id));
+  const members = Array.isArray(parsed?.members)
+    ? (parsed.members.map(normalizeGalaxyMember).filter(Boolean) as GalaxyMember[]).filter(
+        (member) => galaxyIds.has(member.galaxyId)
+      )
+    : [];
+  const prompts = Array.isArray(parsed?.prompts)
+    ? (parsed.prompts.map(normalizeGalaxyPrompt).filter(Boolean) as GalaxyPrompt[]).filter(
+        (prompt) => galaxyIds.has(prompt.galaxyId)
+      )
+    : [];
+  const promptIds = new Set(prompts.map((prompt) => prompt.id));
+  const memberIds = new Set(members.map((member) => member.id));
+  const logs = Array.isArray(parsed?.logs)
+    ? (parsed.logs.map(normalizeGalaxyLog).filter(Boolean) as GalaxyLog[]).filter(
+        (log) =>
+          galaxyIds.has(log.galaxyId) && promptIds.has(log.promptId) && memberIds.has(log.memberId)
+      )
+    : [];
+
+  return { galaxies, members, prompts, logs };
+}
+
+export function saveGalaxyData(data: GalaxyData) {
+  const galaxies = data.galaxies.map(normalizeGalaxy).filter(Boolean) as Galaxy[];
+  const galaxyIds = new Set(galaxies.map((galaxy) => galaxy.id));
+  const members = (data.members.map(normalizeGalaxyMember).filter(Boolean) as GalaxyMember[]).filter(
+    (member) => galaxyIds.has(member.galaxyId)
+  );
+  const prompts = (data.prompts.map(normalizeGalaxyPrompt).filter(Boolean) as GalaxyPrompt[]).filter(
+    (prompt) => galaxyIds.has(prompt.galaxyId)
+  );
+  const promptIds = new Set(prompts.map((prompt) => prompt.id));
+  const memberIds = new Set(members.map((member) => member.id));
+  const logs = (data.logs.map(normalizeGalaxyLog).filter(Boolean) as GalaxyLog[]).filter(
+    (log) =>
+      galaxyIds.has(log.galaxyId) && promptIds.has(log.promptId) && memberIds.has(log.memberId)
+  );
+
+  localStorage.setItem(GALAXY_KEY, JSON.stringify({ galaxies, members, prompts, logs }));
 }

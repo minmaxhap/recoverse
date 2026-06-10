@@ -331,6 +331,7 @@
         brand-label="Recoverse"
         :title="t.memoryUniverse"
         :capsules="capsules"
+        :galaxies="galaxies"
         :home-capsule-items="homeCapsuleItems"
         :selected-capsule-id="selectedCapsuleId"
         :discovery-card="discoveryCard"
@@ -360,6 +361,7 @@
 
       <PlanetDetailView
         v-else-if="mode === 'planet-detail'"
+        v-model:create-mode="createMode"
         v-model:show-unanswered-cards-only="showUnansweredCardsOnly"
         :create-capsule-title="t.createCapsule"
         :show-create-composer="showCreateComposer"
@@ -373,13 +375,17 @@
         :recently-edited-capsule-card-id="recentlyEditedCapsuleCardId"
         :capsule-stats="capsuleStats"
         :capsule-form="capsuleForm"
+        :galaxy-form="galaxyForm"
         :capsule-card-form="capsuleCardForm"
         :capsule-templates="capsuleTemplates"
         :capsule-error="capsuleError"
         :capsule-notice="capsuleNotice"
+        :galaxy-error="galaxyError"
+        :galaxy-notice="galaxyNotice"
         :type-labels="t.typeLabels"
         :create-entry-labels="createEntryLabels"
         :capsule-create-labels="capsuleCreateLabels"
+        :galaxy-create-labels="galaxyCreateLabels"
         :capsule-summary-labels="{
           type: t.type,
           description: t.description,
@@ -393,7 +399,9 @@
         @open-create-flow="openCreateFlow"
         @close-create-flow="closeCreateFlow"
         @create-capsule="onCreateCapsule"
+        @create-galaxy="onCreateGalaxy"
         @reset-capsule-form="resetCapsuleForm"
+        @reset-galaxy-form="resetGalaxyForm"
         @delete-capsule="deleteSelectedCapsule"
         @select-card="selectCapsuleCard"
         @add-card="addCapsuleCard"
@@ -526,11 +534,15 @@ import {
   type Capsule,
   type CapsuleCard,
   type CapsuleType,
+  type Galaxy,
+  type GalaxyData,
+  type GalaxyTheme,
   type ReviewEntryV2 as ReviewEntry,
   loadEntries,
   saveEntries,
   loadCapsuleData,
   saveCapsuleData,
+  loadGalaxyData,
 } from "./lib/recoverseStore";
 import {
   CAPSULE_IMPORT_ERROR,
@@ -546,6 +558,7 @@ import {
   selectDailyDiscoveryCard,
 } from "./lib/capsuleHomeData";
 import { createCapsule } from "./lib/capsuleActions";
+import { createGalaxy } from "./lib/galaxyActions";
 import { capsuleTemplates } from "./lib/capsuleTemplates";
 import {
   addEntry,
@@ -580,16 +593,16 @@ const messages = {
     createEntryEyebrow: "생성 입구",
     createEntryTitle: "새로운 기억 오브젝트를 시작해요",
     createEntryDescription:
-      "개인 행성은 지금 바로 만들 수 있고, 그룹 은하는 다음 단계에서 이 자리로 이어질 거예요.",
+      "혼자 남길 기억 행성과 함께 남길 그룹 은하 중 먼저 만들 대상을 고르세요.",
     openCreateEntry: "생성 입구 열기",
     createPlanetEntry: "개인 행성 만들기",
-    createGalaxyEntry: "그룹 은하 준비 중",
+    createGalaxyEntry: "그룹 은하 만들기",
     closeCreateEntry: "입구 닫기",
     navHome: "홈",
     navPlanet: "기록",
     navGalaxy: "은하",
     navArchive: "아카이브",
-    galaxyPlaceholder: "그룹 은하 준비 중",
+    galaxyPlaceholder: "그룹 은하",
     memoryUniverse: "나의 기억 우주",
     retrospectiveCapsules: "회고 캡슐",
     exportCapsules: "캡슐 JSON 내보내기",
@@ -614,18 +627,18 @@ const messages = {
     createMemoryPlanet: "새 기억 행성 만들기",
     rediscover: "다시 발견하기",
     rediscoverEmpty: "답변이 쌓이면 오래된 질문을 다시 꺼내 보여줄 수 있어요.",
-    createCapsule: "새 캡슐 만들기",
+    createCapsule: "새 기억 오브젝트 만들기",
     title: "제목",
-    titlePlaceholder: "예: 20대 회고, 여행 회고",
+    titlePlaceholder: "예: 2026 연말 회고 행성",
     description: "설명",
-    descriptionPlaceholder: "이 캡슐에 담고 싶은 기억",
+    descriptionPlaceholder: "이 행성에 담고 싶은 기억",
     noDescription: "설명이 없어요.",
     type: "유형",
     defaultQuestions: "기본 질문",
     none: "없음",
-    createCapsuleButton: "캡슐 만들기",
+    createCapsuleButton: "기억 행성 만들기",
     reset: "초기화",
-    templateHint: "기본 질문을 고르면 캡슐 안에 질문 카드가 함께 만들어져요.",
+    templateHint: "기본 질문을 고르면 행성 안에 탐사 기록이 함께 만들어져요.",
     selectCapsuleHint: "왼쪽에서 캡슐을 선택하면 질문 카드를 볼 수 있어요.",
     deleteCapsule: "캡슐 삭제",
     noCards: "아직 기억 카드가 없어요. 첫 기억 카드를 추가해보세요.",
@@ -640,8 +653,25 @@ const messages = {
     saveQuestion: "기억 카드 저장",
     deleteQuestion: "기억 카드 삭제",
     selectOrAddQuestion: "기억 카드를 추가하거나 선택해 주세요.",
-    capsuleCreated: "캡슐을 만들었어요.",
-    capsuleCreateFailed: "캡슐을 만들 수 없어요.",
+    capsuleCreated: "기억 행성을 만들었어요.",
+    capsuleCreateFailed: "기억 행성을 만들 수 없어요.",
+    galaxyCreated: "그룹 은하를 만들었어요.",
+    galaxyCreateFailed: "그룹 은하를 만들 수 없어요.",
+    galaxyTitle: "은하 이름",
+    galaxyTitlePlaceholder: "예: 2026 팀 회고 은하",
+    galaxyDescription: "은하 설명",
+    galaxyDescriptionPlaceholder: "함께 남길 기억의 주제",
+    galaxyTheme: "은하 유형",
+    createGalaxyButton: "그룹 은하 만들기",
+    galaxyHint: "기본 멤버와 공통 탐사 기록이 함께 만들어져요. 멤버와 로그 편집은 다음 단계에서 확장합니다.",
+    galaxyThemeLabels: {
+      year: "연도 회고",
+      trip: "여행",
+      project: "프로젝트",
+      relationship: "관계",
+      career: "커리어",
+      custom: "직접 정하기",
+    },
     questionRequired: "질문을 입력해 주세요.",
     questionSaved: "기억 카드를 저장했어요.",
     questionDeleted: "기억 카드를 삭제했어요.",
@@ -676,16 +706,16 @@ const messages = {
     createEntryEyebrow: "Creation Entry",
     createEntryTitle: "Start a new memory object",
     createEntryDescription:
-      "Personal planets can be created now, and group galaxies will connect to this entry point next.",
+      "Choose whether you are creating a personal memory planet or a group galaxy.",
     openCreateEntry: "Open creation entry",
     createPlanetEntry: "Create personal planet",
-    createGalaxyEntry: "Group galaxy coming soon",
+    createGalaxyEntry: "Create group galaxy",
     closeCreateEntry: "Close entry",
     navHome: "Home",
     navPlanet: "Planet",
     navGalaxy: "Galaxy",
     navArchive: "Archive",
-    galaxyPlaceholder: "Group galaxy coming soon",
+    galaxyPlaceholder: "Group galaxy",
     memoryUniverse: "My Memory Universe",
     retrospectiveCapsules: "Retrospective Capsules",
     exportCapsules: "Export capsule JSON",
@@ -710,18 +740,18 @@ const messages = {
     createMemoryPlanet: "Create memory planet",
     rediscover: "Rediscover",
     rediscoverEmpty: "Once answers build up, old questions can resurface here.",
-    createCapsule: "Create Capsule",
+    createCapsule: "Create memory object",
     title: "Title",
-    titlePlaceholder: "e.g. My twenties, Travel memories",
+    titlePlaceholder: "e.g. 2026 Year-End Planet",
     description: "Description",
-    descriptionPlaceholder: "The memories you want to keep here",
+    descriptionPlaceholder: "The memories you want to keep in this planet",
     noDescription: "No description.",
     type: "Type",
     defaultQuestions: "Default questions",
     none: "None",
-    createCapsuleButton: "Create capsule",
+    createCapsuleButton: "Create memory planet",
     reset: "Reset",
-    templateHint: "Choosing default questions creates question cards inside the capsule.",
+    templateHint: "Choosing default questions creates exploration records inside the planet.",
     selectCapsuleHint: "Select a capsule on the left to view its question cards.",
     deleteCapsule: "Delete capsule",
     noCards: "No memory cards yet. Add the first one.",
@@ -736,8 +766,25 @@ const messages = {
     saveQuestion: "Save memory card",
     deleteQuestion: "Delete memory card",
     selectOrAddQuestion: "Add or select a memory card.",
-    capsuleCreated: "Capsule created.",
-    capsuleCreateFailed: "Could not create capsule.",
+    capsuleCreated: "Memory planet created.",
+    capsuleCreateFailed: "Could not create memory planet.",
+    galaxyCreated: "Group galaxy created.",
+    galaxyCreateFailed: "Could not create group galaxy.",
+    galaxyTitle: "Galaxy name",
+    galaxyTitlePlaceholder: "e.g. 2026 Team Retrospective Galaxy",
+    galaxyDescription: "Galaxy description",
+    galaxyDescriptionPlaceholder: "The shared memory topic",
+    galaxyTheme: "Galaxy type",
+    createGalaxyButton: "Create group galaxy",
+    galaxyHint: "A default member and shared exploration records are created now. Member and log editing will expand next.",
+    galaxyThemeLabels: {
+      year: "Year retrospective",
+      trip: "Trip",
+      project: "Project",
+      relationship: "Relationship",
+      career: "Career",
+      custom: "Custom",
+    },
     questionRequired: "Please enter a question.",
     questionSaved: "Memory card saved.",
     questionDeleted: "Memory card deleted.",
@@ -767,10 +814,17 @@ const language = ref<AppLanguage>(
 );
 const capsules = ref<Capsule[]>([]);
 const capsuleCards = ref<CapsuleCard[]>([]);
+const galaxyData = ref<GalaxyData>({
+  galaxies: [],
+  members: [],
+  prompts: [],
+  logs: [],
+});
 const selectedCapsuleId = ref<string | null>(null);
 const selectedCapsuleCardId = ref<string | null>(null);
 const mode = ref<AppMode>("home-universe");
 const showCreateComposer = ref<boolean>(false);
+const createMode = ref<"planet" | "galaxy">("planet");
 const modePlanById = Object.fromEntries(appModePlans.map((plan) => [plan.id, plan])) as Record<
   AppMode,
   (typeof appModePlans)[number]
@@ -800,6 +854,8 @@ const addSuggestSearch = ref<string>("");
 const capsuleSearch = ref<string>("");
 const capsuleError = ref<string>("");
 const capsuleNotice = ref<string>("");
+const galaxyError = ref<string>("");
+const galaxyNotice = ref<string>("");
 const showUnansweredCardsOnly = ref<boolean>(false);
 
 const capsuleForm = reactive<{
@@ -812,6 +868,16 @@ const capsuleForm = reactive<{
   description: "",
   type: "year",
   templateId: "template_year",
+});
+
+const galaxyForm = reactive<{
+  title: string;
+  description: string;
+  theme: GalaxyTheme;
+}>({
+  title: "",
+  description: "",
+  theme: "year",
 });
 
 const capsuleCardForm = reactive({
@@ -856,6 +922,18 @@ const capsuleCreateLabels = computed(() => ({
   createCapsuleButton: t.value.createCapsuleButton,
   reset: t.value.reset,
   templateHint: t.value.templateHint,
+}));
+
+const galaxyCreateLabels = computed(() => ({
+  title: t.value.galaxyTitle,
+  titlePlaceholder: t.value.galaxyTitlePlaceholder,
+  description: t.value.galaxyDescription,
+  descriptionPlaceholder: t.value.galaxyDescriptionPlaceholder,
+  theme: t.value.galaxyTheme,
+  themeLabels: t.value.galaxyThemeLabels as Record<GalaxyTheme, string>,
+  createGalaxyButton: t.value.createGalaxyButton,
+  reset: t.value.reset,
+  hint: t.value.galaxyHint,
 }));
 
 const capsuleListLabels = computed(() => ({
@@ -921,6 +999,7 @@ function capsuleTypeLabel(type: CapsuleType) {
 onMounted(() => {
   entries.value = loadEntries();
   refreshCapsules();
+  refreshGalaxies();
   // 시작은 2016으로 고정 (원하면: 데이터 있으면 그 연도로 자동 이동도 가능)
   selectedYear.value = START_YEAR;
   form.year = START_YEAR;
@@ -935,6 +1014,10 @@ function refreshCapsules() {
     selectedCapsuleId.value = null;
     selectedCapsuleCardId.value = null;
   }
+}
+
+function refreshGalaxies() {
+  galaxyData.value = loadGalaxyData();
 }
 
 const yearCountMap = computed(() => {
@@ -1016,6 +1099,8 @@ const homeCapsuleItems = computed(() =>
   buildCapsuleHomeItems(capsules.value, capsuleStats.value, discoveryCard.value)
 );
 
+const galaxies = computed<Galaxy[]>(() => galaxyData.value.galaxies);
+
 const discoveryCapsuleTitle = computed(() => {
   if (!discoveryCard.value) return "";
   return capsules.value.find((capsule) => capsule.id === discoveryCard.value?.capsuleId)?.title ?? "";
@@ -1031,6 +1116,8 @@ function setMode(m: AppMode) {
   errorMsg.value = "";
   capsuleError.value = "";
   capsuleNotice.value = "";
+  galaxyError.value = "";
+  galaxyNotice.value = "";
 
   if (isArchiveMode(m)) {
     lastArchiveMode.value = m;
@@ -1044,6 +1131,7 @@ function setMode(m: AppMode) {
 
   if (m === "home-universe" || m === "planet-detail") {
     refreshCapsules();
+    refreshGalaxies();
   }
 
   if (m === "archive-time") {
@@ -1098,14 +1186,25 @@ function resetCapsuleForm() {
   capsuleForm.templateId = "template_year";
 }
 
+function resetGalaxyForm() {
+  galaxyError.value = "";
+  galaxyNotice.value = "";
+  galaxyForm.title = "";
+  galaxyForm.description = "";
+  galaxyForm.theme = "year";
+}
+
 function openCreateFlow() {
   resetCapsuleForm();
+  resetGalaxyForm();
+  createMode.value = "planet";
   showCreateComposer.value = true;
   setMode("planet-detail");
 }
 
 function closeCreateFlow() {
   showCreateComposer.value = false;
+  createMode.value = "planet";
 }
 
 function syncCapsuleStorage() {
@@ -1191,6 +1290,27 @@ function onCreateCapsule() {
     setMode("planet-detail");
   } catch (err: any) {
     capsuleError.value = err?.message ?? t.value.capsuleCreateFailed;
+  }
+}
+
+function onCreateGalaxy() {
+  galaxyError.value = "";
+  galaxyNotice.value = "";
+
+  try {
+    galaxyData.value = createGalaxy({
+      title: galaxyForm.title,
+      description: galaxyForm.description,
+      theme: galaxyForm.theme,
+      language: language.value,
+    });
+    resetGalaxyForm();
+    showCreateComposer.value = false;
+    createMode.value = "planet";
+    galaxyNotice.value = t.value.galaxyCreated;
+    setMode("home-universe");
+  } catch (err: any) {
+    galaxyError.value = err?.message ?? t.value.galaxyCreateFailed;
   }
 }
 

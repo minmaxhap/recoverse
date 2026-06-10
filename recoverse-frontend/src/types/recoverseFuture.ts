@@ -44,6 +44,13 @@ export type GalaxyLog = {
   updatedAt: string;
 };
 
+export type GalaxyData = {
+  galaxies: Galaxy[];
+  members: GalaxyMember[];
+  prompts: GalaxyPrompt[];
+  logs: GalaxyLog[];
+};
+
 export type ObservationSnapshot = {
   id: string;
   sourceType: "planet" | "galaxy";

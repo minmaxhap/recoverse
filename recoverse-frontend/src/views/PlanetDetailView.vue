@@ -25,10 +25,20 @@
 
       <div v-else class="createComposer">
         <div class="createChoiceRow">
-          <button class="choice active" type="button">
+          <button
+            class="choice"
+            :class="{ active: createMode === 'planet' }"
+            type="button"
+            @click="$emit('update:createMode', 'planet')"
+          >
             {{ createEntryLabels.createPlanet }}
           </button>
-          <button class="choice muted" type="button" disabled>
+          <button
+            class="choice"
+            :class="{ active: createMode === 'galaxy' }"
+            type="button"
+            @click="$emit('update:createMode', 'galaxy')"
+          >
             {{ createEntryLabels.createGalaxy }}
           </button>
           <button class="ghostAction" type="button" @click="$emit('close-create-flow')">
@@ -37,6 +47,7 @@
         </div>
 
         <CapsuleCreateForm
+          v-if="createMode === 'planet'"
           :form="capsuleForm"
           :templates="capsuleTemplates"
           :language="language"
@@ -47,6 +58,45 @@
           @create="$emit('create-capsule')"
           @reset="$emit('reset-capsule-form')"
         />
+
+        <div v-else class="galaxyCreateForm">
+          <div class="formGrid">
+            <label class="wide">
+              <span class="noWrap">{{ galaxyCreateLabels.title }}</span>
+              <input v-model="galaxyForm.title" :placeholder="galaxyCreateLabels.titlePlaceholder" />
+            </label>
+
+            <label class="wide">
+              <span class="noWrap">{{ galaxyCreateLabels.description }}</span>
+              <input
+                v-model="galaxyForm.description"
+                :placeholder="galaxyCreateLabels.descriptionPlaceholder"
+              />
+            </label>
+
+            <label>
+              <span class="noWrap">{{ galaxyCreateLabels.theme }}</span>
+              <select v-model="galaxyForm.theme">
+                <option v-for="theme in galaxyThemes" :key="theme" :value="theme">
+                  {{ galaxyCreateLabels.themeLabels[theme] }}
+                </option>
+              </select>
+            </label>
+          </div>
+
+          <div class="btnRow">
+            <button class="primaryAction" type="button" @click="$emit('create-galaxy')">
+              {{ galaxyCreateLabels.createGalaxyButton }}
+            </button>
+            <button class="ghostAction" type="button" @click="$emit('reset-galaxy-form')">
+              {{ galaxyCreateLabels.reset }}
+            </button>
+          </div>
+
+          <p v-if="galaxyError" class="error">{{ galaxyError }}</p>
+          <p v-if="galaxyNotice" class="hint">{{ galaxyNotice }}</p>
+          <p class="hint">{{ galaxyCreateLabels.hint }}</p>
+        </div>
       </div>
     </section>
 
@@ -112,7 +162,10 @@ import type {
   LocalizedCapsuleTemplate,
 } from "../lib/recoverseStore";
 import type { CapsuleHomeStats } from "../lib/capsuleHomeData";
+import type { GalaxyTheme } from "../types/recoverseFuture";
 import CapsuleDetailView from "./CapsuleDetailView.vue";
+
+type CreateMode = "planet" | "galaxy";
 
 type CapsuleFormState = {
   title: string;
@@ -126,8 +179,24 @@ type CapsuleCardFormState = {
   answersText: string;
 };
 
+type GalaxyFormState = {
+  title: string;
+  description: string;
+  theme: GalaxyTheme;
+};
+
+const galaxyThemes: GalaxyTheme[] = [
+  "year",
+  "trip",
+  "project",
+  "relationship",
+  "career",
+  "custom",
+];
+
 const props = defineProps<{
   createCapsuleTitle: string;
+  createMode: CreateMode;
   showCreateComposer: boolean;
   language: AppLanguage;
   capsules: Capsule[];
@@ -140,10 +209,13 @@ const props = defineProps<{
   showUnansweredCardsOnly: boolean;
   capsuleStats: Map<string, CapsuleHomeStats>;
   capsuleForm: CapsuleFormState;
+  galaxyForm: GalaxyFormState;
   capsuleCardForm: CapsuleCardFormState;
   capsuleTemplates: LocalizedCapsuleTemplate[];
   capsuleError: string;
   capsuleNotice: string;
+  galaxyError: string;
+  galaxyNotice: string;
   typeLabels: Record<CapsuleType, string>;
   createEntryLabels: {
     eyebrow: string;
@@ -165,6 +237,17 @@ const props = defineProps<{
     createCapsuleButton: string;
     reset: string;
     templateHint: string;
+  };
+  galaxyCreateLabels: {
+    title: string;
+    titlePlaceholder: string;
+    description: string;
+    descriptionPlaceholder: string;
+    theme: string;
+    themeLabels: Record<GalaxyTheme, string>;
+    createGalaxyButton: string;
+    reset: string;
+    hint: string;
   };
   capsuleSummaryLabels: {
     type: string;
@@ -193,12 +276,15 @@ const props = defineProps<{
 }>();
 
 defineEmits<{
+  "update:createMode": [value: CreateMode];
   "update:showUnansweredCardsOnly": [value: boolean];
   "back-home": [];
   "open-create-flow": [];
   "close-create-flow": [];
   "create-capsule": [];
+  "create-galaxy": [];
   "reset-capsule-form": [];
+  "reset-galaxy-form": [];
   "delete-capsule": [];
   "select-card": [cardId: string];
   "add-card": [];
@@ -322,8 +408,76 @@ const text = computed(() =>
   color: var(--color-ink);
 }
 
-.choice.muted[disabled] {
-  opacity: 0.6;
-  cursor: not-allowed;
+.choice:not(.active),
+.ghostAction {
+  border: 1px solid var(--color-border);
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.galaxyCreateForm {
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 10px;
+}
+
+.formGrid label {
+  display: grid;
+  gap: 6px;
+}
+
+.formGrid label span {
+  color: var(--color-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.formGrid .wide {
+  grid-column: 1 / -1;
+}
+
+input,
+select {
+  min-width: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: rgba(255, 249, 234, 0.96);
+  color: #15111f;
+  font: inherit;
+  padding: 10px 12px;
+}
+
+.btnRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hint,
+.error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.hint {
+  color: var(--color-muted);
+}
+
+.error {
+  color: #f2a27e;
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

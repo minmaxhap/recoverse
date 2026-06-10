@@ -16,6 +16,7 @@
 
       <GalaxyMap
         :items="homeCapsuleItems"
+        :galaxies="galaxies"
         :selected-capsule-id="selectedCapsuleId"
         :labels="galaxyMapLabels"
         @select="$emit('select-capsule', $event)"
@@ -62,12 +63,14 @@ import HomeHeader from "../components/HomeHeader.vue";
 import HomeArchiveBridge from "../components/HomeArchiveBridge.vue";
 import type { Capsule, CapsuleCard } from "../lib/recoverseStore";
 import type { CapsuleHomeItem } from "../lib/capsuleHomeData";
+import type { Galaxy } from "../types/recoverseFuture";
 import HomeView from "./HomeView.vue";
 
 defineProps<{
   title: string;
   brandLabel: string;
   capsules: Capsule[];
+  galaxies: Galaxy[];
   homeCapsuleItems: CapsuleHomeItem[];
   selectedCapsuleId: string | null;
   discoveryCard: CapsuleCard | null;

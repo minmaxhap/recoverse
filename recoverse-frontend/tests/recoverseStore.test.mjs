@@ -374,3 +374,59 @@ test("filters capsules and selects a daily discovery card", () => {
   assert.equal(filtered[0].id, "capsule-1");
   assert.equal(discovery.id, "card-oldest");
 });
+
+test("saves and loads galaxy data separately from capsule data", () => {
+  localStorage.clear();
+
+  store.saveGalaxyData({
+    galaxies: [
+      {
+        id: "galaxy-1",
+        title: "Team Galaxy",
+        description: "Shared memories",
+        theme: "project",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+    members: [
+      {
+        id: "member-1",
+        galaxyId: "galaxy-1",
+        displayName: "Me",
+        colorTone: "toneGold",
+        joinedAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+    prompts: [
+      {
+        id: "prompt-1",
+        galaxyId: "galaxy-1",
+        questionText: "What should we remember?",
+        order: 0,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+    logs: [
+      {
+        id: "log-1",
+        galaxyId: "galaxy-1",
+        promptId: "prompt-1",
+        memberId: "member-1",
+        answers: ["The launch."],
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+  });
+
+  const loaded = store.loadGalaxyData();
+  const capsules = store.loadCapsuleData();
+
+  assert.equal(loaded.galaxies.length, 1);
+  assert.equal(loaded.members.length, 1);
+  assert.equal(loaded.prompts.length, 1);
+  assert.equal(loaded.logs.length, 1);
+  assert.equal(loaded.galaxies[0].title, "Team Galaxy");
+  assert.equal(capsules.capsules.length, 0);
+});

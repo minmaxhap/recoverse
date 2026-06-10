@@ -20,7 +20,28 @@
         {{ labels.empty }}
       </p>
 
-      <button class="galaxyNode" type="button" disabled>
+      <button
+        v-for="(galaxy, index) in galaxies"
+        :key="galaxy.id"
+        class="galaxyNode"
+        type="button"
+        :style="galaxyNodeStyle(index)"
+        aria-disabled="true"
+      >
+        <span class="galaxyCore"></span>
+        <span class="galaxyOrbit orbitA"></span>
+        <span class="galaxyOrbit orbitB"></span>
+        <span class="galaxySatellite satelliteA"></span>
+        <span class="galaxySatellite satelliteB"></span>
+        <span class="galaxyLabel">{{ galaxy.title }}</span>
+      </button>
+
+      <button
+        v-if="galaxies.length === 0"
+        class="galaxyNode preview"
+        type="button"
+        aria-disabled="true"
+      >
         <span class="galaxyCore"></span>
         <span class="galaxyOrbit orbitA"></span>
         <span class="galaxyOrbit orbitB"></span>
@@ -37,6 +58,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { CapsuleHomeItem } from "../lib/capsuleHomeData";
+import type { Galaxy } from "../types/recoverseFuture";
 import CapsulePlanetCard from "./CapsulePlanetCard.vue";
 import CreatePlanetButton from "./CreatePlanetButton.vue";
 import GalaxyStars from "./GalaxyStars.vue";
@@ -50,8 +72,16 @@ const slots = [
   { x: "18%", y: 304, size: "58px" },
 ];
 
+const galaxySlots = [
+  { right: "9%", top: "22px" },
+  { right: "58%", top: "28px" },
+  { right: "13%", top: "244px" },
+  { right: "50%", top: "330px" },
+];
+
 const props = defineProps<{
   items: CapsuleHomeItem[];
+  galaxies: Galaxy[];
   selectedCapsuleId: string | null;
   labels: {
     title: string;
@@ -69,7 +99,7 @@ defineEmits<{
 const rowHeight = 330;
 
 const mapSurfaceStyle = computed(() => {
-  const rows = Math.max(1, Math.ceil(props.items.length / slots.length));
+  const rows = Math.max(1, Math.ceil(Math.max(props.items.length, props.galaxies.length) / slots.length));
   return {
     "--map-height": `${360 + (rows - 1) * rowHeight}px`,
   };
@@ -83,6 +113,16 @@ function mapNodeStyle(index: number): Record<string, string> {
     "--x": slot.x,
     "--y": `${slot.y + rowOffset}px`,
     "--size": slot.size,
+  };
+}
+
+function galaxyNodeStyle(index: number): Record<string, string> {
+  const slot = galaxySlots[index % galaxySlots.length];
+  const rowOffset = Math.floor(index / galaxySlots.length) * rowHeight;
+
+  return {
+    "--galaxy-right": slot.right,
+    "--galaxy-top": `calc(${slot.top} + ${rowOffset}px)`,
   };
 }
 </script>
@@ -131,15 +171,19 @@ h3 {
 .galaxyNode {
   position: absolute;
   z-index: 1;
-  right: 9%;
-  top: 22px;
+  right: var(--galaxy-right, 9%);
+  top: var(--galaxy-top, 22px);
   width: 112px;
   height: 112px;
   border: 0;
   background: transparent;
   color: rgba(255, 249, 234, 0.82);
-  cursor: not-allowed;
+  cursor: default;
   opacity: 0.92;
+}
+
+.galaxyNode.preview {
+  opacity: 0.58;
 }
 
 .galaxyCore {
