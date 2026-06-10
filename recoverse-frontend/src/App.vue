@@ -562,6 +562,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, nextTick } from "vue";
+import { useArchiveCapsuleSearch } from "./composables/useArchiveCapsuleSearch";
+import { useAppNavigation } from "./composables/useAppNavigation";
 import ArchiveCapsuleShelf from "./components/ArchiveCapsuleShelf.vue";
 import ArchiveSectionTabs from "./components/ArchiveSectionTabs.vue";
 import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
@@ -597,7 +599,6 @@ import {
 import {
   buildCapsuleHomeItems,
   buildCapsuleStats,
-  buildArchiveCapsuleResults,
   type CapsuleArchiveSort,
   findMostRecentlyAnsweredCardId,
   selectDailyDiscoveryCard,
@@ -634,7 +635,6 @@ import {
   appModePlans,
   archiveModePlans,
   type AppMode,
-  type ArchiveModeId,
 } from "./lib/appScreens";
 
 const LANGUAGE_KEY = "recoverse_language";
@@ -978,17 +978,13 @@ const selectedCapsuleCardId = ref<string | null>(null);
 const selectedGalaxyId = ref<string | null>(null);
 const selectedObservationId = ref<string | null>(null);
 const selectedUniverseObject = ref<{ type: "planet" | "galaxy"; id: string } | null>(null);
-const mode = ref<AppMode>("home-universe");
+const { mode, activeArchiveMode, setNavigationMode } = useAppNavigation("home-universe");
 const showCreateComposer = ref<boolean>(false);
 const createMode = ref<"planet" | "galaxy">("planet");
 const modePlanById = Object.fromEntries(appModePlans.map((plan) => [plan.id, plan])) as Record<
   AppMode,
   (typeof appModePlans)[number]
 >;
-const archiveModePlanById = Object.fromEntries(
-  archiveModePlans.map((plan) => [plan.id, plan])
-) as Record<ArchiveModeId, (typeof archiveModePlans)[number]>;
-const lastArchiveMode = ref<ArchiveModeId>("archive-library");
 
 const selectedYear = ref<number>(2016);
 const selectedId = ref<string | null>(null);
@@ -1007,8 +1003,6 @@ const compareQ = ref<string>("");
 const compareSearch = ref<string>("");
 
 const addSuggestSearch = ref<string>("");
-const capsuleSearch = ref<string>("");
-const capsuleArchiveSort = ref<CapsuleArchiveSort>("updated");
 const capsuleError = ref<string>("");
 const capsuleNotice = ref<string>("");
 const galaxyError = ref<string>("");
@@ -1059,6 +1053,13 @@ const capsuleCardForm = reactive({
   answersText: "",
 });
 
+const {
+  capsuleSearch,
+  capsuleArchiveSort,
+  filteredCapsules,
+  capsuleMatchReasons,
+} = useArchiveCapsuleSearch(capsules, capsuleCards);
+
 /** ✅ 연도 범위: 2016부터 20년치 */
 const START_YEAR = 2016;
 const YEAR_COUNT = 20;
@@ -1070,20 +1071,6 @@ const years = computed(() => {
 });
 
 const t = computed(() => messages[language.value]);
-
-function isArchiveMode(m: AppMode): m is ArchiveModeId {
-  return (
-    m === "archive-library" ||
-    m === "archive-time" ||
-    m === "archive-organize" ||
-    m === "archive-settings"
-  );
-}
-
-const activeArchiveMode = computed<ArchiveModeId>(() => {
-  return isArchiveMode(mode.value) ? mode.value : lastArchiveMode.value;
-});
-const activeArchiveModePlan = computed(() => archiveModePlanById[activeArchiveMode.value]);
 
 const capsuleCreateLabels = computed(() => ({
   title: t.value.title,
@@ -1344,23 +1331,6 @@ const addSuggestions = computed(() => {
 
 const capsuleStats = computed(() => buildCapsuleStats(capsuleCards.value));
 
-const archiveCapsuleResults = computed(() =>
-  buildArchiveCapsuleResults(
-    capsules.value,
-    capsuleCards.value,
-    capsuleSearch.value,
-    capsuleArchiveSort.value
-  )
-);
-
-const filteredCapsules = computed(() => archiveCapsuleResults.value.map((result) => result.capsule));
-
-const capsuleMatchReasons = computed(() => {
-  return new Map(
-    archiveCapsuleResults.value.map((result) => [result.capsule.id, result.matchReason])
-  );
-});
-
 const selectedCapsule = computed(() => {
   if (!selectedCapsuleId.value) return null;
   return capsules.value.find((capsule) => capsule.id === selectedCapsuleId.value) ?? null;
@@ -1433,16 +1403,12 @@ const discoveryAnswerPreview = computed(() => {
 });
 
 function setMode(m: AppMode) {
-  mode.value = m;
+  setNavigationMode(m);
   errorMsg.value = "";
   capsuleError.value = "";
   capsuleNotice.value = "";
   galaxyError.value = "";
   galaxyNotice.value = "";
-
-  if (isArchiveMode(m)) {
-    lastArchiveMode.value = m;
-  }
 
   if (m === "archive-organize") {
     form.year = selectedYear.value;
