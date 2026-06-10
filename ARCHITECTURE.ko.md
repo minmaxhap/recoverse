@@ -8,7 +8,7 @@ Recoverse는 Vue 3 기반의 localStorage 우선 MVP다.
 
 ```text
 홈 = 내 기억 우주
-개인 캡슐 = 기억 행성
+개인 기록 단위 = 기억 행성
 그룹 회고 = 은하
 질문 카드 = 탐사 기록 / 별
 답변 = 탐사 로그
@@ -20,10 +20,10 @@ Recoverse는 Vue 3 기반의 localStorage 우선 MVP다.
 
 | 위치 | 문제 |
 | --- | --- |
-| `App.vue` | 화면 전환, legacy 연도 기능, 캡슐 기능, import/export가 한 파일에 많이 남아 있다. |
-| 상단 탭 | `캡슐`, `빠른 입력`, `연도 보기`, `질문 비교`가 제품 메타포보다 먼저 노출된다. |
-| 홈 | 우주 뷰가 있어도 캡슐 목록/생성/관리 기능이 같은 화면에 섞여 있다. |
-| 데이터 모델 | 개인 캡슐과 카드까지만 있고 그룹 은하와 관측 모드 모델이 없다. |
+| `App.vue` | 화면 전환, legacy 연도 기능, 개인 행성 기능, import/export가 한 파일에 많이 남아 있다. |
+| 상단 탭 | 기존 목록/관리 탭이 제품 메타포보다 먼저 노출된다. |
+| 홈 | 우주 뷰가 있어도 목록/생성/관리 기능이 같은 화면에 섞여 있다. |
+| 데이터 모델 | 개인 행성과 탐사 기록까지만 있고 그룹 은하와 관측 모드 모델이 없다. |
 | 보조 기능 | JSON 관리, 질문 비교, 연도 보기가 홈 경험을 침범한다. |
 
 ## 목표 IA
@@ -76,18 +76,33 @@ Recoverse
 
 | 기존 기능 | 새 위치 | 처리 |
 | --- | --- | --- |
-| 캡슐 홈 | `HomeUniverseView` | 목록 중심을 제거하고 우주 지도 중심으로 유지 |
+| 개인 행성 홈 | `HomeUniverseView` | 목록 중심을 제거하고 우주 지도 중심으로 유지 |
 | `GalaxyMap` | `UniverseMap` | 개인 행성과 그룹 은하를 함께 담을 수 있게 확장 |
 | `CapsulePlanetCard` | `PlanetNode` | 개인 행성 노드로 유지/이름 변경 후보 |
 | 오늘의 발견 | `TodayDiscovery` | 홈의 감정적 진입점으로 유지 |
-| 캡슐 목록 | `ArchiveSettingsView` | 홈에서 제거하고 아카이브로 이동 |
-| 캡슐 검색/선택 | `ArchiveLibrary` | 아카이브 기본 진입 화면으로 사용 |
-| 캡슐 생성 폼 | `CreateObjectFlow` | 홈에 직접 노출하지 않고 `+` 진입점 뒤로 이동 |
+| 기억 행성 목록 | `ArchiveSettingsView` | 홈에서 제거하고 아카이브로 이동 |
+| 기억 행성 검색/선택 | `ArchiveLibrary` | 아카이브 기본 진입 화면으로 사용 |
+| 기억 행성 생성 폼 | `CreateObjectFlow` | 홈에 직접 노출하지 않고 `+` 진입점 뒤로 이동 |
 | 빠른 입력 | `Organize` | 누락된 기록을 보완하는 정리 작업으로 이동 |
 | 연도 보기 | `TimeTravel` | 시간 탐색 섹션으로 이동 |
 | 질문 비교 | `TimeTravel` | 연도별 기록과 같은 시간 탐색 섹션으로 통합 |
 | JSON 관리 | `Settings > ImportExportPanel` | 아카이브 첫 화면에서 숨기고 설정으로 이동 |
 | 언어 선택 | `Settings > LanguageSettings` | 설정으로 이동 |
+
+## 이름 변경 원칙
+
+사용자에게 보이는 제품 언어는 `기억 행성 / 탐사 기록 / 탐사 로그`를 우선한다.
+
+내부 타입과 저장 포맷의 `Capsule`, `CapsuleCard`, `recoverse_capsule_v1` 이름은 기존 백업과 localStorage 호환성을 위해 유지한다. 코드 이름 변경은 다음 후보를 기준으로 별도 단계에서 진행한다.
+
+| 현재 이름 | 변경 후보 |
+| --- | --- |
+| `CapsulePlanetCard` | `PlanetNode` |
+| `CapsuleHeroPlanet` | `PlanetHero` |
+| `CapsuleSummary` | `PlanetSummary` |
+| `CapsuleDetailEditor` | `ExplorationRecordEditor` |
+| `CapsuleCreateForm` | `PlanetCreateForm` |
+| `CapsuleQuestionCompare` | `ExplorationQuestionCompare` |
 
 ## 현재 핵심 엔티티
 
@@ -259,7 +274,7 @@ src/
 
 - `mode` 이름을 새 화면 개념에 맞게 정리할 설계 반영
 - `HomePage`를 `HomeUniverseView` 방향으로 재정의
-- 홈의 캡슐 목록/JSON/생성 폼을 아카이브/설정 또는 생성 플로우로 이동할 계획 확정
+- 홈의 기억 행성 목록/JSON/생성 폼을 아카이브/설정 또는 생성 플로우로 이동할 계획 확정
 - `PlanetDetailView`, `ArchiveSettingsView` 경계 정의
 
 제외:
@@ -274,7 +289,7 @@ src/
 ## 구현 전 위험 요소
 
 - `App.vue` 상태가 커서 한 번에 바꾸면 회귀 위험이 크다.
-- 홈에서 목록을 제거하면 사용자가 기존 캡슐을 찾는 보조 경로가 필요하다.
+- 홈에서 목록을 제거하면 사용자가 기존 기억 행성을 찾는 보조 경로가 필요하다.
 - 그룹 은하 모델을 성급히 구현하면 MVP 범위가 커진다.
 - 관측 모드는 공유 기능처럼 보이지만 1차에서는 읽기 전용 화면 경계만 필요하다.
 - 문구 변경이 테스트와 import/export 포맷을 흔들지 않도록 UI copy와 데이터 필드를 분리해야 한다.

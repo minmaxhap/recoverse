@@ -642,7 +642,7 @@ const LANGUAGE_KEY = "recoverse_language";
 const messages = {
   ko: {
     language: "언어",
-    capsules: "캡슐",
+    capsules: "기억 행성",
     archive: "아카이브",
     archiveCapsulesEyebrow: "행성 보관함",
     archiveCapsulesTitle: "기억 행성을 찾고 다시 열어요",
@@ -664,9 +664,9 @@ const messages = {
     navArchive: "아카이브",
     galaxyPlaceholder: "그룹 은하",
     memoryUniverse: "나의 기억 우주",
-    retrospectiveCapsules: "회고 캡슐",
-    exportCapsules: "캡슐 JSON 내보내기",
-    importCapsules: "캡슐 JSON 가져오기",
+    retrospectiveCapsules: "회고 행성",
+    exportCapsules: "기억 행성 JSON 내보내기",
+    importCapsules: "기억 행성 JSON 가져오기",
     capsuleBackupGroup: "기억 행성 백업",
     legacyBackupGroup: "연도 아카이브 백업",
     legacyExportJson: "연도 JSON 내보내기",
@@ -675,7 +675,7 @@ const messages = {
     clearAllData: "전체 데이터 삭제",
     capsuleBackupVersion: "백업 v1",
     refresh: "새로고침",
-    searchCapsules: "캡슐 검색",
+    searchCapsules: "기억 행성 검색",
     archiveSort: "정렬",
     archiveSortUpdated: "최근 수정순",
     archiveSortCreated: "생성순",
@@ -683,12 +683,12 @@ const messages = {
     archiveMatch: "매칭",
     questions: "질문",
     answers: "답변",
-    noCapsules: "아직 캡슐이 없어요. 오른쪽에서 첫 회고 캡슐을 만들어보세요.",
+    noCapsules: "아직 기억 행성이 없어요. 첫 회고 행성을 만들어보세요.",
     noSearchResults: "검색 결과가 없어요.",
     todayDiscovery: "오늘의 발견",
     openDiscovery: "다시 열어보기",
     memoryMap: "기억 지도",
-    memoryMapEmpty: "아직 떠 있는 기억 행성이 없어요. 새 캡슐을 만들면 이곳에 나타나요.",
+    memoryMapEmpty: "아직 떠 있는 기억 행성이 없어요. 새 행성을 만들면 이곳에 나타나요.",
     createMemoryPlanet: "새 기억 행성 만들기",
     rediscover: "다시 발견하기",
     rediscoverEmpty: "답변이 쌓이면 오래된 질문을 다시 꺼내 보여줄 수 있어요.",
@@ -704,8 +704,8 @@ const messages = {
     createCapsuleButton: "기억 행성 만들기",
     reset: "초기화",
     templateHint: "기본 질문을 고르면 행성 안에 탐사 기록이 함께 만들어져요.",
-    selectCapsuleHint: "왼쪽에서 캡슐을 선택하면 질문 카드를 볼 수 있어요.",
-    deleteCapsule: "캡슐 삭제",
+    selectCapsuleHint: "왼쪽에서 기억 행성을 선택하면 탐사 기록을 볼 수 있어요.",
+    deleteCapsule: "기억 행성 삭제",
     noCards: "아직 기억 카드가 없어요. 첫 기억 카드를 추가해보세요.",
     questionCard: "기억 카드",
     recentlyEdited: "최근 수정",
@@ -782,11 +782,11 @@ const messages = {
     questionDeleted: "기억 카드를 삭제했어요.",
     questionAdded: "새 기억 카드를 추가했어요.",
     newQuestionTitle: "새 기억 카드",
-    capsuleDeleted: "캡슐을 삭제했어요.",
+    capsuleDeleted: "기억 행성을 삭제했어요.",
     confirmDeleteQuestion: "이 질문 카드를 삭제할까요?",
-    capsuleImportFailed: "캡슐 가져오기 실패",
-    capsuleImportCanceled: "캡슐 가져오기를 취소했어요.",
-    capsuleExported: "캡슐 백업 파일을 만들었어요.",
+    capsuleImportFailed: "기억 행성 가져오기 실패",
+    capsuleImportCanceled: "기억 행성 가져오기를 취소했어요.",
+    capsuleExported: "기억 행성 백업 파일을 만들었어요.",
     unknownError: "알 수 없는 오류",
     typeLabels: {
       year: "연도 회고",
@@ -800,7 +800,7 @@ const messages = {
   },
   en: {
     language: "Language",
-    capsules: "Capsules",
+    capsules: "Memory Planets",
     archive: "Archive",
     archiveCapsulesEyebrow: "Planet Archive",
     archiveCapsulesTitle: "Find and reopen memory planets",
@@ -823,8 +823,8 @@ const messages = {
     galaxyPlaceholder: "Group galaxy",
     memoryUniverse: "My Memory Universe",
     retrospectiveCapsules: "Retrospective Capsules",
-    exportCapsules: "Export capsule JSON",
-    importCapsules: "Import capsule JSON",
+    exportCapsules: "Export memory planet JSON",
+    importCapsules: "Import memory planet JSON",
     capsuleBackupGroup: "Memory Planet Backup",
     legacyBackupGroup: "Year Archive Backup",
     legacyExportJson: "Export year JSON",
@@ -833,7 +833,7 @@ const messages = {
     clearAllData: "Clear all data",
     capsuleBackupVersion: "Backup v1",
     refresh: "Refresh",
-    searchCapsules: "Search capsules",
+    searchCapsules: "Search memory planets",
     archiveSort: "Sort",
     archiveSortUpdated: "Recently updated",
     archiveSortCreated: "Created",
@@ -841,12 +841,12 @@ const messages = {
     archiveMatch: "Match",
     questions: "Questions",
     answers: "Answers",
-    noCapsules: "No capsules yet. Create your first retrospective capsule on the right.",
+    noCapsules: "No memory planets yet. Create your first retrospective planet.",
     noSearchResults: "No results found.",
     todayDiscovery: "Today's Discovery",
     openDiscovery: "Open again",
     memoryMap: "Memory Map",
-    memoryMapEmpty: "No memory planets yet. Create a capsule and it will appear here.",
+    memoryMapEmpty: "No memory planets yet. Create a planet and it will appear here.",
     createMemoryPlanet: "Create memory planet",
     rediscover: "Rediscover",
     rediscoverEmpty: "Once answers build up, old questions can resurface here.",
@@ -862,8 +862,8 @@ const messages = {
     createCapsuleButton: "Create memory planet",
     reset: "Reset",
     templateHint: "Choosing default questions creates exploration records inside the planet.",
-    selectCapsuleHint: "Select a capsule on the left to view its question cards.",
-    deleteCapsule: "Delete capsule",
+    selectCapsuleHint: "Select a memory planet on the left to view exploration records.",
+    deleteCapsule: "Delete memory planet",
     noCards: "No memory cards yet. Add the first one.",
     questionCard: "Memory Card",
     recentlyEdited: "Recent",
@@ -940,11 +940,11 @@ const messages = {
     questionDeleted: "Memory card deleted.",
     questionAdded: "Memory card added.",
     newQuestionTitle: "New memory card",
-    capsuleDeleted: "Capsule deleted.",
+    capsuleDeleted: "Memory planet deleted.",
     confirmDeleteQuestion: "Delete this question card?",
-    capsuleImportFailed: "Capsule import failed",
-    capsuleImportCanceled: "Capsule import canceled.",
-    capsuleExported: "Capsule backup file created.",
+    capsuleImportFailed: "Memory planet import failed",
+    capsuleImportCanceled: "Memory planet import canceled.",
+    capsuleExported: "Memory planet backup file created.",
     unknownError: "Unknown error",
     typeLabels: {
       year: "Year retrospective",
@@ -1908,8 +1908,8 @@ function deleteSelectedCapsule() {
   if (!capsule) return;
   const message =
     language.value === "ko"
-      ? `"${capsule.title}" 캡슐과 그 안의 질문 카드를 삭제할까요?`
-      : `Delete "${capsule.title}" and its question cards?`;
+      ? `"${capsule.title}" 기억 행성과 그 안의 탐사 기록을 삭제할까요?`
+      : `Delete "${capsule.title}" and its exploration records?`;
   if (!confirm(message)) return;
 
   capsules.value = capsules.value.filter((item) => item.id !== capsule.id);
@@ -2127,8 +2127,8 @@ function buildImportPreviewMessage(preview: ReturnType<typeof previewCapsuleBack
   if (language.value === "ko") {
     return [
       "가져오기 미리보기",
-      `추가될 캡슐: ${preview.addedCapsules}개`,
-      `추가될 질문 카드: ${preview.addedCards}개`,
+      `추가될 기억 행성: ${preview.addedCapsules}개`,
+      `추가될 탐사 기록: ${preview.addedCards}개`,
       `중복: ${duplicates}개`,
       "계속 가져올까요?",
     ].join("\n");
@@ -2152,7 +2152,7 @@ function buildImportResultMessage(result: ReturnType<typeof importCapsuleBackup>
       return `가져오기 완료: 추가 0개 / 중복 건너뜀 ${duplicates}개 / 오류 0개`;
     }
 
-    return `가져오기 완료: 추가 ${added}개(캡슐 ${result.addedCapsules}개, 질문 카드 ${result.addedCards}개) / 중복 건너뜀 ${duplicates}개 / 오류 0개`;
+    return `가져오기 완료: 추가 ${added}개(기억 행성 ${result.addedCapsules}개, 탐사 기록 ${result.addedCards}개) / 중복 건너뜀 ${duplicates}개 / 오류 0개`;
   }
 
   if (added === 0) {
@@ -2173,7 +2173,7 @@ function buildCapsuleImportErrorMessage(err: unknown): string {
       return "지원하지 않는 백업 버전이에요. 최신 Recoverse 백업 파일을 사용해 주세요.";
     }
     if (message === CAPSULE_IMPORT_ERROR.unsupportedFormat) {
-      return "Recoverse 백업 구조를 찾을 수 없어요. 캡슐 백업 또는 기존 연도별 백업 파일인지 확인해 주세요.";
+      return "Recoverse 백업 구조를 찾을 수 없어요. 기억 행성 백업 또는 기존 연도별 백업 파일인지 확인해 주세요.";
     }
   } else {
     if (message === CAPSULE_IMPORT_ERROR.invalidJson) {

@@ -55,13 +55,13 @@ const text = computed(() =>
   props.language === "ko"
     ? {
         title: "반복 질문 비교",
-        empty: "여러 캡슐에 같은 질문이 생기면 여기에서 비교할 수 있어요.",
+        empty: "여러 기억 행성에 같은 질문이 생기면 여기에서 비교할 수 있어요.",
         open: "열기",
         noAnswer: "(아직 답변 없음)",
       }
     : {
         title: "Repeated Question Comparison",
-        empty: "When the same question appears in multiple capsules, compare it here.",
+        empty: "When the same question appears in multiple memory planets, compare it here.",
         open: "Open",
         noAnswer: "(No answer yet)",
       }
@@ -93,7 +93,7 @@ const timeline = computed(() => {
     .map((card) => ({
       card,
       capsuleTitle:
-        props.capsules.find((capsule) => capsule.id === card.capsuleId)?.title ?? "알 수 없는 캡슐",
+        props.capsules.find((capsule) => capsule.id === card.capsuleId)?.title ?? "알 수 없는 행성",
     }))
     .sort((a, b) => a.capsuleTitle.localeCompare(b.capsuleTitle));
 });
