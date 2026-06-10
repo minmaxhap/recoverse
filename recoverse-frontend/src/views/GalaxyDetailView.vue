@@ -10,6 +10,9 @@
         <button class="ghostAction" type="button" @click="$emit('back-home')">
           {{ labels.backHome }}
         </button>
+        <button v-if="galaxy" class="ghostAction" type="button" @click="$emit('create-observation')">
+          {{ labels.createObservation }}
+        </button>
         <button v-if="galaxy" class="dangerAction" type="button" @click="$emit('delete-galaxy')">
           {{ labels.deleteGalaxy }}
         </button>
@@ -208,6 +211,7 @@ const props = defineProps<{
     emptyDescription: string;
     noGalaxy: string;
     backHome: string;
+    createObservation: string;
     deleteGalaxy: string;
     galaxySettings: string;
     galaxyInfo: string;
@@ -234,6 +238,7 @@ const props = defineProps<{
 
 defineEmits<{
   "back-home": [];
+  "create-observation": [];
   "save-galaxy": [];
   "delete-galaxy": [];
   "add-member": [];

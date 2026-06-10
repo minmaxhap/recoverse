@@ -9,12 +9,16 @@ export type AppMode =
   | "home-universe"
   | "planet-detail"
   | "galaxy-detail"
+  | "observation"
   | "archive-library"
   | "archive-time"
   | "archive-organize"
   | "archive-settings";
 
-export type ArchiveModeId = Exclude<AppMode, "home-universe" | "planet-detail" | "galaxy-detail">;
+export type ArchiveModeId = Exclude<
+  AppMode,
+  "home-universe" | "planet-detail" | "galaxy-detail" | "observation"
+>;
 
 export type AppModePlan = {
   id: AppMode;
@@ -42,6 +46,12 @@ export const appModePlans: AppModePlan[] = [
     targetScreen: "galaxy-detail",
     title: "그룹 은하 상세",
     note: "그룹 은하의 멤버 행성, 공통 탐사 기록, 멤버별 탐사 로그를 편집하는 화면이다.",
+  },
+  {
+    id: "observation",
+    targetScreen: "observation",
+    title: "관측 모드",
+    note: "공유 시점에 고정된 행성 또는 은하 스냅샷을 읽기 전용으로 보는 화면이다.",
   },
   {
     id: "archive-library",

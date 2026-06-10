@@ -374,6 +374,7 @@
         :log-drafts="galaxyLogDrafts"
         :labels="galaxyDetailLabels"
         @back-home="setMode('home-universe')"
+        @create-observation="createObservationFromSelectedGalaxy"
         @save-galaxy="saveSelectedGalaxy"
         @delete-galaxy="deleteSelectedGalaxy"
         @add-member="addSelectedGalaxyMember"
@@ -385,12 +386,20 @@
         @save-log="saveSelectedGalaxyLog"
       />
 
+      <ObservationModeView
+        v-else-if="mode === 'observation'"
+        :snapshot="selectedObservationSnapshot"
+        :labels="observationLabels"
+        @back="setMode('home-universe')"
+      />
+
       <PlanetDetailView
         v-else-if="mode === 'planet-detail'"
         v-model:create-mode="createMode"
         v-model:show-unanswered-cards-only="showUnansweredCardsOnly"
         :create-capsule-title="t.createCapsule"
         :show-create-composer="showCreateComposer"
+        :observation-label="t.createObservation"
         :language="language"
         :capsules="capsules"
         :capsule-cards="capsuleCards"
@@ -426,6 +435,7 @@
         @close-create-flow="closeCreateFlow"
         @create-capsule="onCreateCapsule"
         @create-galaxy="onCreateGalaxy"
+        @create-observation="createObservationFromSelectedPlanet"
         @reset-capsule-form="resetCapsuleForm"
         @reset-galaxy-form="resetGalaxyForm"
         @delete-capsule="deleteSelectedCapsule"
@@ -555,6 +565,7 @@ import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
 import ArchiveSettingsView from "./views/ArchiveSettingsView.vue";
 import GalaxyDetailView from "./views/GalaxyDetailView.vue";
 import HomeUniverseView from "./views/HomeUniverseView.vue";
+import ObservationModeView from "./views/ObservationModeView.vue";
 import PlanetDetailView from "./views/PlanetDetailView.vue";
 import {
   type AppLanguage,
@@ -564,12 +575,14 @@ import {
   type Galaxy,
   type GalaxyData,
   type GalaxyTheme,
+  type ObservationData,
   type ReviewEntryV2 as ReviewEntry,
   loadEntries,
   saveEntries,
   loadCapsuleData,
   saveCapsuleData,
   loadGalaxyData,
+  loadObservationData,
 } from "./lib/recoverseStore";
 import {
   CAPSULE_IMPORT_ERROR,
@@ -597,6 +610,10 @@ import {
   updateGalaxyMember,
   updateGalaxyPrompt,
 } from "./lib/galaxyActions";
+import {
+  createGalaxyObservationSnapshot,
+  createPlanetObservationSnapshot,
+} from "./lib/observationActions";
 import { capsuleTemplates } from "./lib/capsuleTemplates";
 import {
   addEntry,
@@ -727,6 +744,18 @@ const messages = {
     galaxyMemberAdded: "멤버를 추가했어요.",
     galaxyPromptAdded: "질문을 추가했어요.",
     galaxyLogSaved: "탐사 로그를 저장했어요.",
+    createObservation: "관측 초대장 만들기",
+    observationCreated: "관측 스냅샷을 만들었어요.",
+    observationMode: "관측 모드",
+    observationEmptyTitle: "관측 스냅샷이 없어요",
+    observationEmptyDescription: "행성이나 은하에서 관측 초대장을 만들면 이곳에서 읽을 수 있어요.",
+    observationNoSnapshot: "아직 선택된 읽기 전용 스냅샷이 없습니다.",
+    observationBack: "우주로",
+    readOnly: "읽기 전용",
+    observationNoLogs: "공유된 탐사 로그가 없습니다.",
+    observationNoticeTitle: "이 초대장은 원본과 분리된 스냅샷입니다",
+    observationNoticeDescription:
+      "관측자는 편집, 삭제, 댓글, 좋아요를 할 수 없습니다. 원본이 바뀌어도 이 화면은 공유 시점의 기록만 보여줍니다.",
     confirmDeleteGalaxy: "이 그룹 은하를 삭제할까요?",
     confirmDeleteGalaxyMember: "이 멤버와 관련 로그를 삭제할까요?",
     confirmDeleteGalaxyPrompt: "이 질문과 관련 로그를 삭제할까요?",
@@ -868,6 +897,18 @@ const messages = {
     galaxyMemberAdded: "Member added.",
     galaxyPromptAdded: "Question added.",
     galaxyLogSaved: "Exploration log saved.",
+    createObservation: "Create observation invite",
+    observationCreated: "Observation snapshot created.",
+    observationMode: "Observation Mode",
+    observationEmptyTitle: "No observation snapshot",
+    observationEmptyDescription: "Create an observation invite from a planet or galaxy to read it here.",
+    observationNoSnapshot: "No read-only snapshot is selected yet.",
+    observationBack: "Universe",
+    readOnly: "Read only",
+    observationNoLogs: "No shared exploration logs.",
+    observationNoticeTitle: "This invite is a snapshot separated from the source",
+    observationNoticeDescription:
+      "Observers cannot edit, delete, comment, or like. Even if the source changes, this screen keeps the records from the sharing moment.",
     confirmDeleteGalaxy: "Delete this group galaxy?",
     confirmDeleteGalaxyMember: "Delete this member and related logs?",
     confirmDeleteGalaxyPrompt: "Delete this question and related logs?",
@@ -914,9 +955,13 @@ const galaxyData = ref<GalaxyData>({
   prompts: [],
   logs: [],
 });
+const observationData = ref<ObservationData>({
+  snapshots: [],
+});
 const selectedCapsuleId = ref<string | null>(null);
 const selectedCapsuleCardId = ref<string | null>(null);
 const selectedGalaxyId = ref<string | null>(null);
+const selectedObservationId = ref<string | null>(null);
 const selectedUniverseObject = ref<{ type: "planet" | "galaxy"; id: string } | null>(null);
 const mode = ref<AppMode>("home-universe");
 const showCreateComposer = ref<boolean>(false);
@@ -1084,6 +1129,7 @@ const galaxyDetailLabels = computed(() => ({
   emptyDescription: t.value.galaxyEmptyDescription,
   noGalaxy: t.value.galaxyNoSelected,
   backHome: t.value.navHome,
+  createObservation: t.value.createObservation,
   deleteGalaxy: t.value.deleteGalaxy,
   galaxySettings: t.value.galaxySettings,
   galaxyInfo: t.value.galaxyInfo,
@@ -1105,6 +1151,18 @@ const galaxyDetailLabels = computed(() => ({
   saveLog: t.value.saveLog,
   noPrompts: t.value.noPrompts,
   delete: t.value.delete,
+}));
+
+const observationLabels = computed(() => ({
+  mode: t.value.observationMode,
+  emptyTitle: t.value.observationEmptyTitle,
+  emptyDescription: t.value.observationEmptyDescription,
+  noSnapshot: t.value.observationNoSnapshot,
+  back: t.value.observationBack,
+  readOnly: t.value.readOnly,
+  noLogs: t.value.observationNoLogs,
+  noticeTitle: t.value.observationNoticeTitle,
+  noticeDescription: t.value.observationNoticeDescription,
 }));
 
 const discoveryLabels = computed(() => ({
@@ -1142,6 +1200,7 @@ onMounted(() => {
   entries.value = loadEntries();
   refreshCapsules();
   refreshGalaxies();
+  refreshObservations();
   // 시작은 2016으로 고정 (원하면: 데이터 있으면 그 연도로 자동 이동도 가능)
   selectedYear.value = START_YEAR;
   form.year = START_YEAR;
@@ -1164,6 +1223,16 @@ function refreshGalaxies() {
   if (selectedGalaxyId.value && !galaxyData.value.galaxies.some((galaxy) => galaxy.id === selectedGalaxyId.value)) {
     selectedGalaxyId.value = null;
     if (selectedUniverseObject.value?.type === "galaxy") selectedUniverseObject.value = null;
+  }
+}
+
+function refreshObservations() {
+  observationData.value = loadObservationData();
+  if (
+    selectedObservationId.value &&
+    !observationData.value.snapshots.some((snapshot) => snapshot.id === selectedObservationId.value)
+  ) {
+    selectedObservationId.value = null;
   }
 }
 
@@ -1307,6 +1376,14 @@ const selectedGalaxyLogs = computed(() => {
   return galaxyData.value.logs.filter((log) => log.galaxyId === selectedGalaxyId.value);
 });
 
+const selectedObservationSnapshot = computed(() => {
+  if (!selectedObservationId.value) return null;
+  return (
+    observationData.value.snapshots.find((snapshot) => snapshot.id === selectedObservationId.value) ??
+    null
+  );
+});
+
 const discoveryCapsuleTitle = computed(() => {
   if (!discoveryCard.value) return "";
   return capsules.value.find((capsule) => capsule.id === discoveryCard.value?.capsuleId)?.title ?? "";
@@ -1335,9 +1412,15 @@ function setMode(m: AppMode) {
     ensureAtLeastOneAnswerRow();
   }
 
-  if (m === "home-universe" || m === "planet-detail" || m === "galaxy-detail") {
+  if (
+    m === "home-universe" ||
+    m === "planet-detail" ||
+    m === "galaxy-detail" ||
+    m === "observation"
+  ) {
     refreshCapsules();
     refreshGalaxies();
+    refreshObservations();
   }
 
   if (m === "archive-time") {
@@ -1562,6 +1645,34 @@ function saveSelectedGalaxyLog(payload: { promptId: string; memberId: string }) 
     )
   );
   galaxyNotice.value = t.value.galaxyLogSaved;
+}
+
+function openLatestObservationSnapshot() {
+  selectedObservationId.value = observationData.value.snapshots[0]?.id ?? null;
+  setMode("observation");
+}
+
+function createObservationFromSelectedPlanet() {
+  const capsule = selectedCapsule.value;
+  if (!capsule) return;
+
+  observationData.value = createPlanetObservationSnapshot(capsule, selectedCapsuleCards.value);
+  capsuleNotice.value = t.value.observationCreated;
+  openLatestObservationSnapshot();
+}
+
+function createObservationFromSelectedGalaxy() {
+  const galaxy = selectedGalaxy.value;
+  if (!galaxy) return;
+
+  observationData.value = createGalaxyObservationSnapshot(
+    galaxy,
+    selectedGalaxyMembers.value,
+    selectedGalaxyPrompts.value,
+    selectedGalaxyLogs.value
+  );
+  galaxyNotice.value = t.value.observationCreated;
+  openLatestObservationSnapshot();
 }
 
 function selectCapsuleCard(id: string) {

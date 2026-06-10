@@ -2,45 +2,54 @@
   <section class="observationView">
     <header class="readOnlyHeader">
       <div class="copy">
-        <span class="modeBadge">관측 모드</span>
-        <h2>{{ snapshot.title }}</h2>
-        <p>{{ snapshot.description }}</p>
+        <span class="modeBadge">{{ labels.mode }}</span>
+        <h2>{{ snapshot?.title ?? labels.emptyTitle }}</h2>
+        <p>{{ snapshot?.description || labels.emptyDescription }}</p>
       </div>
-      <div class="inviteMeta">
-        <span>읽기 전용</span>
-        <strong>{{ publishedDate }}</strong>
+      <div class="headerActions">
+        <button class="ghostAction" type="button" @click="$emit('back')">
+          {{ labels.back }}
+        </button>
+        <div v-if="snapshot" class="inviteMeta">
+          <span>{{ labels.readOnly }}</span>
+          <strong>{{ publishedDate }}</strong>
+        </div>
       </div>
     </header>
 
-    <section class="snapshotSurface">
-      <div class="planetPreview" aria-hidden="true">
-        <span class="planet"></span>
-        <span class="halo"></span>
-      </div>
+    <div v-if="!snapshot" class="permissionNotice">
+      <h3>{{ labels.emptyTitle }}</h3>
+      <p>{{ labels.noSnapshot }}</p>
+    </div>
 
-      <div class="recordList">
-        <article v-for="record in sortedRecords" :key="record.id" class="recordCard">
-          <span class="recordIndex">{{ record.order + 1 }}</span>
-          <div class="recordBody">
-            <h3>{{ record.title }}</h3>
-            <ol v-if="record.logs.length">
-              <li v-for="(log, index) in record.logs" :key="index">
-                {{ log }}
-              </li>
-            </ol>
-            <p v-else>공유된 탐사 로그가 없습니다.</p>
-          </div>
-        </article>
-      </div>
-    </section>
+    <template v-else>
+      <section class="snapshotSurface">
+        <div class="planetPreview" :class="snapshot.sourceType" aria-hidden="true">
+          <span class="planet"></span>
+          <span class="halo"></span>
+        </div>
 
-    <aside class="permissionNotice">
-      <h3>이 초대장은 원본과 분리된 스냅샷입니다</h3>
-      <p>
-        관측자는 편집, 삭제, 댓글, 좋아요를 할 수 없습니다. 원본 행성이 바뀌어도 이 화면은 공유
-        시점의 기록만 보여줍니다.
-      </p>
-    </aside>
+        <div class="recordList">
+          <article v-for="record in sortedRecords" :key="record.id" class="recordCard">
+            <span class="recordIndex">{{ record.order + 1 }}</span>
+            <div class="recordBody">
+              <h3>{{ record.title }}</h3>
+              <ol v-if="record.logs.length">
+                <li v-for="(log, index) in record.logs" :key="index">
+                  {{ log }}
+                </li>
+              </ol>
+              <p v-else>{{ labels.noLogs }}</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <aside class="permissionNotice">
+        <h3>{{ labels.noticeTitle }}</h3>
+        <p>{{ labels.noticeDescription }}</p>
+      </aside>
+    </template>
   </section>
 </template>
 
@@ -48,41 +57,39 @@
 import { computed } from "vue";
 import type { ObservationSnapshot } from "../types/recoverseFuture";
 
-const snapshot: ObservationSnapshot = {
-  id: "snapshot-2025-year",
-  sourceType: "planet",
-  sourceId: "capsule-2025",
-  title: "2025 연말 회고 행성",
-  description: "공유 시점에 선택한 탐사 기록만 읽기 전용으로 묶은 관측 초대장.",
-  accessMode: "read_only",
-  createdAt: "2025-12-28T00:00:00.000Z",
-  publishedAt: "2025-12-31T00:00:00.000Z",
-  records: [
-    {
-      id: "record-proud",
-      title: "올해 가장 자랑스러운 순간은?",
-      logs: ["처음으로 오래 미뤄 둔 프로젝트를 끝까지 마쳤다."],
-      order: 0,
-    },
-    {
-      id: "record-lesson",
-      title: "다음 해의 나에게 남기고 싶은 말은?",
-      logs: ["조급해하지 말고, 이미 쌓아 둔 작은 루틴을 믿기."],
-      order: 1,
-    },
-  ],
-};
+const props = defineProps<{
+  snapshot: ObservationSnapshot | null;
+  labels: {
+    mode: string;
+    emptyTitle: string;
+    emptyDescription: string;
+    noSnapshot: string;
+    back: string;
+    readOnly: string;
+    noLogs: string;
+    noticeTitle: string;
+    noticeDescription: string;
+  };
+}>();
+
+defineEmits<{
+  back: [];
+}>();
 
 const sortedRecords = computed(() => {
-  return [...snapshot.records].sort((a, b) => a.order - b.order);
+  return [...(props.snapshot?.records ?? [])].sort((a, b) => a.order - b.order);
 });
 
 const publishedDate = computed(() => {
-  return new Date(snapshot.publishedAt ?? snapshot.createdAt).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+  if (!props.snapshot) return "";
+  return new Date(props.snapshot.publishedAt ?? props.snapshot.createdAt).toLocaleDateString(
+    "ko-KR",
+    {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }
+  );
 });
 </script>
 
@@ -110,9 +117,14 @@ const publishedDate = computed(() => {
   padding: 18px;
 }
 
-.copy {
+.copy,
+.headerActions {
   display: grid;
-  gap: 6px;
+  gap: 8px;
+}
+
+.headerActions {
+  justify-items: end;
 }
 
 .modeBadge {
@@ -120,7 +132,7 @@ const publishedDate = computed(() => {
   border: 1px solid rgba(96, 208, 168, 0.36);
   border-radius: 999px;
   background: rgba(96, 208, 168, 0.1);
-  color: #0f8b68;
+  color: #60d0a8;
   font-size: 12px;
   font-weight: 900;
   padding: 5px 9px;
@@ -147,6 +159,16 @@ li {
   color: var(--color-muted);
   font-size: 14px;
   line-height: 1.6;
+}
+
+.ghostAction {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font: inherit;
+  padding: 9px 12px;
+  cursor: pointer;
 }
 
 .inviteMeta {
@@ -205,6 +227,17 @@ li {
   box-shadow: 0 0 42px rgba(244, 197, 106, 0.32);
 }
 
+.planetPreview.galaxy .halo {
+  border-color: rgba(96, 208, 168, 0.3);
+}
+
+.planetPreview.galaxy .planet {
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 249, 234, 0.9), transparent 17%),
+    linear-gradient(145deg, #60d0a8, #6d5a8d 62%, #1d2438);
+  box-shadow: 0 0 42px rgba(96, 208, 168, 0.32);
+}
+
 .recordList {
   display: grid;
   gap: 10px;
@@ -251,6 +284,10 @@ ol {
   .readOnlyHeader,
   .snapshotSurface {
     grid-template-columns: 1fr;
+  }
+
+  .headerActions {
+    justify-items: start;
   }
 
   .planetPreview {

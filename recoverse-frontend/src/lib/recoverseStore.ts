@@ -12,6 +12,9 @@ import type {
   GalaxyMember,
   GalaxyPrompt,
   GalaxyTheme,
+  ObservationData,
+  ObservationRecordSnapshot,
+  ObservationSnapshot,
 } from "../types/recoverseFuture";
 
 export type {
@@ -34,12 +37,16 @@ export type {
   GalaxyMember,
   GalaxyPrompt,
   GalaxyTheme,
+  ObservationData,
+  ObservationRecordSnapshot,
+  ObservationSnapshot,
 } from "../types/recoverseFuture";
 
 const KEY = "recoverse_v2_entries";
 const LEGACY_KEY_V1 = "recoverse_v1_entries"; // 예전 키가 남아있을 수 있어 체크용
 const CAPSULE_KEY = "recoverse_capsule_v1";
 const GALAXY_KEY = "recoverse_galaxy_v1";
+const OBSERVATION_KEY = "recoverse_observation_v1";
 
 function safeParse<T>(s: string): T | null {
   try {
@@ -268,6 +275,50 @@ function normalizeGalaxyLog(raw: any): GalaxyLog | null {
   };
 }
 
+function normalizeObservationRecordSnapshot(raw: any): ObservationRecordSnapshot | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const title = String(raw.title ?? "").trim();
+  if (!title) return null;
+
+  return {
+    id: typeof raw.id === "string" ? raw.id : uuid(),
+    title,
+    logs: normalizeAnswers(raw.logs ?? raw.answers),
+    order: Number.isFinite(Number(raw.order)) ? Number(raw.order) : 0,
+  };
+}
+
+function normalizeObservationSnapshot(raw: any): ObservationSnapshot | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const sourceType = raw.sourceType === "galaxy" ? "galaxy" : raw.sourceType === "planet" ? "planet" : null;
+  const sourceId = String(raw.sourceId ?? "").trim();
+  const title = String(raw.title ?? "").trim();
+  if (!sourceType || !sourceId || !title) return null;
+
+  const now = new Date().toISOString();
+
+  return {
+    id: typeof raw.id === "string" ? raw.id : uuid(),
+    sourceType,
+    sourceId,
+    title,
+    description:
+      typeof raw.description === "string" && raw.description.trim()
+        ? raw.description.trim()
+        : undefined,
+    accessMode: "read_only",
+    createdAt: typeof raw.createdAt === "string" ? raw.createdAt : now,
+    publishedAt: typeof raw.publishedAt === "string" ? raw.publishedAt : undefined,
+    records: Array.isArray(raw.records)
+      ? (raw.records
+          .map(normalizeObservationRecordSnapshot)
+          .filter(Boolean) as ObservationRecordSnapshot[])
+      : [],
+  };
+}
+
 export function buildCapsuleDataFromEntries(entries: ReviewEntryV2[]): CapsuleData {
   const capsules = new Map<string, Capsule>();
   const cards: CapsuleCard[] = [];
@@ -377,4 +428,24 @@ export function saveGalaxyData(data: GalaxyData) {
   );
 
   localStorage.setItem(GALAXY_KEY, JSON.stringify({ galaxies, members, prompts, logs }));
+}
+
+export function loadObservationData(): ObservationData {
+  const raw = localStorage.getItem(OBSERVATION_KEY);
+  if (!raw) return { snapshots: [] };
+
+  const parsed = safeParse<any>(raw);
+  const snapshots = Array.isArray(parsed?.snapshots)
+    ? (parsed.snapshots.map(normalizeObservationSnapshot).filter(Boolean) as ObservationSnapshot[])
+    : [];
+
+  return { snapshots };
+}
+
+export function saveObservationData(data: ObservationData) {
+  const snapshots = data.snapshots
+    .map(normalizeObservationSnapshot)
+    .filter(Boolean) as ObservationSnapshot[];
+
+  localStorage.setItem(OBSERVATION_KEY, JSON.stringify({ snapshots }));
 }

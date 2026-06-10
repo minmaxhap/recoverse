@@ -69,3 +69,7 @@ export type ObservationRecordSnapshot = {
   logs: string[];
   order: number;
 };
+
+export type ObservationData = {
+  snapshots: ObservationSnapshot[];
+};

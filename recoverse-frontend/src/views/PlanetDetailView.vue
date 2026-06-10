@@ -8,6 +8,14 @@
       <button class="ghostAction" type="button" @click="$emit('back-home')">
         {{ text.backHome }}
       </button>
+      <button
+        v-if="selectedCapsule"
+        class="ghostAction"
+        type="button"
+        @click="$emit('create-observation')"
+      >
+        {{ observationLabel }}
+      </button>
     </div>
 
     <section class="createEntry">
@@ -197,6 +205,7 @@ const galaxyThemes: GalaxyTheme[] = [
 const props = defineProps<{
   createCapsuleTitle: string;
   createMode: CreateMode;
+  observationLabel: string;
   showCreateComposer: boolean;
   language: AppLanguage;
   capsules: Capsule[];
@@ -283,6 +292,7 @@ defineEmits<{
   "close-create-flow": [];
   "create-capsule": [];
   "create-galaxy": [];
+  "create-observation": [];
   "reset-capsule-form": [];
   "reset-galaxy-form": [];
   "delete-capsule": [];

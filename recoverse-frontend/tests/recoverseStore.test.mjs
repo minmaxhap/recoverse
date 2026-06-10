@@ -64,11 +64,17 @@ const galaxyActionsPath = await compileTsModule(
   "galaxyActions.mjs",
   [['"./recoverseStore"', '"./recoverseStore.mjs"']]
 );
+const observationActionsPath = await compileTsModule(
+  new URL("../src/lib/observationActions.ts", import.meta.url),
+  "observationActions.mjs",
+  [['"./recoverseStore"', '"./recoverseStore.mjs"']]
+);
 
 const store = await import(pathToFileURL(storePath).href);
 const capsuleImportExport = await import(pathToFileURL(capsuleImportExportPath).href);
 const capsuleHomeData = await import(pathToFileURL(capsuleHomeDataPath).href);
 const galaxyActions = await import(pathToFileURL(galaxyActionsPath).href);
+const observationActions = await import(pathToFileURL(observationActionsPath).href);
 
 globalThis.localStorage = new MemoryStorage();
 
@@ -469,4 +475,37 @@ test("creates and edits galaxy members prompts and logs", () => {
   data = galaxyActions.deleteGalaxyPrompt(prompt.id);
   log = data.logs.find((item) => item.promptId === prompt.id);
   assert.equal(log, undefined);
+});
+
+test("creates immutable observation snapshots from planet data", () => {
+  localStorage.clear();
+
+  const capsule = {
+    id: "capsule-obs",
+    title: "Observation Planet",
+    description: "Original source",
+    type: "custom",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+  const cards = [
+    {
+      id: "card-obs",
+      capsuleId: capsule.id,
+      questionText: "What stays?",
+      answers: ["First answer"],
+      source: "user",
+      order: 0,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    },
+  ];
+
+  const data = observationActions.createPlanetObservationSnapshot(capsule, cards);
+  cards[0].answers[0] = "Changed answer";
+  const loaded = store.loadObservationData();
+
+  assert.equal(data.snapshots.length, 1);
+  assert.equal(loaded.snapshots[0].sourceType, "planet");
+  assert.equal(loaded.snapshots[0].records[0].logs[0], "First answer");
 });
