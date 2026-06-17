@@ -1,15 +1,25 @@
 :root {
-  --color-page: #f7f3ec;
-  --color-surface: #fffaf2;
-  --color-paper: #ffffff;
-  --color-ink: #1f1b16;
-  --color-muted: #71695f;
-  --color-soft-border: #eadfce;
-  --color-border: #d8cbb8;
-  --color-primary: #3c2f24;
-  --color-primary-contrast: #fffaf2;
-  --color-danger: #9f1d35;
-  --color-chip: #f1eadf;
+  --color-page: #0B0F1E;
+  --color-bg: #0B0F1E;
+  --color-surface: #141C2E;
+  --color-surface-2: #1A2540;
+  --color-paper: rgba(255,255,255,0.06);
+  --color-ink: #E8E0D0;
+  --color-text: #E8E0D0;
+  --color-muted: #8A8A9A;
+  --color-text-dim: #8A8A9A;
+  --color-border: rgba(255,255,255,0.08);
+  --color-soft-border: rgba(255,255,255,0.05);
+  --color-border-gold: rgba(240,192,96,0.2);
+  --color-primary: #F0C060;
+  --color-gold: #F0C060;
+  --color-gold-dim: #9A7A3A;
+  --color-primary-contrast: #1A1000;
+  --color-danger: #e05555;
+  --color-planet-1: #D4845A;
+  --color-planet-2: #7BAFD4;
+  --color-planet-3: #A47BC4;
+  --color-chip: rgba(240,192,96,0.12);
 
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: var(--color-ink);
