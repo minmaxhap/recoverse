@@ -18,6 +18,7 @@ defineProps<{
 .homeHeader {
   padding: 14px 14px 10px;
   border-bottom: 1px solid var(--color-soft-border);
+  background: rgba(20, 28, 46, 0.62);
   display: grid;
   gap: 10px;
   min-width: 0;
@@ -30,7 +31,7 @@ defineProps<{
 }
 
 .eyebrow {
-  color: var(--color-primary);
+  color: var(--color-gold);
   font-size: 11px;
   font-weight: 800;
   line-height: 1;
@@ -39,7 +40,7 @@ defineProps<{
 
 h2 {
   margin: 0;
-  color: var(--color-ink);
+  color: var(--color-text);
   font-size: 24px;
   font-weight: 900;
   line-height: 1.15;

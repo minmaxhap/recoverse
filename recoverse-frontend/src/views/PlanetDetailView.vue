@@ -320,6 +320,7 @@ const text = computed(() =>
 .panelHead {
   padding: 12px 12px;
   border-bottom: 1px solid var(--color-soft-border);
+  background: rgba(20, 28, 46, 0.7);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -351,7 +352,7 @@ const text = computed(() =>
   overflow: auto;
 }
 
-.createEntry {
+ .createEntry {
   padding: 12px;
   display: grid;
   gap: 12px;
@@ -363,7 +364,7 @@ const text = computed(() =>
 }
 
 .eyebrow {
-  color: var(--color-muted);
+  color: var(--color-gold);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -407,22 +408,22 @@ const text = computed(() =>
 .primaryAction,
 .choice.active {
   border: 1px solid var(--color-primary);
-  background: var(--color-primary);
+  background: linear-gradient(135deg, #F0C060, #D4A030);
   color: var(--color-primary-contrast);
 }
 
 .choice.muted,
 .ghostAction {
-  border: 1px solid var(--color-border);
-  background: var(--color-paper);
-  color: var(--color-ink);
+  border: 1px solid var(--color-border-gold);
+  background: rgba(240, 192, 96, 0.08);
+  color: var(--color-text);
 }
 
 .choice:not(.active),
 .ghostAction {
-  border: 1px solid var(--color-border);
-  background: var(--color-paper);
-  color: var(--color-ink);
+  border: 1px solid var(--color-border-gold);
+  background: rgba(240, 192, 96, 0.08);
+  color: var(--color-text);
 }
 
 .galaxyCreateForm {
@@ -457,8 +458,8 @@ select {
   min-width: 0;
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  background: rgba(255, 249, 234, 0.96);
-  color: #15111f;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
   font: inherit;
   padding: 10px 12px;
 }
@@ -489,5 +490,17 @@ select {
   .formGrid {
     grid-template-columns: 1fr;
   }
+}
+</style>
+
+<style>
+.panelHead h2,
+.createEntryHead h3 {
+  color: var(--color-text);
+}
+
+.createEntry,
+.galaxyCreateForm {
+  background: transparent;
 }
 </style>

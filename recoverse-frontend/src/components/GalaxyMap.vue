@@ -153,12 +153,12 @@ h3 {
   position: relative;
   min-height: max(var(--map-height, 360px), 420px);
   overflow: hidden;
-  border: 1px solid rgba(185, 167, 232, 0.25);
+  border: 1px solid var(--color-border-gold);
   border-radius: 24px;
   background:
-    radial-gradient(circle at 20% 18%, rgba(244, 197, 106, 0.18), transparent 22%),
-    radial-gradient(circle at 78% 72%, rgba(232, 168, 184, 0.16), transparent 24%),
-    linear-gradient(160deg, #08070f 0%, #15111f 54%, #1d2438 100%);
+    radial-gradient(circle at 20% 18%, rgba(240, 192, 96, 0.16), transparent 22%),
+    radial-gradient(circle at 78% 72%, rgba(123, 175, 212, 0.12), transparent 24%),
+    linear-gradient(160deg, #0B0F1E 0%, #141C2E 54%, #1A2540 100%);
 }
 
 .empty {
@@ -166,7 +166,7 @@ h3 {
   z-index: 1;
   inset: auto 20px 72px;
   margin: 0;
-  color: rgba(255, 249, 234, 0.78);
+  color: var(--color-text-dim);
   font-size: 13px;
   line-height: 1.5;
 }
@@ -180,7 +180,7 @@ h3 {
   height: 112px;
   border: 0;
   background: transparent;
-  color: rgba(255, 249, 234, 0.82);
+  color: rgba(232, 224, 208, 0.82);
   cursor: pointer;
   opacity: 0.92;
 }
@@ -196,7 +196,7 @@ h3 {
 }
 
 .galaxyNode.selected .galaxyLabel {
-  color: #fff9ea;
+  color: var(--color-text);
 }
 
 .galaxyCore {
@@ -216,7 +216,7 @@ h3 {
   position: absolute;
   left: 50%;
   top: 50%;
-  border: 1px solid rgba(96, 208, 168, 0.28);
+  border: 1px solid rgba(240, 192, 96, 0.24);
   border-radius: 999px;
   transform: translate(-50%, -50%) rotate(-18deg);
 }
@@ -237,7 +237,7 @@ h3 {
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: #b9a7e8;
+  background: var(--color-planet-3);
   box-shadow: 0 0 16px rgba(185, 167, 232, 0.54);
 }
 
@@ -249,7 +249,7 @@ h3 {
 .satelliteB {
   right: 15px;
   top: 36px;
-  background: #60d0a8;
+  background: var(--color-planet-2);
 }
 
 .galaxyLabel {

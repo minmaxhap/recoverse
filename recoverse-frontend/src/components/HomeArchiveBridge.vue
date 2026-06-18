@@ -38,7 +38,7 @@ defineEmits<{
   border-top: 1px solid var(--color-soft-border);
   display: grid;
   gap: 12px;
-  background: rgba(255, 249, 234, 0.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .copy {
@@ -55,7 +55,7 @@ defineEmits<{
 
 h3 {
   margin: 0;
-  color: var(--color-ink);
+  color: var(--color-text);
   font-size: 15px;
   font-weight: 900;
 }
@@ -78,9 +78,9 @@ p {
 
 button {
   font: inherit;
-  border: 1px solid var(--color-border);
-  background: var(--color-paper);
-  color: var(--color-ink);
+  border: 1px solid var(--color-border-gold);
+  background: rgba(240, 192, 96, 0.08);
+  color: var(--color-text);
   border-radius: 999px;
   padding: 8px 12px;
   cursor: pointer;

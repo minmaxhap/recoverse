@@ -136,23 +136,23 @@ h3 {
 }
 
 .chip {
-  border: 1px solid #e5e7eb;
-  background: #f3f4f6;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
   border-radius: 999px;
   padding: 8px 10px;
   font-size: 12px;
-  color: #111;
+  color: var(--color-text);
 }
 
 .chip.active {
-  border-color: #111;
-  background: #111;
-  color: #fff;
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: var(--color-paper);
 }
 
 .empty {
   padding: 14px 12px;
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 13px;
 }
 
@@ -162,10 +162,10 @@ h3 {
 }
 
 .tlCard {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 12px;
-  background: #fff;
+  background: var(--color-paper);
 }
 
 .tlHead {
@@ -197,7 +197,7 @@ h3 {
 }
 
 .muted {
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 12px;
 }
 </style>

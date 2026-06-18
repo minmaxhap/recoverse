@@ -6,30 +6,91 @@
         :title="title"
       />
 
-      <DiscoveryCard
-        :card="discoveryCard"
-        :capsule-title="discoveryCapsuleTitle"
-        :answer-preview="discoveryAnswerPreview"
-        :labels="discoveryLabels"
-        @open="$emit('open-discovery')"
-      />
+      <template v-if="capsules.length === 0">
+        <section class="onboarding" aria-label="Recoverse onboarding">
+          <div class="onboardingCopy">
+            <span class="onboardingEyebrow">RECOVERSE</span>
+            <h2>나의 기억 우주에<br />오신 것을 환영해요</h2>
+          </div>
 
-      <GalaxyMap
-        :items="homeCapsuleItems"
-        :galaxies="galaxies"
-        :selected-capsule-id="selectedCapsuleId"
-        :selected-galaxy-id="selectedGalaxyId"
-        :labels="galaxyMapLabels"
-        @select="$emit('select-capsule', $event)"
-        @select-galaxy="$emit('select-galaxy', $event)"
-        @start-create="$emit('open-create-flow')"
-      />
+          <div class="heroPlanet" aria-hidden="true">
+            <span class="planetGlow"></span>
+            <span class="planetBody"></span>
+            <span class="planetRing"></span>
+          </div>
 
-      <HomeArchiveBridge
-        :count="capsules.length"
-        :labels="archiveBridgeLabels"
-        @open-archive="$emit('open-archive')"
-      />
+          <div class="onboardingMessage">
+            <h3>아직 기억 행성이 없어요.</h3>
+            <p>첫 회고를 작성하면 여기에 행성이 떠오를 거예요.</p>
+          </div>
+
+          <button class="primaryCta" type="button" @click="$emit('open-create-flow')">
+            ✦ 첫 기억 행성 만들기
+          </button>
+        </section>
+      </template>
+
+      <template v-else>
+        <section class="recentSection" aria-label="최근 회고">
+          <span class="sectionEyebrow">Latest Memory</span>
+          <article class="recentCard">
+            <div class="recentPlanet" aria-hidden="true"></div>
+            <div class="recentCopy">
+              <p class="recentDate">{{ formatDate(capsules[0].updatedAt || capsules[0].createdAt) }}</p>
+              <h3>{{ capsules[0].title }}</h3>
+              <p v-if="capsules[0].description" class="recentDescription">
+                {{ capsules[0].description }}
+              </p>
+            </div>
+
+            <div v-if="discoveryCard" class="pastSelfBlock">
+              <span class="pastSelfLabel">그때의 나</span>
+              <p class="pastSelfQuestion">{{ discoveryCard.questionText }}</p>
+              <blockquote>{{ discoveryAnswerPreview }}</blockquote>
+            </div>
+
+            <div class="recentActions">
+              <button class="primaryCta" type="button" @click="openRecentCapsule">
+                다시 열어보기
+              </button>
+              <button class="secondaryCta" type="button" @click="$emit('open-create-flow')">
+                새 답변 추가
+              </button>
+            </div>
+          </article>
+        </section>
+
+        <DiscoveryCard
+          :card="discoveryCard"
+          :capsule-title="discoveryCapsuleTitle"
+          :answer-preview="discoveryAnswerPreview"
+          :labels="discoveryLabels"
+          @open="$emit('open-discovery')"
+        />
+
+        <GalaxyMap
+          :items="homeCapsuleItems"
+          :galaxies="galaxies"
+          :selected-capsule-id="selectedCapsuleId"
+          :selected-galaxy-id="selectedGalaxyId"
+          :labels="galaxyMapLabels"
+          @select="$emit('select-capsule', $event)"
+          @select-galaxy="$emit('select-galaxy', $event)"
+          @start-create="$emit('open-create-flow')"
+        />
+
+        <section class="createBar">
+          <button class="primaryCta wide" type="button" @click="$emit('open-create-flow')">
+            ✦ 새 기억 행성 만들기
+          </button>
+        </section>
+
+        <HomeArchiveBridge
+          :count="capsules.length"
+          :labels="archiveBridgeLabels"
+          @open-archive="$emit('open-archive')"
+        />
+      </template>
 
       <nav class="bottomNav" :aria-label="bottomNavLabels.home">
         <button class="navItem active" type="button">
@@ -68,7 +129,7 @@ import type { CapsuleHomeItem } from "../lib/capsuleHomeData";
 import type { Galaxy } from "../types/recoverseFuture";
 import HomeView from "./HomeView.vue";
 
-defineProps<{
+const props = defineProps<{
   title: string;
   brandLabel: string;
   capsules: Capsule[];
@@ -106,7 +167,7 @@ defineProps<{
   hasSelectedCapsule: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   "open-discovery": [];
   "open-archive": [];
   "open-create-flow": [];
@@ -115,27 +176,230 @@ defineEmits<{
   "select-capsule": [capsuleId: string];
   "select-galaxy": [galaxyId: string];
 }>();
+
+function openRecentCapsule() {
+  const recentCapsule = props.capsules[0];
+  if (!recentCapsule) return;
+  emit("select-capsule", recentCapsule.id);
+  emit("open-selected-capsule");
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(value));
+}
 </script>
 
 <style scoped>
 .panel {
-  --color-surface: #0d0a18;
-  --color-paper: rgba(255, 249, 234, 0.08);
-  --color-ink: #fff9ea;
-  --color-muted: #bdb4c8;
-  --color-soft-border: rgba(185, 167, 232, 0.18);
-  --color-border: rgba(185, 167, 232, 0.32);
-  --color-primary: #f4c56a;
-  --color-primary-contrast: #15111f;
-
-  background: var(--color-surface);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(240, 192, 96, 0.12), transparent 32%),
+    radial-gradient(circle at 88% 28%, rgba(123, 175, 212, 0.1), transparent 28%),
+    var(--color-page);
   border: 1px solid var(--color-soft-border);
   border-radius: 22px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 92px);
-  box-shadow: 0 24px 80px rgba(8, 7, 15, 0.28);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+.onboarding {
+  min-height: 620px;
+  padding: 34px 20px 26px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 24px;
+  text-align: center;
+}
+
+.onboardingCopy,
+.onboardingMessage {
+  display: grid;
+  gap: 8px;
+}
+
+.onboardingEyebrow,
+.sectionEyebrow,
+.pastSelfLabel {
+  color: var(--color-gold);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.onboarding h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: clamp(28px, 7vw, 44px);
+  line-height: 1.14;
+  letter-spacing: -0.04em;
+}
+
+.heroPlanet {
+  position: relative;
+  width: 180px;
+  height: 180px;
+}
+
+.planetGlow,
+.planetBody,
+.planetRing {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+
+.planetGlow {
+  width: 170px;
+  height: 170px;
+  border-radius: 999px;
+  background: rgba(240, 192, 96, 0.12);
+  filter: blur(18px);
+}
+
+.planetBody {
+  width: 118px;
+  height: 118px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.82), transparent 18%),
+    linear-gradient(145deg, var(--color-planet-1), var(--color-gold) 54%, var(--color-planet-3));
+  box-shadow: 0 0 42px rgba(240, 192, 96, 0.35);
+}
+
+.planetRing {
+  width: 178px;
+  height: 62px;
+  border: 2px solid rgba(240, 192, 96, 0.34);
+  border-radius: 999px;
+  transform: rotate(-18deg);
+}
+
+.onboardingMessage h3,
+.recentCard h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.onboardingMessage p,
+.recentDescription,
+.pastSelfQuestion {
+  margin: 0;
+  color: var(--color-text-dim);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.primaryCta,
+.secondaryCta {
+  border-radius: 999px;
+  padding: 11px 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.primaryCta {
+  border: 0;
+  background: linear-gradient(135deg, #F0C060, #D4A030);
+  color: var(--color-primary-contrast);
+  box-shadow: 0 0 18px rgba(240, 192, 96, 0.28);
+}
+
+.secondaryCta {
+  border: 1px solid var(--color-border-gold);
+  background: rgba(240, 192, 96, 0.08);
+  color: var(--color-text);
+}
+
+.recentSection {
+  padding: 16px 14px 14px;
+  display: grid;
+  gap: 10px;
+  border-bottom: 1px solid var(--color-soft-border);
+}
+
+.recentCard {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--color-border-gold);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 90% 0%, rgba(240, 192, 96, 0.16), transparent 26%),
+    linear-gradient(145deg, rgba(26, 37, 64, 0.92), rgba(20, 28, 46, 0.96));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
+}
+
+.recentPlanet {
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.88), transparent 18%),
+    linear-gradient(145deg, var(--color-planet-1), var(--color-gold) 55%, var(--color-planet-3));
+  box-shadow: 0 0 28px rgba(240, 192, 96, 0.32);
+}
+
+.recentCopy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.recentDate {
+  margin: 0;
+  color: var(--color-gold-dim);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.pastSelfBlock,
+.recentActions {
+  grid-column: 1 / -1;
+}
+
+.pastSelfBlock {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--color-border);
+}
+
+.pastSelfBlock blockquote {
+  margin: 0;
+  padding-left: 12px;
+  border-left: 3px solid var(--color-gold);
+  color: var(--color-text);
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.recentActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.createBar {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-soft-border);
+}
+
+.wide {
+  width: 100%;
 }
 
 @media (max-width: 899px) {
@@ -151,7 +415,7 @@ defineEmits<{
   gap: 6px;
   padding: 10px;
   border-top: 1px solid var(--color-soft-border);
-  background: rgba(8, 7, 15, 0.78);
+  background: rgba(11, 15, 30, 0.88);
 }
 
 .navItem {
@@ -160,7 +424,7 @@ defineEmits<{
   border: 1px solid transparent;
   border-radius: 16px;
   background: transparent;
-  color: rgba(255, 249, 234, 0.72);
+  color: rgba(232, 224, 208, 0.72);
   display: grid;
   justify-items: center;
   align-content: center;
@@ -180,9 +444,9 @@ defineEmits<{
 }
 
 .navItem.active {
-  border-color: rgba(244, 197, 106, 0.36);
-  background: rgba(244, 197, 106, 0.12);
-  color: #fff9ea;
+  border-color: var(--color-border-gold);
+  background: rgba(240, 192, 96, 0.12);
+  color: var(--color-text);
 }
 
 .navItem:disabled {
@@ -199,20 +463,20 @@ defineEmits<{
 .homeIcon {
   border-radius: 5px;
   border: 1px solid currentColor;
-  box-shadow: inset 0 -5px 0 rgba(244, 197, 106, 0.28);
+  box-shadow: inset 0 -5px 0 rgba(240, 192, 96, 0.28);
 }
 
 .planetIcon {
   border-radius: 999px;
   background:
-    radial-gradient(circle at 32% 26%, rgba(255, 249, 234, 0.95), transparent 19%),
-    linear-gradient(145deg, #f4c56a, #f2a27e 58%, #6d5a8d);
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.95), transparent 19%),
+    linear-gradient(145deg, var(--color-gold), var(--color-planet-1) 58%, var(--color-planet-3));
 }
 
 .galaxyIcon {
   border-radius: 999px;
-  border: 1px solid #60d0a8;
-  box-shadow: 0 0 0 5px rgba(96, 208, 168, 0.12);
+  border: 1px solid var(--color-planet-2);
+  box-shadow: 0 0 0 5px rgba(123, 175, 212, 0.12);
 }
 
 .archiveIcon {

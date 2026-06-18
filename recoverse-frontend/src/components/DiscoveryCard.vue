@@ -1,10 +1,10 @@
 <template>
   <section class="discovery">
     <button v-if="card" class="discoveryButton" type="button" @click="$emit('open')">
-      <span class="eyebrow">{{ labels.title }}</span>
+      <span class="discoveryEyebrow">{{ labels.title }}</span>
       <span class="capsuleTitle">{{ capsuleTitle }}</span>
       <span class="question">{{ card.questionText }}</span>
-      <span class="answer">"{{ answerPreview }}"</span>
+      <span class="discoveryQuote">"{{ answerPreview }}"</span>
       <span class="openLabel">{{ labels.open }}</span>
     </button>
 
@@ -42,53 +42,67 @@ defineEmits<{
 .discoveryButton {
   width: 100%;
   font: inherit;
-  color: var(--color-ink);
   cursor: pointer;
   text-align: left;
-  border: 1px solid var(--color-soft-border);
-  border-radius: 18px;
-  background:
-    radial-gradient(circle at 16% 8%, rgba(244, 197, 106, 0.22), transparent 28%),
-    linear-gradient(135deg, rgba(109, 90, 141, 0.22), rgba(21, 17, 31, 0.92));
-  box-shadow: 0 18px 40px rgba(8, 7, 15, 0.26);
+  border: 1px solid var(--color-border-gold, rgba(240,192,96,0.2));
+  border-radius: 20px;
+  background: var(--color-surface);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22);
   display: grid;
-  gap: 6px;
-  padding: 14px;
+  gap: 8px;
+  padding: 20px;
 }
 
-.eyebrow {
-  color: var(--color-primary);
-  font-size: 12px;
-  font-weight: 800;
+.discoveryEyebrow {
+  color: var(--color-gold);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 .capsuleTitle {
+  color: var(--color-text);
   font-size: 15px;
   font-weight: 900;
   line-height: 1.25;
 }
 
 .question {
+  color: var(--color-text);
   font-size: 13px;
   font-weight: 800;
   line-height: 1.35;
 }
 
-.answer {
-  color: rgba(246, 238, 220, 0.78);
-  font-size: 12px;
-  line-height: 1.45;
+.discoveryQuote {
+  border-left: 3px solid var(--color-gold);
+  padding-left: 12px;
+  color: var(--color-text);
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.7;
 }
 
 .openLabel {
-  color: #60d0a8;
+  justify-self: start;
+  margin-top: 4px;
+  padding: 9px 12px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, #F0C060, #D4A030);
+  color: #1A1000;
+  border: none;
   font-size: 12px;
   font-weight: 900;
-  margin-top: 2px;
+  box-shadow: 0 0 16px rgba(240,192,96,0.3);
 }
 
 .empty {
   margin: 0;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-paper);
   color: var(--color-muted);
   font-size: 13px;
   line-height: 1.5;

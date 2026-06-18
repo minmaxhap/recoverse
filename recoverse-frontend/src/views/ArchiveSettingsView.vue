@@ -36,6 +36,7 @@ defineEmits<{
   gap: 16px;
   padding-bottom: 18px;
   background: var(--color-page);
+  color: var(--color-text);
 }
 
 .archiveHead {
@@ -60,7 +61,7 @@ defineEmits<{
 
 h2 {
   margin: 0;
-  color: var(--color-ink);
+  color: var(--color-text);
   font-size: 28px;
   font-weight: 900;
   line-height: 1.12;
@@ -81,10 +82,10 @@ p {
 
 .homeButton {
   font: inherit;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-gold);
   border-radius: 999px;
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: rgba(240, 192, 96, 0.08);
+  color: var(--color-text);
   cursor: pointer;
   padding: 9px 12px;
   white-space: nowrap;
@@ -102,5 +103,26 @@ p {
   .actions {
     justify-content: flex-start;
   }
+}
+</style>
+
+<style>
+.archiveView input,
+.archiveView select,
+.archiveView textarea {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.archiveView input:focus,
+.archiveView select:focus,
+.archiveView textarea:focus {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 3px rgba(240, 192, 96, 0.12);
+}
+
+.archiveView button {
+  border-color: var(--color-border-gold);
 }
 </style>

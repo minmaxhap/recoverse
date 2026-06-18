@@ -120,7 +120,7 @@ defineEmits<{
 .formGrid label span {
   font-size: 12px;
   font-weight: 800;
-  color: #374151;
+  color: var(--color-muted);
 }
 
 .formGrid .wide {
@@ -136,12 +136,12 @@ defineEmits<{
 input,
 select {
   font: inherit;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-border);
   border-radius: 12px;
   padding: 10px 12px;
   outline: none;
-  background: #fff;
-  color: #111;
+  background: rgba(255,255,255,0.04);
+  color: var(--color-text);
 }
 
 .btnRow {
@@ -152,34 +152,34 @@ select {
 
 button {
   font: inherit;
-  border: 1px solid #d1d5db;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-paper);
   border-radius: 12px;
   padding: 10px 12px;
   cursor: pointer;
-  color: #111;
+  color: var(--color-text);
 }
 
 .primary {
-  background: #111;
-  border-color: #111;
-  color: #fff;
+  background: linear-gradient(135deg, #F0C060, #D4A030);
+  border-color: var(--color-primary);
+  color: var(--color-primary-contrast);
 }
 
 .ghost {
-  background: #fff;
+  background: var(--color-paper);
 }
 
 .hint {
   margin: 8px 0 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-muted);
   line-height: 1.35;
 }
 
 .error {
   margin: 10px 0 0;
-  color: #b00020;
+  color: var(--color-danger);
   font-weight: 700;
 }
 </style>

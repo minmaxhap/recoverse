@@ -131,12 +131,7 @@ const visibleCards = computed(() =>
 
 .detailBlock {
   display: grid;
-  gap: 10px;
-}
-
-h3 {
-  margin: 0 0 6px;
-  font-size: 13px;
+  gap: 12px;
 }
 
 .noWrap {
@@ -163,27 +158,31 @@ h3 {
 
 button {
   font: inherit;
-  border: 1px solid #d1d5db;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-paper);
   border-radius: 12px;
   padding: 10px 12px;
   cursor: pointer;
-  color: #111;
+  color: var(--color-text);
 }
 
 .primary {
-  background: #111;
-  border-color: #111;
-  color: #fff;
+  background: linear-gradient(135deg, #F0C060, #D4A030);
+  border-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+  font-weight: 900;
+  box-shadow: 0 0 16px rgba(240, 192, 96, 0.22);
 }
 
 .ghost {
-  background: #fff;
+  border-color: var(--color-border-gold);
+  background: rgba(240, 192, 96, 0.08);
 }
 
 .danger {
-  border-color: #b00020;
-  color: #b00020;
+  border-color: rgba(224, 85, 85, 0.55);
+  background: rgba(224, 85, 85, 0.08);
+  color: #ff8f8f;
 }
 
 .chips {
@@ -193,11 +192,14 @@ button {
   flex-wrap: wrap;
   gap: 8px;
   align-content: flex-start;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .chip {
-  border: 1px solid #e5e7eb;
-  background: #f3f4f6;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
   border-radius: 999px;
   padding: 8px 10px;
   font-size: 12px;
@@ -207,9 +209,9 @@ button {
 }
 
 .chip.active {
-  border-color: #111;
-  background: #111;
-  color: #fff;
+  border-color: var(--color-gold);
+  background: rgba(240, 192, 96, 0.14);
+  color: var(--color-text);
 }
 
 .chipBadge {
@@ -222,19 +224,32 @@ button {
 
 .formGrid {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(240,192,96,0.2);
+  border-radius: 20px;
+  background: var(--color-surface);
 }
 
 .formGrid label {
   display: grid;
-  gap: 6px;
+  gap: 10px;
+}
+
+.formGrid label:first-child {
+  padding: 16px;
+  border: 1px solid var(--color-border-gold);
+  border-radius: 18px;
+  background: rgba(240, 192, 96, 0.06);
 }
 
 .formGrid label span {
-  font-size: 12px;
-  font-weight: 800;
-  color: #374151;
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--color-gold);
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .formGrid .wide {
@@ -244,34 +259,40 @@ button {
 input,
 textarea {
   font: inherit;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 16px;
   outline: none;
-  background: #fff;
-  color: #111;
+  background: rgba(255,255,255,0.04);
+  color: var(--color-text);
+}
+
+input {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.5;
 }
 
 input:focus,
 textarea:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(60, 47, 36, 0.12);
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 3px rgba(240, 192, 96, 0.12);
 }
 
 textarea {
   min-height: 180px;
-  line-height: 1.6;
+  line-height: 1.7;
   resize: vertical;
 }
 
 .muted {
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 12px;
 }
 
 .empty {
   padding: 14px 12px;
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 13px;
   line-height: 1.5;
 }

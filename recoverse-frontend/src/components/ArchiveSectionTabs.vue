@@ -35,9 +35,9 @@ defineEmits<{
 
 button {
   font: inherit;
-  border: 1px solid var(--color-border);
-  background: var(--color-paper);
-  color: var(--color-ink);
+  border: 1px solid var(--color-border-gold);
+  background: rgba(240, 192, 96, 0.08);
+  color: var(--color-text);
   border-radius: 14px;
   padding: 12px 10px;
   cursor: pointer;
@@ -50,7 +50,7 @@ button {
 }
 
 .active {
-  background: var(--color-primary);
+  background: linear-gradient(135deg, #F0C060, #D4A030);
   border-color: var(--color-primary);
   color: var(--color-primary-contrast);
 }

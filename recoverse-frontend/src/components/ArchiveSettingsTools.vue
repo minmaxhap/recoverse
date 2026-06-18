@@ -110,9 +110,9 @@ defineEmits<{
 button,
 .file {
   font: inherit;
-  border: 1px solid var(--color-border);
-  background: var(--color-paper);
-  color: var(--color-ink);
+  border: 1px solid var(--color-border-gold);
+  background: rgba(240, 192, 96, 0.08);
+  color: var(--color-text);
   border-radius: 12px;
   padding: 10px 12px;
 }
@@ -136,8 +136,9 @@ button:disabled {
 }
 
 .danger {
-  border-color: #ef4444;
-  color: #b91c1c;
+  border-color: rgba(224, 85, 85, 0.55);
+  background: rgba(224, 85, 85, 0.08);
+  color: #ff8f8f;
 }
 
 .dangerGroup {
