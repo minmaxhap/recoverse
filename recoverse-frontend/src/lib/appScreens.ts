@@ -75,7 +75,7 @@ export const appModePlans: AppModePlan[] = [
     id: "archive-settings",
     targetScreen: "archive-settings",
     title: "설정",
-    note: "언어, 백업, 가져오기, 위험 작업을 다루는 관리 화면이다.",
+    note: "언어, 백업, 가져오기, 데이터 초기화를 다루는 관리 화면이다.",
   },
 ];
 

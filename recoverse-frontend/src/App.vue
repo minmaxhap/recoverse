@@ -249,7 +249,7 @@
               </button>
 
               <div v-if="filteredQuestionBank.length === 0" class="empty">
-                질문이 없어요. 먼저 정리 섹션에서 기록을 보완해 주세요.
+                기록이 충분히 쌓이면 반복 질문을 비교할 수 있어요.
               </div>
             </div>
           </aside>
@@ -472,7 +472,7 @@
       <section class="layoutAdd">
         <section class="panel">
           <div class="panelHead">
-            <h2 class="noWrap">빠른 입력</h2>
+            <h2 class="noWrap">새 기억 추가</h2>
           </div>
 
           <div class="addWrap" @keydown="onFormKeydown">
@@ -684,7 +684,7 @@ const messages = {
     legacyBackupGroup: "연도 아카이브 백업",
     legacyExportJson: "연도 JSON 내보내기",
     legacyImportJson: "연도 JSON 가져오기",
-    dangerSettingsGroup: "위험 작업",
+    dangerSettingsGroup: "데이터 초기화",
     clearAllData: "전체 데이터 삭제",
     capsuleBackupVersion: "백업 v1",
     refresh: "새로고침",
@@ -708,7 +708,7 @@ const messages = {
     createMemoryPlanet: "새 기억 행성 만들기",
     rediscover: "다시 발견하기",
     rediscoverEmpty: "답변이 쌓이면 오래된 질문을 다시 꺼내 보여줄 수 있어요.",
-    createCapsule: "새 기억 오브젝트 만들기",
+    createCapsule: "새 기억 만들기",
     title: "제목",
     titlePlaceholder: "예: 2026 연말 회고 행성",
     description: "설명",
@@ -845,7 +845,7 @@ const messages = {
     legacyBackupGroup: "Year Archive Backup",
     legacyExportJson: "Export year JSON",
     legacyImportJson: "Import year JSON",
-    dangerSettingsGroup: "Danger Zone",
+    dangerSettingsGroup: "Data reset",
     clearAllData: "Clear all data",
     capsuleBackupVersion: "Backup v1",
     refresh: "Refresh",
@@ -869,7 +869,7 @@ const messages = {
     createMemoryPlanet: "Create memory planet",
     rediscover: "Rediscover",
     rediscoverEmpty: "Once answers build up, old questions can resurface here.",
-    createCapsule: "Create memory object",
+    createCapsule: "Create memory",
     title: "Title",
     titlePlaceholder: "e.g. 2026 Year-End Planet",
     description: "Description",
