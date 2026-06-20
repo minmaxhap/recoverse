@@ -65,19 +65,19 @@ import CreatePlanetButton from "./CreatePlanetButton.vue";
 import GalaxyStars from "./GalaxyStars.vue";
 
 const slots = [
-  { x: "58%", y: 76, size: "82px" },
-  { x: "20%", y: 132, size: "68px" },
-  { x: "70%", y: 188, size: "74px" },
-  { x: "34%", y: 252, size: "88px" },
-  { x: "78%", y: 292, size: "62px" },
-  { x: "18%", y: 304, size: "58px" },
+  { x: "56%", y: 92, size: "84px" },
+  { x: "21%", y: 172, size: "70px" },
+  { x: "72%", y: 246, size: "76px" },
+  { x: "36%", y: 326, size: "88px" },
+  { x: "79%", y: 382, size: "64px" },
+  { x: "18%", y: 408, size: "60px" },
 ];
 
 const galaxySlots = [
-  { right: "9%", top: "22px" },
-  { right: "58%", top: "28px" },
-  { right: "13%", top: "244px" },
-  { right: "50%", top: "330px" },
+  { right: "9%", top: "34px" },
+  { right: "58%", top: "44px" },
+  { right: "13%", top: "300px" },
+  { right: "50%", top: "384px" },
 ];
 
 const props = defineProps<{
@@ -99,12 +99,12 @@ defineEmits<{
   "start-create": [];
 }>();
 
-const rowHeight = 330;
+const rowHeight = 420;
 
 const mapSurfaceStyle = computed(() => {
   const rows = Math.max(1, Math.ceil(Math.max(props.items.length, props.galaxies.length) / slots.length));
   return {
-    "--map-height": `${360 + (rows - 1) * rowHeight}px`,
+    "--map-height": `${540 + (rows - 1) * rowHeight}px`,
   };
 });
 
@@ -150,7 +150,7 @@ h3 {
 
 .mapSurface {
   position: relative;
-  min-height: max(var(--map-height, 360px), 420px);
+  min-height: max(var(--map-height, 540px), 540px);
   overflow: hidden;
   border: 1px solid var(--color-border-gold);
   border-radius: 24px;

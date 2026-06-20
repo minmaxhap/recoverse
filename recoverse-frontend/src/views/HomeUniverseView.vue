@@ -205,6 +205,7 @@ defineEmits<{
     radial-gradient(circle at 32% 24%, rgba(255, 255, 255, 0.82), transparent 18%),
     linear-gradient(145deg, var(--color-planet-1), var(--color-gold) 54%, var(--color-planet-3));
   box-shadow: 0 0 42px rgba(240, 192, 96, 0.35);
+  animation: planetFloat 7s ease-in-out infinite;
 }
 
 .planetRing {
@@ -293,6 +294,23 @@ defineEmits<{
 .navItem:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+@keyframes planetFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planetBody {
+    animation: none;
+  }
 }
 
 </style>

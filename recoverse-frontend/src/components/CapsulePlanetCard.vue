@@ -68,6 +68,15 @@ defineEmits<{
   position: relative;
   display: grid;
   place-items: center;
+  animation: planetFloat 8s ease-in-out infinite;
+}
+
+.planetCard:nth-of-type(2n) .planetWrap {
+  animation-delay: -2.6s;
+}
+
+.planetCard:nth-of-type(3n) .planetWrap {
+  animation-delay: -4.1s;
 }
 
 .planet {
@@ -171,6 +180,17 @@ defineEmits<{
   }
 }
 
+@keyframes planetFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .planetCard {
     transition: none;
@@ -181,6 +201,10 @@ defineEmits<{
   }
 
   .selected .planetWrap {
+    animation: none;
+  }
+
+  .planetWrap {
     animation: none;
   }
 }
