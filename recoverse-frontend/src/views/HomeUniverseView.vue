@@ -53,7 +53,7 @@
 
       <nav class="bottomNav" :aria-label="bottomNavLabels.home">
         <button class="navItem active" type="button">
-          <span class="navIcon homeIcon"></span>
+          <NavIcon name="home" />
           <span>{{ bottomNavLabels.home }}</span>
         </button>
         <button
@@ -61,15 +61,15 @@
           type="button"
           @click="$emit('open-selected-capsule')"
         >
-          <span class="navIcon planetIcon"></span>
+          <NavIcon name="planet" />
           <span>{{ bottomNavLabels.planet }}</span>
         </button>
         <button class="navItem" type="button" @click="$emit('open-galaxy')">
-          <span class="navIcon galaxyIcon"></span>
+          <NavIcon name="galaxy" />
           <span>{{ bottomNavLabels.galaxy }}</span>
         </button>
         <button class="navItem" type="button" @click="$emit('open-archive')">
-          <span class="navIcon archiveIcon"></span>
+          <NavIcon name="archive" />
           <span>{{ bottomNavLabels.archive }}</span>
         </button>
       </nav>
@@ -81,6 +81,7 @@
 import DiscoveryCard from "../components/DiscoveryCard.vue";
 import GalaxyMap from "../components/GalaxyMap.vue";
 import HomeHeader from "../components/HomeHeader.vue";
+import NavIcon from "../components/NavIcon.vue";
 import type { Capsule, CapsuleCard } from "../lib/recoverseStore";
 import type { CapsuleHomeItem } from "../lib/capsuleHomeData";
 import type { Galaxy } from "../types/recoverseFuture";
@@ -294,44 +295,4 @@ defineEmits<{
   cursor: not-allowed;
 }
 
-.navIcon {
-  width: 18px;
-  height: 18px;
-  display: block;
-}
-
-.homeIcon {
-  border-radius: 5px;
-  border: 1px solid currentColor;
-  box-shadow: inset 0 -5px 0 rgba(240, 192, 96, 0.28);
-}
-
-.planetIcon {
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.95), transparent 19%),
-    linear-gradient(145deg, var(--color-gold), var(--color-planet-1) 58%, var(--color-planet-3));
-}
-
-.galaxyIcon {
-  border-radius: 999px;
-  border: 1px solid var(--color-planet-2);
-  box-shadow: 0 0 0 5px rgba(123, 175, 212, 0.12);
-}
-
-.archiveIcon {
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  position: relative;
-}
-
-.archiveIcon::before {
-  content: "";
-  position: absolute;
-  left: 3px;
-  right: 3px;
-  top: 5px;
-  height: 1px;
-  background: currentColor;
-}
 </style>
