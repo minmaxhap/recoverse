@@ -13,9 +13,6 @@
         <button v-if="galaxy" class="ghostAction" type="button" @click="$emit('create-observation')">
           {{ labels.createObservation }}
         </button>
-        <button v-if="galaxy" class="dangerAction" type="button" @click="$emit('delete-galaxy')">
-          {{ labels.deleteGalaxy }}
-        </button>
       </div>
       <div class="galaxyVisual" aria-hidden="true">
         <span class="orbit orbitA"></span>
@@ -159,6 +156,13 @@
           </div>
         </div>
       </section>
+
+      <details class="dangerZone">
+        <summary>{{ labels.deleteGalaxy }}</summary>
+        <button class="dangerAction" type="button" @click="$emit('delete-galaxy')">
+          {{ labels.deleteGalaxy }}
+        </button>
+      </details>
     </template>
   </section>
 </template>
@@ -278,6 +282,7 @@ function formatJoinedAt(iso: string) {
 .editSection,
 .memberSection,
 .promptSection,
+.dangerZone,
 .emptyState {
   border: 1px solid var(--color-soft-border);
   border-radius: 18px;
@@ -416,10 +421,27 @@ p {
 .editSection,
 .memberSection,
 .promptSection,
+.dangerZone,
 .emptyState {
   padding: 16px;
   display: grid;
   gap: 14px;
+}
+
+.dangerZone {
+  border-color: rgba(224, 85, 85, 0.25);
+  background: rgba(224, 85, 85, 0.04);
+}
+
+.dangerZone summary {
+  color: #ff9f9f;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.dangerZone .dangerAction {
+  width: fit-content;
 }
 
 .formGrid {
