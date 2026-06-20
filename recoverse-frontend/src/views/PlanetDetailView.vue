@@ -18,7 +18,7 @@
       </button>
     </div>
 
-    <section class="createEntry">
+    <section v-if="showCreateComposer || !selectedCapsule" class="createEntry">
       <div class="createEntryHead">
         <span class="eyebrow">{{ createEntryLabels.eyebrow }}</span>
         <h3>{{ createEntryLabels.title }}</h3>
@@ -108,50 +108,48 @@
       </div>
     </section>
 
-    <div class="divider"></div>
-
-    <CapsuleHeroPlanet
-      :capsule="selectedCapsule"
-      :stats="selectedCapsule ? capsuleStats.get(selectedCapsule.id) : undefined"
-      :type-label="selectedCapsule ? typeLabels[selectedCapsule.type] : ''"
-    />
-
-    <CapsuleSummary
-      :capsule="selectedCapsule"
-      :stats="selectedCapsule ? capsuleStats.get(selectedCapsule.id) : undefined"
-      :type-label="selectedCapsule ? typeLabels[selectedCapsule.type] : ''"
-      :language="language"
-      :labels="capsuleSummaryLabels"
-    />
-
-    <CapsuleDetailEditor
-      :capsule="selectedCapsule"
-      :cards="selectedCapsuleCards"
-      :selected-card="selectedCapsuleCard"
-      :selected-card-id="selectedCapsuleCardId"
-      :recent-card-id="recentlyEditedCapsuleCardId"
-      :show-unanswered-only="showUnansweredCardsOnly"
-      :card-form="capsuleCardForm"
-      :language="language"
-      :labels="capsuleDetailLabels"
-      @update:show-unanswered-only="$emit('update:showUnansweredCardsOnly', $event)"
-      @delete-capsule="$emit('delete-capsule')"
-      @select-card="$emit('select-card', $event)"
-      @add-card="$emit('add-card')"
-      @save-card="$emit('save-card')"
-      @delete-card="$emit('delete-card')"
-    />
-
-    <div class="divider"></div>
-
-    <div class="addWrap">
-      <CapsuleQuestionCompare
-        :capsules="capsules"
-        :cards="capsuleCards"
-        :language="language"
-        @open-card="(capsuleId, cardId) => $emit('open-card', capsuleId, cardId)"
+    <template v-else>
+      <CapsuleHeroPlanet
+        :capsule="selectedCapsule"
+        :stats="selectedCapsule ? capsuleStats.get(selectedCapsule.id) : undefined"
+        :type-label="selectedCapsule ? typeLabels[selectedCapsule.type] : ''"
       />
-    </div>
+
+      <CapsuleSummary
+        :capsule="selectedCapsule"
+        :stats="selectedCapsule ? capsuleStats.get(selectedCapsule.id) : undefined"
+        :type-label="selectedCapsule ? typeLabels[selectedCapsule.type] : ''"
+        :language="language"
+        :labels="capsuleSummaryLabels"
+      />
+
+      <CapsuleDetailEditor
+        :capsule="selectedCapsule"
+        :cards="selectedCapsuleCards"
+        :selected-card="selectedCapsuleCard"
+        :selected-card-id="selectedCapsuleCardId"
+        :recent-card-id="recentlyEditedCapsuleCardId"
+        :show-unanswered-only="showUnansweredCardsOnly"
+        :card-form="capsuleCardForm"
+        :language="language"
+        :labels="capsuleDetailLabels"
+        @update:show-unanswered-only="$emit('update:showUnansweredCardsOnly', $event)"
+        @delete-capsule="$emit('delete-capsule')"
+        @select-card="$emit('select-card', $event)"
+        @add-card="$emit('add-card')"
+        @save-card="$emit('save-card')"
+        @delete-card="$emit('delete-card')"
+      />
+
+      <div class="addWrap">
+        <CapsuleQuestionCompare
+          :capsules="capsules"
+          :cards="capsuleCards"
+          :language="language"
+          @open-card="(capsuleId, cardId) => $emit('open-card', capsuleId, cardId)"
+        />
+      </div>
+    </template>
   </CapsuleDetailView>
 </template>
 
