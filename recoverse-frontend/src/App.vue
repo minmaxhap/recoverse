@@ -1,7 +1,7 @@
 <template>
   <div class="app">
     <main class="main">
-      <ArchiveSettingsView
+      <ArchiveShellView
         v-if="mode === 'archive-library'"
         :title="modePlanById['archive-library'].title"
         :description="modePlanById['archive-library'].note"
@@ -28,9 +28,9 @@
           @update:sort="capsuleArchiveSort = $event"
           @select="openCapsuleFromArchive"
         />
-      </ArchiveSettingsView>
+      </ArchiveShellView>
 
-      <ArchiveSettingsView
+      <ArchiveShellView
         v-else-if="mode === 'archive-time'"
         :title="modePlanById['archive-time'].title"
         :description="modePlanById['archive-time'].note"
@@ -288,10 +288,12 @@
           </section>
         </section>
       </section>
-      </ArchiveSettingsView>
+      </ArchiveShellView>
 
-      <ArchiveSettingsView
+      <ArchiveShellView
         v-else-if="mode === 'archive-settings'"
+        eyebrow="Settings"
+        tone="settings"
         :title="modePlanById['archive-settings'].title"
         :description="modePlanById['archive-settings'].note"
         :home-label="t.navHome"
@@ -326,7 +328,7 @@
             @clear-all="clearAll"
           />
         </section>
-      </ArchiveSettingsView>
+      </ArchiveShellView>
 
       <!-- Mode: CAPSULES -->
       <HomeUniverseView
@@ -448,7 +450,7 @@
         @open-card="jumpToCapsuleCard"
       />
 
-      <ArchiveSettingsView
+      <ArchiveShellView
         v-else-if="mode === 'archive-organize'"
         :title="modePlanById['archive-organize'].title"
         :description="modePlanById['archive-organize'].note"
@@ -554,7 +556,7 @@
           </div>
         </aside>
       </section>
-      </ArchiveSettingsView>
+      </ArchiveShellView>
     </main>
   </div>
 </template>
@@ -567,7 +569,7 @@ import { useCapsuleEditorState } from "./composables/useCapsuleEditorState";
 import ArchiveCapsuleShelf from "./components/ArchiveCapsuleShelf.vue";
 import ArchiveSectionTabs from "./components/ArchiveSectionTabs.vue";
 import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
-import ArchiveSettingsView from "./views/ArchiveSettingsView.vue";
+import ArchiveShellView from "./views/ArchiveShellView.vue";
 import GalaxyDetailView from "./views/GalaxyDetailView.vue";
 import HomeUniverseView from "./views/HomeUniverseView.vue";
 import ObservationModeView from "./views/ObservationModeView.vue";

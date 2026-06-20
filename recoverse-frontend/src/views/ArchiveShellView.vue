@@ -1,8 +1,8 @@
 <template>
-  <section class="archiveView">
+  <section class="archiveShell" :class="`tone-${tone}`">
     <div class="archiveHead">
       <div class="copy">
-        <span class="eyebrow">Archive / Settings</span>
+        <span class="eyebrow">{{ eyebrow }}</span>
         <h2>{{ title }}</h2>
         <p>{{ description }}</p>
       </div>
@@ -19,11 +19,16 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+withDefaults(defineProps<{
+  eyebrow?: string;
+  tone?: "archive" | "settings";
   title: string;
   description: string;
   homeLabel: string;
-}>();
+}>(), {
+  eyebrow: "Archive",
+  tone: "archive",
+});
 
 defineEmits<{
   "back-home": [];
@@ -31,7 +36,7 @@ defineEmits<{
 </script>
 
 <style scoped>
-.archiveView {
+.archiveShell {
   display: grid;
   gap: 16px;
   padding-bottom: 18px;
@@ -53,10 +58,15 @@ defineEmits<{
 }
 
 .eyebrow {
-  color: var(--color-muted);
+  color: var(--color-gold);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 900;
+  letter-spacing: 1.4px;
   text-transform: uppercase;
+}
+
+.tone-settings .eyebrow {
+  color: var(--color-muted);
 }
 
 h2 {
@@ -107,22 +117,22 @@ p {
 </style>
 
 <style>
-.archiveView input,
-.archiveView select,
-.archiveView textarea {
+.archiveShell input,
+.archiveShell select,
+.archiveShell textarea {
   background: var(--color-surface);
   color: var(--color-text);
   border: 1px solid var(--color-border);
 }
 
-.archiveView input:focus,
-.archiveView select:focus,
-.archiveView textarea:focus {
+.archiveShell input:focus,
+.archiveShell select:focus,
+.archiveShell textarea:focus {
   border-color: var(--color-gold);
   box-shadow: 0 0 0 3px rgba(240, 192, 96, 0.12);
 }
 
-.archiveView button {
+.archiveShell button {
   border-color: var(--color-border-gold);
 }
 </style>
