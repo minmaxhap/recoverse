@@ -355,7 +355,6 @@
           galaxy: t.navGalaxy,
           archive: t.navArchive,
         }"
-        :has-selected-capsule="selectedUniverseObject?.type === 'planet' && selectedCapsule !== null"
         @open-discovery="openDiscoveryCard"
         @open-archive="openArchiveSettings"
         @open-create-flow="openCreateFlow"
@@ -1522,8 +1521,17 @@ function openCapsuleFromArchive(id: string) {
 }
 
 function openSelectedCapsule() {
-  if (selectedUniverseObject.value?.type !== "planet" || !selectedCapsuleId.value) return;
-  setMode("planet-detail");
+  const id =
+    selectedUniverseObject.value?.type === "planet"
+      ? selectedUniverseObject.value.id
+      : selectedCapsuleId.value ?? capsules.value[0]?.id ?? null;
+
+  if (id) {
+    selectCapsule(id);
+    return;
+  }
+
+  openCreateFlow();
 }
 
 function selectGalaxy(id: string) {
@@ -1538,7 +1546,16 @@ function openSelectedGalaxy() {
     selectedUniverseObject.value?.type === "galaxy"
       ? selectedUniverseObject.value.id
       : selectedGalaxyId.value ?? galaxies.value[0]?.id ?? null;
-  if (!id) return;
+
+  if (!id) {
+    resetCapsuleForm();
+    resetGalaxyForm();
+    createMode.value = "galaxy";
+    showCreateComposer.value = true;
+    setMode("planet-detail");
+    return;
+  }
+
   selectGalaxy(id);
 }
 

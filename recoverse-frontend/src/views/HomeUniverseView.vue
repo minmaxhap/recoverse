@@ -100,13 +100,12 @@
         <button
           class="navItem"
           type="button"
-          :disabled="!hasSelectedCapsule"
           @click="$emit('open-selected-capsule')"
         >
           <span class="navIcon planetIcon"></span>
           <span>{{ bottomNavLabels.planet }}</span>
         </button>
-        <button class="navItem" type="button" :disabled="galaxies.length === 0" @click="$emit('open-galaxy')">
+        <button class="navItem" type="button" @click="$emit('open-galaxy')">
           <span class="navIcon galaxyIcon"></span>
           <span>{{ bottomNavLabels.galaxy }}</span>
         </button>
@@ -164,7 +163,6 @@ const props = defineProps<{
     galaxy: string;
     archive: string;
   };
-  hasSelectedCapsule: boolean;
 }>();
 
 const emit = defineEmits<{
