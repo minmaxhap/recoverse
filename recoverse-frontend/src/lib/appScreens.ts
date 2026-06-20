@@ -68,8 +68,8 @@ export const appModePlans: AppModePlan[] = [
   {
     id: "archive-organize",
     targetScreen: "archive-settings",
-    title: "정리",
-    note: "빠른 입력과 질문 보완으로 누락된 기록을 정리하는 화면이다.",
+    title: "새 기억",
+    note: "아카이브에서 바로 새 기억 행성 또는 그룹 은하 생성 흐름으로 이동한다.",
   },
   {
     id: "archive-settings",

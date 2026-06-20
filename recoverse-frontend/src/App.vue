@@ -11,7 +11,7 @@
         <ArchiveSectionTabs
           :active-mode="activeArchiveMode"
           :plans="archiveModePlans"
-          @select="setMode($event)"
+          @select="selectArchiveMode"
         />
         <ArchiveCapsuleShelf
           :search="capsuleSearch"
@@ -40,7 +40,7 @@
         <ArchiveSectionTabs
           :active-mode="activeArchiveMode"
           :plans="archiveModePlans"
-          @select="setMode($event)"
+          @select="selectArchiveMode"
         />
       <section class="layout3">
         <!-- Left: Years -->
@@ -309,7 +309,7 @@
         <ArchiveSectionTabs
           :active-mode="activeArchiveMode"
           :plans="archiveModePlans"
-          @select="setMode($event)"
+          @select="selectArchiveMode"
         />
         <section class="settingsPanel">
           <ArchiveSettingsTools
@@ -467,7 +467,7 @@
         <ArchiveSectionTabs
           :active-mode="activeArchiveMode"
           :plans="archiveModePlans"
-          @select="setMode($event)"
+          @select="selectArchiveMode"
         />
       <section class="layoutAdd">
         <section class="panel">
@@ -646,6 +646,7 @@ import {
 import {
   appModePlans,
   archiveModePlans,
+  type ArchiveModeId,
   type AppMode,
 } from "./lib/appScreens";
 
@@ -1424,6 +1425,15 @@ function setMode(m: AppMode) {
 
 function openArchiveSettings() {
   setMode("archive-library");
+}
+
+function selectArchiveMode(nextMode: ArchiveModeId) {
+  if (nextMode === "archive-organize") {
+    openCreateFlow();
+    return;
+  }
+
+  setMode(nextMode);
 }
 
 function selectYear(y: number) {
