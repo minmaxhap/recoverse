@@ -88,8 +88,8 @@ defineEmits<{
   margin-top: 4px;
   padding: 9px 12px;
   border-radius: 99px;
-  background: linear-gradient(135deg, #F0C060, #D4A030);
-  color: #1A1000;
+  background: linear-gradient(135deg, var(--color-gold), var(--color-planet-1));
+  color: var(--color-primary-contrast);
   border: none;
   font-size: 12px;
   font-weight: 900;

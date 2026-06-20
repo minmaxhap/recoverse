@@ -237,7 +237,7 @@ defineEmits<{
 
 .primaryCta {
   border: 0;
-  background: linear-gradient(135deg, #F0C060, #D4A030);
+  background: linear-gradient(135deg, var(--color-gold), var(--color-planet-1));
   color: var(--color-primary-contrast);
   box-shadow: 0 0 18px rgba(240, 192, 96, 0.28);
 }

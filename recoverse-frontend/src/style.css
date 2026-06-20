@@ -10,16 +10,16 @@
   --color-text-dim: #8A8A9A;
   --color-border: rgba(255,255,255,0.08);
   --color-soft-border: rgba(255,255,255,0.05);
-  --color-border-gold: rgba(240,192,96,0.2);
-  --color-primary: #F0C060;
-  --color-gold: #F0C060;
+  --color-border-gold: rgba(244,197,106,0.2);
+  --color-primary: #F4C56A;
+  --color-gold: #F4C56A;
   --color-gold-dim: #9A7A3A;
   --color-primary-contrast: #1A1000;
   --color-danger: #e05555;
-  --color-planet-1: #D4845A;
+  --color-planet-1: #F2A27E;
   --color-planet-2: #7BAFD4;
   --color-planet-3: #A47BC4;
-  --color-chip: rgba(240,192,96,0.12);
+  --color-chip: rgba(244,197,106,0.12);
 
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: var(--color-ink);

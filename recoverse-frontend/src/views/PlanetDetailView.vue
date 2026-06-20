@@ -406,7 +406,7 @@ const text = computed(() =>
 .primaryAction,
 .choice.active {
   border: 1px solid var(--color-primary);
-  background: linear-gradient(135deg, #F0C060, #D4A030);
+  background: linear-gradient(135deg, var(--color-gold), var(--color-planet-1));
   color: var(--color-primary-contrast);
 }
 

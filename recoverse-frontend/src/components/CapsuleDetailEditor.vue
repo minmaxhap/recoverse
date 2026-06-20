@@ -167,7 +167,7 @@ button {
 }
 
 .primary {
-  background: linear-gradient(135deg, #F0C060, #D4A030);
+  background: linear-gradient(135deg, var(--color-gold), var(--color-planet-1));
   border-color: var(--color-primary);
   color: var(--color-primary-contrast);
   font-weight: 900;
