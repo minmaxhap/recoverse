@@ -305,7 +305,7 @@ const text = computed(() =>
   props.language === "ko"
     ? {
         eyebrow: "기억 행성",
-        backHome: "우주로",
+        backHome: "내 기억 우주로",
       }
     : {
         eyebrow: "Memory Planet",
@@ -319,9 +319,9 @@ const text = computed(() =>
   padding: 12px 12px;
   border-bottom: 1px solid var(--color-soft-border);
   background: rgba(20, 28, 46, 0.7);
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   min-width: 0;
 }
@@ -401,6 +401,7 @@ const text = computed(() =>
   border-radius: 999px;
   padding: 9px 12px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .primaryAction,
@@ -485,6 +486,22 @@ select {
 }
 
 @media (max-width: 640px) {
+  .panelHead {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .panelHead > div {
+    grid-column: 1 / -1;
+  }
+
+  .panelHead .ghostAction {
+    width: 100%;
+    min-height: 42px;
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
   .formGrid {
     grid-template-columns: 1fr;
   }

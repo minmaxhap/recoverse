@@ -41,7 +41,8 @@
         v-if="galaxies.length === 0"
         class="galaxyNode preview"
         type="button"
-        aria-disabled="true"
+        aria-label="함께 쓰는 그룹 회고 만들기"
+        @click="$emit('start-create-galaxy')"
       >
         <span class="galaxyCore"></span>
         <span class="galaxyOrbit orbitA"></span>
@@ -97,6 +98,7 @@ defineEmits<{
   select: [capsuleId: string];
   "select-galaxy": [galaxyId: string];
   "start-create": [];
+  "start-create-galaxy": [];
 }>();
 
 const rowHeight = 420;
@@ -185,7 +187,7 @@ h3 {
 }
 
 .galaxyNode.preview {
-  opacity: 0.58;
+  opacity: 0.72;
 }
 
 .galaxyNode.selected .galaxyCore {
@@ -264,7 +266,15 @@ h3 {
   word-break: keep-all;
 }
 
-@media (max-width: 430px) {
+@media (max-width: 640px) {
+  .galaxyMap {
+    padding: 4px 12px 14px;
+  }
+
+  .mapSurface {
+    min-height: 420px;
+  }
+
   .galaxyNode {
     right: 4%;
     transform: scale(0.88);

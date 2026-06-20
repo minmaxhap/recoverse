@@ -5,10 +5,7 @@
 
   <div v-else class="addWrap">
     <div class="detailBlock">
-      <div class="btnRow">
-        <button class="danger" type="button" @click="$emit('delete-capsule')">
-          {{ labels.deleteCapsule }}
-        </button>
+      <div class="toolsRow">
         <label class="filterToggle">
           <input
             type="checkbox"
@@ -69,6 +66,13 @@
       <div v-else class="empty">
         {{ labels.selectOrAddQuestion }}
       </div>
+
+      <details class="dangerZone">
+        <summary>{{ labels.deleteCapsule }}</summary>
+        <button class="danger" type="button" @click="$emit('delete-capsule')">
+          {{ labels.deleteCapsule }}
+        </button>
+      </details>
     </div>
   </div>
 </template>
@@ -148,6 +152,12 @@ const visibleCards = computed(() =>
   flex-wrap: wrap;
 }
 
+.toolsRow {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .filterToggle {
   display: inline-flex;
   align-items: center;
@@ -183,6 +193,25 @@ button {
   border-color: rgba(224, 85, 85, 0.55);
   background: rgba(224, 85, 85, 0.08);
   color: #ff8f8f;
+}
+
+.dangerZone {
+  margin-top: 8px;
+  border: 1px solid rgba(224, 85, 85, 0.25);
+  border-radius: 16px;
+  padding: 10px;
+  background: rgba(224, 85, 85, 0.04);
+}
+
+.dangerZone summary {
+  color: #ff9f9f;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.dangerZone .danger {
+  margin-top: 10px;
 }
 
 .chips {

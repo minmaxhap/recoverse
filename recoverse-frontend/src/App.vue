@@ -366,6 +366,7 @@
         @open-discovery="openDiscoveryCard"
         @open-archive="openArchiveSettings"
         @open-create-flow="openCreateFlow"
+        @open-galaxy-create-flow="openGalaxyCreateFlow"
         @open-galaxy="openSelectedGalaxy"
         @open-selected-capsule="openSelectedCapsule"
         @select-capsule="selectCapsule"
@@ -663,12 +664,12 @@ const messages = {
     archiveCount: "전체 행성",
     openArchive: "아카이브 열기",
     createEntryEyebrow: "생성 입구",
-    createEntryTitle: "새로운 기억 오브젝트를 시작해요",
+    createEntryTitle: "어떤 기억을 남겨볼까요?",
     createEntryDescription:
       "혼자 남길 기억 행성과 함께 남길 그룹 은하 중 먼저 만들 대상을 고르세요.",
-    openCreateEntry: "생성 입구 열기",
-    createPlanetEntry: "개인 행성 만들기",
-    createGalaxyEntry: "그룹 은하 만들기",
+    openCreateEntry: "새 기억 시작하기",
+    createPlanetEntry: "혼자 쓰는 기억 행성",
+    createGalaxyEntry: "함께 쓰는 회고 은하",
     closeCreateEntry: "입구 닫기",
     navHome: "홈",
     navPlanet: "기록",
@@ -703,8 +704,8 @@ const messages = {
     todayDiscovery: "오늘의 발견",
     openDiscovery: "다시 열어보기",
     memoryMap: "기억 지도",
-    memoryMapEmpty: "아직 떠 있는 기억 행성이 없어요. 새 행성을 만들면 이곳에 나타나요.",
-    createMemoryPlanet: "새 기억 행성 만들기",
+    memoryMapEmpty: "아직 떠 있는 기억 행성이 없어요. 첫 회고 행성을 만들면 이곳에 나타나요.",
+    createMemoryPlanet: "내 첫 회고 행성 만들기",
     rediscover: "다시 발견하기",
     rediscoverEmpty: "답변이 쌓이면 오래된 질문을 다시 꺼내 보여줄 수 있어요.",
     createCapsule: "새 기억 만들기",
@@ -720,7 +721,7 @@ const messages = {
     reset: "초기화",
     templateHint: "기본 질문을 고르면 행성 안에 탐사 기록이 함께 만들어져요.",
     selectCapsuleHint: "왼쪽에서 기억 행성을 선택하면 탐사 기록을 볼 수 있어요.",
-    deleteCapsule: "기억 행성 삭제",
+    deleteCapsule: "행성 삭제",
     noCards: "아직 기억 카드가 없어요. 첫 기억 카드를 추가해보세요.",
     questionCard: "기억 카드",
     recentlyEdited: "최근 수정",
@@ -769,15 +770,15 @@ const messages = {
     galaxyMemberAdded: "멤버를 추가했어요.",
     galaxyPromptAdded: "질문을 추가했어요.",
     galaxyLogSaved: "탐사 로그를 저장했어요.",
-    createObservation: "관측 초대장 만들기",
+    createObservation: "읽기 전용 링크 만들기",
     observationCreated: "관측 스냅샷을 만들었어요.",
     observationMode: "관측 모드",
     observationEmptyTitle: "관측 스냅샷이 없어요",
     observationEmptyDescription: "행성이나 은하에서 관측 초대장을 만들면 이곳에서 읽을 수 있어요.",
     observationNoSnapshot: "아직 선택된 읽기 전용 스냅샷이 없습니다.",
-    observationBack: "우주로",
+    observationBack: "내 기억 우주로",
     readOnly: "읽기 전용",
-    observationNoLogs: "공유된 탐사 로그가 없습니다.",
+    observationNoLogs: "아직 공유된 답변이 없어요.",
     observationNoticeTitle: "이 초대장은 원본과 분리된 스냅샷입니다",
     observationNoticeDescription:
       "관측자는 편집, 삭제, 댓글, 좋아요를 할 수 없습니다. 원본이 바뀌어도 이 화면은 공유 시점의 기록만 보여줍니다.",
@@ -824,12 +825,12 @@ const messages = {
     archiveCount: "Planets",
     openArchive: "Open archive",
     createEntryEyebrow: "Creation Entry",
-    createEntryTitle: "Start a new memory object",
+    createEntryTitle: "What memory are you keeping?",
     createEntryDescription:
       "Choose whether you are creating a personal memory planet or a group galaxy.",
-    openCreateEntry: "Open creation entry",
-    createPlanetEntry: "Create personal planet",
-    createGalaxyEntry: "Create group galaxy",
+    openCreateEntry: "Start a new memory",
+    createPlanetEntry: "Solo memory planet",
+    createGalaxyEntry: "Shared reflection galaxy",
     closeCreateEntry: "Close entry",
     navHome: "Home",
     navPlanet: "Planet",
@@ -930,15 +931,15 @@ const messages = {
     galaxyMemberAdded: "Member added.",
     galaxyPromptAdded: "Question added.",
     galaxyLogSaved: "Exploration log saved.",
-    createObservation: "Create observation invite",
+    createObservation: "Create read-only link",
     observationCreated: "Observation snapshot created.",
     observationMode: "Observation Mode",
     observationEmptyTitle: "No observation snapshot",
     observationEmptyDescription: "Create an observation invite from a planet or galaxy to read it here.",
     observationNoSnapshot: "No read-only snapshot is selected yet.",
-    observationBack: "Universe",
+    observationBack: "My memory universe",
     readOnly: "Read only",
-    observationNoLogs: "No shared exploration logs.",
+    observationNoLogs: "No shared answers yet.",
     observationNoticeTitle: "This invite is a snapshot separated from the source",
     observationNoticeDescription:
       "Observers cannot edit, delete, comment, or like. Even if the source changes, this screen keeps the records from the sharing moment.",
@@ -1480,6 +1481,14 @@ function openCreateFlow() {
   resetCapsuleForm();
   resetGalaxyForm();
   createMode.value = "planet";
+  showCreateComposer.value = true;
+  setMode("planet-detail");
+}
+
+function openGalaxyCreateFlow() {
+  resetCapsuleForm();
+  resetGalaxyForm();
+  createMode.value = "galaxy";
   showCreateComposer.value = true;
   setMode("planet-detail");
 }

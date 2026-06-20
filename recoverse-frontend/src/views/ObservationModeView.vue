@@ -191,15 +191,21 @@ li {
 }
 
 .snapshotSurface {
+  position: relative;
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-columns: 150px minmax(0, 1fr);
   gap: 16px;
   padding: 18px;
 }
 
 .planetPreview {
-  position: relative;
-  min-height: 180px;
+  align-self: start;
+  position: sticky;
+  top: 16px;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.92;
+  min-height: 150px;
 }
 
 .planet,
@@ -291,7 +297,12 @@ ol {
   }
 
   .planetPreview {
-    min-height: 140px;
+    display: none;
+  }
+
+  .recordList {
+    position: relative;
+    z-index: 1;
   }
 }
 </style>

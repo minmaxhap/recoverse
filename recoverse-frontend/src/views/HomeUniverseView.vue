@@ -48,6 +48,7 @@
           @select="$emit('select-capsule', $event)"
           @select-galaxy="$emit('select-galaxy', $event)"
           @start-create="$emit('open-create-flow')"
+          @start-create-galaxy="$emit('open-galaxy-create-flow')"
         />
       </template>
 
@@ -121,6 +122,7 @@ defineEmits<{
   "open-discovery": [];
   "open-archive": [];
   "open-create-flow": [];
+  "open-galaxy-create-flow": [];
   "open-galaxy": [];
   "open-selected-capsule": [];
   "select-capsule": [capsuleId: string];

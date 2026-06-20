@@ -56,7 +56,9 @@ const formattedUpdatedAt = computed(() => {
   margin: 0 12px 12px;
   border: 1px solid var(--color-soft-border);
   border-radius: 16px;
-  background: var(--color-paper);
+  background:
+    radial-gradient(circle at 10% 0%, rgba(244, 197, 106, 0.08), transparent 42%),
+    rgba(255, 255, 255, 0.035);
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1px;
@@ -64,7 +66,7 @@ const formattedUpdatedAt = computed(() => {
 }
 
 .summaryItem {
-  background: rgba(255, 250, 242, 0.76);
+  background: rgba(20, 28, 46, 0.78);
   display: grid;
   gap: 4px;
   min-width: 0;
@@ -76,13 +78,13 @@ const formattedUpdatedAt = computed(() => {
 }
 
 span {
-  color: var(--color-muted);
+  color: rgba(232, 224, 208, 0.62);
   font-size: 11px;
   font-weight: 800;
 }
 
 strong {
-  color: var(--color-ink);
+  color: var(--color-text);
   font-size: 12px;
   line-height: 1.35;
   word-break: keep-all;

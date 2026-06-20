@@ -33,6 +33,7 @@ defineEmits<{
   padding: 9px 12px;
   white-space: nowrap;
   backdrop-filter: blur(10px);
+  min-height: 44px;
 }
 
 .miniPlanet {
@@ -48,5 +49,13 @@ defineEmits<{
 span:last-child {
   font-size: 12px;
   font-weight: 900;
+}
+
+@media (max-width: 640px) {
+  .createPlanet {
+    bottom: 14px;
+    max-width: calc(100% - 36px);
+    padding: 10px 12px;
+  }
 }
 </style>
