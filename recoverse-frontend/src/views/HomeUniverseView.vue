@@ -31,35 +31,6 @@
       </template>
 
       <template v-else>
-        <section class="recentSection" aria-label="최근 회고">
-          <span class="sectionEyebrow">Latest Memory</span>
-          <article class="recentCard">
-            <div class="recentPlanet" aria-hidden="true"></div>
-            <div class="recentCopy">
-              <p class="recentDate">{{ formatDate(capsules[0].updatedAt || capsules[0].createdAt) }}</p>
-              <h3>{{ capsules[0].title }}</h3>
-              <p v-if="capsules[0].description" class="recentDescription">
-                {{ capsules[0].description }}
-              </p>
-            </div>
-
-            <div v-if="discoveryCard" class="pastSelfBlock">
-              <span class="pastSelfLabel">그때의 나</span>
-              <p class="pastSelfQuestion">{{ discoveryCard.questionText }}</p>
-              <blockquote>{{ discoveryAnswerPreview }}</blockquote>
-            </div>
-
-            <div class="recentActions">
-              <button class="primaryCta" type="button" @click="openRecentCapsule">
-                다시 열어보기
-              </button>
-              <button class="secondaryCta" type="button" @click="$emit('open-create-flow')">
-                새 답변 추가
-              </button>
-            </div>
-          </article>
-        </section>
-
         <DiscoveryCard
           :card="discoveryCard"
           :capsule-title="discoveryCapsuleTitle"
@@ -77,18 +48,6 @@
           @select="$emit('select-capsule', $event)"
           @select-galaxy="$emit('select-galaxy', $event)"
           @start-create="$emit('open-create-flow')"
-        />
-
-        <section class="createBar">
-          <button class="primaryCta wide" type="button" @click="$emit('open-create-flow')">
-            ✦ 새 기억 행성 만들기
-          </button>
-        </section>
-
-        <HomeArchiveBridge
-          :count="capsules.length"
-          :labels="archiveBridgeLabels"
-          @open-archive="$emit('open-archive')"
         />
       </template>
 
@@ -122,13 +81,12 @@
 import DiscoveryCard from "../components/DiscoveryCard.vue";
 import GalaxyMap from "../components/GalaxyMap.vue";
 import HomeHeader from "../components/HomeHeader.vue";
-import HomeArchiveBridge from "../components/HomeArchiveBridge.vue";
 import type { Capsule, CapsuleCard } from "../lib/recoverseStore";
 import type { CapsuleHomeItem } from "../lib/capsuleHomeData";
 import type { Galaxy } from "../types/recoverseFuture";
 import HomeView from "./HomeView.vue";
 
-const props = defineProps<{
+defineProps<{
   title: string;
   brandLabel: string;
   capsules: Capsule[];
@@ -150,13 +108,6 @@ const props = defineProps<{
     create: string;
     galaxy: string;
   };
-  archiveBridgeLabels: {
-    eyebrow: string;
-    title: string;
-    description: string;
-    count: string;
-    open: string;
-  };
   bottomNavLabels: {
     home: string;
     planet: string;
@@ -165,7 +116,7 @@ const props = defineProps<{
   };
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   "open-discovery": [];
   "open-archive": [];
   "open-create-flow": [];
@@ -174,21 +125,6 @@ const emit = defineEmits<{
   "select-capsule": [capsuleId: string];
   "select-galaxy": [galaxyId: string];
 }>();
-
-function openRecentCapsule() {
-  const recentCapsule = props.capsules[0];
-  if (!recentCapsule) return;
-  emit("select-capsule", recentCapsule.id);
-  emit("open-selected-capsule");
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(value));
-}
 </script>
 
 <style scoped>
@@ -222,9 +158,7 @@ function formatDate(value: string) {
   gap: 8px;
 }
 
-.onboardingEyebrow,
-.sectionEyebrow,
-.pastSelfLabel {
+.onboardingEyebrow {
   color: var(--color-gold);
   font-size: 10px;
   font-weight: 900;
@@ -280,25 +214,21 @@ function formatDate(value: string) {
   transform: rotate(-18deg);
 }
 
-.onboardingMessage h3,
-.recentCard h3 {
+.onboardingMessage h3 {
   margin: 0;
   color: var(--color-text);
   font-size: 20px;
   font-weight: 900;
 }
 
-.onboardingMessage p,
-.recentDescription,
-.pastSelfQuestion {
+.onboardingMessage p {
   margin: 0;
   color: var(--color-text-dim);
   font-size: 13px;
   line-height: 1.6;
 }
 
-.primaryCta,
-.secondaryCta {
+.primaryCta {
   border-radius: 999px;
   padding: 11px 15px;
   font-weight: 900;
@@ -310,94 +240,6 @@ function formatDate(value: string) {
   background: linear-gradient(135deg, #F0C060, #D4A030);
   color: var(--color-primary-contrast);
   box-shadow: 0 0 18px rgba(240, 192, 96, 0.28);
-}
-
-.secondaryCta {
-  border: 1px solid var(--color-border-gold);
-  background: rgba(240, 192, 96, 0.08);
-  color: var(--color-text);
-}
-
-.recentSection {
-  padding: 16px 14px 14px;
-  display: grid;
-  gap: 10px;
-  border-bottom: 1px solid var(--color-soft-border);
-}
-
-.recentCard {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 14px;
-  padding: 18px;
-  border: 1px solid var(--color-border-gold);
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at 90% 0%, rgba(240, 192, 96, 0.16), transparent 26%),
-    linear-gradient(145deg, rgba(26, 37, 64, 0.92), rgba(20, 28, 46, 0.96));
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.28);
-}
-
-.recentPlanet {
-  width: 54px;
-  height: 54px;
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.88), transparent 18%),
-    linear-gradient(145deg, var(--color-planet-1), var(--color-gold) 55%, var(--color-planet-3));
-  box-shadow: 0 0 28px rgba(240, 192, 96, 0.32);
-}
-
-.recentCopy {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
-}
-
-.recentDate {
-  margin: 0;
-  color: var(--color-gold-dim);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.pastSelfBlock,
-.recentActions {
-  grid-column: 1 / -1;
-}
-
-.pastSelfBlock {
-  display: grid;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--color-border);
-}
-
-.pastSelfBlock blockquote {
-  margin: 0;
-  padding-left: 12px;
-  border-left: 3px solid var(--color-gold);
-  color: var(--color-text);
-  font-size: 14px;
-  font-style: italic;
-  line-height: 1.7;
-}
-
-.recentActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.createBar {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--color-soft-border);
-}
-
-.wide {
-  width: 100%;
 }
 
 @media (max-width: 899px) {

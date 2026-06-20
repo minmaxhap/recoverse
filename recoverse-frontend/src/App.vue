@@ -357,7 +357,6 @@
           create: t.createMemoryPlanet,
           galaxy: t.galaxyPlaceholder,
         }"
-        :archive-bridge-labels="archiveBridgeLabels"
         :bottom-nav-labels="{
           home: t.navHome,
           planet: t.navPlanet,
@@ -1131,13 +1130,6 @@ const archiveShelfLabels = computed(() => ({
   recentTitle: t.value.archiveRecentTitle,
   recentDescription: t.value.archiveRecentDescription,
   recentOpen: t.value.archiveRecentOpen,
-}));
-const archiveBridgeLabels = computed(() => ({
-  eyebrow: t.value.archiveCapsulesEyebrow,
-  title: t.value.archiveCapsulesTitle,
-  description: t.value.archiveCapsulesDescription,
-  count: t.value.archiveCount,
-  open: t.value.openArchive,
 }));
 const createEntryLabels = computed(() => ({
   eyebrow: t.value.createEntryEyebrow,
