@@ -219,8 +219,12 @@
         <div class="archiveBandHead">
           <span class="eyebrow">반복 질문</span>
           <h2>같은 질문을 시간순으로 비교해요</h2>
+          <p>연도별 기록을 둘러보다가, 필요할 때만 같은 질문의 변화를 펼쳐보세요.</p>
+          <button class="ghost compareToggle" type="button" @click="showQuestionCompare = !showQuestionCompare">
+            {{ showQuestionCompare ? "비교 닫기" : "반복 질문 비교 열기" }}
+          </button>
         </div>
-        <section class="layoutCompare">
+        <section v-if="showQuestionCompare" class="layoutCompare">
           <aside class="panel">
             <div class="panelHead">
               <h2 class="noWrap">질문 선택</h2>
@@ -287,6 +291,9 @@
             </div>
           </section>
         </section>
+        <div v-else class="empty compareHint">
+          반복 질문 비교는 보조 도구예요. 먼저 연도별 기록을 보고, 같은 질문의 변화가 궁금할 때 열어보세요.
+        </div>
       </section>
       </ArchiveShellView>
 
@@ -1024,6 +1031,7 @@ const errorMsg = ref<string>("");
 
 const compareQ = ref<string>("");
 const compareSearch = ref<string>("");
+const showQuestionCompare = ref(false);
 
 const addSuggestSearch = ref<string>("");
 const capsuleError = ref<string>("");
@@ -2003,6 +2011,7 @@ function onClonePrevYear() {
 function openCompareFromSelected() {
   if (!selectedEntry.value) return;
   compareQ.value = selectedEntry.value.q;
+  showQuestionCompare.value = true;
   setMode("archive-time");
 }
 
@@ -2364,6 +2373,26 @@ button:disabled {
   color: var(--color-ink);
   font-size: 17px;
   font-weight: 900;
+}
+
+.archiveBandHead p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.compareToggle {
+  width: fit-content;
+  border-color: var(--color-border-gold);
+  background: rgba(240, 192, 96, 0.08);
+  color: var(--color-text);
+}
+
+.compareHint {
+  border: 1px dashed var(--color-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .settingsPanel {
