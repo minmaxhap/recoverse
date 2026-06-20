@@ -137,6 +137,62 @@ test("exports a capsule backup payload", async () => {
   assert.equal(payload.cards.length, 1);
 });
 
+test("exports a selected capsule with only its cards", async () => {
+  const blob = capsuleImportExport.exportCapsuleBackup(
+    {
+      capsules: [
+        {
+          id: "capsule-a",
+          title: "Alpha",
+          type: "custom",
+          createdAt: "2024-01-01T00:00:00.000Z",
+          updatedAt: "2024-01-01T00:00:00.000Z",
+        },
+        {
+          id: "capsule-b",
+          title: "Beta",
+          type: "project",
+          createdAt: "2024-02-01T00:00:00.000Z",
+          updatedAt: "2024-02-01T00:00:00.000Z",
+        },
+      ],
+      cards: [
+        {
+          id: "card-a",
+          capsuleId: "capsule-a",
+          questionText: "A?",
+          answers: ["A"],
+          source: "user",
+          order: 0,
+          createdAt: "2024-01-01T00:00:00.000Z",
+          updatedAt: "2024-01-01T00:00:00.000Z",
+        },
+        {
+          id: "card-b",
+          capsuleId: "capsule-b",
+          questionText: "B?",
+          answers: ["B"],
+          source: "user",
+          order: 0,
+          createdAt: "2024-02-01T00:00:00.000Z",
+          updatedAt: "2024-02-01T00:00:00.000Z",
+        },
+      ],
+    },
+    "capsule-b"
+  );
+
+  const payload = JSON.parse(await blob.text());
+  assert.deepEqual(
+    payload.capsules.map((capsule) => capsule.id),
+    ["capsule-b"]
+  );
+  assert.deepEqual(
+    payload.cards.map((card) => card.id),
+    ["card-b"]
+  );
+});
+
 test("imports capsule backups by merging and skipping duplicate ids", () => {
   localStorage.clear();
   localStorage.setItem("recoverse_capsule_v1", JSON.stringify({ capsules: [], cards: [] }));
@@ -437,6 +493,42 @@ test("builds archive results from title question and answer matches", () => {
   assert.equal(titleResults[0].capsule.id, "capsule-1");
 });
 
+test("sorts archive capsule results by updated created and title", () => {
+  const capsules = [
+    {
+      id: "capsule-z",
+      title: "Zeta",
+      type: "custom",
+      createdAt: "2024-01-01T00:00:00.000Z",
+      updatedAt: "2024-03-01T00:00:00.000Z",
+    },
+    {
+      id: "capsule-a",
+      title: "Alpha",
+      type: "custom",
+      createdAt: "2024-02-01T00:00:00.000Z",
+      updatedAt: "2024-02-01T00:00:00.000Z",
+    },
+  ];
+
+  const updated = capsuleHomeData.buildArchiveCapsuleResults(capsules, [], "", "updated");
+  const created = capsuleHomeData.buildArchiveCapsuleResults(capsules, [], "", "created");
+  const title = capsuleHomeData.buildArchiveCapsuleResults(capsules, [], "", "title");
+
+  assert.deepEqual(
+    updated.map((result) => result.capsule.id),
+    ["capsule-z", "capsule-a"]
+  );
+  assert.deepEqual(
+    created.map((result) => result.capsule.id),
+    ["capsule-a", "capsule-z"]
+  );
+  assert.deepEqual(
+    title.map((result) => result.capsule.id),
+    ["capsule-a", "capsule-z"]
+  );
+});
+
 test("saves and loads galaxy data separately from capsule data", () => {
   localStorage.clear();
 
@@ -527,6 +619,102 @@ test("creates and edits galaxy members prompts and logs", () => {
   assert.equal(log, undefined);
 });
 
+test("deletes galaxies with related members prompts and logs", () => {
+  localStorage.clear();
+
+  store.saveGalaxyData({
+    galaxies: [
+      {
+        id: "galaxy-delete",
+        title: "Delete Me",
+        theme: "project",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        id: "galaxy-keep",
+        title: "Keep Me",
+        theme: "project",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+    members: [
+      {
+        id: "member-delete",
+        galaxyId: "galaxy-delete",
+        displayName: "Deleted",
+        colorTone: "toneGold",
+        joinedAt: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        id: "member-keep",
+        galaxyId: "galaxy-keep",
+        displayName: "Kept",
+        colorTone: "toneGreen",
+        joinedAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+    prompts: [
+      {
+        id: "prompt-delete",
+        galaxyId: "galaxy-delete",
+        questionText: "Delete?",
+        order: 0,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        id: "prompt-keep",
+        galaxyId: "galaxy-keep",
+        questionText: "Keep?",
+        order: 0,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+    logs: [
+      {
+        id: "log-delete",
+        galaxyId: "galaxy-delete",
+        promptId: "prompt-delete",
+        memberId: "member-delete",
+        answers: ["Remove"],
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        id: "log-keep",
+        galaxyId: "galaxy-keep",
+        promptId: "prompt-keep",
+        memberId: "member-keep",
+        answers: ["Keep"],
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+    ],
+  });
+
+  const data = galaxyActions.deleteGalaxy("galaxy-delete");
+
+  assert.deepEqual(
+    data.galaxies.map((galaxy) => galaxy.id),
+    ["galaxy-keep"]
+  );
+  assert.deepEqual(
+    data.members.map((member) => member.id),
+    ["member-keep"]
+  );
+  assert.deepEqual(
+    data.prompts.map((prompt) => prompt.id),
+    ["prompt-keep"]
+  );
+  assert.deepEqual(
+    data.logs.map((log) => log.id),
+    ["log-keep"]
+  );
+});
+
 test("creates immutable observation snapshots from planet data", () => {
   localStorage.clear();
 
@@ -558,4 +746,60 @@ test("creates immutable observation snapshots from planet data", () => {
   assert.equal(data.snapshots.length, 1);
   assert.equal(loaded.snapshots[0].sourceType, "planet");
   assert.equal(loaded.snapshots[0].records[0].logs[0], "First answer");
+});
+
+test("creates immutable observation snapshots from galaxy data", () => {
+  localStorage.clear();
+
+  const galaxy = {
+    id: "galaxy-obs",
+    title: "Observation Galaxy",
+    description: "Team source",
+    theme: "project",
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  };
+  const members = [
+    {
+      id: "member-obs",
+      galaxyId: galaxy.id,
+      displayName: "Dana",
+      colorTone: "toneGold",
+      joinedAt: "2026-01-01T00:00:00.000Z",
+    },
+  ];
+  const prompts = [
+    {
+      id: "prompt-obs",
+      galaxyId: galaxy.id,
+      questionText: "What worked?",
+      order: 0,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    },
+  ];
+  const logs = [
+    {
+      id: "log-obs",
+      galaxyId: galaxy.id,
+      promptId: "prompt-obs",
+      memberId: "member-obs",
+      answers: ["Small scope"],
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    },
+  ];
+
+  const data = observationActions.createGalaxyObservationSnapshot(
+    galaxy,
+    members,
+    prompts,
+    logs
+  );
+  logs[0].answers[0] = "Changed answer";
+  const loaded = store.loadObservationData();
+
+  assert.equal(data.snapshots.length, 1);
+  assert.equal(loaded.snapshots[0].sourceType, "galaxy");
+  assert.equal(loaded.snapshots[0].records[0].logs[0], "Dana: Small scope");
 });
