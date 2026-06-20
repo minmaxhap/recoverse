@@ -132,8 +132,7 @@ function galaxyNodeStyle(index: number): Record<string, string> {
 
 <style scoped>
 .galaxyMap {
-  padding: 12px 14px 14px;
-  border-bottom: 1px solid var(--color-soft-border);
+  padding: 6px 14px 18px;
 }
 
 .mapHead {

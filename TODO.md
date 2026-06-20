@@ -179,7 +179,7 @@
   - 확인: 같은 질문/답변 미리보기가 `recentCard`와 `DiscoveryCard`에 중복 노출되지 않는다.
 - [x] 행성 상세에서 새 행성/은하 생성 폼을 분리한다.
   - 확인: `PlanetDetailView`는 선택된 행성 감상과 탐사 로그 편집이 먼저 보이고, 새 항목 생성은 별도 진입 또는 보조 액션으로 이동한다.
-- [ ] 섹션을 자르는 `border-bottom` 의존도를 줄인다.
+- [x] 섹션을 자르는 `border-bottom` 의존도를 줄인다.
   - 확인: 홈과 지도 영역은 선이 아니라 여백, 배경 깊이, 내부 gap으로 구분된다.
 - [ ] 색상 토큰을 `DESIGN_SYSTEM.ko.md` 기준으로 맞춘다.
   - 확인: `style.css`와 주요 컴포넌트가 `Memory Gold`, `Sunset Peach` 계열을 일관되게 사용한다.

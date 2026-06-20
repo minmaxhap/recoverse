@@ -36,7 +36,6 @@ defineEmits<{
 <style scoped>
 .discovery {
   padding: 10px 14px 14px;
-  border-bottom: 1px solid var(--color-soft-border);
 }
 
 .discoveryButton {
