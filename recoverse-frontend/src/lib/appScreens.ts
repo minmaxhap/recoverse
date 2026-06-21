@@ -1,5 +1,9 @@
 export type FutureScreenId =
   | "home-universe"
+  | "reflection-new"
+  | "reflection-write"
+  | "review-again"
+  | "shared-reflections"
   | "planet-detail"
   | "galaxy-detail"
   | "observation"
@@ -7,6 +11,10 @@ export type FutureScreenId =
 
 export type AppMode =
   | "home-universe"
+  | "reflection-new"
+  | "reflection-write"
+  | "review-again"
+  | "shared-reflections"
   | "planet-detail"
   | "galaxy-detail"
   | "observation"
@@ -17,7 +25,14 @@ export type AppMode =
 
 export type ArchiveModeId = Exclude<
   AppMode,
-  "home-universe" | "planet-detail" | "galaxy-detail" | "observation"
+  | "home-universe"
+  | "reflection-new"
+  | "reflection-write"
+  | "review-again"
+  | "shared-reflections"
+  | "planet-detail"
+  | "galaxy-detail"
+  | "observation"
 >;
 
 export type AppModePlan = {
@@ -32,8 +47,32 @@ export const appModePlans: AppModePlan[] = [
   {
     id: "home-universe",
     targetScreen: "home-universe",
-    title: "기억 우주 홈",
-    note: "오늘의 발견, 우주 지도, 아카이브 진입만 남기는 모바일 우선 홈이다.",
+    title: "홈",
+    note: "오늘 다시 만나는 나, 이어쓰기, 새 회고 시작을 보여주는 메인 화면이다.",
+  },
+  {
+    id: "reflection-new",
+    targetScreen: "reflection-new",
+    title: "새 회고",
+    note: "유형, 기간, 질문 세트를 고르는 3단계 회고 시작 화면이다.",
+  },
+  {
+    id: "reflection-write",
+    targetScreen: "reflection-write",
+    title: "회고 작성",
+    note: "한 화면에 질문 하나씩 답하는 질문 카드 작성 화면이다.",
+  },
+  {
+    id: "review-again",
+    targetScreen: "review-again",
+    title: "다시 보기",
+    note: "같은 질문 타임라인과 랜덤 과거 답변을 다시 보는 화면이다.",
+  },
+  {
+    id: "shared-reflections",
+    targetScreen: "shared-reflections",
+    title: "함께 보기",
+    note: "친구가 공유한 회고와 내가 공유한 회고를 모아 보는 화면이다.",
   },
   {
     id: "planet-detail",

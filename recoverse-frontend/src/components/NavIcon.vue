@@ -24,6 +24,25 @@
       <path d="M12 4.5c4.3 1.3 6.2 8.1 2.7 13.1" />
     </template>
 
+    <template v-else-if="name === 'write'">
+      <path d="M5 19h14" />
+      <path d="M7 16.5 16.8 6.7a2.1 2.1 0 0 1 3 3L10 19l-4 .7z" />
+    </template>
+
+    <template v-else-if="name === 'review'">
+      <path d="M12 5v5l3 2" />
+      <circle cx="12" cy="12" r="7" />
+      <path d="M4.5 8.5 3.2 5.2 6.7 6" />
+    </template>
+
+    <template v-else-if="name === 'share'">
+      <circle cx="6.5" cy="12" r="2.2" />
+      <circle cx="17.5" cy="6.5" r="2.2" />
+      <circle cx="17.5" cy="17.5" r="2.2" />
+      <path d="M8.6 11 15.4 7.5" />
+      <path d="M8.6 13 15.4 16.5" />
+    </template>
+
     <template v-else>
       <path d="M5.5 7.5h13" />
       <path d="M7 7.5v11h10v-11" />
@@ -36,7 +55,7 @@
 
 <script setup lang="ts">
 defineProps<{
-  name: "home" | "planet" | "galaxy" | "archive";
+  name: "home" | "planet" | "galaxy" | "write" | "review" | "share" | "archive";
 }>();
 </script>
 

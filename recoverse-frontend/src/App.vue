@@ -359,12 +359,16 @@
         }"
         :bottom-nav-labels="{
           home: t.navHome,
-          planet: t.navPlanet,
-          galaxy: t.navGalaxy,
+          write: t.navWrite,
+          review: t.navReview,
+          shared: t.navShared,
           archive: t.navArchive,
         }"
         @open-discovery="openDiscoveryCard"
         @open-archive="openArchiveSettings"
+        @open-new-reflection="openNewReflection"
+        @open-review="openReviewAgain"
+        @open-shared="openSharedReflections"
         @open-create-flow="openCreateFlow"
         @open-galaxy-create-flow="openGalaxyCreateFlow"
         @open-galaxy="openSelectedGalaxy"
@@ -372,6 +376,49 @@
         @select-capsule="selectCapsule"
         @select-galaxy="selectGalaxy"
       />
+
+      <NewReflectionPage
+        v-else-if="mode === 'reflection-new'"
+        @back-home="setMode('home-universe')"
+        @create="startReflectionDraft"
+      />
+
+      <WriteReflectionPage
+        v-else-if="mode === 'reflection-write'"
+        :reflection="activeReflection"
+        @save-answer="saveActiveReflectionAnswer"
+        @save-later="setMode('home-universe')"
+        @back-new="setMode('reflection-new')"
+        @finish="setMode('home-universe')"
+      />
+
+      <ArchiveShellView
+        v-else-if="mode === 'review-again'"
+        title="다시 보기"
+        description="같은 질문의 지난 답변을 비교하는 화면은 다음 단계에서 확장합니다."
+        :home-label="t.navHome"
+        @back-home="setMode('home-universe')"
+      >
+        <section class="placeholderPanel">
+          <span class="eyebrow">다음 구현</span>
+          <h2>그때의 나는 이렇게 말했어요</h2>
+          <p>질문별 타임라인, 연도별 보기, 랜덤으로 꺼내보기를 이 화면에 연결합니다.</p>
+        </section>
+      </ArchiveShellView>
+
+      <ArchiveShellView
+        v-else-if="mode === 'shared-reflections'"
+        title="함께 보기"
+        description="친구가 공유한 회고와 내가 공유한 회고를 모아 보는 화면입니다."
+        :home-label="t.navHome"
+        @back-home="setMode('home-universe')"
+      >
+        <section class="placeholderPanel">
+          <span class="eyebrow">다음 구현</span>
+          <h2>공유된 회고를 읽고, 같은 질문에 답해볼 수 있게 만듭니다</h2>
+          <p>선택 공유와 읽기 전용 페이지는 공유 단계에서 연결합니다.</p>
+        </section>
+      </ArchiveShellView>
 
       <GalaxyDetailView
         v-else-if="mode === 'galaxy-detail'"
@@ -579,8 +626,10 @@ import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
 import ArchiveShellView from "./views/ArchiveShellView.vue";
 import GalaxyDetailView from "./views/GalaxyDetailView.vue";
 import HomeUniverseView from "./views/HomeUniverseView.vue";
+import NewReflectionPage from "./views/NewReflectionPage.vue";
 import ObservationModeView from "./views/ObservationModeView.vue";
 import PlanetDetailView from "./views/PlanetDetailView.vue";
+import WriteReflectionPage from "./views/WriteReflectionPage.vue";
 import {
   type AppLanguage,
   type Capsule,
@@ -649,6 +698,13 @@ import {
   type ArchiveModeId,
   type AppMode,
 } from "./lib/appScreens";
+import {
+  createReflectionDraft,
+  loadReflections,
+  saveReflection,
+  saveReflectionAnswer,
+} from "./lib/reflectionStore";
+import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
 const LANGUAGE_KEY = "recoverse_language";
 
@@ -674,9 +730,12 @@ const messages = {
     navHome: "홈",
     navPlanet: "기록",
     navGalaxy: "은하",
+    navWrite: "작성",
+    navReview: "다시 보기",
+    navShared: "함께 보기",
     navArchive: "아카이브",
     galaxyPlaceholder: "그룹 은하",
-    memoryUniverse: "나의 기억 우주",
+    memoryUniverse: "오늘 다시 만나는 나",
     retrospectiveCapsules: "회고 행성",
     exportCapsules: "기억 행성 JSON 내보내기",
     importCapsules: "기억 행성 JSON 가져오기",
@@ -835,9 +894,12 @@ const messages = {
     navHome: "Home",
     navPlanet: "Planet",
     navGalaxy: "Galaxy",
+    navWrite: "Write",
+    navReview: "Review",
+    navShared: "Shared",
     navArchive: "Archive",
     galaxyPlaceholder: "Group galaxy",
-    memoryUniverse: "My Memory Universe",
+    memoryUniverse: "Today, meet my past self",
     retrospectiveCapsules: "Retrospective Capsules",
     exportCapsules: "Export memory planet JSON",
     importCapsules: "Import memory planet JSON",
@@ -992,6 +1054,8 @@ const galaxyData = ref<GalaxyData>({
 const observationData = ref<ObservationData>({
   snapshots: [],
 });
+const reflections = ref<Reflection[]>(loadReflections());
+const activeReflectionId = ref<string | null>(reflections.value[0]?.id ?? null);
 const {
   selectedCapsuleId,
   selectedCapsuleCardId,
@@ -1376,6 +1440,11 @@ const selectedObservationSnapshot = computed(() => {
   );
 });
 
+const activeReflection = computed(() => {
+  if (!activeReflectionId.value) return null;
+  return reflections.value.find((reflection) => reflection.id === activeReflectionId.value) ?? null;
+});
+
 const discoveryCapsuleTitle = computed(() => {
   if (!discoveryCard.value) return "";
   return capsules.value.find((capsule) => capsule.id === discoveryCard.value?.capsuleId)?.title ?? "";
@@ -1418,6 +1487,48 @@ function setMode(m: AppMode) {
 
 function openArchiveSettings() {
   setMode("archive-library");
+}
+
+function openNewReflection() {
+  setMode("reflection-new");
+}
+
+function openReviewAgain() {
+  setMode("review-again");
+}
+
+function openSharedReflections() {
+  setMode("shared-reflections");
+}
+
+function startReflectionDraft(payload: {
+  templateId: string;
+  period: ReflectionPeriod;
+  questionSetMode: ReflectionQuestionSetMode;
+  title?: string;
+}) {
+  const reflection = createReflectionDraft(payload);
+  reflections.value = saveReflection(reflection);
+  activeReflectionId.value = reflection.id;
+  setMode("reflection-write");
+}
+
+function saveActiveReflectionAnswer(payload: {
+  questionId: string;
+  value: string;
+  skipped: boolean;
+}) {
+  const reflection = activeReflection.value;
+  if (!reflection) return;
+
+  const next = saveReflectionAnswer(
+    reflection,
+    payload.questionId,
+    payload.value,
+    payload.skipped
+  );
+  reflections.value = saveReflection(next);
+  activeReflectionId.value = next.id;
 }
 
 function selectArchiveMode(nextMode: ArchiveModeId) {
@@ -2413,6 +2524,32 @@ button:disabled {
   padding: 14px;
 }
 
+.placeholderPanel {
+  margin: 0 18px;
+  border: 1px solid var(--color-soft-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  padding: 20px;
+}
+
+.placeholderPanel .eyebrow {
+  color: var(--color-gold);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.placeholderPanel h2 {
+  margin: 6px 0 8px;
+  color: var(--color-text);
+  letter-spacing: 0;
+}
+
+.placeholderPanel p {
+  margin: 0;
+  color: var(--color-text-dim);
+  line-height: 1.5;
+}
+
 @media (max-width: 899px) {
   .panel {
     min-height: auto;
@@ -2425,7 +2562,8 @@ button:disabled {
   }
 
   .archiveBand,
-  .settingsPanel {
+  .settingsPanel,
+  .placeholderPanel {
     margin: 0 12px;
   }
 }

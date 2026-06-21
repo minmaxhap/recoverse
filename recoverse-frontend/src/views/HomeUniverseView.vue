@@ -60,14 +60,18 @@
         <button
           class="navItem"
           type="button"
-          @click="$emit('open-selected-capsule')"
+          @click="$emit('open-new-reflection')"
         >
-          <NavIcon name="planet" />
-          <span>{{ bottomNavLabels.planet }}</span>
+          <NavIcon name="write" />
+          <span>{{ bottomNavLabels.write }}</span>
         </button>
-        <button class="navItem" type="button" @click="$emit('open-galaxy')">
-          <NavIcon name="galaxy" />
-          <span>{{ bottomNavLabels.galaxy }}</span>
+        <button class="navItem" type="button" @click="$emit('open-review')">
+          <NavIcon name="review" />
+          <span>{{ bottomNavLabels.review }}</span>
+        </button>
+        <button class="navItem" type="button" @click="$emit('open-shared')">
+          <NavIcon name="share" />
+          <span>{{ bottomNavLabels.shared }}</span>
         </button>
         <button class="navItem" type="button" @click="$emit('open-archive')">
           <NavIcon name="archive" />
@@ -112,8 +116,9 @@ defineProps<{
   };
   bottomNavLabels: {
     home: string;
-    planet: string;
-    galaxy: string;
+    write: string;
+    review: string;
+    shared: string;
     archive: string;
   };
 }>();
@@ -121,6 +126,9 @@ defineProps<{
 defineEmits<{
   "open-discovery": [];
   "open-archive": [];
+  "open-new-reflection": [];
+  "open-review": [];
+  "open-shared": [];
   "open-create-flow": [];
   "open-galaxy-create-flow": [];
   "open-galaxy": [];
@@ -255,7 +263,7 @@ defineEmits<{
 
 .bottomNav {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
   padding: 10px;
   border-top: 1px solid var(--color-soft-border);
