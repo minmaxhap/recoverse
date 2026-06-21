@@ -47,9 +47,19 @@ async function compileTsModule(inputUrl, outputName, replacements = []) {
 }
 
 await compileTsModule(new URL("../src/lib/capsuleTemplates.ts", import.meta.url), "capsuleTemplates.mjs");
+await compileTsModule(new URL("../src/data/reflectionTemplates.ts", import.meta.url), "reflectionTemplates.mjs");
 const storePath = await compileTsModule(new URL("../src/lib/recoverseStore.ts", import.meta.url), "recoverseStore.mjs", [
   ['"./capsuleTemplates"', '"./capsuleTemplates.mjs"'],
 ]);
+const reflectionStorePath = await compileTsModule(
+  new URL("../src/lib/reflectionStore.ts", import.meta.url),
+  "reflectionStore.mjs",
+  [['"../data/reflectionTemplates"', '"./reflectionTemplates.mjs"']]
+);
+const questionTimelinePath = await compileTsModule(
+  new URL("../src/lib/questionTimeline.ts", import.meta.url),
+  "questionTimeline.mjs"
+);
 const capsuleImportExportPath = await compileTsModule(
   new URL("../src/lib/capsuleImportExport.ts", import.meta.url),
   "capsuleImportExport.mjs",
@@ -71,12 +81,115 @@ const observationActionsPath = await compileTsModule(
 );
 
 const store = await import(pathToFileURL(storePath).href);
+const reflectionStore = await import(pathToFileURL(reflectionStorePath).href);
+const questionTimeline = await import(pathToFileURL(questionTimelinePath).href);
 const capsuleImportExport = await import(pathToFileURL(capsuleImportExportPath).href);
 const capsuleHomeData = await import(pathToFileURL(capsuleHomeDataPath).href);
 const galaxyActions = await import(pathToFileURL(galaxyActionsPath).href);
 const observationActions = await import(pathToFileURL(observationActionsPath).href);
 
 globalThis.localStorage = new MemoryStorage();
+
+test("creates a reflection draft from the year template light question set", () => {
+  const reflection = reflectionStore.createReflectionDraft({
+    templateId: "template_year",
+    period: { label: "2025년", year: 2025 },
+    questionSetMode: "light",
+  });
+
+  const questions = reflection.questionGroups.flatMap((group) => group.questions);
+
+  assert.equal(reflection.title, "2025년 한 해 회고");
+  assert.equal(reflection.type, "year");
+  assert.equal(reflection.mode, "solo");
+  assert.equal(reflection.visibility, "private");
+  assert.equal(questions.length, 10);
+  assert.equal(questions[0].text, "올해 가장 기억에 남는 장소는?");
+});
+
+test("saves loads updates and deletes reflection data", () => {
+  localStorage.clear();
+
+  let reflection = reflectionStore.createReflectionDraft({
+    templateId: "template_year",
+    period: { label: "2025년", year: 2025 },
+    questionSetMode: "light",
+  });
+  const firstQuestionId = reflection.questionGroups[0].questions[0].id;
+
+  reflection = reflectionStore.saveReflectionAnswer(reflection, firstQuestionId, "교토 철학의 길");
+  reflectionStore.saveReflection(reflection);
+
+  let loaded = reflectionStore.loadReflections();
+  assert.equal(loaded.length, 1);
+  assert.equal(loaded[0].answers[0].value, "교토 철학의 길");
+  assert.equal(loaded[0].completionRate, 10);
+  assert.equal(loaded[0].representativeSentence, "교토 철학의 길");
+
+  reflectionStore.deleteReflection(reflection.id);
+  loaded = reflectionStore.loadReflections();
+  assert.equal(loaded.length, 0);
+});
+
+test("migrates legacy yearly entries into reflection records without mutating legacy storage", () => {
+  localStorage.clear();
+  localStorage.setItem("recoverse_v2_entries", JSON.stringify([{ untouched: true }]));
+
+  const migrated = reflectionStore.migrateLegacyEntriesToReflections([
+    {
+      id: "legacy-2024",
+      year: 2024,
+      q: "올해를 한 마디로 표현하면?",
+      answers: ["조금씩"],
+      createdAt: "2024-12-31T00:00:00.000Z",
+    },
+    {
+      id: "legacy-2025",
+      year: 2025,
+      q: "올해를 한 마디로 표현하면?",
+      answers: ["나답게", "천천히"],
+      createdAt: "2025-12-31T00:00:00.000Z",
+    },
+  ]);
+
+  assert.equal(migrated.length, 2);
+  assert.equal(migrated[0].title, "2025 한 해 회고");
+  assert.equal(migrated[0].answers[0].value, "나답게\n천천히");
+  assert.equal(localStorage.getItem("recoverse_v2_entries"), JSON.stringify([{ untouched: true }]));
+});
+
+test("builds same question timelines across reflection periods", () => {
+  const reflections = reflectionStore.migrateLegacyEntriesToReflections([
+    {
+      id: "legacy-2024",
+      year: 2024,
+      q: "올해를 한 마디로 표현하면?",
+      answers: ["조금씩"],
+      createdAt: "2024-12-31T00:00:00.000Z",
+    },
+    {
+      id: "legacy-2025",
+      year: 2025,
+      q: "올해를 한 마디로 표현하면?",
+      answers: ["나답게"],
+      createdAt: "2025-12-31T00:00:00.000Z",
+    },
+  ]);
+
+  const timeline = questionTimeline.findSameQuestionAnswers(
+    "올해를 한 마디로 표현하면?",
+    reflections
+  );
+
+  assert.deepEqual(
+    timeline.map((item) => item.period.year),
+    [2024, 2025]
+  );
+  assert.deepEqual(
+    timeline.map((item) => item.answer.value),
+    ["조금씩", "나답게"]
+  );
+});
 
 test("converts legacy year entries into year capsules", () => {
   const data = store.buildCapsuleDataFromEntries([
