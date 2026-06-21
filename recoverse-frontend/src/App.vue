@@ -400,35 +400,22 @@
         :reflection="activeReflection"
         @back-home="setMode('home-universe')"
         @edit="setMode('reflection-write')"
+        @share="shareActiveReflection"
       />
 
-      <ArchiveShellView
+      <ReviewAgainPage
         v-else-if="mode === 'review-again'"
-        title="다시 보기"
-        description="같은 질문의 지난 답변을 비교하는 화면은 다음 단계에서 확장합니다."
-        :home-label="t.navHome"
+        :reflections="reflections"
         @back-home="setMode('home-universe')"
-      >
-        <section class="placeholderPanel">
-          <span class="eyebrow">다음 구현</span>
-          <h2>그때의 나는 이렇게 말했어요</h2>
-          <p>질문별 타임라인, 연도별 보기, 랜덤으로 꺼내보기를 이 화면에 연결합니다.</p>
-        </section>
-      </ArchiveShellView>
+        @open-reflection="openReflectionDetail"
+      />
 
-      <ArchiveShellView
+      <SharedReflectionPage
         v-else-if="mode === 'shared-reflections'"
-        title="함께 보기"
-        description="친구가 공유한 회고와 내가 공유한 회고를 모아 보는 화면입니다."
-        :home-label="t.navHome"
+        :reflection="activeReflection"
         @back-home="setMode('home-universe')"
-      >
-        <section class="placeholderPanel">
-          <span class="eyebrow">다음 구현</span>
-          <h2>공유된 회고를 읽고, 같은 질문에 답해볼 수 있게 만듭니다</h2>
-          <p>선택 공유와 읽기 전용 페이지는 공유 단계에서 연결합니다.</p>
-        </section>
-      </ArchiveShellView>
+        @answer-same="openNewReflection"
+      />
 
       <GalaxyDetailView
         v-else-if="mode === 'galaxy-detail'"
@@ -640,6 +627,8 @@ import NewReflectionPage from "./views/NewReflectionPage.vue";
 import ObservationModeView from "./views/ObservationModeView.vue";
 import PlanetDetailView from "./views/PlanetDetailView.vue";
 import ReflectionDetailPage from "./views/ReflectionDetailPage.vue";
+import ReviewAgainPage from "./views/ReviewAgainPage.vue";
+import SharedReflectionPage from "./views/SharedReflectionPage.vue";
 import WriteReflectionPage from "./views/WriteReflectionPage.vue";
 import {
   type AppLanguage,
@@ -1522,6 +1511,37 @@ function openReviewAgain() {
 }
 
 function openSharedReflections() {
+  if (!activeReflectionId.value) {
+    activeReflectionId.value =
+      reflections.value.find((reflection) => reflection.visibility === "shared")?.id ??
+      reflections.value[0]?.id ??
+      null;
+  }
+  setMode("shared-reflections");
+}
+
+function shareActiveReflection(questionIds: string[]) {
+  const reflection = activeReflection.value;
+  const selectedQuestionIds = questionIds.filter(Boolean);
+  if (!reflection || selectedQuestionIds.length === 0) return;
+
+  const allQuestionIds = reflection.questionGroups.flatMap((group) =>
+    group.questions.map((question) => question.id)
+  );
+  const next = {
+    ...reflection,
+    visibility: "shared" as const,
+    shareSettings: {
+      shareId: reflection.shareSettings?.shareId ?? `share_${Date.now().toString(36)}`,
+      selectedQuestionIds,
+      hiddenQuestionIds: allQuestionIds.filter((questionId) => !selectedQuestionIds.includes(questionId)),
+      createdAt: reflection.shareSettings?.createdAt ?? new Date().toISOString(),
+    },
+    updatedAt: new Date().toISOString(),
+  };
+
+  reflections.value = saveReflection(next);
+  activeReflectionId.value = next.id;
   setMode("shared-reflections");
 }
 

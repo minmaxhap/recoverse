@@ -34,6 +34,27 @@
         </div>
       </section>
 
+      <section class="sharePanel">
+        <details>
+          <summary>공유할 질문 선택</summary>
+          <p>공개 가능한 질문만 고를 수 있어요. 선택 후 열리는 화면은 읽기 전용입니다.</p>
+          <div class="shareList">
+            <label v-for="item in shareableItems" :key="item.question.id" class="shareOption">
+              <input v-model="shareSelection" type="checkbox" :value="item.question.id" />
+              <span>{{ item.question.text }}</span>
+            </label>
+          </div>
+          <button
+            class="shareButton"
+            type="button"
+            :disabled="shareSelection.length === 0"
+            @click="$emit('share', shareSelection)"
+          >
+            읽기 전용 공유 화면 열기
+          </button>
+        </details>
+      </section>
+
       <section class="answerList">
         <article
           v-for="item in answerItems"
@@ -58,7 +79,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import type { Answer, Question, Reflection } from "../types/reflection";
 
 const props = defineProps<{
@@ -68,7 +89,10 @@ const props = defineProps<{
 defineEmits<{
   "back-home": [];
   edit: [];
+  share: [questionIds: string[]];
 }>();
+
+const shareSelection = ref<string[]>([]);
 
 const questions = computed<Question[]>(() =>
   props.reflection?.questionGroups.flatMap((group) => group.questions) ?? []
@@ -107,6 +131,19 @@ const answerItems = computed(() => {
     })
   );
 });
+const shareableItems = computed(() =>
+  answerItems.value.filter(
+    (item) => item.question.visibility === "public" && item.answerText.trim().length > 0
+  )
+);
+
+watch(
+  () => props.reflection?.id,
+  () => {
+    shareSelection.value = shareableItems.value.map((item) => item.question.id);
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
@@ -156,6 +193,7 @@ const answerItems = computed(() => {
 
 .heroPanel,
 .answerCard,
+.sharePanel,
 .metaGrid > div {
   border: 1px solid var(--color-soft-border);
   background: var(--color-surface);
@@ -208,6 +246,42 @@ const answerItems = computed(() => {
   gap: 10px;
 }
 
+.sharePanel {
+  padding: 16px;
+}
+
+.sharePanel summary {
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.sharePanel p {
+  margin: 8px 0 12px;
+  color: var(--color-text-dim);
+  line-height: 1.5;
+}
+
+.shareList {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.shareOption {
+  border: 1px solid var(--color-soft-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  align-items: start;
+}
+
+.shareOption span {
+  line-height: 1.35;
+}
+
 .answerCard {
   padding: 18px;
   display: grid;
@@ -224,7 +298,8 @@ const answerItems = computed(() => {
 }
 
 .textButton,
-.editButton {
+.editButton,
+.shareButton {
   border-radius: 999px;
   font-weight: 900;
   padding: 11px 14px;
@@ -240,6 +315,12 @@ const answerItems = computed(() => {
   border: 0;
   background: var(--color-gold);
   color: var(--color-primary-contrast);
+}
+
+.shareButton {
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
 }
 
 .emptyState {
