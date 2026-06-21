@@ -2,6 +2,7 @@ export type FutureScreenId =
   | "home-universe"
   | "reflection-new"
   | "reflection-write"
+  | "reflection-detail"
   | "review-again"
   | "shared-reflections"
   | "planet-detail"
@@ -13,6 +14,7 @@ export type AppMode =
   | "home-universe"
   | "reflection-new"
   | "reflection-write"
+  | "reflection-detail"
   | "review-again"
   | "shared-reflections"
   | "planet-detail"
@@ -28,6 +30,7 @@ export type ArchiveModeId = Exclude<
   | "home-universe"
   | "reflection-new"
   | "reflection-write"
+  | "reflection-detail"
   | "review-again"
   | "shared-reflections"
   | "planet-detail"
@@ -61,6 +64,12 @@ export const appModePlans: AppModePlan[] = [
     targetScreen: "reflection-write",
     title: "회고 작성",
     note: "한 화면에 질문 하나씩 답하는 질문 카드 작성 화면이다.",
+  },
+  {
+    id: "reflection-detail",
+    targetScreen: "reflection-detail",
+    title: "회고 읽기",
+    note: "작성된 회고를 수정 폼이 아니라 감상용 질문 답변 카드로 읽는 화면이다.",
   },
   {
     id: "review-again",

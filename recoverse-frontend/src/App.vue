@@ -342,6 +342,7 @@
         v-else-if="mode === 'home-universe'"
         brand-label="Recoverse"
         :title="t.memoryUniverse"
+        :reflections="reflections"
         :capsules="capsules"
         :galaxies="galaxies"
         :home-capsule-items="homeCapsuleItems"
@@ -354,7 +355,7 @@
         :galaxy-map-labels="{
           title: t.memoryMap,
           empty: t.memoryMapEmpty,
-          create: t.createMemoryPlanet,
+          create: t.startReflection,
           galaxy: t.galaxyPlaceholder,
         }"
         :bottom-nav-labels="{
@@ -367,6 +368,8 @@
         @open-discovery="openDiscoveryCard"
         @open-archive="openArchiveSettings"
         @open-new-reflection="openNewReflection"
+        @open-reflection="openReflectionDetail"
+        @continue-reflection="continueReflection"
         @open-review="openReviewAgain"
         @open-shared="openSharedReflections"
         @open-create-flow="openCreateFlow"
@@ -389,7 +392,14 @@
         @save-answer="saveActiveReflectionAnswer"
         @save-later="setMode('home-universe')"
         @back-new="setMode('reflection-new')"
-        @finish="setMode('home-universe')"
+        @finish="setMode('reflection-detail')"
+      />
+
+      <ReflectionDetailPage
+        v-else-if="mode === 'reflection-detail'"
+        :reflection="activeReflection"
+        @back-home="setMode('home-universe')"
+        @edit="setMode('reflection-write')"
       />
 
       <ArchiveShellView
@@ -629,6 +639,7 @@ import HomeUniverseView from "./views/HomeUniverseView.vue";
 import NewReflectionPage from "./views/NewReflectionPage.vue";
 import ObservationModeView from "./views/ObservationModeView.vue";
 import PlanetDetailView from "./views/PlanetDetailView.vue";
+import ReflectionDetailPage from "./views/ReflectionDetailPage.vue";
 import WriteReflectionPage from "./views/WriteReflectionPage.vue";
 import {
   type AppLanguage,
@@ -734,6 +745,7 @@ const messages = {
     navReview: "다시 보기",
     navShared: "함께 보기",
     navArchive: "아카이브",
+    startReflection: "새 회고 시작",
     galaxyPlaceholder: "그룹 은하",
     memoryUniverse: "오늘 다시 만나는 나",
     retrospectiveCapsules: "회고 행성",
@@ -898,6 +910,7 @@ const messages = {
     navReview: "Review",
     navShared: "Shared",
     navArchive: "Archive",
+    startReflection: "Start reflection",
     galaxyPlaceholder: "Group galaxy",
     memoryUniverse: "Today, meet my past self",
     retrospectiveCapsules: "Retrospective Capsules",
@@ -1491,6 +1504,17 @@ function openArchiveSettings() {
 
 function openNewReflection() {
   setMode("reflection-new");
+}
+
+function openReflectionDetail(reflectionId: string) {
+  activeReflectionId.value = reflectionId;
+  setMode("reflection-detail");
+}
+
+function continueReflection(reflectionId: string) {
+  activeReflectionId.value = reflectionId;
+  const reflection = activeReflection.value;
+  setMode(reflection?.isCompleted ? "reflection-detail" : "reflection-write");
 }
 
 function openReviewAgain() {
