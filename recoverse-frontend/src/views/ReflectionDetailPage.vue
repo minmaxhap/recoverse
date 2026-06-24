@@ -15,7 +15,7 @@
         <h2>{{ representativeSentence }}</h2>
         <p>
           {{ answeredCount }}개의 답변을 남겼고, {{ skippedCount }}개는 건너뛰었어요.
-          지금은 고치기보다 그때의 나를 먼저 읽는 화면입니다.
+          {{ hasReadableAnswers ? "지금은 고치기보다 그때의 나를 먼저 읽는 화면입니다." : "첫 답변을 남기면 이 화면이 읽기 화면으로 바뀝니다." }}
         </p>
       </section>
 
@@ -34,7 +34,16 @@
         </div>
       </section>
 
-      <section class="sharePanel">
+      <section v-if="!hasReadableAnswers" class="emptyDraftPanel">
+        <div>
+          <span class="eyebrow">아직 탐험 전</span>
+          <h2>이 회고는 읽기보다 이어쓰기가 먼저예요</h2>
+          <p>질문 하나에 한 문장만 남겨도 나중에 다시 발견할 단서가 생깁니다.</p>
+        </div>
+        <button class="editButton" type="button" @click="$emit('edit')">이어쓰기</button>
+      </section>
+
+      <section v-if="shareableItems.length > 0" class="sharePanel">
         <details>
           <summary>공유할 질문 선택</summary>
           <p>공개 가능한 질문만 고를 수 있어요. 선택 후 열리는 화면은 읽기 전용입니다.</p>
@@ -55,9 +64,9 @@
         </details>
       </section>
 
-      <section class="answerList">
+      <section v-if="visibleAnswerItems.length > 0" class="answerList">
         <article
-          v-for="item in answerItems"
+          v-for="item in visibleAnswerItems"
           :key="item.question.id"
           class="answerCard"
           :class="{ empty: !item.answerText }"
@@ -101,6 +110,7 @@ const answerMap = computed(() => new Map(props.reflection?.answers.map((answer) 
 const answeredCount = computed(() =>
   props.reflection?.answers.filter((answer) => answer.value.trim().length > 0).length ?? 0
 );
+const hasReadableAnswers = computed(() => answeredCount.value > 0);
 const skippedCount = computed(() =>
   props.reflection?.answers.filter((answer) => answer.skipped).length ?? 0
 );
@@ -109,7 +119,7 @@ const representativeSentence = computed(() => {
   return (
     props.reflection.representativeSentence ??
     props.reflection.answers.find((answer) => answer.value.trim())?.value.trim() ??
-    "아직 문장이 없어요. 이어쓰기에서 첫 답변을 남겨보세요."
+    "첫 답변을 기다리는 회고예요."
   );
 });
 const updatedDate = computed(() => {
@@ -135,6 +145,9 @@ const shareableItems = computed(() =>
   answerItems.value.filter(
     (item) => item.question.visibility === "public" && item.answerText.trim().length > 0
   )
+);
+const visibleAnswerItems = computed(() =>
+  answerItems.value.filter((item) => item.answerText || item.answer?.skipped)
 );
 
 watch(
@@ -194,6 +207,7 @@ watch(
 .heroPanel,
 .answerCard,
 .sharePanel,
+.emptyDraftPanel,
 .metaGrid > div {
   border: 1px solid var(--color-soft-border);
   background: var(--color-surface);
@@ -244,6 +258,26 @@ watch(
 .answerList {
   display: grid;
   gap: 10px;
+}
+
+.emptyDraftPanel {
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.emptyDraftPanel h2 {
+  margin: 4px 0 6px;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+
+.emptyDraftPanel p {
+  margin: 0;
+  color: var(--color-text-dim);
+  line-height: 1.5;
 }
 
 .sharePanel {
@@ -346,6 +380,11 @@ watch(
 
   .metaGrid {
     grid-template-columns: 1fr;
+  }
+
+  .emptyDraftPanel {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 </style>

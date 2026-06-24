@@ -10,7 +10,7 @@
         <div class="dockHead">
           <div>
             <span class="dockEyebrow">오늘 다시 만나는 나</span>
-            <h2>지금의 내가 다시 읽을 회고</h2>
+            <h2>{{ todayReflection ? primarySectionTitle : "돌아볼 시간을 하나 고르세요" }}</h2>
           </div>
           <button class="smallCta" type="button" @click="$emit('open-new-reflection')">
             새 회고
@@ -18,7 +18,11 @@
         </div>
 
         <article v-if="todayReflection" class="todayCard">
-          <button class="todayButton" type="button" @click="$emit('open-reflection', todayReflection.id)">
+          <button
+            class="todayButton"
+            type="button"
+            @click="openReflectionFromHome(todayReflection)"
+          >
             <span>{{ todayReflection.period.label }}</span>
             <strong>{{ todayReflection.title }}</strong>
             <em>{{ getReflectionPreview(todayReflection) }}</em>
@@ -38,7 +42,7 @@
             :key="reflection.id"
             class="recentChip"
             type="button"
-            @click="$emit('open-reflection', reflection.id)"
+            @click="openReflectionFromHome(reflection)"
           >
             <span>{{ reflection.period.label }}</span>
             <strong>{{ reflection.title }}</strong>
@@ -77,7 +81,7 @@
         </section>
       </template>
 
-      <template v-else-if="capsules.length > 0">
+      <template v-else-if="capsules.length > 0 && reflections.length === 0">
         <DiscoveryCard
           :card="discoveryCard"
           :capsule-title="discoveryCapsuleTitle"
@@ -173,7 +177,7 @@ const props = defineProps<{
   };
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   "open-discovery": [];
   "open-archive": [];
   "open-new-reflection": [];
@@ -189,15 +193,37 @@ defineEmits<{
   "select-galaxy": [galaxyId: string];
 }>();
 
-const recentReflections = computed(() => props.reflections.slice(0, 4));
+const readableReflections = computed(() =>
+  props.reflections.filter((reflection) => hasReadableAnswer(reflection))
+);
+const draftReflections = computed(() =>
+  props.reflections.filter((reflection) => !hasReadableAnswer(reflection))
+);
+const recentReflections = computed(() =>
+  [...readableReflections.value, ...draftReflections.value].slice(0, 4)
+);
 const todayReflection = computed(() => recentReflections.value[0] ?? null);
+const primarySectionTitle = computed(() =>
+  todayReflection.value && hasReadableAnswer(todayReflection.value)
+    ? "지금의 내가 다시 읽을 회고"
+    : "이어서 쓸 회고"
+);
+
+function hasReadableAnswer(reflection: Reflection) {
+  return reflection.answers.some((answer) => answer.value.trim().length > 0);
+}
 
 function getReflectionPreview(reflection: Reflection) {
   return (
     reflection.representativeSentence ??
     reflection.answers.find((answer) => answer.value.trim())?.value.trim() ??
-    `${reflection.completionRate}% 작성됨`
+    "아직 첫 답변 전이에요. 이어쓰기에서 한 문장만 남겨도 충분해요."
   );
+}
+
+function openReflectionFromHome(reflection: Reflection) {
+  if (hasReadableAnswer(reflection)) emit("open-reflection", reflection.id);
+  else emit("continue-reflection", reflection.id);
 }
 </script>
 
@@ -294,9 +320,10 @@ function getReflectionPreview(reflection: Reflection) {
   color: var(--color-text-dim);
   font-style: normal;
   line-height: 1.45;
+  display: -webkit-box;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .continueButton,
@@ -449,6 +476,15 @@ function getReflectionPreview(reflection: Reflection) {
     padding: 14px;
   }
 
+  .dockEyebrow {
+    font-size: 10px;
+  }
+
+  .dockHead h2 {
+    font-size: 18px;
+    line-height: 1.2;
+  }
+
   .dockHead,
   .todayCard {
     align-items: stretch;
@@ -462,6 +498,24 @@ function getReflectionPreview(reflection: Reflection) {
   .todayCard,
   .recentRail {
     grid-template-columns: 1fr;
+  }
+
+  .todayCard {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .todayButton strong {
+    font-size: 19px;
+  }
+
+  .todayButton em {
+    font-size: 13px;
+  }
+
+  .continueButton,
+  .smallCta {
+    padding: 10px 13px;
   }
 }
 

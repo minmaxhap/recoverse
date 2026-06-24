@@ -52,6 +52,16 @@ h2 {
 @media (max-width: 899px) {
   .homeHeader {
     align-items: stretch;
+    padding: 12px 14px 9px;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+  }
+
+  h2 {
+    font-size: 20px;
+    line-height: 1.18;
   }
 }
 </style>
