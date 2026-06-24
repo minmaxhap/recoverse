@@ -147,7 +147,7 @@ function skipQuestion() {
   min-height: 100vh;
   background: var(--color-page);
   color: var(--color-text);
-  padding: 26px;
+  padding: 26px 26px 178px;
 }
 
 .writeHeader,
@@ -244,9 +244,20 @@ function skipQuestion() {
 }
 
 .writeActions {
+  position: fixed;
+  left: 50%;
+  bottom: calc(84px + env(safe-area-inset-bottom));
+  z-index: 35;
+  width: min(840px, calc(100% - 32px));
+  transform: translateX(-50%);
   display: grid;
   grid-template-columns: 1fr 1fr 1.4fr;
   gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--color-soft-border);
+  border-radius: 20px;
+  background: rgba(11, 15, 30, 0.94);
+  backdrop-filter: blur(16px);
 }
 
 .primary,
@@ -279,7 +290,7 @@ function skipQuestion() {
 
 @media (max-width: 720px) {
   .writePage {
-    padding: 16px;
+    padding: 16px 16px 212px;
   }
 
   .writeHeader {
@@ -288,6 +299,7 @@ function skipQuestion() {
   }
 
   .writeActions {
+    bottom: calc(82px + env(safe-area-inset-bottom));
     grid-template-columns: 1fr;
   }
 

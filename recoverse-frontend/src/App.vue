@@ -342,42 +342,6 @@
         v-else-if="mode === 'home-universe'"
         brand-label="Recoverse"
         :title="t.memoryUniverse"
-        :reflections="reflections"
-        :capsules="capsules"
-        :galaxies="galaxies"
-        :home-capsule-items="homeCapsuleItems"
-        :selected-capsule-id="selectedCapsuleId"
-        :selected-galaxy-id="selectedGalaxyId"
-        :discovery-card="discoveryCard"
-        :discovery-capsule-title="discoveryCapsuleTitle"
-        :discovery-answer-preview="discoveryAnswerPreview"
-        :discovery-labels="discoveryLabels"
-        :galaxy-map-labels="{
-          title: t.memoryMap,
-          empty: t.memoryMapEmpty,
-          create: t.startReflection,
-          galaxy: t.galaxyPlaceholder,
-        }"
-        :bottom-nav-labels="{
-          home: t.navHome,
-          write: t.navWrite,
-          review: t.navReview,
-          shared: t.navShared,
-          archive: t.navArchive,
-        }"
-        @open-discovery="openDiscoveryCard"
-        @open-archive="openArchiveSettings"
-        @open-new-reflection="openNewReflection"
-        @open-reflection="openReflectionDetail"
-        @continue-reflection="continueReflection"
-        @open-review="openReviewAgain"
-        @open-shared="openSharedReflections"
-        @open-create-flow="openCreateFlow"
-        @open-galaxy-create-flow="openGalaxyCreateFlow"
-        @open-galaxy="openSelectedGalaxy"
-        @open-selected-capsule="openSelectedCapsule"
-        @select-capsule="selectCapsule"
-        @select-galaxy="selectGalaxy"
       />
 
       <NewReflectionPage
@@ -609,17 +573,24 @@
       </section>
       </ArchiveShellView>
     </main>
+    <AppBottomNav
+      v-if="showBottomNav"
+      :active-tab="activeBottomTab"
+      :labels="bottomNavLabels"
+      @navigate="navigateBottomTab"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, nextTick } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, nextTick } from "vue";
 import { useArchiveCapsuleSearch } from "./composables/useArchiveCapsuleSearch";
 import { useAppNavigation } from "./composables/useAppNavigation";
 import { useCapsuleEditorState } from "./composables/useCapsuleEditorState";
 import ArchiveCapsuleShelf from "./components/ArchiveCapsuleShelf.vue";
 import ArchiveSectionTabs from "./components/ArchiveSectionTabs.vue";
 import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
+import AppBottomNav from "./components/AppBottomNav.vue";
 import ArchiveShellView from "./views/ArchiveShellView.vue";
 import GalaxyDetailView from "./views/GalaxyDetailView.vue";
 import HomeUniverseView from "./views/HomeUniverseView.vue";
@@ -706,6 +677,8 @@ import {
 } from "./lib/reflectionStore";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
+type BottomTabId = "home" | "write" | "review" | "settings";
+
 const LANGUAGE_KEY = "recoverse_language";
 
 const messages = {
@@ -734,6 +707,7 @@ const messages = {
     navReview: "다시 보기",
     navShared: "함께 보기",
     navArchive: "아카이브",
+    navSettings: "설정",
     startReflection: "새 회고 시작",
     galaxyPlaceholder: "그룹 은하",
     memoryUniverse: "내 회고 홈",
@@ -899,6 +873,7 @@ const messages = {
     navReview: "Review",
     navShared: "Shared",
     navArchive: "Archive",
+    navSettings: "Settings",
     startReflection: "Start reflection",
     galaxyPlaceholder: "Group galaxy",
     memoryUniverse: "My reflection home",
@@ -1151,6 +1126,31 @@ const years = computed(() => {
 
 const t = computed(() => messages[language.value]);
 
+const bottomNavLabels = computed(() => ({
+  home: t.value.navHome,
+  write: t.value.navWrite,
+  review: t.value.navReview,
+  settings: t.value.navSettings,
+}));
+
+const showBottomNav = computed(() =>
+  [
+    "home-universe",
+    "reflection-new",
+    "reflection-write",
+    "reflection-detail",
+    "review-again",
+    "archive-settings",
+  ].includes(mode.value)
+);
+
+const activeBottomTab = computed<BottomTabId>(() => {
+  if (mode.value === "reflection-new" || mode.value === "reflection-write") return "write";
+  if (mode.value === "review-again" || mode.value === "shared-reflections") return "review";
+  if (mode.value === "archive-settings") return "settings";
+  return "home";
+});
+
 const capsuleCreateLabels = computed(() => ({
   title: t.value.title,
   titlePlaceholder: t.value.titlePlaceholder,
@@ -1285,6 +1285,12 @@ onMounted(() => {
   // 시작은 2016으로 고정 (원하면: 데이터 있으면 그 연도로 자동 이동도 가능)
   selectedYear.value = START_YEAR;
   form.year = START_YEAR;
+  window.history.replaceState({ recoverseMode: mode.value }, "", window.location.href);
+  window.addEventListener("popstate", onBrowserBack);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("popstate", onBrowserBack);
 });
 
 function refreshCapsules() {
@@ -1457,7 +1463,25 @@ const discoveryAnswerPreview = computed(() => {
   return previewAnswers(discoveryCard.value.answers);
 });
 
-function setMode(m: AppMode) {
+const modeBackStack = ref<AppMode[]>([]);
+const isHandlingBrowserBack = ref(false);
+
+function confirmLeavingWriteMode() {
+  if (mode.value !== "reflection-write") return true;
+  return confirm(
+    "작성 중인 회고를 벗어나려 합니다. 저장하고 다음을 누르지 않은 현재 답변은 저장되지 않을 수 있어요. 이동할까요?"
+  );
+}
+
+function setMode(m: AppMode, options: { recordHistory?: boolean } = {}) {
+  const previousMode = mode.value;
+  const shouldRecordHistory = options.recordHistory !== false;
+
+  if (previousMode !== m && shouldRecordHistory && !isHandlingBrowserBack.value) {
+    modeBackStack.value.push(previousMode);
+    window.history.pushState({ recoverseMode: m }, "", window.location.href);
+  }
+
   setNavigationMode(m);
   errorMsg.value = "";
   capsuleError.value = "";
@@ -1485,6 +1509,37 @@ function setMode(m: AppMode) {
   if (m === "archive-time") {
     if (!compareQ.value && questionBank.value[0]) compareQ.value = questionBank.value[0].q;
   }
+}
+
+function navigateBottomTab(tabId: BottomTabId) {
+  if (tabId === activeBottomTab.value) return;
+  if (!confirmLeavingWriteMode()) return;
+
+  if (tabId === "home") {
+    setMode("home-universe");
+    return;
+  }
+  if (tabId === "write") {
+    openNewReflection();
+    return;
+  }
+  if (tabId === "review") {
+    openReviewAgain();
+    return;
+  }
+  setMode("archive-settings");
+}
+
+function onBrowserBack() {
+  if (!confirmLeavingWriteMode()) {
+    window.history.pushState({ recoverseMode: mode.value }, "", window.location.href);
+    return;
+  }
+
+  const previousMode = modeBackStack.value.pop() ?? "home-universe";
+  isHandlingBrowserBack.value = true;
+  setMode(previousMode, { recordHistory: false });
+  isHandlingBrowserBack.value = false;
 }
 
 function openArchiveSettings() {
@@ -1551,6 +1606,19 @@ function startReflectionDraft(payload: {
   questionSetMode: ReflectionQuestionSetMode;
   title?: string;
 }) {
+  const duplicate = reflections.value.find(
+    (reflection) =>
+      reflection.templateId === payload.templateId &&
+      reflection.period.label.trim() === payload.period.label.trim()
+  );
+
+  if (duplicate) {
+    activeReflectionId.value = duplicate.id;
+    alert("같은 기간의 회고가 이미 있어요. 새로 만들지 않고 기존 회고를 이어서 열게요.");
+    setMode(duplicate.isCompleted ? "reflection-detail" : "reflection-write");
+    return;
+  }
+
   const reflection = createReflectionDraft(payload);
   reflections.value = saveReflection(reflection);
   activeReflectionId.value = reflection.id;
@@ -2430,7 +2498,7 @@ button:disabled {
 }
 
 .main {
-  padding: 0;
+  padding: 0 0 88px;
 }
 
 .panel {

@@ -79,6 +79,24 @@
           <p>{{ randomAnswerText }}</p>
           <button class="smallCta" type="button" @click="pickRandomAnswer">다른 답변</button>
         </article>
+
+        <div class="panelHead secondaryHead">
+          <h2>공유</h2>
+        </div>
+        <article class="randomCard">
+          <span>나중에 친구와 보기</span>
+          <p>
+            공유 기능은 다시보기 안에서 연결합니다. 공유된 회고가 생기면 이곳에서 읽기 전용으로 확인합니다.
+          </p>
+          <button
+            v-if="sharedReflections[0]"
+            class="smallCta"
+            type="button"
+            @click="$emit('open-reflection', sharedReflections[0].id)"
+          >
+            공유 회고 보기
+          </button>
+        </article>
       </aside>
     </main>
   </section>
@@ -102,7 +120,22 @@ const selectedQuestionId = ref<string | null>(null);
 const selectedTopic = ref<string | null>(null);
 const randomIndex = ref(0);
 
-const questionOptions = computed<Question[]>(() => getTimelineQuestionOptions(props.reflections));
+const answeredQuestionIds = computed(() => {
+  const ids = new Set<string>();
+  for (const reflection of props.reflections) {
+    for (const answer of reflection.answers) {
+      if (answer.value.trim()) ids.add(answer.questionId);
+    }
+  }
+  return ids;
+});
+const questionOptions = computed<Question[]>(() =>
+  getTimelineQuestionOptions(props.reflections).sort((a, b) => {
+    const aAnswered = answeredQuestionIds.value.has(a.id) ? 1 : 0;
+    const bAnswered = answeredQuestionIds.value.has(b.id) ? 1 : 0;
+    return bAnswered - aAnswered;
+  })
+);
 const selectedQuestion = computed<Question | null>(() => {
   const filtered = selectedTopic.value
     ? questionOptions.value.filter((question) => getQuestionGroupLabel(question) === selectedTopic.value)
@@ -135,6 +168,9 @@ const answeredItems = computed(() =>
         value: answer.value.trim(),
       }))
   )
+);
+const sharedReflections = computed(() =>
+  props.reflections.filter((reflection) => reflection.visibility === "shared")
 );
 const randomAnswerText = computed(() => {
   if (answeredItems.value.length === 0) return "아직 꺼내볼 답변이 없어요.";
