@@ -7,9 +7,6 @@
         <p>{{ galaxy?.description || labels.emptyDescription }}</p>
       </div>
       <div class="heroActions">
-        <button class="ghostAction" type="button" @click="$emit('back-home')">
-          {{ labels.backHome }}
-        </button>
         <button v-if="galaxy" class="ghostAction" type="button" @click="$emit('create-observation')">
           {{ labels.createObservation }}
         </button>

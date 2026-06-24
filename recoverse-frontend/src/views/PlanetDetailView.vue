@@ -5,9 +5,6 @@
         <span class="eyebrow">{{ text.eyebrow }}</span>
         <h2 class="noWrap">{{ selectedCapsule?.title ?? createCapsuleTitle }}</h2>
       </div>
-      <button class="ghostAction" type="button" @click="$emit('back-home')">
-        {{ text.backHome }}
-      </button>
       <button
         v-if="selectedCapsule"
         class="ghostAction"

@@ -1,7 +1,6 @@
 <template>
   <section class="reviewPage">
     <header class="reviewHeader">
-      <button class="textButton" type="button" @click="$emit('back-home')">홈</button>
       <div>
         <span class="eyebrow">다시 보기</span>
         <h1>같은 질문을 따라가며 과거의 나를 봅니다</h1>
@@ -348,17 +347,10 @@ function pickRandomAnswer() {
   gap: 10px;
 }
 
-.textButton,
 .smallCta {
   border-radius: 999px;
   font-weight: 900;
   padding: 10px 13px;
-}
-
-.textButton {
-  border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--color-text);
 }
 
 .smallCta {

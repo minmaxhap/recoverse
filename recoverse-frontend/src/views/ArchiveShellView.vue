@@ -6,9 +6,6 @@
         <h2>{{ title }}</h2>
         <p>{{ description }}</p>
       </div>
-      <button class="homeButton" type="button" @click="$emit('back-home')">
-        {{ homeLabel }}
-      </button>
       <div class="actions">
         <slot name="actions" />
       </div>
@@ -90,24 +87,9 @@ p {
   justify-content: stretch;
 }
 
-.homeButton {
-  font: inherit;
-  border: 1px solid var(--color-border-gold);
-  border-radius: 999px;
-  background: rgba(240, 192, 96, 0.08);
-  color: var(--color-text);
-  cursor: pointer;
-  padding: 9px 12px;
-  white-space: nowrap;
-}
-
 @media (max-width: 899px) {
   .archiveHead {
     grid-template-columns: 1fr;
-  }
-
-  .homeButton {
-    width: fit-content;
   }
 
   .actions {

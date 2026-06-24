@@ -1,7 +1,6 @@
 <template>
   <section class="reflectionPage">
     <header class="reflectionHeader">
-      <button class="textButton" type="button" @click="$emit('back-home')">홈</button>
       <div>
         <span class="eyebrow">새 회고</span>
         <h1>무엇을 돌아볼까요?</h1>
@@ -356,8 +355,7 @@ function start() {
   font-size: 16px;
 }
 
-.primaryCta,
-.textButton {
+.primaryCta {
   border-radius: 999px;
   font-weight: 900;
 }
@@ -367,13 +365,6 @@ function start() {
   background: var(--color-gold);
   color: var(--color-primary-contrast);
   padding: 13px 18px;
-}
-
-.textButton {
-  border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--color-text);
-  padding: 10px 13px;
 }
 
 @media (max-width: 720px) {

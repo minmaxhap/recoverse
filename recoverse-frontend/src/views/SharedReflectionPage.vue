@@ -1,7 +1,6 @@
 <template>
   <section v-if="reflection" class="sharedPage">
     <header class="sharedHeader">
-      <button class="textButton" type="button" @click="$emit('back-home')">홈</button>
       <div>
         <span class="eyebrow">읽기 전용 공유</span>
         <h1>{{ reflection.title }}</h1>
@@ -36,7 +35,6 @@
 
   <section v-else class="sharedPage emptyState">
     <h1>공유된 회고가 없어요.</h1>
-    <button class="primaryCta" type="button" @click="$emit('back-home')">홈으로</button>
   </section>
 </template>
 
@@ -158,17 +156,10 @@ const visibleItems = computed(() => {
   gap: 14px;
 }
 
-.textButton,
 .primaryCta {
   border-radius: 999px;
   font-weight: 900;
   padding: 11px 14px;
-}
-
-.textButton {
-  border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--color-text);
 }
 
 .primaryCta {

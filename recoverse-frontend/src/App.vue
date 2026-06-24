@@ -1,5 +1,6 @@
 <template>
   <div class="app">
+    <AppTopNav />
     <main class="main">
       <ArchiveShellView
         v-if="mode === 'archive-library'"
@@ -591,6 +592,7 @@ import ArchiveCapsuleShelf from "./components/ArchiveCapsuleShelf.vue";
 import ArchiveSectionTabs from "./components/ArchiveSectionTabs.vue";
 import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
 import AppBottomNav from "./components/AppBottomNav.vue";
+import AppTopNav from "./components/AppTopNav.vue";
 import ArchiveShellView from "./views/ArchiveShellView.vue";
 import GalaxyDetailView from "./views/GalaxyDetailView.vue";
 import HomeUniverseView from "./views/HomeUniverseView.vue";
@@ -2498,7 +2500,7 @@ button:disabled {
 }
 
 .main {
-  padding: 0 0 88px;
+  padding: 54px 0 88px;
 }
 
 .panel {

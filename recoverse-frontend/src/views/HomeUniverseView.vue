@@ -1,11 +1,8 @@
 <template>
   <HomeView>
     <section class="homePanel">
-      <HomeHeader :brand-label="brandLabel" :title="title" />
-
       <main class="intro">
         <section class="heroCopy">
-          <span>Recoverse</span>
           <h1>쉽게 쓰고, 나중에 다시 보는 회고 공간</h1>
           <p>
             Recoverse는 연말 회고만을 위한 도구가 아닙니다. 한 해, 여행, 상반기,
@@ -34,7 +31,6 @@
 </template>
 
 <script setup lang="ts">
-import HomeHeader from "../components/HomeHeader.vue";
 import HomeView from "./HomeView.vue";
 
 defineProps<{

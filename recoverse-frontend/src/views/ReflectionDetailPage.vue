@@ -1,7 +1,6 @@
 <template>
   <section v-if="reflection" class="detailPage">
     <header class="detailHeader">
-      <button class="textButton" type="button" @click="$emit('back-home')">홈</button>
       <div>
         <span class="eyebrow">다시 읽는 회고</span>
         <h1>{{ reflection.title }}</h1>
@@ -83,7 +82,6 @@
 
   <section v-else class="detailPage emptyState">
     <h1>읽을 회고가 없어요.</h1>
-    <button class="editButton" type="button" @click="$emit('back-home')">홈으로</button>
   </section>
 </template>
 
@@ -331,18 +329,11 @@ watch(
   border-style: dashed;
 }
 
-.textButton,
 .editButton,
 .shareButton {
   border-radius: 999px;
   font-weight: 900;
   padding: 11px 14px;
-}
-
-.textButton {
-  border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--color-text);
 }
 
 .editButton {
