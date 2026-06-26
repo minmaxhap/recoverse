@@ -248,11 +248,6 @@ function onTopMenuAction(action: TopMenuAction) {
     return;
   }
 
-  if (action === "logout") {
-    alert("아직 로그인 계정이 연결되어 있지 않아요. 현재 데이터는 이 브라우저에 임시 저장되어 있어요.");
-    return;
-  }
-
   openSettingsSection(action);
 }
 

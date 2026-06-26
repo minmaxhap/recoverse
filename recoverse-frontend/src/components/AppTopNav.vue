@@ -11,7 +11,6 @@
         <button type="button" @click="choose('theme')">테마 변경</button>
         <button type="button" @click="choose('import')">가져오기</button>
         <button type="button" @click="choose('backup')">백업</button>
-        <button type="button" @click="choose('logout')">로그아웃</button>
       </div>
     </details>
   </header>
@@ -20,7 +19,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-export type TopMenuAction = "settings" | "language" | "theme" | "import" | "backup" | "logout";
+export type TopMenuAction = "settings" | "language" | "theme" | "import" | "backup";
 
 const emit = defineEmits<{
   "go-home": [];
