@@ -43,8 +43,10 @@
   </section>
 
   <section v-else class="writePage emptyState">
-    <h1>이어 쓸 회고가 없어요.</h1>
-    <button class="primary" type="button" @click="$emit('back-new')">새 기억 작성</button>
+    <span class="eyebrow">기억 작성</span>
+    <h1>작성 중이던 기억을 찾지 못했어요.</h1>
+    <p>새 질문 카드부터 다시 시작하면 됩니다. 한 문장만 남겨도 나중에 다시 열어볼 수 있어요.</p>
+    <button class="primary" type="button" @click="$emit('back-new')">새 기억 시작하기</button>
   </section>
 </template>
 
@@ -286,6 +288,13 @@ function skipQuestion() {
   place-items: center;
   align-content: center;
   gap: 16px;
+  text-align: center;
+}
+
+.emptyState p {
+  max-width: 360px;
+  color: var(--color-text-dim);
+  line-height: 1.6;
 }
 
 @media (max-width: 720px) {

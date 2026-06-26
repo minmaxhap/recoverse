@@ -78,14 +78,17 @@
           <h3>{{ item.question.text }}</h3>
           <p v-if="item.answerText">{{ item.answerText }}</p>
           <p v-else-if="item.answer?.skipped">이 질문은 지금은 넘겼어요.</p>
-          <p v-else>아직 답하지 않은 질문입니다.</p>
+          <p v-else>아직 비어 있는 질문이에요. 필요하면 이어쓰기에서 천천히 채울 수 있어요.</p>
         </article>
       </section>
     </main>
   </section>
 
   <section v-else class="detailPage emptyState">
-    <h1>읽을 회고가 없어요.</h1>
+    <span class="eyebrow">회고 열람</span>
+    <h1>열어볼 기억을 찾지 못했어요.</h1>
+    <p>홈으로 돌아가면 오늘 다시 떠오른 기억을 보거나 새 기억을 시작할 수 있어요.</p>
+    <button class="primaryAction" type="button" @click="$emit('back-home')">홈으로 돌아가기</button>
   </section>
 </template>
 
@@ -340,6 +343,14 @@ p {
   display: grid;
   place-items: center;
   align-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.emptyState p {
+  max-width: 380px;
+  color: var(--color-text-dim);
+  line-height: 1.6;
 }
 
 @media (max-width: 720px) {

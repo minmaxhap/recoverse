@@ -20,7 +20,7 @@
         <article v-for="item in visibleItems" :key="item.questionId" class="answerCard">
           <span>{{ item.groupLabel }}</span>
           <h2>{{ item.questionText }}</h2>
-          <p>{{ item.answerText || "공유된 답변이 아직 없어요." }}</p>
+          <p>{{ item.answerText || "공유자가 이 질문은 비워두었어요." }}</p>
         </article>
       </section>
 
@@ -37,7 +37,12 @@
   </section>
 
   <section v-else class="sharedPage emptyState">
-    <h1>공유된 회고가 없어요.</h1>
+    <span class="eyebrow">읽기 전용 공유</span>
+    <h1>공유된 기억을 열 수 없어요.</h1>
+    <p>링크가 잘렸거나 공유할 답변이 없는 상태예요. 내 회고를 새로 시작하거나 다시 받은 링크로 열어주세요.</p>
+    <button class="primaryCta" type="button" @click="$emit('answer-same')">
+      내 기억 작성하기
+    </button>
   </section>
 </template>
 
@@ -181,6 +186,13 @@ const visibleItems = computed(() => {
   place-items: center;
   align-content: center;
   gap: 16px;
+  text-align: center;
+}
+
+.emptyState p {
+  max-width: 390px;
+  color: var(--color-text-dim);
+  line-height: 1.6;
 }
 
 @media (max-width: 720px) {
