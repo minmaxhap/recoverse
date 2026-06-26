@@ -231,6 +231,7 @@ UI 원칙:
 - 새 저장 키를 추가하더라도 기존 `recoverse_capsule_v1`, `recoverse_v2_entries`를 깨지 않는다.
 - import/export는 아카이브/설정에 남긴다.
 - 계정 저장을 도입할 때도 서버의 1차 테이블은 `Reflection`이 된다.
+- 계정 저장의 상세 계약은 `ACCOUNT_STORAGE_PLAN.ko.md`를 따른다.
 
 ## 권장 파일 구조
 

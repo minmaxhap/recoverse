@@ -25,9 +25,9 @@
           </p>
         </div>
         <div class="saveActions">
-          <button type="button">Google로 저장</button>
-          <button type="button">Kakao로 저장</button>
-          <button type="button">임시 저장 유지</button>
+          <button type="button" @click="$emit('account-save', 'google')">Google로 저장</button>
+          <button type="button" @click="$emit('account-save', 'kakao')">Kakao로 저장</button>
+          <button type="button" @click="$emit('local-backup')">백업 파일 저장</button>
         </div>
       </section>
 
@@ -91,6 +91,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
+import type { AccountStorageProvider } from "../lib/reflectionSync";
 import type { Answer, Question, Reflection } from "../types/reflection";
 
 const props = defineProps<{
@@ -101,6 +102,8 @@ defineEmits<{
   "back-home": [];
   edit: [];
   share: [questionIds: string[]];
+  "account-save": [provider: AccountStorageProvider];
+  "local-backup": [];
 }>();
 
 const shareSelection = ref<string[]>([]);

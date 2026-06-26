@@ -64,6 +64,14 @@ const reflectionBackupPath = await compileTsModule(
     ['"./reflectionStore"', '"./reflectionStore.mjs"'],
   ]
 );
+const reflectionSyncPath = await compileTsModule(
+  new URL("../src/lib/reflectionSync.ts", import.meta.url),
+  "reflectionSync.mjs",
+  [
+    ['"../types/reflection"', '"./reflectionTypes.mjs"'],
+    ['"./reflectionStore"', '"./reflectionStore.mjs"'],
+  ]
+);
 const questionTimelinePath = await compileTsModule(
   new URL("../src/lib/questionTimeline.ts", import.meta.url),
   "questionTimeline.mjs"
@@ -91,6 +99,7 @@ const observationActionsPath = await compileTsModule(
 const store = await import(pathToFileURL(storePath).href);
 const reflectionStore = await import(pathToFileURL(reflectionStorePath).href);
 const reflectionBackup = await import(pathToFileURL(reflectionBackupPath).href);
+const reflectionSync = await import(pathToFileURL(reflectionSyncPath).href);
 const questionTimeline = await import(pathToFileURL(questionTimelinePath).href);
 const capsuleImportExport = await import(pathToFileURL(capsuleImportExportPath).href);
 const capsuleHomeData = await import(pathToFileURL(capsuleHomeDataPath).href);
@@ -187,6 +196,34 @@ test("merges reflection backups without overwriting newer local data", () => {
   assert.equal(result.reflections.length, 2);
   assert.equal(result.reflections.find((item) => item.id === local.id).title, local.title);
   assert.ok(result.reflections.some((item) => item.title === "부산 여행의 기억"));
+});
+
+test("builds account sync payloads from canonical reflections", () => {
+  const reflection = reflectionStore.createReflectionDraft({
+    templateId: "template_travel",
+    period: { label: "제주 여행" },
+    questionSetMode: "light",
+    title: "제주 여행의 기억",
+  });
+
+  const payload = reflectionSync.buildReflectionSyncPayload([reflection], "google");
+
+  assert.equal(payload.schema, "recoverse_account_sync_v1");
+  assert.equal(payload.source, "local_browser");
+  assert.equal(payload.provider, "google");
+  assert.equal(payload.reflections.length, 1);
+  assert.equal(payload.reflections[0].title, "제주 여행의 기억");
+});
+
+test("explains local only account save fallback", () => {
+  assert.match(
+    reflectionSync.getAccountSaveUnavailableMessage("kakao"),
+    /Kakao 계정 저장은 아직 연결 전/
+  );
+  assert.match(
+    reflectionSync.getLocalOnlyStorageWarning(1),
+    /브라우저 데이터가 삭제되면 사라질 수/
+  );
 });
 
 test("migrates legacy yearly entries into reflection records without mutating legacy storage", () => {

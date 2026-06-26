@@ -385,6 +385,8 @@
         @back-home="setMode('home-universe')"
         @edit="setMode('reflection-write')"
         @share="shareActiveReflection"
+        @account-save="requestAccountSave"
+        @local-backup="onExportReflections"
       />
 
       <ReviewAgainPage
@@ -704,6 +706,12 @@ import {
   mergeReflectionBackup,
   REFLECTION_BACKUP_SCHEMA,
 } from "./lib/reflectionBackup";
+import {
+  buildReflectionSyncPayload,
+  getAccountSaveUnavailableMessage,
+  getLocalOnlyStorageWarning,
+  type AccountStorageProvider,
+} from "./lib/reflectionSync";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
 type BottomTabId = "write" | "home" | "review";
@@ -1360,6 +1368,19 @@ function onTopMenuAction(action: TopMenuAction) {
   }
 
   openSettingsSection(action);
+}
+
+function requestAccountSave(provider: AccountStorageProvider) {
+  const payload = buildReflectionSyncPayload(reflections.value, provider);
+  const message = [
+    getAccountSaveUnavailableMessage(provider),
+    getLocalOnlyStorageWarning(payload.reflections.length),
+    "지금 백업 파일을 내려받을까요?",
+  ].join("\n\n");
+
+  if (confirm(message)) {
+    onExportReflections();
+  }
 }
 
 onMounted(() => {
