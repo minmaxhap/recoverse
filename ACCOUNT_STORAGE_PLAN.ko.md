@@ -39,7 +39,6 @@ type AccountStorageAdapter = {
 ## 서버 저장 원칙
 
 - 서버의 1차 테이블은 `Reflection`이다.
-- `capsule`, `legacy entry`는 서버 저장 대상으로 확장하지 않는다.
 - 서버 저장 전 로컬 백업을 유지한다.
 - 같은 `reflection.id`가 있을 때는 `updatedAt`이 최신인 항목을 우선한다.
 - 삭제 동기화는 별도 `deletedAt` 필드가 생기기 전까지 자동 삭제하지 않는다.
@@ -77,4 +76,3 @@ type AccountStorageAdapter = {
 - 친구 공유 링크 발행
 - 실시간 그룹 동기화
 - 서버 삭제 동기화
-- capsule/legacy 서버 마이그레이션
