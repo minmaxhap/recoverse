@@ -22,7 +22,7 @@
             type="button"
             @click="$emit('open-reflection', featuredReflection.id)"
           >
-            <span>오늘 다시 떠오른 기억</span>
+            <span>{{ featuredLabel }}</span>
             <strong>{{ featuredAnswer }}</strong>
             <em>{{ featuredReflection.period.label }}</em>
           </button>
@@ -90,17 +90,45 @@ defineEmits<{
 
 const driftMarks = [1, 2, 3, 4, 5, 6];
 
+const REDISCOVER_THRESHOLD_DAYS = 7;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
 const sortedReflections = computed(() =>
   [...props.reflections].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
 );
 
-const featuredReflection = computed(() => {
-  return (
-    sortedReflections.value.find((reflection) => getFirstAnswer(reflection)) ??
-    sortedReflections.value[0] ??
-    null
+const answeredReflections = computed(() =>
+  sortedReflections.value.filter((reflection) => getFirstAnswer(reflection))
+);
+
+const rediscoveryCandidates = computed(() => {
+  const cutoff = Date.now() - REDISCOVER_THRESHOLD_DAYS * MS_PER_DAY;
+  return answeredReflections.value.filter(
+    (reflection) => Date.parse(reflection.updatedAt) <= cutoff
   );
 });
+
+function dailySeed(): number {
+  const dayKey = new Date().toISOString().slice(0, 10);
+  let hash = 0;
+  for (let i = 0; i < dayKey.length; i++) {
+    hash = (hash * 31 + dayKey.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+const isRediscovery = computed(() => rediscoveryCandidates.value.length > 0);
+
+const featuredReflection = computed(() => {
+  if (rediscoveryCandidates.value.length > 0) {
+    return rediscoveryCandidates.value[dailySeed() % rediscoveryCandidates.value.length];
+  }
+  return answeredReflections.value[0] ?? null;
+});
+
+const featuredLabel = computed(() =>
+  isRediscovery.value ? "오늘 다시 떠오른 기억" : "최근에 남긴 기억"
+);
 
 const draftReflection = computed(() =>
   sortedReflections.value.find((reflection) => !reflection.isCompleted) ?? null
