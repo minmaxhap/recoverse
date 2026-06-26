@@ -243,6 +243,7 @@ function skipQuestion() {
   font-size: 18px;
   line-height: 1.6;
   outline: none;
+  scroll-margin-bottom: 180px;
 }
 
 .writeActions {
@@ -310,6 +311,18 @@ function skipQuestion() {
   .writeActions {
     bottom: calc(82px + env(safe-area-inset-bottom));
     grid-template-columns: 1fr;
+  }
+
+  .writePage:focus-within {
+    padding-bottom: 32px;
+  }
+
+  .writePage:focus-within .writeActions {
+    position: sticky;
+    left: auto;
+    bottom: 12px;
+    width: 100%;
+    transform: none;
   }
 
   .questionCard {
