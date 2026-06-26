@@ -64,6 +64,17 @@ button:disabled {
   cursor: not-allowed;
 }
 
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--color-gold) !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(244, 197, 106, 0.18) !important;
+}
+
 #app {
   min-height: 100vh;
 }
