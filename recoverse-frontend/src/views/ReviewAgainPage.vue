@@ -451,6 +451,7 @@ p {
 .timelineCard {
   display: grid;
   gap: 10px;
+  position: relative;
 }
 
 .timelineCard button {
@@ -461,6 +462,40 @@ p {
   text-align: left;
   display: grid;
   gap: 3px;
+}
+
+.timeline {
+  position: relative;
+  gap: 0;
+  padding-left: 22px;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  bottom: 12px;
+  left: 5px;
+  width: 2px;
+  border-radius: 999px;
+  background: rgba(244, 197, 106, 0.28);
+}
+
+.timelineCard:not(:last-child) {
+  margin-bottom: 8px;
+}
+
+.timelineCard::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  left: -22px;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--color-page);
+  border-radius: 999px;
+  background: var(--color-gold);
+  box-shadow: 0 0 0 4px rgba(244, 197, 106, 0.16);
 }
 
 .emptyState {
