@@ -384,9 +384,8 @@
         :reflection="activeReflection"
         @back-home="setMode('home-universe')"
         @edit="setMode('reflection-write')"
+        @review-again="openReviewAgain"
         @share="shareActiveReflection"
-        @account-save="requestAccountSave"
-        @local-backup="onExportReflections"
       />
 
       <ReviewAgainPage
@@ -1200,6 +1199,8 @@ const showBottomNav = computed(() =>
     "reflection-write",
     "reflection-detail",
     "review-again",
+    "shared-reflections",
+    "archive-settings",
   ].includes(mode.value)
 );
 
@@ -1662,7 +1663,13 @@ function clearShareHash() {
 }
 
 function navigateBottomTab(tabId: BottomTabId) {
-  if (tabId === activeBottomTab.value) return;
+  if (
+    (tabId === "home" && mode.value === "home-universe") ||
+    (tabId === "write" && (mode.value === "reflection-new" || mode.value === "reflection-write")) ||
+    (tabId === "review" && mode.value === "review-again")
+  ) {
+    return;
+  }
   if (!confirmLeavingWriteMode()) return;
 
   if (tabId === "home") {

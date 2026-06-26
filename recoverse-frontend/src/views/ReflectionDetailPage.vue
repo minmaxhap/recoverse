@@ -5,7 +5,6 @@
         <span class="eyebrow">검토와 다시 보기</span>
         <h1>{{ reflection.title }}</h1>
       </div>
-      <button class="editButton" type="button" @click="$emit('edit')">수정하기</button>
     </header>
 
     <main class="detailShell">
@@ -15,20 +14,21 @@
         <p>{{ representativeEmotion }}</p>
       </section>
 
-      <section class="savePanel">
-        <div>
-          <span class="eyebrow">저장 안내</span>
-          <h2>이 기억은 내 브라우저에 임시 저장되어 있어요.</h2>
-          <p>
-            캐시를 지우면 사라질 수 있으니, 정식 저장은 Google/Kakao 연결 이후 안전하게
-            보관하는 흐름으로 이어질 예정입니다.
-          </p>
-        </div>
-        <div class="saveActions">
-          <button type="button" @click="$emit('account-save', 'google')">Google로 저장</button>
-          <button type="button" @click="$emit('account-save', 'kakao')">Kakao로 저장</button>
-          <button type="button" @click="$emit('local-backup')">백업 파일 저장</button>
-        </div>
+      <section class="actionPanel" aria-label="회고 주요 행동">
+        <button class="primaryAction" type="button" @click="$emit('edit')">
+          {{ reflection.isCompleted ? "답변 수정하기" : "이어쓰기" }}
+        </button>
+        <button class="secondaryAction" type="button" @click="$emit('review-again')">
+          같은 질문 다시보기
+        </button>
+        <button
+          class="secondaryAction"
+          type="button"
+          :disabled="shareableItems.length === 0"
+          @click="openShareOptions"
+        >
+          공유하기
+        </button>
       </section>
 
       <section class="metaGrid" aria-label="회고 상태">
@@ -47,8 +47,8 @@
       </section>
 
       <section v-if="shareableItems.length > 0" class="sharePanel">
-        <details>
-          <summary>읽기 전용 공유 만들기</summary>
+        <details ref="shareDetailsRef">
+          <summary>공유할 답변 고르기</summary>
           <p>친구에게 보여줘도 괜찮은 질문만 고르면 수정할 수 없는 읽기 전용 화면이 만들어집니다.</p>
           <div class="shareList">
             <label v-for="item in shareableItems" :key="item.question.id" class="shareOption">
@@ -62,7 +62,7 @@
             :disabled="shareSelection.length === 0"
             @click="$emit('share', shareSelection)"
           >
-            공유 화면 열기
+            읽기 전용 링크 만들기
           </button>
         </details>
       </section>
@@ -91,7 +91,6 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import type { AccountStorageProvider } from "../lib/reflectionSync";
 import type { Answer, Question, Reflection } from "../types/reflection";
 
 const props = defineProps<{
@@ -101,12 +100,12 @@ const props = defineProps<{
 defineEmits<{
   "back-home": [];
   edit: [];
+  "review-again": [];
   share: [questionIds: string[]];
-  "account-save": [provider: AccountStorageProvider];
-  "local-backup": [];
 }>();
 
 const shareSelection = ref<string[]>([]);
+const shareDetailsRef = ref<HTMLDetailsElement | null>(null);
 
 const questions = computed<Question[]>(() =>
   props.reflection?.questionGroups.flatMap((group) => group.questions) ?? []
@@ -164,6 +163,12 @@ watch(
   },
   { immediate: true }
 );
+
+function openShareOptions() {
+  if (!shareDetailsRef.value) return;
+  shareDetailsRef.value.open = true;
+  shareDetailsRef.value.scrollIntoView({ block: "center", behavior: "smooth" });
+}
 </script>
 
 <style scoped>
@@ -181,10 +186,6 @@ watch(
 }
 
 .detailHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   margin-bottom: 22px;
 }
 
@@ -216,16 +217,15 @@ p {
 
 .heroPanel,
 .answerCard,
+.actionPanel,
 .sharePanel,
-.savePanel,
 .metaGrid > div {
   border: 1px solid var(--color-soft-border);
   background: var(--color-surface);
   border-radius: 18px;
 }
 
-.heroPanel,
-.savePanel {
+.heroPanel {
   padding: 24px;
   display: grid;
   gap: 10px;
@@ -237,42 +237,42 @@ p {
 }
 
 .heroPanel p,
-.savePanel p,
 .answerCard p,
 .sharePanel p {
   color: var(--color-text-dim);
   line-height: 1.6;
 }
 
-.savePanel {
-  grid-template-columns: 1fr auto;
-  align-items: center;
-}
-
-.saveActions {
+.actionPanel {
+  padding: 14px;
   display: grid;
-  gap: 8px;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 10px;
 }
 
-.saveActions button,
-.editButton,
+.primaryAction,
+.secondaryAction,
 .shareButton {
   border-radius: 999px;
   font-weight: 900;
   padding: 11px 14px;
 }
 
-.saveActions button,
+.secondaryAction,
 .shareButton {
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.04);
   color: var(--color-text);
 }
 
-.editButton {
+.primaryAction {
   border: 0;
   background: var(--color-gold);
   color: var(--color-primary-contrast);
+}
+
+.secondaryAction:disabled {
+  opacity: 0.45;
 }
 
 .metaGrid {
@@ -347,14 +347,8 @@ p {
     padding: 16px 16px 112px;
   }
 
-  .detailHeader,
-  .savePanel {
-    align-items: stretch;
+  .actionPanel {
     grid-template-columns: 1fr;
-  }
-
-  .detailHeader {
-    display: grid;
   }
 
   .heroPanel h2 {
