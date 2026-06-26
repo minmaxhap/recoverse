@@ -1,8 +1,8 @@
 <template>
-  <div class="app">
+  <div class="app" :data-theme="appTheme">
     <AppTopNav
       @go-home="navigateBottomTab('home')"
-      @open-settings="openSettingsFromTop"
+      @menu-action="onTopMenuAction"
     />
     <main class="main">
       <ArchiveShellView
@@ -318,7 +318,16 @@
         <section class="settingsPanel">
           <ArchiveSettingsTools
             :language="language"
+            :theme="appTheme"
+            :active-section="activeSettingsSection"
             :language-label="t.language"
+            theme-label="테마"
+            :theme-options="themeOptions"
+            reflection-group-label="새 회고 백업"
+            reflection-export-label="회고 백업하기"
+            reflection-import-label="회고 가져오기"
+            reflection-backup-hint="기억 작성 탭에서 만든 새 회고 데이터를 JSON으로 내보내거나 다시 가져옵니다."
+            :reflection-export-disabled="reflections.length === 0"
             :capsule-group-label="t.capsuleBackupGroup"
             :capsule-export-label="t.exportCapsules"
             :capsule-import-label="t.importCapsules"
@@ -329,9 +338,12 @@
             :danger-group-label="t.dangerSettingsGroup"
             :clear-label="t.clearAllData"
             :export-disabled="entries.length === 0"
-            :clear-disabled="entries.length === 0"
+            :clear-disabled="entries.length === 0 && reflections.length === 0 && capsules.length === 0"
             @update:language="language = $event"
+            @update:theme="setAppTheme"
             @change-language="saveLanguage"
+            @reflection-export="onExportReflections"
+            @reflection-import-file="onImportReflectionFile"
             @capsule-export="onExportCapsules"
             @capsule-import-file="onImportCapsuleFile"
             @export="onExport"
@@ -598,8 +610,10 @@ import { useCapsuleEditorState } from "./composables/useCapsuleEditorState";
 import ArchiveCapsuleShelf from "./components/ArchiveCapsuleShelf.vue";
 import ArchiveSectionTabs from "./components/ArchiveSectionTabs.vue";
 import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
+import type { RecoverseTheme, SettingsSection } from "./components/ArchiveSettingsTools.vue";
 import AppBottomNav from "./components/AppBottomNav.vue";
 import AppTopNav from "./components/AppTopNav.vue";
+import type { TopMenuAction } from "./components/AppTopNav.vue";
 import ArchiveShellView from "./views/ArchiveShellView.vue";
 import GalaxyDetailView from "./views/GalaxyDetailView.vue";
 import HomeUniverseView from "./views/HomeUniverseView.vue";
@@ -683,12 +697,14 @@ import {
   loadReflections,
   saveReflection,
   saveReflectionAnswer,
+  saveReflections,
 } from "./lib/reflectionStore";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
 type BottomTabId = "write" | "home" | "review";
 
 const LANGUAGE_KEY = "recoverse_language";
+const THEME_KEY = "recoverse_theme";
 
 const messages = {
   ko: {
@@ -1029,6 +1045,20 @@ const entries = ref<ReviewEntry[]>([]);
 const language = ref<AppLanguage>(
   localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "ko"
 );
+const savedTheme = localStorage.getItem(THEME_KEY);
+const appTheme = ref<RecoverseTheme>(
+  savedTheme === "letter" || savedTheme === "journey" ? savedTheme : "universe"
+);
+const activeSettingsSection = ref<SettingsSection>("settings");
+const themeOptions: Array<{
+  id: RecoverseTheme;
+  label: string;
+  description: string;
+}> = [
+  { id: "universe", label: "우주", description: "기본 기억 공간" },
+  { id: "letter", label: "편지방", description: "낡은 편지와 잉크" },
+  { id: "journey", label: "지도", description: "여행 지도와 항해 일지" },
+];
 const capsules = ref<Capsule[]>([]);
 const capsuleCards = ref<CapsuleCard[]>([]);
 const galaxyData = ref<GalaxyData>({
@@ -1283,6 +1313,50 @@ function saveLanguage() {
   localStorage.setItem(LANGUAGE_KEY, language.value);
 }
 
+function setAppTheme(theme: RecoverseTheme) {
+  appTheme.value = theme;
+  localStorage.setItem(THEME_KEY, theme);
+}
+
+function openSettingsSection(section: SettingsSection) {
+  activeSettingsSection.value = section;
+  if (!confirmLeavingWriteMode()) return;
+  setMode("archive-settings");
+
+  nextTick(() => {
+    const targetId =
+      section === "language"
+        ? "settings-language"
+        : section === "theme"
+          ? "settings-theme"
+          : section === "import" || section === "backup"
+            ? "settings-backup"
+            : "";
+    if (!targetId) return;
+    document.getElementById(targetId)?.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
+}
+
+function onTopMenuAction(action: TopMenuAction) {
+  if (action === "backup") {
+    if (!confirmLeavingWriteMode()) return;
+    if (reflections.value.length > 0) {
+      onExportReflections();
+      return;
+    }
+    alert("백업할 새 회고가 아직 없어요.");
+    openSettingsSection("backup");
+    return;
+  }
+
+  if (action === "logout") {
+    alert("아직 로그인 계정이 연결되어 있지 않아요. 현재 데이터는 이 브라우저에 임시 저장되어 있어요.");
+    return;
+  }
+
+  openSettingsSection(action);
+}
+
 onMounted(() => {
   entries.value = loadEntries();
   refreshCapsules();
@@ -1533,11 +1607,6 @@ function navigateBottomTab(tabId: BottomTabId) {
     openReviewAgain();
     return;
   }
-}
-
-function openSettingsFromTop() {
-  if (!confirmLeavingWriteMode()) return;
-  setMode("archive-settings");
 }
 
 function onBrowserBack() {
@@ -2295,6 +2364,25 @@ function onExport() {
   downloadBlob(blob, `recoverse_${yyyyMMdd}.json`);
 }
 
+function onExportReflections() {
+  const yyyyMMdd = new Date().toISOString().slice(0, 10);
+  const blob = new Blob(
+    [
+      JSON.stringify(
+        {
+          schema: "recoverse_reflections_v1",
+          exportedAt: new Date().toISOString(),
+          reflections: reflections.value,
+        },
+        null,
+        2
+      ),
+    ],
+    { type: "application/json;charset=utf-8" }
+  );
+  downloadBlob(blob, `recoverse_reflections_${yyyyMMdd}.json`);
+}
+
 function onExportCapsules() {
   capsuleError.value = "";
   capsuleNotice.value = "";
@@ -2371,11 +2459,42 @@ async function onImportFile(e: Event) {
   }
 }
 
+async function onImportReflectionFile(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    if (parsed?.schema !== "recoverse_reflections_v1" || !Array.isArray(parsed.reflections)) {
+      throw new Error("Recoverse 새 회고 백업 파일이 아니에요.");
+    }
+
+    const imported = saveReflections(parsed.reflections);
+    reflections.value = imported;
+    activeReflectionId.value = imported[0]?.id ?? null;
+    alert(`${imported.length}개의 회고를 가져왔어요.`);
+  } catch (err: any) {
+    alert(`회고 가져오기 실패: ${err?.message ?? "알 수 없는 오류"}`);
+  } finally {
+    input.value = "";
+  }
+}
+
 function clearAll() {
   if (!confirm("진짜로 전부 삭제할까요? (되돌리기 없음)")) return;
   entries.value = [];
+  reflections.value = [];
+  capsules.value = [];
+  capsuleCards.value = [];
   saveEntries([]);
+  saveReflections([]);
+  saveCapsuleData({ capsules: [], cards: [] });
   selectedId.value = null;
+  activeReflectionId.value = null;
+  selectedCapsuleId.value = null;
+  selectedCapsuleCardId.value = null;
   editingId.value = null;
   resetForm();
 }
@@ -2464,6 +2583,30 @@ function onFormKeydown(e: KeyboardEvent) {
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
 }
 
+.app[data-theme="letter"] {
+  --color-page: #17120f;
+  --color-bg: #17120f;
+  --color-surface: #251d18;
+  --color-surface-2: #30241e;
+  --color-text: #f1dfc4;
+  --color-ink: #f1dfc4;
+  --color-gold: #d7a35f;
+  --color-primary: #d7a35f;
+  --color-border-gold: rgba(215, 163, 95, 0.28);
+}
+
+.app[data-theme="journey"] {
+  --color-page: #111915;
+  --color-bg: #111915;
+  --color-surface: #1a2720;
+  --color-surface-2: #22342b;
+  --color-text: #e8dfca;
+  --color-ink: #e8dfca;
+  --color-gold: #c7a96a;
+  --color-primary: #c7a96a;
+  --color-border-gold: rgba(199, 169, 106, 0.28);
+}
+
 /* ✅ 한글 텍스트가 글자 단위로 쪼개져 줄바꿈되는 현상 방지 */
 .noWrap {
   white-space: nowrap;      /* 한 줄 유지 */
@@ -2508,7 +2651,7 @@ button:disabled {
 }
 
 .main {
-  padding: 54px 0 88px;
+  padding: 54px 0 0;
 }
 
 .panel {

@@ -86,18 +86,22 @@ function previewReflection(reflection: Reflection) {
 
 <style scoped>
 .homeSpace {
-  min-height: calc(100vh - 54px);
+  height: calc(100dvh - 54px);
+  min-height: 560px;
   background:
     radial-gradient(circle at 18% 8%, rgba(244, 197, 106, 0.14), transparent 28%),
     radial-gradient(circle at 92% 18%, rgba(164, 123, 196, 0.12), transparent 30%),
     var(--color-page);
+  overflow: hidden;
 }
 
 .homeInner {
   width: min(980px, 100%);
+  height: 100%;
   margin: 0 auto;
-  padding: 36px 18px 118px;
+  padding: 24px 18px calc(96px + env(safe-area-inset-bottom));
   display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 16px;
 }
 
@@ -111,10 +115,15 @@ function previewReflection(reflection: Reflection) {
 }
 
 .introPanel {
-  min-height: 320px;
+  min-height: 0;
   display: grid;
   align-content: center;
   gap: 14px;
+}
+
+.memoryPanel {
+  min-height: 0;
+  overflow: auto;
 }
 
 .eyebrow {
@@ -220,12 +229,16 @@ h2 {
 }
 
 @media (max-width: 720px) {
+  .homeSpace {
+    min-height: 0;
+  }
+
   .homeInner {
-    padding: 18px 14px 112px;
+    padding: 14px 14px calc(92px + env(safe-area-inset-bottom));
   }
 
   .introPanel {
-    min-height: 420px;
+    min-height: 0;
   }
 
   .sectionHead {

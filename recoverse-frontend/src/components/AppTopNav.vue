@@ -1,27 +1,38 @@
 <template>
   <header class="topNav">
     <button class="brand" type="button" @click="$emit('go-home')">Recoverse</button>
-    <details class="profileMenu">
+    <details ref="menuRef" class="profileMenu">
       <summary aria-label="프로필 메뉴">
         <span>나</span>
       </summary>
       <div class="menuPanel">
-        <button type="button" @click="$emit('open-settings')">설정</button>
-        <button type="button" @click="$emit('open-settings')">언어 변경</button>
-        <button type="button" @click="$emit('open-settings')">테마 변경</button>
-        <button type="button" @click="$emit('open-settings')">가져오기</button>
-        <button type="button" @click="$emit('open-settings')">백업</button>
-        <button type="button" @click="$emit('open-settings')">로그아웃</button>
+        <button type="button" @click="choose('settings')">설정</button>
+        <button type="button" @click="choose('language')">언어 변경</button>
+        <button type="button" @click="choose('theme')">테마 변경</button>
+        <button type="button" @click="choose('import')">가져오기</button>
+        <button type="button" @click="choose('backup')">백업</button>
+        <button type="button" @click="choose('logout')">로그아웃</button>
       </div>
     </details>
   </header>
 </template>
 
 <script setup lang="ts">
-defineEmits<{
+import { ref } from "vue";
+
+export type TopMenuAction = "settings" | "language" | "theme" | "import" | "backup" | "logout";
+
+const emit = defineEmits<{
   "go-home": [];
-  "open-settings": [];
+  "menu-action": [action: TopMenuAction];
 }>();
+
+const menuRef = ref<HTMLDetailsElement | null>(null);
+
+function choose(action: TopMenuAction) {
+  if (menuRef.value) menuRef.value.open = false;
+  emit("menu-action", action);
+}
 </script>
 
 <style scoped>

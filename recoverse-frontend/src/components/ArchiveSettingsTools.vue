@@ -1,6 +1,6 @@
 <template>
   <div class="tools">
-    <section class="toolGroup">
+    <section id="settings-language" class="toolGroup" :class="{ active: activeSection === 'language' }">
       <span class="groupLabel">{{ languageLabel }}</span>
       <LanguageSelector
         :model-value="language"
@@ -8,6 +8,36 @@
         @update:model-value="$emit('update:language', $event)"
         @change="$emit('change-language')"
       />
+    </section>
+
+    <section id="settings-theme" class="toolGroup" :class="{ active: activeSection === 'theme' }">
+      <span class="groupLabel">{{ themeLabel }}</span>
+      <div class="themeGrid">
+        <button
+          v-for="item in themeOptions"
+          :key="item.id"
+          type="button"
+          :class="{ selected: item.id === theme }"
+          @click="$emit('update:theme', item.id)"
+        >
+          <strong>{{ item.label }}</strong>
+          <span>{{ item.description }}</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="settings-backup" class="toolGroup" :class="{ active: activeSection === 'backup' || activeSection === 'import' }">
+      <span class="groupLabel">{{ reflectionGroupLabel }}</span>
+      <div class="buttonRow">
+        <button type="button" :disabled="reflectionExportDisabled" @click="$emit('reflection-export')">
+          {{ reflectionExportLabel }}
+        </button>
+        <label class="file">
+          {{ reflectionImportLabel }}
+          <input type="file" accept="application/json" @change="$emit('reflection-import-file', $event)" />
+        </label>
+      </div>
+      <p class="hint">{{ reflectionBackupHint }}</p>
     </section>
 
     <section class="toolGroup">
@@ -36,7 +66,7 @@
       </div>
     </section>
 
-    <section class="toolGroup dangerGroup">
+    <section id="settings-danger" class="toolGroup dangerGroup">
       <span class="groupLabel">{{ dangerGroupLabel }}</span>
       <button class="danger" type="button" :disabled="clearDisabled" @click="$emit('clear-all')">
         {{ clearLabel }}
@@ -49,9 +79,25 @@
 import type { AppLanguage } from "../lib/recoverseStore";
 import LanguageSelector from "./LanguageSelector.vue";
 
+export type RecoverseTheme = "universe" | "letter" | "journey";
+export type SettingsSection = "settings" | "language" | "theme" | "import" | "backup";
+
 defineProps<{
   language: AppLanguage;
+  theme: RecoverseTheme;
+  activeSection: SettingsSection;
   languageLabel: string;
+  themeLabel: string;
+  themeOptions: Array<{
+    id: RecoverseTheme;
+    label: string;
+    description: string;
+  }>;
+  reflectionGroupLabel: string;
+  reflectionExportLabel: string;
+  reflectionImportLabel: string;
+  reflectionBackupHint: string;
+  reflectionExportDisabled: boolean;
   capsuleGroupLabel: string;
   capsuleExportLabel: string;
   capsuleImportLabel: string;
@@ -67,7 +113,10 @@ defineProps<{
 
 defineEmits<{
   "update:language": [language: AppLanguage];
+  "update:theme": [theme: RecoverseTheme];
   "change-language": [];
+  "reflection-export": [];
+  "reflection-import-file": [event: Event];
   "capsule-export": [];
   "capsule-import-file": [event: Event];
   export: [];
@@ -93,6 +142,11 @@ defineEmits<{
   padding: 10px;
 }
 
+.toolGroup.active {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 1px rgba(244, 197, 106, 0.18);
+}
+
 .groupLabel {
   color: var(--color-muted);
   font-size: 11px;
@@ -107,6 +161,12 @@ defineEmits<{
   flex-wrap: wrap;
 }
 
+.themeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
 button,
 .file {
   font: inherit;
@@ -115,6 +175,24 @@ button,
   color: var(--color-text);
   border-radius: 12px;
   padding: 10px 12px;
+}
+
+.themeGrid button {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+}
+
+.themeGrid button.selected {
+  border-color: var(--color-gold);
+  background: rgba(244, 197, 106, 0.16);
+}
+
+.themeGrid span,
+.hint {
+  color: var(--color-text-dim);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 button {
@@ -148,6 +226,10 @@ button:disabled {
 @media (max-width: 899px) {
   .tools {
     min-width: 0;
+  }
+
+  .themeGrid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
