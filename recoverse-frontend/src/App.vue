@@ -399,6 +399,7 @@
       <SharedReflectionPage
         v-else-if="mode === 'shared-reflections'"
         :reflection="activeReflection"
+        :snapshot="sharedReflectionSnapshot"
         @back-home="setMode('home-universe')"
         @answer-same="openNewReflection"
       />
@@ -712,6 +713,13 @@ import {
   getLocalOnlyStorageWarning,
   type AccountStorageProvider,
 } from "./lib/reflectionSync";
+import {
+  buildShareHash,
+  buildSharedReflectionSnapshot,
+  REFLECTION_SHARE_HASH_PREFIX,
+  readShareHash,
+  type SharedReflectionSnapshot,
+} from "./lib/reflectionShare";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
 type BottomTabId = "write" | "home" | "review";
@@ -1085,6 +1093,7 @@ const observationData = ref<ObservationData>({
 });
 const reflections = ref<Reflection[]>(loadReflections());
 const activeReflectionId = ref<string | null>(reflections.value[0]?.id ?? null);
+const sharedReflectionSnapshot = ref<SharedReflectionSnapshot | null>(null);
 const {
   selectedCapsuleId,
   selectedCapsuleCardId,
@@ -1383,6 +1392,24 @@ function requestAccountSave(provider: AccountStorageProvider) {
   }
 }
 
+function openSharedSnapshotFromHash() {
+  const snapshot = readShareHash(window.location.hash);
+  if (!snapshot) return false;
+
+  sharedReflectionSnapshot.value = snapshot;
+  activeReflectionId.value = null;
+  setMode("shared-reflections", { recordHistory: false });
+  return true;
+}
+
+function onHashChange() {
+  if (openSharedSnapshotFromHash()) return;
+  if (sharedReflectionSnapshot.value) {
+    sharedReflectionSnapshot.value = null;
+    setMode("home-universe");
+  }
+}
+
 onMounted(() => {
   entries.value = loadEntries();
   refreshCapsules();
@@ -1392,11 +1419,14 @@ onMounted(() => {
   selectedYear.value = START_YEAR;
   form.year = START_YEAR;
   window.history.replaceState({ recoverseMode: mode.value }, "", window.location.href);
+  openSharedSnapshotFromHash();
   window.addEventListener("popstate", onBrowserBack);
+  window.addEventListener("hashchange", onHashChange);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("popstate", onBrowserBack);
+  window.removeEventListener("hashchange", onHashChange);
 });
 
 function refreshCapsules() {
@@ -1583,6 +1613,11 @@ function setMode(m: AppMode, options: { recordHistory?: boolean } = {}) {
   const previousMode = mode.value;
   const shouldRecordHistory = options.recordHistory !== false;
 
+  if (m !== "shared-reflections") {
+    sharedReflectionSnapshot.value = null;
+    clearShareHash();
+  }
+
   if (previousMode !== m && shouldRecordHistory && !isHandlingBrowserBack.value) {
     modeBackStack.value.push(previousMode);
     window.history.pushState({ recoverseMode: m }, "", window.location.href);
@@ -1615,6 +1650,15 @@ function setMode(m: AppMode, options: { recordHistory?: boolean } = {}) {
   if (m === "archive-time") {
     if (!compareQ.value && questionBank.value[0]) compareQ.value = questionBank.value[0].q;
   }
+}
+
+function clearShareHash() {
+  if (!window.location.hash.startsWith(REFLECTION_SHARE_HASH_PREFIX)) return;
+  window.history.replaceState(
+    { recoverseMode: mode.value },
+    "",
+    `${window.location.pathname}${window.location.search}`
+  );
 }
 
 function navigateBottomTab(tabId: BottomTabId) {
@@ -1652,25 +1696,30 @@ function openArchiveSettings() {
 }
 
 function openNewReflection() {
+  sharedReflectionSnapshot.value = null;
   setMode("reflection-new");
 }
 
 function openReflectionDetail(reflectionId: string) {
+  sharedReflectionSnapshot.value = null;
   activeReflectionId.value = reflectionId;
   setMode("reflection-detail");
 }
 
 function continueReflection(reflectionId: string) {
+  sharedReflectionSnapshot.value = null;
   activeReflectionId.value = reflectionId;
   const reflection = activeReflection.value;
   setMode(reflection?.isCompleted ? "reflection-detail" : "reflection-write");
 }
 
 function openReviewAgain() {
+  sharedReflectionSnapshot.value = null;
   setMode("review-again");
 }
 
 function openSharedReflections() {
+  sharedReflectionSnapshot.value = null;
   if (!activeReflectionId.value) {
     activeReflectionId.value =
       reflections.value.find((reflection) => reflection.visibility === "shared")?.id ??
@@ -1680,7 +1729,7 @@ function openSharedReflections() {
   setMode("shared-reflections");
 }
 
-function shareActiveReflection(questionIds: string[]) {
+async function shareActiveReflection(questionIds: string[]) {
   const reflection = activeReflection.value;
   const selectedQuestionIds = questionIds.filter(Boolean);
   if (!reflection || selectedQuestionIds.length === 0) return;
@@ -1702,7 +1751,19 @@ function shareActiveReflection(questionIds: string[]) {
 
   reflections.value = saveReflection(next);
   activeReflectionId.value = next.id;
+  const snapshot = buildSharedReflectionSnapshot(next, selectedQuestionIds);
+  const hash = buildShareHash(snapshot);
+  const shareUrl = `${window.location.origin}${window.location.pathname}${window.location.search}${hash}`;
+  sharedReflectionSnapshot.value = snapshot;
+  window.history.pushState({ recoverseMode: "shared-reflections" }, "", shareUrl);
   setMode("shared-reflections");
+
+  try {
+    await navigator.clipboard?.writeText(shareUrl);
+    alert("읽기 전용 공유 링크를 복사했어요.");
+  } catch {
+    window.prompt("읽기 전용 공유 링크를 복사해 주세요.", shareUrl);
+  }
 }
 
 function startReflectionDraft(payload: {

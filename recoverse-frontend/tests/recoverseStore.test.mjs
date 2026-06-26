@@ -72,6 +72,10 @@ const reflectionSyncPath = await compileTsModule(
     ['"./reflectionStore"', '"./reflectionStore.mjs"'],
   ]
 );
+const reflectionSharePath = await compileTsModule(
+  new URL("../src/lib/reflectionShare.ts", import.meta.url),
+  "reflectionShare.mjs"
+);
 const questionTimelinePath = await compileTsModule(
   new URL("../src/lib/questionTimeline.ts", import.meta.url),
   "questionTimeline.mjs"
@@ -100,6 +104,7 @@ const store = await import(pathToFileURL(storePath).href);
 const reflectionStore = await import(pathToFileURL(reflectionStorePath).href);
 const reflectionBackup = await import(pathToFileURL(reflectionBackupPath).href);
 const reflectionSync = await import(pathToFileURL(reflectionSyncPath).href);
+const reflectionShare = await import(pathToFileURL(reflectionSharePath).href);
 const questionTimeline = await import(pathToFileURL(questionTimelinePath).href);
 const capsuleImportExport = await import(pathToFileURL(capsuleImportExportPath).href);
 const capsuleHomeData = await import(pathToFileURL(capsuleHomeDataPath).href);
@@ -224,6 +229,31 @@ test("explains local only account save fallback", () => {
     reflectionSync.getLocalOnlyStorageWarning(1),
     /브라우저 데이터가 삭제되면 사라질 수/
   );
+});
+
+test("encodes and restores read only reflection share snapshots", () => {
+  let reflection = reflectionStore.createReflectionDraft({
+    templateId: "template_travel",
+    period: { label: "제주 여행" },
+    questionSetMode: "light",
+    title: "제주 여행의 기억",
+  });
+  const firstQuestion = reflection.questionGroups[0].questions[0];
+  reflection = reflectionStore.saveReflectionAnswer(
+    reflection,
+    firstQuestion.id,
+    "바다 앞에서 먹은 라면"
+  );
+
+  const snapshot = reflectionShare.buildSharedReflectionSnapshot(reflection, [firstQuestion.id]);
+  const hash = reflectionShare.buildShareHash(snapshot);
+  const restored = reflectionShare.readShareHash(hash);
+
+  assert.ok(hash.startsWith("#share="));
+  assert.equal(restored.title, "제주 여행의 기억");
+  assert.equal(restored.items.length, 1);
+  assert.equal(restored.items[0].questionText, firstQuestion.text);
+  assert.equal(restored.items[0].answerText, "바다 앞에서 먹은 라면");
 });
 
 test("migrates legacy yearly entries into reflection records without mutating legacy storage", () => {

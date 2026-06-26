@@ -1,22 +1,25 @@
 <template>
-  <section v-if="reflection" class="sharedPage">
+  <section v-if="shareTitle" class="sharedPage">
     <header class="sharedHeader">
       <div>
         <span class="eyebrow">읽기 전용 공유</span>
-        <h1>{{ reflection.title }}</h1>
+        <h1>{{ shareTitle }}</h1>
       </div>
     </header>
 
     <main class="sharedShell">
       <section class="notice">
         <strong>이 화면에서는 수정할 수 없어요.</strong>
-        <p>공유자가 고른 질문과 답변만 보입니다. 댓글, 좋아요, 편집 없이 조용히 읽는 공유 화면입니다.</p>
+        <p>
+          공유자가 고른 질문과 답변만 보입니다.
+          댓글, 좋아요, 편집 없이 조용히 읽는 공유 화면입니다.
+        </p>
       </section>
 
       <section class="answerList">
-        <article v-for="item in visibleItems" :key="item.question.id" class="answerCard">
+        <article v-for="item in visibleItems" :key="item.questionId" class="answerCard">
           <span>{{ item.groupLabel }}</span>
-          <h2>{{ item.question.text }}</h2>
+          <h2>{{ item.questionText }}</h2>
           <p>{{ item.answerText || "공유된 답변이 아직 없어요." }}</p>
         </article>
       </section>
@@ -40,10 +43,12 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import type { SharedReflectionSnapshot } from "../lib/reflectionShare";
 import type { Reflection } from "../types/reflection";
 
 const props = defineProps<{
   reflection: Reflection | null;
+  snapshot?: SharedReflectionSnapshot | null;
 }>();
 
 defineEmits<{
@@ -51,8 +56,10 @@ defineEmits<{
   "answer-same": [];
 }>();
 
+const shareTitle = computed(() => props.snapshot?.title ?? props.reflection?.title ?? "");
 const visibleQuestionIds = computed(() => new Set(props.reflection?.shareSettings?.selectedQuestionIds ?? []));
 const visibleItems = computed(() => {
+  if (props.snapshot) return props.snapshot.items;
   if (!props.reflection) return [];
   const hasSelection = visibleQuestionIds.value.size > 0;
 
@@ -64,7 +71,8 @@ const visibleItems = computed(() => {
       return [
         {
           groupLabel: group.label,
-          question,
+          questionId: question.id,
+          questionText: question.text,
           answerText: answer?.value.trim() ?? "",
         },
       ];

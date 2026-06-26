@@ -174,6 +174,9 @@ type GalaxyLog = {
 ### Observation Snapshot
 
 관측 모드는 원본 데이터를 직접 노출하지 않고 공유 시점의 읽기 전용 스냅샷을 사용한다.
+현재 MVP의 회고 공유는 `recoverse_shared_reflection_v1` 스냅샷을 URL 해시에 인코딩한다.
+이 방식은 로그인과 서버 저장 없이 동작하지만, 긴 답변이 많아지면 URL 길이 제한이 생길 수 있다.
+계정 저장 이후에는 같은 스냅샷 구조를 서버 저장 링크로 이전한다.
 
 ```ts
 type ObservationSnapshot = {
@@ -208,7 +211,8 @@ type ObservationRecordSnapshot = {
 | 호환 모델 | `recoverse_capsule_v1` | 이전 기억 행성/탐사 기록 데이터 유지 | 아니오 |
 | 호환 모델 | `recoverse_v2_entries` | 이전 연도 질문/답변 JSON 유지와 마이그레이션 | 아니오 |
 | 확장 모델 | `recoverse_galaxy_v1` | 그룹 회고 은하 초안 | 보류 |
-| 확장 모델 | `recoverse_observation_v1` | 읽기 전용 공유 스냅샷 초안 | 보류 |
+| 파생 스냅샷 | `recoverse_shared_reflection_v1` | URL 해시에 담기는 회고 공유 읽기 전용 스냅샷 | 예 |
+| 확장 모델 | `recoverse_observation_v1` | 개인/그룹 기억 관측 스냅샷 초안 | 보류 |
 
 ```text
 localStorage["recoverse_reflections_v1"]
@@ -295,7 +299,7 @@ src/
 
 - 실제 로그인
 - 서버 저장
-- 실제 공유 링크 발행
+- 서버 저장 기반 공유 링크 발행
 - PDF 내보내기
 - 실시간 그룹 협업
 - Three.js
