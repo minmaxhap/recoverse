@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AppLanguage } from "../lib/recoverseStore";
+import type { AppLanguage } from "../types/recoverse";
 
 defineProps<{
   modelValue: AppLanguage;

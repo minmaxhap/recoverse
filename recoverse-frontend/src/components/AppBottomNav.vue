@@ -31,7 +31,7 @@ defineEmits<{
 
 const items = computed<Array<{
   id: BottomTabId;
-  icon: "home" | "write" | "review" | "archive";
+  icon: "home" | "write" | "review";
   label: string;
 }>>(() => [
   { id: "write", icon: "write", label: props.labels.write },

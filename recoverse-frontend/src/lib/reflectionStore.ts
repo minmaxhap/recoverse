@@ -1,7 +1,6 @@
 import { buildQuestionGroupsForMode, getReflectionTemplate } from "../data/reflectionTemplates";
 import type {
   Answer,
-  LegacyEntry,
   Question,
   QuestionGroup,
   Reflection,
@@ -25,14 +24,6 @@ function safeParse<T>(raw: string | null): T | null {
 
 function uuid(): string {
   return (crypto as any)?.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`;
-}
-
-function stableId(prefix: string, value: string): string {
-  let hash = 5381;
-  for (let i = 0; i < value.length; i++) {
-    hash = (hash * 33) ^ value.charCodeAt(i);
-  }
-  return `${prefix}_${(hash >>> 0).toString(36)}`;
 }
 
 function normalizeText(value: unknown): string {
@@ -276,67 +267,3 @@ export function saveReflectionAnswer(
   };
 }
 
-export function migrateLegacyEntriesToReflections(entries: LegacyEntry[]): Reflection[] {
-  const byYear = new Map<number, LegacyEntry[]>();
-
-  for (const entry of entries) {
-    if (!Number.isFinite(entry.year) || !entry.q.trim()) continue;
-    const list = byYear.get(entry.year) ?? [];
-    list.push(entry);
-    byYear.set(entry.year, list);
-  }
-
-  return Array.from(byYear.entries())
-    .sort(([a], [b]) => b - a)
-    .map(([year, yearEntries]) => {
-      const sortedEntries = yearEntries.slice().sort((a, b) => (a.createdAt > b.createdAt ? 1 : -1));
-      const questions: Question[] = sortedEntries.map((entry) => ({
-        id: stableId("legacy_question", entry.q),
-        text: entry.q,
-        groupId: "legacy_year",
-        hint: commonLegacyHint(entry.answers.length),
-        isRepeatable: true,
-        visibility: "public",
-      }));
-      const questionGroups: QuestionGroup[] = [
-        {
-          id: "legacy_year",
-          label: "기존 연도 회고",
-          questions,
-        },
-      ];
-      const answers: Answer[] = sortedEntries.map((entry) => ({
-        questionId: stableId("legacy_question", entry.q),
-        value: entry.answers.map((answer) => answer.trim()).filter(Boolean).join("\n"),
-        skipped: false,
-        updatedAt: entry.createdAt,
-      }));
-      const createdAt = sortedEntries[0]?.createdAt ?? new Date().toISOString();
-      const updatedAt = sortedEntries[sortedEntries.length - 1]?.createdAt ?? createdAt;
-      const completionRate = calculateCompletionRate(questionGroups, answers);
-
-      return {
-        id: stableId("legacy_reflection", String(year)),
-        title: `${year} 한 해 회고`,
-        type: "year",
-        mode: "solo",
-        period: { label: `${year}년`, year },
-        templateId: "legacy_recoverse_v2",
-        questionSetMode: "deep",
-        questionGroups,
-        answers,
-        representativeSentence: firstAnswerValue(answers),
-        visibility: "private",
-        isCompleted: true,
-        completionRate,
-        createdAt,
-        updatedAt,
-      };
-    });
-}
-
-function commonLegacyHint(answerCount: number): string {
-  return answerCount > 1 ? "기존 회고의 여러 답변을 줄바꿈으로 합쳤어요." : commonLegacyHintText;
-}
-
-const commonLegacyHintText = "기존 Recoverse 회고에서 가져온 질문이에요.";

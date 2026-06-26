@@ -40,32 +40,6 @@
       <p class="hint">{{ reflectionBackupHint }}</p>
     </section>
 
-    <section class="toolGroup">
-      <span class="groupLabel">{{ capsuleGroupLabel }}</span>
-      <div class="buttonRow">
-        <button type="button" :disabled="capsuleExportDisabled" @click="$emit('capsule-export')">
-          {{ capsuleExportLabel }}
-        </button>
-        <label class="file">
-          {{ capsuleImportLabel }}
-          <input type="file" accept="application/json" @change="$emit('capsule-import-file', $event)" />
-        </label>
-      </div>
-    </section>
-
-    <section class="toolGroup">
-      <span class="groupLabel">{{ legacyGroupLabel }}</span>
-      <div class="buttonRow">
-        <button type="button" :disabled="exportDisabled" @click="$emit('export')">
-          {{ exportLabel }}
-        </button>
-        <label class="file">
-          {{ importLabel }}
-          <input type="file" accept="application/json" @change="$emit('import-file', $event)" />
-        </label>
-      </div>
-    </section>
-
     <section id="settings-danger" class="toolGroup dangerGroup">
       <span class="groupLabel">{{ dangerGroupLabel }}</span>
       <button class="danger" type="button" :disabled="clearDisabled" @click="$emit('clear-all')">
@@ -76,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AppLanguage } from "../lib/recoverseStore";
+import type { AppLanguage } from "../types/recoverse";
 import LanguageSelector from "./LanguageSelector.vue";
 
 export type RecoverseTheme = "universe" | "letter" | "journey";
@@ -98,16 +72,8 @@ defineProps<{
   reflectionImportLabel: string;
   reflectionBackupHint: string;
   reflectionExportDisabled: boolean;
-  capsuleGroupLabel: string;
-  capsuleExportLabel: string;
-  capsuleImportLabel: string;
-  capsuleExportDisabled: boolean;
-  legacyGroupLabel: string;
-  exportLabel: string;
-  importLabel: string;
   dangerGroupLabel: string;
   clearLabel: string;
-  exportDisabled: boolean;
   clearDisabled: boolean;
 }>();
 
@@ -117,10 +83,6 @@ defineEmits<{
   "change-language": [];
   "reflection-export": [];
   "reflection-import-file": [event: Event];
-  "capsule-export": [];
-  "capsule-import-file": [event: Event];
-  export: [];
-  "import-file": [event: Event];
   "clear-all": [];
 }>();
 </script>

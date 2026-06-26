@@ -90,14 +90,6 @@ export interface ReflectionTemplate {
   groups: ReflectionTemplateGroup[];
 }
 
-export interface LegacyEntry {
-  id: string;
-  year: number;
-  q: string;
-  answers: string[];
-  createdAt: string;
-}
-
 export interface QuestionTimelineItem {
   reflectionId: string;
   reflectionTitle: string;
