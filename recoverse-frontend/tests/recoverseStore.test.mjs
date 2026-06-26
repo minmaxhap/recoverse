@@ -139,6 +139,20 @@ test("creates a reflection draft from the year template light question set", () 
   assert.equal(questions[0].text, "올해 가장 기억에 남는 장소는?");
 });
 
+test("adds concrete writing hints to reflection template questions", () => {
+  const reflection = reflectionStore.createReflectionDraft({
+    templateId: "template_travel",
+    period: { label: "제주 여행" },
+    questionSetMode: "light",
+  });
+  const hints = reflection.questionGroups.flatMap((group) =>
+    group.questions.map((question) => question.hint)
+  );
+
+  assert.ok(hints.every((hint) => hint && !hint.includes("단어만 적어도")));
+  assert.match(hints[0], /도착|이동|숙소|길거리/);
+});
+
 test("saves loads updates and deletes reflection data", () => {
   localStorage.clear();
 
