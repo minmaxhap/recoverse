@@ -37,6 +37,14 @@
               {{ reflections.length ? "새 기억 남기기" : "첫 기억 작성하기" }}
             </button>
             <button
+              v-if="reflections.length === 0"
+              class="draftButton"
+              type="button"
+              @click="$emit('load-sample')"
+            >
+              샘플 기억 먼저 보기
+            </button>
+            <button
               v-if="draftReflection"
               class="draftButton"
               type="button"
@@ -77,6 +85,7 @@ defineEmits<{
   "start-writing": [];
   "open-reflection": [reflectionId: string];
   "continue-reflection": [reflectionId: string];
+  "load-sample": [];
 }>();
 
 const driftMarks = [1, 2, 3, 4, 5, 6];

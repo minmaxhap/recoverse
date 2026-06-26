@@ -362,6 +362,7 @@
         @start-writing="openNewReflection"
         @open-reflection="openReflectionDetail"
         @continue-reflection="continueReflection"
+        @load-sample="loadSampleReflection"
       />
 
       <NewReflectionPage
@@ -719,6 +720,7 @@ import {
   readShareHash,
   type SharedReflectionSnapshot,
 } from "./lib/reflectionShare";
+import { createSampleReflection, SAMPLE_REFLECTION_ID } from "./lib/sampleReflection";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
 type BottomTabId = "write" | "home" | "review";
@@ -1796,6 +1798,15 @@ function startReflectionDraft(payload: {
   reflections.value = saveReflection(reflection);
   activeReflectionId.value = reflection.id;
   setMode("reflection-write");
+}
+
+function loadSampleReflection() {
+  const sample =
+    reflections.value.find((reflection) => reflection.id === SAMPLE_REFLECTION_ID) ??
+    createSampleReflection();
+  reflections.value = saveReflection(sample);
+  activeReflectionId.value = sample.id;
+  setMode("reflection-detail");
 }
 
 function saveActiveReflectionAnswer(payload: {

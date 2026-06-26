@@ -76,6 +76,14 @@ const reflectionSharePath = await compileTsModule(
   new URL("../src/lib/reflectionShare.ts", import.meta.url),
   "reflectionShare.mjs"
 );
+const sampleReflectionPath = await compileTsModule(
+  new URL("../src/lib/sampleReflection.ts", import.meta.url),
+  "sampleReflection.mjs",
+  [
+    ['"../data/reflectionTemplates"', '"./reflectionTemplates.mjs"'],
+    ['"./reflectionStore"', '"./reflectionStore.mjs"'],
+  ]
+);
 const questionTimelinePath = await compileTsModule(
   new URL("../src/lib/questionTimeline.ts", import.meta.url),
   "questionTimeline.mjs"
@@ -105,6 +113,7 @@ const reflectionStore = await import(pathToFileURL(reflectionStorePath).href);
 const reflectionBackup = await import(pathToFileURL(reflectionBackupPath).href);
 const reflectionSync = await import(pathToFileURL(reflectionSyncPath).href);
 const reflectionShare = await import(pathToFileURL(reflectionSharePath).href);
+const sampleReflection = await import(pathToFileURL(sampleReflectionPath).href);
 const questionTimeline = await import(pathToFileURL(questionTimelinePath).href);
 const capsuleImportExport = await import(pathToFileURL(capsuleImportExportPath).href);
 const capsuleHomeData = await import(pathToFileURL(capsuleHomeDataPath).href);
@@ -254,6 +263,17 @@ test("encodes and restores read only reflection share snapshots", () => {
   assert.equal(restored.items.length, 1);
   assert.equal(restored.items[0].questionText, firstQuestion.text);
   assert.equal(restored.items[0].answerText, "바다 앞에서 먹은 라면");
+});
+
+test("creates a complete sample reflection users can preview", () => {
+  const sample = sampleReflection.createSampleReflection();
+
+  assert.equal(sample.id, sampleReflection.SAMPLE_REFLECTION_ID);
+  assert.equal(sample.templateId, "template_travel");
+  assert.equal(sample.period.label, "제주 여행");
+  assert.ok(sample.answers.length > 0);
+  assert.equal(sample.completionRate, 100);
+  assert.match(sample.representativeSentence, /바다/);
 });
 
 test("migrates legacy yearly entries into reflection records without mutating legacy storage", () => {
