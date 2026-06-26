@@ -196,28 +196,41 @@ type ObservationRecordSnapshot = {
 };
 ```
 
-## 저장소
+## 저장소와 데이터 모델 정리
 
-현재 저장 키:
+현재 기준 모델은 `Reflection`이다. 사용자가 새로 작성하는 회고, 다시 보기, 공유 후보, 계정 저장 후보는 모두 `Reflection`을 기준으로 다룬다.
+
+기존 모델은 삭제하지 않고 호환 계층으로 둔다.
+
+| 계층 | 저장 키 | 역할 | 신규 기능 기준 여부 |
+| --- | --- | --- | --- |
+| 기준 모델 | `recoverse_reflections_v1` | 새 회고 작성, 다시 보기, 공유 후보, 백업/가져오기 | 예 |
+| 호환 모델 | `recoverse_capsule_v1` | 이전 기억 행성/탐사 기록 데이터 유지 | 아니오 |
+| 호환 모델 | `recoverse_v2_entries` | 이전 연도 질문/답변 JSON 유지와 마이그레이션 | 아니오 |
+| 확장 모델 | `recoverse_galaxy_v1` | 그룹 회고 은하 초안 | 보류 |
+| 확장 모델 | `recoverse_observation_v1` | 읽기 전용 공유 스냅샷 초안 | 보류 |
 
 ```text
+localStorage["recoverse_reflections_v1"]
 localStorage["recoverse_capsule_v1"]
+localStorage["recoverse_v2_entries"]
 ```
 
-추가 후보:
+UI 원칙:
 
-```text
-localStorage["recoverse_galaxy_v1"]
-localStorage["recoverse_observation_v1"]
-localStorage["recoverse_ui_v1"]
-```
+- `기억 작성`, `홈`, `다시 보기`는 `Reflection`만 기준으로 동작한다.
+- `capsule`과 `legacy entry`는 설정/호환 아카이브에서만 보조적으로 다룬다.
+- 새 백업 파일의 기준 schema는 `recoverse_reflections_v1`이다.
+- 새 회고 가져오기는 기존 회고를 덮어쓰지 않고, 같은 id의 최신 `updatedAt`만 병합한다.
+- 기존 `capsule`/`legacy` 백업은 호환을 위해 유지하지만 신규 기능의 기준으로 확장하지 않는다.
 
 원칙:
 
 - MVP에서는 localStorage를 단일 진실 공급원으로 유지한다.
-- 기존 연도 기반 데이터는 계속 연도 회고 행성으로 변환한다.
-- 새 저장 키를 추가하더라도 기존 `recoverse_capsule_v1`을 깨지 않는다.
+- 기존 연도 기반 데이터는 필요할 때 `Reflection`으로 변환한다.
+- 새 저장 키를 추가하더라도 기존 `recoverse_capsule_v1`, `recoverse_v2_entries`를 깨지 않는다.
 - import/export는 아카이브/설정에 남긴다.
+- 계정 저장을 도입할 때도 서버의 1차 테이블은 `Reflection`이 된다.
 
 ## 권장 파일 구조
 

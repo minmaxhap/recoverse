@@ -323,10 +323,10 @@
             :language-label="t.language"
             theme-label="테마"
             :theme-options="themeOptions"
-            reflection-group-label="새 회고 백업"
+            reflection-group-label="현재 회고 데이터"
             reflection-export-label="회고 백업하기"
             reflection-import-label="회고 가져오기"
-            reflection-backup-hint="기억 작성 탭에서 만든 새 회고 데이터를 JSON으로 내보내거나 다시 가져옵니다."
+            reflection-backup-hint="Recoverse의 기준 데이터입니다. 가져오기는 기존 회고를 지우지 않고 최신 항목만 병합합니다."
             :reflection-export-disabled="reflections.length === 0"
             :capsule-group-label="t.capsuleBackupGroup"
             :capsule-export-label="t.exportCapsules"
@@ -699,6 +699,11 @@ import {
   saveReflectionAnswer,
   saveReflections,
 } from "./lib/reflectionStore";
+import {
+  exportReflectionBackup,
+  mergeReflectionBackup,
+  REFLECTION_BACKUP_SCHEMA,
+} from "./lib/reflectionBackup";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
 type BottomTabId = "write" | "home" | "review";
@@ -739,8 +744,8 @@ const messages = {
     retrospectiveCapsules: "회고 행성",
     exportCapsules: "기억 행성 JSON 내보내기",
     importCapsules: "기억 행성 JSON 가져오기",
-    capsuleBackupGroup: "기억 행성 백업",
-    legacyBackupGroup: "연도 아카이브 백업",
+    capsuleBackupGroup: "이전 행성 데이터",
+    legacyBackupGroup: "이전 연도 데이터",
     legacyExportJson: "연도 JSON 내보내기",
     legacyImportJson: "연도 JSON 가져오기",
     dangerSettingsGroup: "데이터 초기화",
@@ -905,8 +910,8 @@ const messages = {
     retrospectiveCapsules: "Retrospective Capsules",
     exportCapsules: "Export memory planet JSON",
     importCapsules: "Import memory planet JSON",
-    capsuleBackupGroup: "Memory Planet Backup",
-    legacyBackupGroup: "Year Archive Backup",
+    capsuleBackupGroup: "Legacy Planet Data",
+    legacyBackupGroup: "Legacy Year Data",
     legacyExportJson: "Export year JSON",
     legacyImportJson: "Import year JSON",
     dangerSettingsGroup: "Data reset",
@@ -2366,20 +2371,7 @@ function onExport() {
 
 function onExportReflections() {
   const yyyyMMdd = new Date().toISOString().slice(0, 10);
-  const blob = new Blob(
-    [
-      JSON.stringify(
-        {
-          schema: "recoverse_reflections_v1",
-          exportedAt: new Date().toISOString(),
-          reflections: reflections.value,
-        },
-        null,
-        2
-      ),
-    ],
-    { type: "application/json;charset=utf-8" }
-  );
+  const blob = exportReflectionBackup(reflections.value);
   downloadBlob(blob, `recoverse_reflections_${yyyyMMdd}.json`);
 }
 
@@ -2466,17 +2458,20 @@ async function onImportReflectionFile(e: Event) {
 
   try {
     const text = await file.text();
-    const parsed = JSON.parse(text);
-    if (parsed?.schema !== "recoverse_reflections_v1" || !Array.isArray(parsed.reflections)) {
-      throw new Error("Recoverse 새 회고 백업 파일이 아니에요.");
-    }
-
-    const imported = saveReflections(parsed.reflections);
-    reflections.value = imported;
-    activeReflectionId.value = imported[0]?.id ?? null;
-    alert(`${imported.length}개의 회고를 가져왔어요.`);
+    const result = mergeReflectionBackup(reflections.value, text);
+    reflections.value = saveReflections(result.reflections);
+    activeReflectionId.value = reflections.value[0]?.id ?? null;
+    alert(
+      `회고 가져오기 완료: 추가 ${result.added}개, 업데이트 ${result.updated}개, 유지 ${result.skipped}개`
+    );
   } catch (err: any) {
-    alert(`회고 가져오기 실패: ${err?.message ?? "알 수 없는 오류"}`);
+    const reason =
+      err?.message === "RECOVERSE_REFLECTION_IMPORT_INVALID_JSON"
+        ? "JSON 파일을 읽을 수 없어요."
+        : err?.message === "RECOVERSE_REFLECTION_IMPORT_UNSUPPORTED_VERSION"
+          ? `${REFLECTION_BACKUP_SCHEMA} 백업 파일이 아니에요.`
+          : err?.message ?? "알 수 없는 오류";
+    alert(`회고 가져오기 실패: ${reason}`);
   } finally {
     input.value = "";
   }

@@ -56,6 +56,14 @@ const reflectionStorePath = await compileTsModule(
   "reflectionStore.mjs",
   [['"../data/reflectionTemplates"', '"./reflectionTemplates.mjs"']]
 );
+const reflectionBackupPath = await compileTsModule(
+  new URL("../src/lib/reflectionBackup.ts", import.meta.url),
+  "reflectionBackup.mjs",
+  [
+    ['"../types/reflection"', '"./reflectionTypes.mjs"'],
+    ['"./reflectionStore"', '"./reflectionStore.mjs"'],
+  ]
+);
 const questionTimelinePath = await compileTsModule(
   new URL("../src/lib/questionTimeline.ts", import.meta.url),
   "questionTimeline.mjs"
@@ -82,6 +90,7 @@ const observationActionsPath = await compileTsModule(
 
 const store = await import(pathToFileURL(storePath).href);
 const reflectionStore = await import(pathToFileURL(reflectionStorePath).href);
+const reflectionBackup = await import(pathToFileURL(reflectionBackupPath).href);
 const questionTimeline = await import(pathToFileURL(questionTimelinePath).href);
 const capsuleImportExport = await import(pathToFileURL(capsuleImportExportPath).href);
 const capsuleHomeData = await import(pathToFileURL(capsuleHomeDataPath).href);
@@ -129,6 +138,55 @@ test("saves loads updates and deletes reflection data", () => {
   reflectionStore.deleteReflection(reflection.id);
   loaded = reflectionStore.loadReflections();
   assert.equal(loaded.length, 0);
+});
+
+test("exports reflection backups with the canonical schema", async () => {
+  const reflection = reflectionStore.createReflectionDraft({
+    templateId: "template_travel",
+    period: { label: "제주 여행" },
+    questionSetMode: "light",
+    title: "제주 여행의 기억",
+  });
+
+  const blob = reflectionBackup.exportReflectionBackup([reflection]);
+  const payload = JSON.parse(await blob.text());
+
+  assert.equal(payload.schema, "recoverse_reflections_v1");
+  assert.equal(payload.reflections.length, 1);
+  assert.equal(payload.reflections[0].title, "제주 여행의 기억");
+});
+
+test("merges reflection backups without overwriting newer local data", () => {
+  const local = reflectionStore.createReflectionDraft({
+    templateId: "template_year",
+    period: { label: "2026년", year: 2026 },
+    questionSetMode: "light",
+  });
+  const olderDuplicate = {
+    ...local,
+    title: "Older title",
+    updatedAt: "2025-01-01T00:00:00.000Z",
+  };
+  const incomingNew = reflectionStore.createReflectionDraft({
+    templateId: "template_travel",
+    period: { label: "부산 여행" },
+    questionSetMode: "light",
+    title: "부산 여행의 기억",
+  });
+
+  const backup = JSON.stringify({
+    schema: "recoverse_reflections_v1",
+    exportedAt: "2026-01-01T00:00:00.000Z",
+    reflections: [olderDuplicate, incomingNew],
+  });
+  const result = reflectionBackup.mergeReflectionBackup([local], backup);
+
+  assert.equal(result.added, 1);
+  assert.equal(result.updated, 0);
+  assert.equal(result.skipped, 1);
+  assert.equal(result.reflections.length, 2);
+  assert.equal(result.reflections.find((item) => item.id === local.id).title, local.title);
+  assert.ok(result.reflections.some((item) => item.title === "부산 여행의 기억"));
 });
 
 test("migrates legacy yearly entries into reflection records without mutating legacy storage", () => {
