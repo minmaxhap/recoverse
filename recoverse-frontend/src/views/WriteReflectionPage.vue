@@ -5,7 +5,7 @@
         나중에 이어쓰기
       </button>
       <div class="titleBlock">
-        <span class="eyebrow">{{ currentGroup?.label ?? "회고" }}</span>
+        <span class="eyebrow">{{ currentGroup?.label ?? "기억 작성" }}</span>
         <h1>{{ reflection.title }}</h1>
       </div>
       <div class="progressText">{{ currentStep }} / {{ questions.length }}</div>
@@ -19,12 +19,12 @@
       <article class="questionCard">
         <span class="questionMeta">질문 {{ currentStep }}</span>
         <h2>{{ currentQuestion?.text }}</h2>
-        <p>{{ currentQuestion?.hint ?? "짧게 적어도 괜찮아요." }}</p>
+        <p>{{ currentQuestion?.hint ?? "짧은 문장으로 시작해도 괜찮아요. 길게 쓰고 싶으면 그대로 이어 쓰세요." }}</p>
 
         <textarea
           v-model="draft"
           rows="7"
-          placeholder="지금 떠오르는 단어부터 적어보세요."
+          placeholder="지금 가장 먼저 떠오르는 장면이나 감정을 적어보세요."
           @keydown.ctrl.enter.prevent="saveAndNext"
           @keydown.meta.enter.prevent="saveAndNext"
         ></textarea>
@@ -34,9 +34,9 @@
         <button class="secondary" type="button" :disabled="activeIndex === 0" @click="goPrevious">
           이전
         </button>
-        <button class="secondary" type="button" @click="skipQuestion">건너뛰기</button>
+        <button class="secondary" type="button" @click="skipQuestion">지금은 넘기기</button>
         <button class="primary" type="button" @click="saveAndNext">
-          {{ isLastQuestion ? "완료하기" : "저장하고 다음" }}
+          {{ isLastQuestion ? "검토하러 가기" : "답변 저장" }}
         </button>
       </nav>
     </main>
@@ -44,7 +44,7 @@
 
   <section v-else class="writePage emptyState">
     <h1>이어 쓸 회고가 없어요.</h1>
-    <button class="primary" type="button" @click="$emit('back-new')">새 회고 시작</button>
+    <button class="primary" type="button" @click="$emit('back-new')">새 기억 작성</button>
   </section>
 </template>
 

@@ -163,19 +163,23 @@ export const reflectionTemplates: ReflectionTemplate[] = [
         id: "travel_scene",
         label: "이 여행의 장면",
         questions: [
-          q("travel_landscape", "travel_scene", "가장 기억에 남는 풍경은?", "scene", [
+          q("travel_first_scene", "travel_scene", "그 여행에서 가장 먼저 떠오르는 장면은?", "scene", [
             "light",
             "deep",
             "share",
+            "compare",
           ]),
-          q("travel_best_food", "travel_scene", "먹은 것 중 최고는?", "scene", [
+          q("travel_sense", "travel_scene", "계속 생각나는 음식, 노래, 냄새가 있다면?", "taste", [
             "light",
             "deep",
             "share",
+            "compare",
           ]),
-          q("travel_place_return", "travel_scene", "다시 가고 싶은 장소는?", "scene", [
+          q("travel_unexpected", "travel_scene", "예상과 달랐던 순간은?", "change", [
+            "light",
             "deep",
             "share",
+            "compare",
           ]),
         ],
       },
@@ -183,30 +187,35 @@ export const reflectionTemplates: ReflectionTemplate[] = [
         id: "travel_feeling",
         label: "이 여행의 감정",
         questions: [
-          q("travel_happy", "travel_feeling", "가장 기뻤던 순간은?", "self", [
+          q("travel_main_emotion", "travel_feeling", "그때 가장 많이 느낀 감정은?", "self", [
             "light",
             "deep",
             "share",
+            "compare",
           ]),
-          q("travel_unexpected", "travel_feeling", "예상 밖이었던 것은?", "change", [
+          q("travel_after_feeling", "travel_feeling", "그 여행이 끝난 뒤 남은 마음은?", "self", [
             "light",
             "deep",
             "share",
+            "compare",
           ]),
         ],
       },
       {
         id: "travel_self",
-        label: "이 여행의 나",
+        label: "이 여행의 의미",
         questions: [
-          q("travel_changed", "travel_self", "이 여행에서 달라진 것은?", "change", [
+          q("travel_people", "travel_self", "같이 있던 사람이나 떠오르는 얼굴은?", "people", [
             "light",
             "deep",
+            "share",
             "compare",
           ]),
-          q("travel_next", "travel_self", "다음에 또 간다면 꼭 하고 싶은 것은?", "future", [
+          q("travel_meaning", "travel_self", "지금 다시 돌아본다면 어떤 의미였나요?", "future", [
+            "light",
             "deep",
             "share",
+            "compare",
           ]),
         ],
       },

@@ -112,10 +112,13 @@ const emit = defineEmits<{
   ];
 }>();
 
-const templates = reflectionTemplates;
-const selectedTemplateId = ref(templates[0]?.id ?? "template_year");
+const templates = [
+  ...reflectionTemplates.filter((template) => template.id === "template_travel"),
+  ...reflectionTemplates.filter((template) => template.id !== "template_travel"),
+];
+const selectedTemplateId = ref("template_travel");
 const selectedQuestionSetMode = ref<ReflectionQuestionSetMode>("light");
-const periodLabel = ref(new Date().getFullYear().toString() + "년");
+const periodLabel = ref("제주 여행");
 const titleOverride = ref("");
 
 const questionModes: Array<{

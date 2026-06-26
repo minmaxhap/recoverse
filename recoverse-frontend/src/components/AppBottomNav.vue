@@ -18,7 +18,7 @@
 import { computed } from "vue";
 import NavIcon from "./NavIcon.vue";
 
-export type BottomTabId = "home" | "write" | "review" | "settings";
+export type BottomTabId = "write" | "home" | "review";
 
 const props = defineProps<{
   activeTab: BottomTabId;
@@ -34,10 +34,9 @@ const items = computed<Array<{
   icon: "home" | "write" | "review" | "archive";
   label: string;
 }>>(() => [
-  { id: "home", icon: "home", label: props.labels.home },
   { id: "write", icon: "write", label: props.labels.write },
+  { id: "home", icon: "home", label: props.labels.home },
   { id: "review", icon: "review", label: props.labels.review },
-  { id: "settings", icon: "archive", label: props.labels.settings },
 ]);
 </script>
 
@@ -49,7 +48,7 @@ const items = computed<Array<{
   bottom: 0;
   z-index: 40;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   padding: 10px max(10px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
   border-top: 1px solid var(--color-soft-border);

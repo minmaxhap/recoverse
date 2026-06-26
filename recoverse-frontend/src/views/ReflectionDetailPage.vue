@@ -2,20 +2,33 @@
   <section v-if="reflection" class="detailPage">
     <header class="detailHeader">
       <div>
-        <span class="eyebrow">다시 읽는 회고</span>
+        <span class="eyebrow">검토와 다시 보기</span>
         <h1>{{ reflection.title }}</h1>
       </div>
-      <button class="editButton" type="button" @click="$emit('edit')">수정</button>
+      <button class="editButton" type="button" @click="$emit('edit')">수정하기</button>
     </header>
 
     <main class="detailShell">
       <section class="heroPanel">
         <span class="heroLabel">{{ reflection.period.label }}</span>
-        <h2>{{ representativeSentence }}</h2>
-        <p>
-          {{ answeredCount }}개의 답변을 남겼고, {{ skippedCount }}개는 건너뛰었어요.
-          {{ hasReadableAnswers ? "지금은 고치기보다 그때의 나를 먼저 읽는 화면입니다." : "첫 답변을 남기면 이 화면이 읽기 화면으로 바뀝니다." }}
-        </p>
+        <h2>{{ representativeScene }}</h2>
+        <p>{{ representativeEmotion }}</p>
+      </section>
+
+      <section class="savePanel">
+        <div>
+          <span class="eyebrow">저장 안내</span>
+          <h2>이 기억은 내 브라우저에 임시 저장되어 있어요.</h2>
+          <p>
+            캐시를 지우면 사라질 수 있으니, 정식 저장은 Google/Kakao 연결 이후 안전하게
+            보관하는 흐름으로 이어질 예정입니다.
+          </p>
+        </div>
+        <div class="saveActions">
+          <button type="button">Google로 저장</button>
+          <button type="button">Kakao로 저장</button>
+          <button type="button">임시 저장 유지</button>
+        </div>
       </section>
 
       <section class="metaGrid" aria-label="회고 상태">
@@ -24,8 +37,8 @@
           <strong>{{ reflection.completionRate }}%</strong>
         </div>
         <div>
-          <span>질문 수</span>
-          <strong>{{ questions.length }}개</strong>
+          <span>답변</span>
+          <strong>{{ answeredCount }}개</strong>
         </div>
         <div>
           <span>마지막 수정</span>
@@ -33,19 +46,10 @@
         </div>
       </section>
 
-      <section v-if="!hasReadableAnswers" class="emptyDraftPanel">
-        <div>
-          <span class="eyebrow">아직 탐험 전</span>
-          <h2>이 회고는 읽기보다 이어쓰기가 먼저예요</h2>
-          <p>질문 하나에 한 문장만 남겨도 나중에 다시 발견할 단서가 생깁니다.</p>
-        </div>
-        <button class="editButton" type="button" @click="$emit('edit')">이어쓰기</button>
-      </section>
-
       <section v-if="shareableItems.length > 0" class="sharePanel">
         <details>
-          <summary>공유할 질문 선택</summary>
-          <p>공개 가능한 질문만 고를 수 있어요. 선택 후 열리는 화면은 읽기 전용입니다.</p>
+          <summary>읽기 전용 공유 만들기</summary>
+          <p>친구에게 보여줘도 괜찮은 질문만 고르면 수정할 수 없는 읽기 전용 화면이 만들어집니다.</p>
           <div class="shareList">
             <label v-for="item in shareableItems" :key="item.question.id" class="shareOption">
               <input v-model="shareSelection" type="checkbox" :value="item.question.id" />
@@ -58,14 +62,14 @@
             :disabled="shareSelection.length === 0"
             @click="$emit('share', shareSelection)"
           >
-            읽기 전용 공유 화면 열기
+            공유 화면 열기
           </button>
         </details>
       </section>
 
-      <section v-if="visibleAnswerItems.length > 0" class="answerList">
+      <section class="answerList" aria-label="질문과 답변">
         <article
-          v-for="item in visibleAnswerItems"
+          v-for="item in answerItems"
           :key="item.question.id"
           class="answerCard"
           :class="{ empty: !item.answerText }"
@@ -73,8 +77,8 @@
           <span>{{ item.groupLabel }}</span>
           <h3>{{ item.question.text }}</h3>
           <p v-if="item.answerText">{{ item.answerText }}</p>
-          <p v-else-if="item.answer?.skipped">그때는 이 질문을 지나쳤어요.</p>
-          <p v-else>아직 답하지 않은 질문이에요.</p>
+          <p v-else-if="item.answer?.skipped">이 질문은 지금은 넘겼어요.</p>
+          <p v-else>아직 답하지 않은 질문입니다.</p>
         </article>
       </section>
     </main>
@@ -108,21 +112,26 @@ const answerMap = computed(() => new Map(props.reflection?.answers.map((answer) 
 const answeredCount = computed(() =>
   props.reflection?.answers.filter((answer) => answer.value.trim().length > 0).length ?? 0
 );
-const hasReadableAnswers = computed(() => answeredCount.value > 0);
-const skippedCount = computed(() =>
-  props.reflection?.answers.filter((answer) => answer.skipped).length ?? 0
+const firstAnsweredText = computed(() =>
+  props.reflection?.answers.find((answer) => answer.value.trim())?.value.trim() ?? ""
 );
-const representativeSentence = computed(() => {
+const representativeScene = computed(() => {
   if (!props.reflection) return "";
-  return (
-    props.reflection.representativeSentence ??
-    props.reflection.answers.find((answer) => answer.value.trim())?.value.trim() ??
-    "첫 답변을 기다리는 회고예요."
-  );
+  return props.reflection.representativeSentence ?? (firstAnsweredText.value || "아직 대표 장면이 없어요.");
+});
+const representativeEmotion = computed(() => {
+  const emotionQuestion = questions.value.find((question) => question.text.includes("감정"));
+  const emotionAnswer = emotionQuestion
+    ? answerMap.value.get(emotionQuestion.id)?.value.trim()
+    : "";
+  if (emotionAnswer) return `가장 가까운 감정: ${emotionAnswer}`;
+  return answeredCount.value > 0
+    ? "지금은 답변 전체를 천천히 읽어보는 화면입니다."
+    : "첫 답변을 남기면 이곳에 기억의 요약이 생깁니다.";
 });
 const updatedDate = computed(() => {
   if (!props.reflection) return "";
-  return new Date(props.reflection.updatedAt).toLocaleDateString();
+  return new Date(props.reflection.updatedAt).toLocaleDateString("ko-KR");
 });
 const answerItems = computed(() => {
   if (!props.reflection) return [];
@@ -144,9 +153,6 @@ const shareableItems = computed(() =>
     (item) => item.question.visibility === "public" && item.answerText.trim().length > 0
   )
 );
-const visibleAnswerItems = computed(() =>
-  answerItems.value.filter((item) => item.answerText || item.answer?.skipped)
-);
 
 watch(
   () => props.reflection?.id,
@@ -162,7 +168,7 @@ watch(
   min-height: 100vh;
   background: var(--color-page);
   color: var(--color-text);
-  padding: 26px;
+  padding: 26px 26px 118px;
 }
 
 .detailHeader,
@@ -172,16 +178,17 @@ watch(
 }
 
 .detailHeader {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
   margin-bottom: 22px;
 }
 
-.detailHeader h1,
-.heroPanel h2,
-.answerCard h3 {
+h1,
+h2,
+h3,
+p {
   margin: 0;
   letter-spacing: 0;
 }
@@ -191,7 +198,9 @@ watch(
 }
 
 .eyebrow,
-.heroLabel {
+.heroLabel,
+.answerCard span,
+.metaGrid span {
   color: var(--color-gold);
   font-size: 12px;
   font-weight: 900;
@@ -205,14 +214,15 @@ watch(
 .heroPanel,
 .answerCard,
 .sharePanel,
-.emptyDraftPanel,
+.savePanel,
 .metaGrid > div {
   border: 1px solid var(--color-soft-border);
   background: var(--color-surface);
   border-radius: 18px;
 }
 
-.heroPanel {
+.heroPanel,
+.savePanel {
   padding: 24px;
   display: grid;
   gap: 10px;
@@ -224,10 +234,42 @@ watch(
 }
 
 .heroPanel p,
-.answerCard p {
-  margin: 0;
+.savePanel p,
+.answerCard p,
+.sharePanel p {
   color: var(--color-text-dim);
   line-height: 1.6;
+}
+
+.savePanel {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.saveActions {
+  display: grid;
+  gap: 8px;
+}
+
+.saveActions button,
+.editButton,
+.shareButton {
+  border-radius: 999px;
+  font-weight: 900;
+  padding: 11px 14px;
+}
+
+.saveActions button,
+.shareButton {
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+}
+
+.editButton {
+  border: 0;
+  background: var(--color-gold);
+  color: var(--color-primary-contrast);
 }
 
 .metaGrid {
@@ -242,40 +284,8 @@ watch(
   gap: 5px;
 }
 
-.metaGrid span,
-.answerCard span {
-  color: var(--color-text-dim);
-  font-size: 12px;
-  font-weight: 900;
-}
-
 .metaGrid strong {
   font-size: 20px;
-}
-
-.answerList {
-  display: grid;
-  gap: 10px;
-}
-
-.emptyDraftPanel {
-  padding: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.emptyDraftPanel h2 {
-  margin: 4px 0 6px;
-  font-size: 22px;
-  letter-spacing: 0;
-}
-
-.emptyDraftPanel p {
-  margin: 0;
-  color: var(--color-text-dim);
-  line-height: 1.5;
 }
 
 .sharePanel {
@@ -287,16 +297,14 @@ watch(
   font-weight: 900;
 }
 
-.sharePanel p {
-  margin: 8px 0 12px;
-  color: var(--color-text-dim);
-  line-height: 1.5;
+.shareList,
+.answerList {
+  display: grid;
+  gap: 10px;
 }
 
 .shareList {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 12px;
+  margin: 12px 0;
 }
 
 .shareOption {
@@ -308,10 +316,6 @@ watch(
   grid-template-columns: auto 1fr;
   gap: 8px;
   align-items: start;
-}
-
-.shareOption span {
-  line-height: 1.35;
 }
 
 .answerCard {
@@ -329,40 +333,25 @@ watch(
   border-style: dashed;
 }
 
-.editButton,
-.shareButton {
-  border-radius: 999px;
-  font-weight: 900;
-  padding: 11px 14px;
-}
-
-.editButton {
-  border: 0;
-  background: var(--color-gold);
-  color: var(--color-primary-contrast);
-}
-
-.shareButton {
-  border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--color-text);
-}
-
 .emptyState {
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 16px;
 }
 
 @media (max-width: 720px) {
   .detailPage {
-    padding: 16px;
+    padding: 16px 16px 112px;
+  }
+
+  .detailHeader,
+  .savePanel {
+    align-items: stretch;
+    grid-template-columns: 1fr;
   }
 
   .detailHeader {
-    grid-template-columns: 1fr;
-    align-items: stretch;
+    display: grid;
   }
 
   .heroPanel h2 {
@@ -371,11 +360,6 @@ watch(
 
   .metaGrid {
     grid-template-columns: 1fr;
-  }
-
-  .emptyDraftPanel {
-    align-items: stretch;
-    flex-direction: column;
   }
 }
 </style>

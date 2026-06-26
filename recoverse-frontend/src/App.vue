@@ -1,6 +1,9 @@
 <template>
   <div class="app">
-    <AppTopNav />
+    <AppTopNav
+      @go-home="navigateBottomTab('home')"
+      @open-settings="openSettingsFromTop"
+    />
     <main class="main">
       <ArchiveShellView
         v-if="mode === 'archive-library'"
@@ -343,6 +346,10 @@
         v-else-if="mode === 'home-universe'"
         brand-label="Recoverse"
         :title="t.memoryUniverse"
+        :reflections="reflections"
+        @start-writing="openNewReflection"
+        @open-reflection="openReflectionDetail"
+        @continue-reflection="continueReflection"
       />
 
       <NewReflectionPage
@@ -679,7 +686,7 @@ import {
 } from "./lib/reflectionStore";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
-type BottomTabId = "home" | "write" | "review" | "settings";
+type BottomTabId = "write" | "home" | "review";
 
 const LANGUAGE_KEY = "recoverse_language";
 
@@ -705,7 +712,7 @@ const messages = {
     navHome: "홈",
     navPlanet: "기록",
     navGalaxy: "은하",
-    navWrite: "작성",
+    navWrite: "기억 작성",
     navReview: "다시 보기",
     navShared: "함께 보기",
     navArchive: "아카이브",
@@ -871,7 +878,7 @@ const messages = {
     navHome: "Home",
     navPlanet: "Planet",
     navGalaxy: "Galaxy",
-    navWrite: "Write",
+    navWrite: "Write Memory",
     navReview: "Review",
     navShared: "Shared",
     navArchive: "Archive",
@@ -1132,7 +1139,6 @@ const bottomNavLabels = computed(() => ({
   home: t.value.navHome,
   write: t.value.navWrite,
   review: t.value.navReview,
-  settings: t.value.navSettings,
 }));
 
 const showBottomNav = computed(() =>
@@ -1142,14 +1148,12 @@ const showBottomNav = computed(() =>
     "reflection-write",
     "reflection-detail",
     "review-again",
-    "archive-settings",
   ].includes(mode.value)
 );
 
 const activeBottomTab = computed<BottomTabId>(() => {
   if (mode.value === "reflection-new" || mode.value === "reflection-write") return "write";
   if (mode.value === "review-again" || mode.value === "shared-reflections") return "review";
-  if (mode.value === "archive-settings") return "settings";
   return "home";
 });
 
@@ -1529,6 +1533,10 @@ function navigateBottomTab(tabId: BottomTabId) {
     openReviewAgain();
     return;
   }
+}
+
+function openSettingsFromTop() {
+  if (!confirmLeavingWriteMode()) return;
   setMode("archive-settings");
 }
 

@@ -3,33 +3,65 @@
     <header class="reviewHeader">
       <div>
         <span class="eyebrow">다시 보기</span>
-        <h1>같은 질문을 따라가며 과거의 나를 봅니다</h1>
+        <h1>내가 남긴 답변을 다시 발견하는 곳</h1>
       </div>
     </header>
 
-    <main class="reviewGrid">
-      <aside class="panel questionPanel">
+    <main v-if="reflections.length" class="reviewLayout">
+      <aside class="panel memoryListPanel">
         <div class="panelHead">
-          <h2>질문별</h2>
-          <span>{{ questionOptions.length }}개</span>
+          <h2>기억 목록</h2>
+          <span>{{ reflections.length }}개</span>
         </div>
         <button
-          v-for="question in questionOptions"
-          :key="question.id"
-          class="questionButton"
-          :class="{ active: question.id === selectedQuestionId }"
+          v-for="reflection in reflections"
+          :key="reflection.id"
+          class="memoryButton"
+          :class="{ active: reflection.id === selectedReflectionId }"
           type="button"
-          @click="selectedQuestionId = question.id"
+          @click="selectedReflectionId = reflection.id"
         >
-          {{ question.text }}
+          <span>{{ reflection.period.label }}</span>
+          <strong>{{ reflection.title }}</strong>
+          <em>{{ countAnswers(reflection) }}개 답변</em>
         </button>
       </aside>
 
-      <section class="panel timelinePanel">
+      <section class="panel answerPanel">
         <div class="panelHead">
-          <h2>{{ selectedQuestion?.text ?? "질문을 선택하세요" }}</h2>
-          <span>{{ timeline.length }}개 답변</span>
+          <h2>{{ selectedReflection?.title ?? "기억을 선택하세요" }}</h2>
+          <button
+            v-if="selectedReflection"
+            class="smallCta"
+            type="button"
+            @click="$emit('open-reflection', selectedReflection.id)"
+          >
+            상세 열기
+          </button>
         </div>
+
+        <div v-if="selectedAnswerItems.length" class="answerList">
+          <article v-for="item in selectedAnswerItems" :key="item.question.id" class="answerCard">
+            <span>{{ item.groupLabel }}</span>
+            <h3>{{ item.question.text }}</h3>
+            <p>{{ item.answerText }}</p>
+          </article>
+        </div>
+        <div v-else class="empty">
+          아직 답변이 있는 질문이 없어요. 작성 탭에서 첫 질문에 답해보세요.
+        </div>
+      </section>
+
+      <aside class="panel comparePanel">
+        <div class="panelHead">
+          <h2>같은 질문 비교</h2>
+          <span>{{ questionOptions.length }}개</span>
+        </div>
+        <select v-model="selectedQuestionId">
+          <option v-for="question in questionOptions" :key="question.id" :value="question.id">
+            {{ question.text }}
+          </option>
+        </select>
 
         <div v-if="timeline.length" class="timeline">
           <article v-for="item in timeline" :key="`${item.reflectionId}-${item.questionId}`" class="timelineCard">
@@ -40,63 +72,15 @@
             <p>{{ item.answer.value }}</p>
           </article>
         </div>
-
         <div v-else class="empty">
-          같은 질문의 답변이 아직 충분하지 않아요. 비교용 질문 세트로 회고를 하나 더 남기면 이곳이 살아납니다.
+          같은 질문에 답한 회고가 더 쌓이면 변화가 보입니다.
         </div>
-      </section>
-
-      <aside class="panel sidePanel">
-        <div class="panelHead">
-          <h2>연도별</h2>
-        </div>
-        <button
-          v-for="period in periodOptions"
-          :key="period"
-          class="chip"
-          type="button"
-          @click="openFirstReflectionInPeriod(period)"
-        >
-          {{ period }}
-        </button>
-
-        <div class="panelHead secondaryHead">
-          <h2>주제별</h2>
-        </div>
-        <button
-          v-for="topic in topicOptions"
-          :key="topic"
-          class="chip"
-          type="button"
-          @click="selectedTopic = topic"
-        >
-          {{ topic }}
-        </button>
-
-        <article class="randomCard">
-          <span>랜덤으로 꺼내보기</span>
-          <p>{{ randomAnswerText }}</p>
-          <button class="smallCta" type="button" @click="pickRandomAnswer">다른 답변</button>
-        </article>
-
-        <div class="panelHead secondaryHead">
-          <h2>공유</h2>
-        </div>
-        <article class="randomCard">
-          <span>나중에 친구와 보기</span>
-          <p>
-            공유 기능은 다시보기 안에서 연결합니다. 공유된 회고가 생기면 이곳에서 읽기 전용으로 확인합니다.
-          </p>
-          <button
-            v-if="sharedReflections[0]"
-            class="smallCta"
-            type="button"
-            @click="$emit('open-reflection', sharedReflections[0].id)"
-          >
-            공유 회고 보기
-          </button>
-        </article>
       </aside>
+    </main>
+
+    <main v-else class="emptyState">
+      <h2>아직 다시 볼 회고가 없어요.</h2>
+      <p>기억 작성 탭에서 첫 회고를 남기면 이곳에 답변 카드가 쌓입니다.</p>
     </main>
   </section>
 </template>
@@ -104,78 +88,59 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import { findSameQuestionAnswers, getTimelineQuestionOptions } from "../lib/questionTimeline";
-import type { Question, Reflection } from "../types/reflection";
+import type { Answer, Question, Reflection } from "../types/reflection";
 
 const props = defineProps<{
   reflections: Reflection[];
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   "back-home": [];
   "open-reflection": [reflectionId: string];
 }>();
 
+const selectedReflectionId = ref<string | null>(props.reflections[0]?.id ?? null);
 const selectedQuestionId = ref<string | null>(null);
-const selectedTopic = ref<string | null>(null);
-const randomIndex = ref(0);
 
-const answeredQuestionIds = computed(() => {
-  const ids = new Set<string>();
-  for (const reflection of props.reflections) {
-    for (const answer of reflection.answers) {
-      if (answer.value.trim()) ids.add(answer.questionId);
-    }
-  }
-  return ids;
+const selectedReflection = computed(() =>
+  props.reflections.find((reflection) => reflection.id === selectedReflectionId.value) ?? props.reflections[0] ?? null
+);
+const answerMap = computed(() => new Map(selectedReflection.value?.answers.map((answer) => [answer.questionId, answer]) ?? []));
+const selectedAnswerItems = computed(() => {
+  if (!selectedReflection.value) return [];
+
+  return selectedReflection.value.questionGroups.flatMap((group) =>
+    group.questions.flatMap((question) => {
+      const answer = answerMap.value.get(question.id) as Answer | undefined;
+      const answerText = answer?.value.trim() ?? "";
+      if (!answerText) return [];
+      return [{ groupLabel: group.label, question, answerText }];
+    })
+  );
 });
 const questionOptions = computed<Question[]>(() =>
-  getTimelineQuestionOptions(props.reflections).sort((a, b) => {
-    const aAnswered = answeredQuestionIds.value.has(a.id) ? 1 : 0;
-    const bAnswered = answeredQuestionIds.value.has(b.id) ? 1 : 0;
-    return bAnswered - aAnswered;
-  })
+  getTimelineQuestionOptions(props.reflections).filter((question) =>
+    props.reflections.some((reflection) =>
+      reflection.answers.some((answer) => answer.questionId === question.id && answer.value.trim())
+    )
+  )
 );
-const selectedQuestion = computed<Question | null>(() => {
-  const filtered = selectedTopic.value
-    ? questionOptions.value.filter((question) => getQuestionGroupLabel(question) === selectedTopic.value)
-    : questionOptions.value;
-  return filtered.find((question) => question.id === selectedQuestionId.value) ?? filtered[0] ?? null;
-});
+const selectedQuestion = computed<Question | null>(
+  () => questionOptions.value.find((question) => question.id === selectedQuestionId.value) ?? questionOptions.value[0] ?? null
+);
 const timeline = computed(() =>
   selectedQuestion.value
     ? findSameQuestionAnswers(selectedQuestion.value.text, props.reflections, selectedQuestion.value.id)
     : []
 );
-const periodOptions = computed(() =>
-  Array.from(new Set(props.reflections.map((reflection) => reflection.period.label))).slice(0, 8)
+
+watch(
+  () => props.reflections,
+  (reflections) => {
+    if (!selectedReflectionId.value && reflections[0]) selectedReflectionId.value = reflections[0].id;
+  },
+  { immediate: true }
 );
-const topicOptions = computed(() =>
-  Array.from(
-    new Set(
-      props.reflections.flatMap((reflection) => reflection.questionGroups.map((group) => group.label))
-    )
-  )
-);
-const answeredItems = computed(() =>
-  props.reflections.flatMap((reflection) =>
-    reflection.answers
-      .filter((answer) => answer.value.trim())
-      .map((answer) => ({
-        reflectionId: reflection.id,
-        title: reflection.title,
-        period: reflection.period.label,
-        value: answer.value.trim(),
-      }))
-  )
-);
-const sharedReflections = computed(() =>
-  props.reflections.filter((reflection) => reflection.visibility === "shared")
-);
-const randomAnswerText = computed(() => {
-  if (answeredItems.value.length === 0) return "아직 꺼내볼 답변이 없어요.";
-  const item = answeredItems.value[randomIndex.value % answeredItems.value.length];
-  return `${item.period} · ${item.value}`;
-});
 
 watch(
   questionOptions,
@@ -185,28 +150,8 @@ watch(
   { immediate: true }
 );
 
-watch(selectedTopic, () => {
-  selectedQuestionId.value = selectedQuestion.value?.id ?? null;
-});
-
-function getQuestionGroupLabel(question: Question) {
-  for (const reflection of props.reflections) {
-    const group = reflection.questionGroups.find((item) =>
-      item.questions.some((candidate) => candidate.id === question.id)
-    );
-    if (group) return group.label;
-  }
-  return "기타";
-}
-
-function openFirstReflectionInPeriod(period: string) {
-  const reflection = props.reflections.find((item) => item.period.label === period);
-  if (reflection) emit("open-reflection", reflection.id);
-}
-
-function pickRandomAnswer() {
-  if (answeredItems.value.length === 0) return;
-  randomIndex.value = (randomIndex.value + 1) % answeredItems.value.length;
+function countAnswers(reflection: Reflection) {
+  return reflection.answers.filter((answer) => answer.value.trim()).length;
 }
 </script>
 
@@ -215,46 +160,55 @@ function pickRandomAnswer() {
   min-height: 100vh;
   background: var(--color-page);
   color: var(--color-text);
-  padding: 26px;
+  padding: 26px 26px 118px;
 }
 
 .reviewHeader,
-.reviewGrid {
+.reviewLayout,
+.emptyState {
   width: min(1180px, 100%);
   margin: 0 auto;
 }
 
 .reviewHeader {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   margin-bottom: 22px;
 }
 
-.reviewHeader h1 {
+h1,
+h2,
+h3,
+p {
   margin: 0;
-  font-size: 26px;
   letter-spacing: 0;
 }
 
-.eyebrow {
+.reviewHeader h1 {
+  font-size: 28px;
+}
+
+.eyebrow,
+.panelHead span,
+.memoryButton span,
+.answerCard span,
+.timelineCard span {
   color: var(--color-gold);
   font-size: 12px;
   font-weight: 900;
 }
 
-.reviewGrid {
+.reviewLayout {
   display: grid;
-  grid-template-columns: 300px 1fr 260px;
+  grid-template-columns: 280px 1fr 320px;
   gap: 12px;
+  align-items: start;
 }
 
-.panel {
+.panel,
+.emptyState {
   border: 1px solid var(--color-soft-border);
   border-radius: 18px;
   background: var(--color-surface);
   padding: 14px;
-  min-width: 0;
 }
 
 .panelHead {
@@ -266,48 +220,79 @@ function pickRandomAnswer() {
 }
 
 .panelHead h2 {
-  margin: 0;
   font-size: 16px;
-  letter-spacing: 0;
 }
 
-.panelHead span {
-  color: var(--color-text-dim);
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.questionPanel,
-.sidePanel,
-.timeline {
+.memoryListPanel,
+.answerList,
+.timeline,
+.comparePanel {
   display: grid;
   gap: 8px;
-  align-content: start;
 }
 
-.questionButton,
-.chip,
+.memoryButton,
+.answerCard,
 .timelineCard,
-.randomCard {
+.empty {
   border: 1px solid var(--color-soft-border);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.04);
+}
+
+.memoryButton {
   color: var(--color-text);
-}
-
-.questionButton,
-.chip {
-  padding: 11px 12px;
+  padding: 12px;
   text-align: left;
+  display: grid;
+  gap: 5px;
 }
 
-.questionButton.active {
+.memoryButton.active {
   border-color: var(--color-gold);
   background: rgba(244, 197, 106, 0.13);
 }
 
+.memoryButton em {
+  color: var(--color-text-dim);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.answerCard,
+.timelineCard,
+.empty {
+  padding: 14px;
+}
+
+.answerCard {
+  display: grid;
+  gap: 8px;
+}
+
+.answerCard h3 {
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.answerCard p,
+.timelineCard p,
+.empty,
+.emptyState p {
+  color: var(--color-text-dim);
+  line-height: 1.55;
+}
+
+.comparePanel select {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+  padding: 11px 12px;
+}
+
 .timelineCard {
-  padding: 15px;
   display: grid;
   gap: 10px;
 }
@@ -322,56 +307,26 @@ function pickRandomAnswer() {
   gap: 3px;
 }
 
-.timelineCard span,
-.randomCard span {
-  color: var(--color-gold);
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.timelineCard p,
-.randomCard p,
-.empty {
-  margin: 0;
-  color: var(--color-text-dim);
-  line-height: 1.55;
-}
-
-.secondaryHead {
-  margin-top: 14px;
-}
-
-.randomCard {
-  padding: 14px;
-  display: grid;
-  gap: 10px;
-}
-
-.smallCta {
-  border-radius: 999px;
-  font-weight: 900;
-  padding: 10px 13px;
-}
-
 .smallCta {
   border: 0;
+  border-radius: 999px;
   background: var(--color-gold);
   color: var(--color-primary-contrast);
+  padding: 9px 12px;
+  font-weight: 900;
 }
 
-@media (max-width: 900px) {
+.emptyState {
+  display: grid;
+  gap: 8px;
+}
+
+@media (max-width: 960px) {
   .reviewPage {
-    padding: 16px;
+    padding: 16px 16px 112px;
   }
 
-  .reviewHeader,
-  .reviewGrid {
-    width: 100%;
-  }
-
-  .reviewHeader,
-  .reviewGrid {
-    display: grid;
+  .reviewLayout {
     grid-template-columns: 1fr;
   }
 }
