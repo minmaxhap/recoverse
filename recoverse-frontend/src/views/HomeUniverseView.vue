@@ -10,8 +10,8 @@
         <section class="journalSheet">
           <div class="journalCopy">
             <span class="eyebrow">내 기억 공간</span>
-            <h1>지나간 나를 다시 만나는 곳</h1>
-            <p>
+            <h1>{{ reflections.length ? "지나간 나를 다시 만나는 곳" : "첫 기억을 남기는 곳" }}</h1>
+            <p v-if="reflections.length">
               짧은 질문에 답해두면, 시간이 지난 뒤 그때의 감정과 장면을 다시 발견할 수 있어요.
             </p>
           </div>
@@ -28,8 +28,8 @@
           </button>
 
           <div v-else class="emptyMemory">
-            <span>아직 남겨진 기억이 없어요.</span>
-            <strong>첫 문장 하나만 남겨도 나중에 다시 만날 수 있어요.</strong>
+            <span>비어 있는 기억 공간</span>
+            <strong>첫 질문부터 열어볼까요?</strong>
           </div>
 
           <div class="homeActions">

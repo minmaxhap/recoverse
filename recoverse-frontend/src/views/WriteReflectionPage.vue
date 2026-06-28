@@ -34,9 +34,8 @@
         <button class="secondary" type="button" :disabled="activeIndex === 0" @click="goPrevious">
           이전
         </button>
-        <button class="secondary" type="button" @click="skipQuestion">지금은 넘기기</button>
         <button class="primary" type="button" @click="saveAndNext">
-          {{ isLastQuestion ? "검토하러 가기" : "답변 저장" }}
+          {{ isLastQuestion ? "검토하기" : "다음" }}
         </button>
       </nav>
     </main>
@@ -127,18 +126,7 @@ function saveAndNext() {
   emit("save-answer", {
     questionId: currentQuestion.value.id,
     value: draft.value,
-    skipped: false,
-  });
-  moveNextOrFinish();
-}
-
-function skipQuestion() {
-  if (!currentQuestion.value) return;
-
-  emit("save-answer", {
-    questionId: currentQuestion.value.id,
-    value: "",
-    skipped: true,
+    skipped: draft.value.trim().length === 0,
   });
   moveNextOrFinish();
 }
@@ -211,8 +199,10 @@ function skipQuestion() {
 .questionCard {
   border: 1px solid var(--color-soft-border);
   border-radius: 18px;
-  background: var(--color-card, #f5f0e8);
-  color: var(--color-text-card, #1a2535);
+  background:
+    linear-gradient(145deg, rgba(26, 33, 51, 0.96), rgba(17, 19, 34, 0.98)),
+    var(--color-surface);
+  color: var(--color-text);
   padding: 26px;
   display: grid;
   gap: 14px;
@@ -227,14 +217,14 @@ function skipQuestion() {
 
 .questionCard p {
   margin: 0;
-  color: rgba(26, 37, 53, 0.68);
+  color: var(--color-text-dim);
   line-height: 1.5;
 }
 
 .questionCard textarea {
   width: 100%;
   border: 0;
-  border-top: 1px solid rgba(26, 37, 53, 0.18);
+  border-top: 1px solid rgba(184, 166, 232, 0.24);
   border-radius: 0;
   background: transparent;
   color: inherit;
@@ -254,7 +244,7 @@ function skipQuestion() {
   width: min(840px, calc(100% - 32px));
   transform: translateX(-50%);
   display: grid;
-  grid-template-columns: 1fr 1fr 1.4fr;
+  grid-template-columns: 1fr 1.35fr;
   gap: 10px;
   padding: 10px;
   border: 1px solid var(--color-soft-border);
