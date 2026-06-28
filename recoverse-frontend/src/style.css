@@ -1,7 +1,7 @@
 :root {
-  --color-page: #0B0F1E;
-  --color-bg: #0B0F1E;
-  --color-surface: #141C2E;
+  --color-page: #08070F;
+  --color-bg: #111322;
+  --color-surface: #1A2133;
   --color-surface-2: #1A2540;
   --color-paper: rgba(255,255,255,0.06);
   --color-ink: #E8E0D0;
@@ -19,6 +19,8 @@
   --color-planet-1: #F2A27E;
   --color-planet-2: #7BAFD4;
   --color-planet-3: #A47BC4;
+  --color-accent: #6E5A9A;
+  --color-star: #B8A6E8;
   --color-chip: rgba(244,197,106,0.12);
 
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;

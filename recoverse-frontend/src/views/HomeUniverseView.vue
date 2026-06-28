@@ -2,76 +2,80 @@
   <HomeView>
     <section class="homeSpace" :class="{ empty: reflections.length === 0 }">
       <main class="homeScene" aria-label="Recoverse 기억 공간">
-        <div class="cosmicWash" aria-hidden="true"></div>
-        <div class="driftLayer" aria-hidden="true">
-          <span v-for="mark in driftMarks" :key="mark" :class="`driftMark mark${mark}`"></span>
+        <div class="starField" aria-hidden="true">
+          <span
+            v-for="star in stars"
+            :key="star.id"
+            class="star"
+            :style="star.style"
+          ></span>
         </div>
 
-        <section class="journalSheet">
-          <div class="journalCopy">
-            <span class="eyebrow">내 기억 공간</span>
-            <h1>{{ reflections.length ? "지나간 나를 다시 만나는 곳" : "첫 기억을 남기는 곳" }}</h1>
-            <p v-if="reflections.length">
-              짧은 질문에 답해두면, 시간이 지난 뒤 그때의 감정과 장면을 다시 발견할 수 있어요.
-            </p>
-          </div>
-
-          <button
-            v-if="featuredReflection"
-            class="featuredMemory"
-            type="button"
-            @click="$emit('open-reflection', featuredReflection.id)"
-          >
-            <span>{{ featuredLabel }}</span>
-            <strong>{{ featuredAnswer }}</strong>
-            <em>{{ featuredReflection.period.label }}</em>
+        <section v-if="reflections.length === 0" class="emptyState">
+          <span class="eyebrow">내 기억 공간</span>
+          <h1>내 기억이 쌓이는 공간</h1>
+          <button class="primaryCta" type="button" @click="$emit('start-writing')">
+            첫 기억 작성하기
           </button>
-
-          <div v-else class="emptyMemory">
-            <span>비어 있는 기억 공간</span>
-            <strong>첫 질문부터 열어볼까요?</strong>
-          </div>
-
-          <div class="homeActions">
-            <button class="primaryCta" type="button" @click="$emit('start-writing')">
-              {{ reflections.length ? "새 기억 남기기" : "첫 기억 작성하기" }}
-            </button>
-            <button
-              v-if="reflections.length === 0"
-              class="draftButton"
-              type="button"
-              @click="$emit('load-sample')"
-            >
-              샘플 기억 먼저 보기
-            </button>
-            <button
-              v-if="draftReflection"
-              class="draftButton"
-              type="button"
-              @click="$emit('continue-reflection', draftReflection.id)"
-            >
-              작성 중인 기억 이어쓰기
-            </button>
-          </div>
         </section>
 
-        <aside v-if="memoryFragments.length" class="memoryDrift" aria-label="떠다니는 기억 조각">
-          <span
-            v-for="fragment in memoryFragments"
-            :key="fragment.id"
-            class="memoryFragment"
-            :style="fragment.style"
-          >
-            {{ fragment.label }}
-          </span>
-        </aside>
+        <section v-else class="memoryField" aria-label="연도별 기억 묶음">
+          <header class="fieldHeader">
+            <div>
+              <span class="eyebrow">내 기억 공간</span>
+              <h1>{{ title }}</h1>
+            </div>
+            <button class="primaryCta compact" type="button" @click="$emit('start-writing')">
+              새 기억 남기기
+            </button>
+          </header>
+
+          <div class="clusterField">
+            <section
+              v-for="cluster in yearClusters"
+              :key="cluster.year"
+              class="yearCluster"
+              :style="cluster.style"
+              :aria-label="`${cluster.year} 기억 묶음`"
+            >
+              <span class="yearLabel">{{ cluster.year }}</span>
+              <button
+                v-for="node in cluster.nodes"
+                :key="node.reflection.id"
+                class="memoryObject"
+                :class="{
+                  selected: node.reflection.id === selectedReflection?.id,
+                  draft: !node.reflection.isCompleted,
+                }"
+                :style="node.style"
+                type="button"
+                @click="selectReflection(node.reflection.id)"
+              >
+                <span>{{ node.reflection.period.label }}</span>
+              </button>
+            </section>
+          </div>
+
+          <aside v-if="selectedReflection" class="previewPanel" aria-live="polite">
+            <span class="eyebrow">{{ previewLabel }}</span>
+            <h2>{{ selectedReflection.title }}</h2>
+            <p>{{ previewSentence }}</p>
+            <div class="previewMeta">
+              <span>{{ selectedReflection.period.label }}</span>
+              <span>{{ selectedReflection.completionRate }}%</span>
+            </div>
+            <button class="openButton" type="button" @click="openSelectedReflection">
+              {{ selectedReflection.isCompleted ? "열어보기" : "이어쓰기" }}
+            </button>
+          </aside>
+        </section>
       </main>
     </section>
   </HomeView>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import HomeView from "./HomeView.vue";
 import type { Reflection } from "../types/reflection";
 
@@ -81,89 +85,144 @@ const props = defineProps<{
   reflections: Reflection[];
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   "start-writing": [];
   "open-reflection": [reflectionId: string];
   "continue-reflection": [reflectionId: string];
   "load-sample": [];
 }>();
 
-const driftMarks = [1, 2, 3, 4, 5, 6];
+const selectedReflectionId = ref<string | null>(null);
 
-const REDISCOVER_THRESHOLD_DAYS = 7;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const starPositions = [
+  { x: 8, y: 14, size: 2 },
+  { x: 15, y: 32, size: 1 },
+  { x: 22, y: 18, size: 2 },
+  { x: 29, y: 76, size: 1 },
+  { x: 36, y: 40, size: 2 },
+  { x: 43, y: 12, size: 1 },
+  { x: 48, y: 68, size: 2 },
+  { x: 55, y: 30, size: 1 },
+  { x: 61, y: 84, size: 2 },
+  { x: 67, y: 18, size: 1 },
+  { x: 73, y: 56, size: 2 },
+  { x: 79, y: 24, size: 1 },
+  { x: 86, y: 72, size: 2 },
+  { x: 92, y: 38, size: 1 },
+  { x: 11, y: 88, size: 2 },
+  { x: 95, y: 12, size: 1 },
+  { x: 5, y: 56, size: 1 },
+];
+
+const stars = Array.from({ length: 34 }, (_, index) => ({
+  id: `star-${index}`,
+  style: {
+    "--x": `${starPositions[index % starPositions.length].x}%`,
+    "--y": `${starPositions[index % starPositions.length].y}%`,
+    "--size": `${starPositions[index % starPositions.length].size}px`,
+    "--delay": `${(index % 8) * -0.65}s`,
+  },
+}));
 
 const sortedReflections = computed(() =>
   [...props.reflections].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
 );
 
-const answeredReflections = computed(() =>
-  sortedReflections.value.filter((reflection) => getFirstAnswer(reflection))
+const selectedReflection = computed(() => {
+  if (selectedReflectionId.value) {
+    const selected = sortedReflections.value.find(
+      (reflection) => reflection.id === selectedReflectionId.value
+    );
+    if (selected) return selected;
+  }
+
+  return sortedReflections.value[0] ?? null;
+});
+
+const previewLabel = computed(() =>
+  selectedReflection.value?.isCompleted ? "기억 미리보기" : "작성 중인 기억"
 );
 
-const rediscoveryCandidates = computed(() => {
-  const cutoff = Date.now() - REDISCOVER_THRESHOLD_DAYS * MS_PER_DAY;
-  return answeredReflections.value.filter(
-    (reflection) => Date.parse(reflection.updatedAt) <= cutoff
+const previewSentence = computed(() => {
+  const reflection = selectedReflection.value;
+  if (!reflection) return "";
+  return (
+    reflection.representativeSentence?.trim() ||
+    reflection.answers.find((answer) => answer.value.trim())?.value.trim() ||
+    "아직 첫 문장이 비어 있어요."
   );
 });
 
-function dailySeed(): number {
-  const dayKey = new Date().toISOString().slice(0, 10);
-  let hash = 0;
-  for (let i = 0; i < dayKey.length; i++) {
-    hash = (hash * 31 + dayKey.charCodeAt(i)) >>> 0;
+const yearClusters = computed(() => {
+  const groups = new Map<string, Reflection[]>();
+
+  sortedReflections.value.forEach((reflection) => {
+    const year = getReflectionYear(reflection);
+    groups.set(year, [...(groups.get(year) ?? []), reflection]);
+  });
+
+  return [...groups.entries()].map(([year, reflections], index) => ({
+    year,
+    style: {
+      "--cluster-y": `${clusterRows[index % clusterRows.length]}%`,
+    },
+    nodes: reflections.map((reflection, reflectionIndex) => {
+      const position = nodePositions[(reflectionIndex + index * 2) % nodePositions.length];
+      return {
+        reflection,
+        style: {
+          "--node-x": `${position.x}%`,
+          "--node-y": `${position.y}%`,
+          "--node-size": `${reflection.isCompleted ? position.size : position.size + 8}px`,
+        },
+      };
+    }),
+  }));
+});
+
+watch(
+  () => props.reflections.map((reflection) => reflection.id).join("|"),
+  () => {
+    if (!selectedReflectionId.value) return;
+    if (props.reflections.some((reflection) => reflection.id === selectedReflectionId.value)) return;
+    selectedReflectionId.value = null;
   }
-  return hash;
+);
+
+function selectReflection(reflectionId: string) {
+  selectedReflectionId.value = reflectionId;
 }
 
-const isRediscovery = computed(() => rediscoveryCandidates.value.length > 0);
+function openSelectedReflection() {
+  const reflection = selectedReflection.value;
+  if (!reflection) return;
 
-const featuredReflection = computed(() => {
-  if (rediscoveryCandidates.value.length > 0) {
-    return rediscoveryCandidates.value[dailySeed() % rediscoveryCandidates.value.length];
+  if (reflection.isCompleted) {
+    emit("open-reflection", reflection.id);
+    return;
   }
-  return answeredReflections.value[0] ?? null;
-});
 
-const featuredLabel = computed(() =>
-  isRediscovery.value ? "오늘 다시 떠오른 기억" : "최근에 남긴 기억"
-);
+  emit("continue-reflection", reflection.id);
+}
 
-const draftReflection = computed(() =>
-  sortedReflections.value.find((reflection) => !reflection.isCompleted) ?? null
-);
+function getReflectionYear(reflection: Reflection) {
+  if (reflection.period.year) return String(reflection.period.year);
 
-const featuredAnswer = computed(() => {
-  if (!featuredReflection.value) return "";
-  return featuredReflection.value.representativeSentence?.trim() || getFirstAnswer(featuredReflection.value);
-});
+  const createdYear = new Date(reflection.createdAt).getFullYear();
+  return Number.isFinite(createdYear) ? String(createdYear) : "기억";
+}
 
-const memoryFragments = computed(() =>
-  sortedReflections.value
-    .filter((reflection) => reflection.id !== featuredReflection.value?.id)
-    .slice(0, 4)
-    .map((reflection, index) => ({
-      id: reflection.id,
-      label: reflection.period.label,
-      style: {
-        "--x": `${fragmentPositions[index].x}%`,
-        "--y": `${fragmentPositions[index].y}%`,
-        "--r": `${fragmentPositions[index].rotate}deg`,
-      },
-    }))
-);
+const clusterRows = [18, 42, 66];
 
-const fragmentPositions = [
-  { x: 74, y: 17, rotate: -7 },
-  { x: 82, y: 58, rotate: 8 },
-  { x: 17, y: 70, rotate: -10 },
-  { x: 24, y: 19, rotate: 6 },
+const nodePositions = [
+  { x: 13, y: 40, size: 44 },
+  { x: 31, y: 68, size: 34 },
+  { x: 49, y: 32, size: 40 },
+  { x: 66, y: 58, size: 30 },
+  { x: 83, y: 36, size: 38 },
+  { x: 24, y: 23, size: 32 },
+  { x: 74, y: 76, size: 34 },
 ];
-
-function getFirstAnswer(reflection: Reflection) {
-  return reflection.answers.find((answer) => answer.value.trim())?.value.trim() ?? "";
-}
 </script>
 
 <style scoped>
@@ -172,372 +231,324 @@ function getFirstAnswer(reflection: Reflection) {
   min-height: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 82% 18%, rgba(134, 92, 171, 0.18), transparent 26%),
-    radial-gradient(circle at 18% 88%, rgba(244, 197, 106, 0.16), transparent 28%),
-    linear-gradient(135deg, #1b1721 0%, #211b21 34%, #0c1020 100%);
+    linear-gradient(180deg, var(--color-page) 0%, var(--color-bg) 100%);
   color: var(--color-text);
 }
 
 .homeScene {
   position: relative;
-  width: min(1120px, 100%);
+  width: min(1180px, 100%);
   height: 100%;
   margin: 0 auto;
-  padding: clamp(14px, 3vw, 28px) clamp(14px, 3vw, 32px)
-    calc(88px + env(safe-area-inset-bottom));
-  display: grid;
-  place-items: center;
+  padding: clamp(16px, 3vw, 28px) clamp(16px, 3vw, 32px)
+    calc(92px + env(safe-area-inset-bottom));
   isolation: isolate;
 }
 
-.cosmicWash {
+.starField {
   position: absolute;
   inset: 0;
-  z-index: -3;
-  background:
-    radial-gradient(circle at 67% 35%, rgba(184, 134, 219, 0.22), transparent 14%),
-    radial-gradient(circle at 77% 31%, rgba(255, 245, 191, 0.18), transparent 4%),
-    radial-gradient(circle at 63% 47%, rgba(68, 92, 148, 0.2), transparent 21%),
-    repeating-radial-gradient(circle at 68% 38%, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px 18px);
-  mask-image: radial-gradient(circle at 70% 40%, black 0 40%, transparent 68%);
-  opacity: 0.95;
-}
-
-.homeScene::before {
-  content: "";
-  position: absolute;
-  inset: 10px;
-  z-index: -2;
-  border-radius: 30px;
-  background:
-    linear-gradient(90deg, rgba(72, 45, 105, 0.2), transparent 34%),
-    radial-gradient(circle at 88% 24%, rgba(30, 18, 54, 0.72), transparent 30%),
-    linear-gradient(112deg, #d7bd8c 0%, #b98758 42%, rgba(30, 24, 42, 0.74) 76%, #0b1020 100%);
-  box-shadow: inset 0 0 0 1px rgba(82, 48, 26, 0.24), 0 28px 80px rgba(0, 0, 0, 0.34);
-}
-
-.homeScene::after {
-  content: "";
-  position: absolute;
-  inset: 14px;
   z-index: -1;
-  border-radius: 26px;
+  overflow: hidden;
   pointer-events: none;
-  background:
-    linear-gradient(105deg, rgba(90, 45, 18, 0.12), transparent 38%),
-    repeating-linear-gradient(93deg, rgba(74, 41, 20, 0.06) 0 1px, transparent 1px 7px),
-    radial-gradient(circle at 66% 42%, rgba(117, 77, 152, 0.28), transparent 18%);
-  mix-blend-mode: multiply;
 }
 
-.journalSheet {
-  position: relative;
-  z-index: 0;
-  width: min(680px, 100%);
-  min-height: min(520px, calc(100dvh - 170px));
-  padding: clamp(24px, 5vw, 54px);
+.star {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 999px;
+  background: var(--color-star);
+  opacity: 0.68;
+  animation: starPulse 5.2s ease-in-out infinite;
+  animation-delay: var(--delay);
+  box-shadow: 0 0 12px rgba(184, 166, 232, 0.32);
+}
+
+.emptyState,
+.memoryField {
+  height: 100%;
+}
+
+.emptyState {
   display: grid;
   align-content: center;
-  gap: clamp(18px, 3vh, 26px);
-  color: #251911;
+  justify-items: start;
+  gap: 22px;
 }
 
-.journalSheet > * {
+.memoryField {
   position: relative;
-  z-index: 1;
-}
-
-.journalSheet::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: 34px 22px 42px 24px;
-  background:
-    radial-gradient(circle at 84% 22%, rgba(104, 63, 145, 0.15), transparent 23%),
-    linear-gradient(100deg, rgba(255, 244, 210, 0.94), rgba(217, 181, 124, 0.82));
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.28), inset 0 0 0 1px rgba(96, 58, 25, 0.16);
-  transform: rotate(-1.2deg);
-}
-
-.journalCopy {
   display: grid;
-  gap: 11px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 18px;
+}
+
+.fieldHeader {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.fieldHeader > div,
+.emptyState {
+  min-width: 0;
 }
 
 .eyebrow {
-  width: fit-content;
-  color: #6b3f20;
+  color: var(--color-star);
   font-size: 12px;
   font-weight: 900;
-  letter-spacing: 0;
 }
 
 h1,
-p,
-strong,
-em {
+h2,
+p {
   margin: 0;
   letter-spacing: 0;
 }
 
 h1 {
-  max-width: 520px;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(38px, 8vw, 72px);
-  line-height: 0.98;
-  font-weight: 700;
-  color: #26160f;
+  max-width: 680px;
+  margin-top: 8px;
+  font-size: clamp(40px, 8vw, 76px);
+  line-height: 1.02;
+  font-weight: 900;
+  color: var(--color-text);
 }
 
-.journalCopy p {
-  max-width: 520px;
-  color: rgba(37, 25, 17, 0.72);
-  font-size: clamp(14px, 2.3vw, 18px);
-  line-height: 1.65;
-}
-
-.featuredMemory,
-.emptyMemory {
-  appearance: none;
-  width: min(520px, 100%);
-  justify-self: start;
-  border: 1px solid rgba(99, 58, 26, 0.18);
-  border-radius: 6px;
+.clusterField {
+  position: relative;
+  min-height: 0;
+  border: 1px solid var(--color-soft-border);
+  border-radius: 22px;
   background:
-    linear-gradient(96deg, rgba(255, 251, 232, 0.64), rgba(162, 124, 174, 0.16)),
-    rgba(255, 255, 255, 0.22);
-  color: #28170f;
-  padding: 16px 17px;
-  text-align: left;
-  line-height: 1.35;
-  transform: rotate(0.7deg);
-  box-shadow: 0 14px 28px rgba(68, 35, 14, 0.13);
-}
-
-.featuredMemory {
-  display: grid;
-  gap: 8px;
-}
-
-.featuredMemory span,
-.emptyMemory span {
-  color: #7a4f2c;
-  font-size: 12px;
-  font-weight: 900;
-}
-
-.featuredMemory strong,
-.emptyMemory strong {
-  display: block;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(20px, 3.8vw, 30px);
-  line-height: 1.24;
-  font-weight: 700;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.featuredMemory strong::before,
-.featuredMemory strong::after {
-  content: "\"";
-}
-
-.featuredMemory em {
-  display: block;
-  color: rgba(37, 25, 17, 0.62);
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 800;
-}
-
-.homeActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  align-items: center;
-}
-
-.primaryCta,
-.draftButton {
-  border-radius: 999px;
-  font-weight: 900;
-  letter-spacing: 0;
-}
-
-.primaryCta {
-  border: 0;
-  background: #2b1810;
-  color: #fff0cf;
-  padding: 13px 18px;
-}
-
-.draftButton {
-  border: 1px solid rgba(43, 24, 16, 0.22);
-  background: rgba(255, 248, 224, 0.48);
-  color: #2b1810;
-  padding: 12px 15px;
-}
-
-.memoryDrift {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.memoryFragment {
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  transform: translate(-50%, -50%) rotate(var(--r));
-  border: 1px solid rgba(92, 52, 24, 0.18);
-  border-radius: 4px;
-  background: rgba(245, 220, 164, 0.64);
-  color: #3a2113;
-  padding: 7px 10px;
-  font-size: 12px;
-  font-weight: 900;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.18);
-}
-
-.driftLayer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+    linear-gradient(135deg, rgba(26, 33, 51, 0.5), rgba(17, 19, 34, 0.74));
   overflow: hidden;
 }
 
-.driftMark {
+.clusterField::before {
+  content: "";
   position: absolute;
-  display: block;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px 999px 999px 0;
-  background: rgba(244, 197, 106, 0.8);
-  filter: blur(0.1px);
-  animation: floatMark 9s ease-in-out infinite;
+  inset: 13% 8%;
+  border: 1px solid rgba(110, 90, 154, 0.24);
+  border-radius: 50%;
+  transform: rotate(-8deg);
 }
 
-.mark1 {
-  left: 19%;
-  top: 22%;
-  background: rgba(235, 175, 133, 0.78);
+.yearCluster {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: var(--cluster-y);
+  height: 26%;
+  min-height: 118px;
 }
 
-.mark2 {
-  left: 78%;
-  top: 24%;
-  animation-delay: -2s;
-  background: rgba(177, 129, 207, 0.72);
-}
-
-.mark3 {
-  left: 73%;
-  top: 72%;
-  animation-delay: -4s;
-}
-
-.mark4 {
-  left: 29%;
-  top: 82%;
-  animation-delay: -1s;
-  background: rgba(255, 234, 176, 0.76);
-}
-
-.mark5 {
-  left: 85%;
+.yearLabel {
+  position: absolute;
+  left: 0;
   top: 50%;
-  animation-delay: -5s;
-  background: rgba(230, 201, 239, 0.78);
+  transform: translateY(-50%);
+  color: rgba(232, 224, 208, 0.58);
+  font-size: clamp(20px, 3vw, 34px);
+  font-weight: 900;
 }
 
-.mark6 {
-  left: 12%;
-  top: 54%;
-  animation-delay: -3s;
-  background: rgba(255, 228, 184, 0.7);
+.memoryObject {
+  position: absolute;
+  left: var(--node-x);
+  top: var(--node-y);
+  width: var(--node-size);
+  height: var(--node-size);
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(184, 166, 232, 0.52);
+  border-radius: 999px;
+  background:
+    linear-gradient(145deg, rgba(184, 166, 232, 0.88), rgba(110, 90, 154, 0.72));
+  color: transparent;
+  padding: 0;
+  box-shadow: 0 0 0 8px rgba(110, 90, 154, 0.1), 0 18px 34px rgba(0, 0, 0, 0.28);
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
 
-@keyframes floatMark {
+.memoryObject span {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  width: max-content;
+  min-width: 72px;
+  max-width: 110px;
+  transform: translateX(-50%);
+  color: var(--color-text-dim);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1.2;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+.memoryObject.draft {
+  border-color: rgba(244, 197, 106, 0.76);
+  background:
+    linear-gradient(145deg, rgba(244, 197, 106, 0.88), rgba(110, 90, 154, 0.62));
+}
+
+.memoryObject.selected,
+.memoryObject:hover {
+  transform: translate(-50%, -50%) scale(1.08);
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 11px rgba(244, 197, 106, 0.11), 0 18px 42px rgba(0, 0, 0, 0.34);
+}
+
+.previewPanel {
+  position: absolute;
+  right: clamp(18px, 4vw, 42px);
+  bottom: clamp(22px, 5vh, 42px);
+  width: min(360px, calc(100% - 36px));
+  border: 1px solid rgba(184, 166, 232, 0.22);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(26, 33, 51, 0.94), rgba(17, 19, 34, 0.96));
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.34);
+}
+
+.previewPanel h2 {
+  font-size: 24px;
+  line-height: 1.18;
+}
+
+.previewPanel p {
+  color: var(--color-text-dim);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.previewMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.previewMeta span {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text-dim);
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.primaryCta,
+.openButton {
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-gold);
+  color: var(--color-primary-contrast);
+  padding: 13px 18px;
+  font-weight: 900;
+}
+
+.primaryCta {
+  min-height: 52px;
+}
+
+.primaryCta.compact {
+  min-width: 148px;
+  min-height: 44px;
+  padding: 11px 15px;
+}
+
+.openButton {
+  width: fit-content;
+}
+
+@keyframes starPulse {
   0%,
   100% {
-    transform: translate3d(0, 0, 0) rotate(18deg);
+    opacity: 0.38;
   }
 
   50% {
-    transform: translate3d(10px, -18px, 0) rotate(58deg);
+    opacity: 0.86;
   }
 }
 
-@media (max-width: 720px) {
+@media (prefers-reduced-motion: reduce) {
+  .star,
+  .memoryObject {
+    animation: none;
+    transition: none;
+  }
+}
+
+@media (max-width: 760px) {
   .homeScene {
-    padding: 12px 12px calc(86px + env(safe-area-inset-bottom));
+    padding: 14px 14px calc(90px + env(safe-area-inset-bottom));
   }
 
-  .homeScene::before {
-    inset: 6px;
-    border-radius: 24px;
-  }
-
-  .homeScene::after {
-    inset: 9px;
-    border-radius: 20px;
-  }
-
-  .journalSheet {
-    min-height: min(510px, calc(100dvh - 158px));
-    padding: 26px 24px;
-    gap: 16px;
-  }
-
-  h1 {
-    font-size: clamp(32px, 11vw, 44px);
-  }
-
-  .journalCopy p {
-    font-size: 14px;
-    line-height: 1.55;
-  }
-
-  .featuredMemory,
-  .emptyMemory {
-    padding: 14px;
-  }
-
-  .homeActions {
+  .fieldHeader {
+    align-items: start;
     display: grid;
   }
 
-  .primaryCta,
-  .draftButton {
-    width: 100%;
-    padding: 12px 14px;
+  h1 {
+    font-size: clamp(34px, 11vw, 48px);
   }
 
-  .memoryFragment {
-    display: none;
+  .clusterField {
+    border-radius: 18px;
+  }
+
+  .clusterField::before {
+    inset: 16% -8%;
+  }
+
+  .yearCluster {
+    left: 4%;
+    right: 4%;
+  }
+
+  .yearLabel {
+    font-size: 18px;
+  }
+
+  .memoryObject span {
+    max-width: 82px;
+    font-size: 10px;
+  }
+
+  .previewPanel {
+    left: 14px;
+    right: 14px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    width: auto;
   }
 }
 
 @media (max-height: 680px) {
-  .journalSheet {
-    min-height: 0;
+  .homeScene {
+    padding-top: 12px;
+  }
+
+  .memoryField {
     gap: 12px;
-    padding: 22px;
   }
 
-  h1 {
-    font-size: clamp(32px, 9vw, 46px);
+  .previewPanel {
+    padding: 14px;
+    gap: 9px;
   }
 
-  .journalCopy p {
-    font-size: 13px;
-    line-height: 1.45;
-  }
-
-  .featuredMemory strong,
-  .emptyMemory strong {
-    font-size: 19px;
+  .previewPanel h2 {
+    font-size: 20px;
   }
 }
 </style>
