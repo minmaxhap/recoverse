@@ -140,10 +140,16 @@ import {
 import {
   buildShareHash,
   buildSharedReflectionSnapshot,
-  REFLECTION_SHARE_HASH_PREFIX,
   readShareHash,
   type SharedReflectionSnapshot,
 } from "./lib/reflectionShare";
+import {
+  createHistoryState,
+  shouldRecordHistory,
+  urlWithoutHash,
+  popFallbackMode,
+  urlHasShareHash,
+} from "./lib/appHistory";
 import { createSampleReflection, SAMPLE_REFLECTION_ID } from "./lib/sampleReflection";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
@@ -271,26 +277,25 @@ function confirmLeavingWriteMode() {
 }
 
 function clearShareHash() {
-  if (!window.location.hash.startsWith(REFLECTION_SHARE_HASH_PREFIX)) return;
+  if (!urlHasShareHash(window.location.hash)) return;
   window.history.replaceState(
-    { recoverseMode: mode.value },
+    createHistoryState(mode.value),
     "",
-    `${window.location.pathname}${window.location.search}`
+    urlWithoutHash(window.location.pathname, window.location.search)
   );
 }
 
 function setMode(m: AppMode, options: { recordHistory?: boolean } = {}) {
   const previousMode = mode.value;
-  const shouldRecordHistory = options.recordHistory !== false;
 
   if (m !== "shared-reflections") {
     sharedReflectionSnapshot.value = null;
     clearShareHash();
   }
 
-  if (previousMode !== m && shouldRecordHistory && !isHandlingBrowserBack.value) {
+  if (previousMode !== m && shouldRecordHistory(options) && !isHandlingBrowserBack.value) {
     modeBackStack.value.push(previousMode);
-    window.history.pushState({ recoverseMode: m }, "", window.location.href);
+    window.history.pushState(createHistoryState(m), "", window.location.href);
   }
 
   mode.value = m;
@@ -316,11 +321,11 @@ function navigateBottomTab(tabId: BottomTabId) {
 
 function onBrowserBack() {
   if (!confirmLeavingWriteMode()) {
-    window.history.pushState({ recoverseMode: mode.value }, "", window.location.href);
+    window.history.pushState(createHistoryState(mode.value), "", window.location.href);
     return;
   }
 
-  const previousMode = modeBackStack.value.pop() ?? "home-universe";
+  const previousMode = popFallbackMode(modeBackStack.value, "home-universe");
   isHandlingBrowserBack.value = true;
   setMode(previousMode, { recordHistory: false });
   isHandlingBrowserBack.value = false;
@@ -375,7 +380,7 @@ async function shareActiveReflection(questionIds: string[]) {
   const hash = buildShareHash(snapshot);
   const shareUrl = `${window.location.origin}${window.location.pathname}${window.location.search}${hash}`;
   sharedReflectionSnapshot.value = snapshot;
-  window.history.pushState({ recoverseMode: "shared-reflections" }, "", shareUrl);
+  window.history.pushState(createHistoryState("shared-reflections"), "", shareUrl);
   setMode("shared-reflections");
 
   try {
@@ -478,7 +483,7 @@ function clearAll() {
 }
 
 onMounted(() => {
-  window.history.replaceState({ recoverseMode: mode.value }, "", window.location.href);
+  window.history.replaceState(createHistoryState(mode.value), "", window.location.href);
   openSharedSnapshotFromHash();
   window.addEventListener("popstate", onBrowserBack);
   window.addEventListener("hashchange", onHashChange);

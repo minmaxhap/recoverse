@@ -98,6 +98,13 @@ const appNavPath = await compileTsModule(
 );
 const appNav = await import(pathToFileURL(appNavPath).href);
 
+const appHistoryPath = await compileTsModule(
+  new URL("../src/lib/appHistory.ts", import.meta.url),
+  "appHistory.mjs",
+  [['"./reflectionShare"', '"./reflectionShare.mjs"']]
+);
+const appHistory = await import(pathToFileURL(appHistoryPath).href);
+
 globalThis.localStorage = new MemoryStorage();
 
 test("creates a reflection draft from the year template light question set", () => {
@@ -353,4 +360,37 @@ test("appNavigation isTabActive matches the navigateBottomTab guard logic", () =
   assert.ok(!isTabActive("reflection-detail", "home"));
   assert.ok(!isTabActive("reflection-detail", "write"));
   assert.ok(!isTabActive("reflection-detail", "review"));
+});
+
+test("appHistory createHistoryState creates correct state object", () => {
+  assert.deepEqual(appHistory.createHistoryState("home-universe"), { recoverseMode: "home-universe" });
+  assert.deepEqual(appHistory.createHistoryState("reflection-write"), { recoverseMode: "reflection-write" });
+});
+
+test("appHistory shouldRecordHistory returns true by default and false when recordHistory is false", () => {
+  assert.equal(appHistory.shouldRecordHistory({}), true);
+  assert.equal(appHistory.shouldRecordHistory({ recordHistory: true }), true);
+  assert.equal(appHistory.shouldRecordHistory({ recordHistory: false }), false);
+});
+
+test("appHistory urlWithoutHash concatenates pathname and search", () => {
+  assert.equal(appHistory.urlWithoutHash("/app", "?lang=ko"), "/app?lang=ko");
+  assert.equal(appHistory.urlWithoutHash("/app/", ""), "/app/");
+  assert.equal(appHistory.urlWithoutHash("/", "?q=test"), "/?q=test");
+});
+
+test("appHistory popFallbackMode pops from stack or returns default", () => {
+  const stack = ["a", "b"];
+  assert.equal(appHistory.popFallbackMode(stack, "default"), "b");
+  assert.equal(stack.length, 1);
+  assert.equal(appHistory.popFallbackMode(stack, "default"), "a");
+  assert.equal(stack.length, 0);
+  assert.equal(appHistory.popFallbackMode(stack, "home-universe"), "home-universe");
+});
+
+test("appHistory urlHasShareHash detects share hash prefix", () => {
+  assert.equal(appHistory.urlHasShareHash("#share=abc123"), true);
+  assert.equal(appHistory.urlHasShareHash("#other=value"), false);
+  assert.equal(appHistory.urlHasShareHash(""), false);
+  assert.equal(appHistory.urlHasShareHash("no-hash"), false);
 });
