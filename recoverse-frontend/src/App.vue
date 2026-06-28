@@ -110,6 +110,14 @@ import ReviewAgainPage from "./views/ReviewAgainPage.vue";
 import SharedReflectionPage from "./views/SharedReflectionPage.vue";
 import WriteReflectionPage from "./views/WriteReflectionPage.vue";
 import { downloadBlob } from "./lib/downloadBlob";
+import {
+  type AppMode,
+  type BottomTabId,
+  bottomNavLabels,
+  shouldShowBottomNav,
+  getActiveBottomTab,
+  isTabActive,
+} from "./lib/appNavigation";
 import type { AppLanguage } from "./types/recoverse";
 import {
   createReflectionDraft,
@@ -138,17 +146,6 @@ import {
 } from "./lib/reflectionShare";
 import { createSampleReflection, SAMPLE_REFLECTION_ID } from "./lib/sampleReflection";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
-
-type AppMode =
-  | "home-universe"
-  | "reflection-new"
-  | "reflection-write"
-  | "reflection-detail"
-  | "review-again"
-  | "shared-reflections"
-  | "archive-settings";
-
-type BottomTabId = "write" | "home" | "review";
 
 const LANGUAGE_KEY = "recoverse_language";
 const THEME_KEY = "recoverse_theme";
@@ -179,29 +176,9 @@ const mode = ref<AppMode>("home-universe");
 const modeBackStack = ref<AppMode[]>([]);
 const isHandlingBrowserBack = ref(false);
 
-const bottomNavLabels = {
-  home: "홈",
-  write: "기억 작성",
-  review: "다시 보기",
-};
+const showBottomNav = computed(() => shouldShowBottomNav(mode.value));
 
-const showBottomNav = computed(() =>
-  [
-    "home-universe",
-    "reflection-new",
-    "reflection-write",
-    "reflection-detail",
-    "review-again",
-    "shared-reflections",
-    "archive-settings",
-  ].includes(mode.value)
-);
-
-const activeBottomTab = computed<BottomTabId>(() => {
-  if (mode.value === "reflection-new" || mode.value === "reflection-write") return "write";
-  if (mode.value === "review-again" || mode.value === "shared-reflections") return "review";
-  return "home";
-});
+const activeBottomTab = computed<BottomTabId>(() => getActiveBottomTab(mode.value));
 
 const activeReflection = computed(() => {
   if (!activeReflectionId.value) return null;
@@ -320,13 +297,7 @@ function setMode(m: AppMode, options: { recordHistory?: boolean } = {}) {
 }
 
 function navigateBottomTab(tabId: BottomTabId) {
-  if (
-    (tabId === "home" && mode.value === "home-universe") ||
-    (tabId === "write" && (mode.value === "reflection-new" || mode.value === "reflection-write")) ||
-    (tabId === "review" && mode.value === "review-again")
-  ) {
-    return;
-  }
+  if (isTabActive(mode.value, tabId)) return;
   if (!confirmLeavingWriteMode()) return;
 
   if (tabId === "home") {

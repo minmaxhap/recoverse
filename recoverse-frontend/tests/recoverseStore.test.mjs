@@ -92,6 +92,12 @@ const reflectionShare = await import(pathToFileURL(reflectionSharePath).href);
 const sampleReflection = await import(pathToFileURL(sampleReflectionPath).href);
 const questionTimeline = await import(pathToFileURL(questionTimelinePath).href);
 
+const appNavPath = await compileTsModule(
+  new URL("../src/lib/appNavigation.ts", import.meta.url),
+  "appNavigation.mjs"
+);
+const appNav = await import(pathToFileURL(appNavPath).href);
+
 globalThis.localStorage = new MemoryStorage();
 
 test("creates a reflection draft from the year template light question set", () => {
@@ -287,4 +293,64 @@ test("builds same question timelines across reflection periods", () => {
     timeline.map((item) => item.answer.value),
     ["조금씩", "나답게"]
   );
+});
+
+test("appNavigation bottomNavLabels maps every BottomTabId", () => {
+  const { bottomNavLabels } = appNav;
+
+  assert.equal(typeof bottomNavLabels, "object");
+  assert.equal(bottomNavLabels.home, "홈");
+  assert.equal(bottomNavLabels.write, "기억 작성");
+  assert.equal(bottomNavLabels.review, "다시 보기");
+  assert.deepEqual(Object.keys(bottomNavLabels).sort(), ["home", "review", "write"]);
+});
+
+test("appNavigation shouldShowBottomNav returns true for every AppMode", () => {
+  const { shouldShowBottomNav } = appNav;
+  const modes = [
+    "home-universe",
+    "reflection-new",
+    "reflection-write",
+    "reflection-detail",
+    "review-again",
+    "shared-reflections",
+    "archive-settings",
+  ];
+
+  for (const mode of modes) {
+    assert.ok(shouldShowBottomNav(mode), `${mode} should show bottom nav`);
+  }
+});
+
+test("appNavigation getActiveBottomTab maps modes to correct tabs", () => {
+  const { getActiveBottomTab } = appNav;
+
+  assert.equal(getActiveBottomTab("home-universe"), "home");
+  assert.equal(getActiveBottomTab("reflection-new"), "write");
+  assert.equal(getActiveBottomTab("reflection-write"), "write");
+  assert.equal(getActiveBottomTab("reflection-detail"), "home");
+  assert.equal(getActiveBottomTab("review-again"), "review");
+  assert.equal(getActiveBottomTab("shared-reflections"), "review");
+  assert.equal(getActiveBottomTab("archive-settings"), "home");
+});
+
+test("appNavigation isTabActive matches the navigateBottomTab guard logic", () => {
+  const { isTabActive } = appNav;
+
+  assert.ok(isTabActive("home-universe", "home"));
+  assert.ok(!isTabActive("home-universe", "write"));
+  assert.ok(!isTabActive("home-universe", "review"));
+
+  assert.ok(isTabActive("reflection-new", "write"));
+  assert.ok(isTabActive("reflection-write", "write"));
+  assert.ok(!isTabActive("reflection-new", "home"));
+  assert.ok(!isTabActive("reflection-write", "home"));
+
+  assert.ok(isTabActive("review-again", "review"));
+  assert.ok(!isTabActive("shared-reflections", "review"));
+  assert.ok(!isTabActive("review-again", "home"));
+
+  assert.ok(!isTabActive("reflection-detail", "home"));
+  assert.ok(!isTabActive("reflection-detail", "write"));
+  assert.ok(!isTabActive("reflection-detail", "review"));
 });

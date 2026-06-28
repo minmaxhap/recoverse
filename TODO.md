@@ -24,6 +24,9 @@
 
 별도 결정이 필요하므로 진행 전 우선순위를 확인한다.
 
+- [x] 재설계 계획을 [REDESIGN_PLAN.ko.md](./REDESIGN_PLAN.ko.md)에 고정한다.
+- [x] 앱 내비게이션 모드/탭 판단을 순수 모듈로 분리한다.
+- [ ] 히스토리와 공유 해시 처리를 순수 헬퍼로 분리한다.
 - [ ] 로그인 (Google / Kakao). 자세한 계약은 [ACCOUNT_STORAGE_PLAN.ko.md](./ACCOUNT_STORAGE_PLAN.ko.md).
 - [ ] 계정 기반 클라우드 저장과 멀티 디바이스 동기화
 - [ ] 서버 저장 기반 공유 링크 발행 (현재는 URL 해시만 지원)
