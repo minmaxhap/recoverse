@@ -27,6 +27,15 @@
 - [x] 재설계 계획을 [REDESIGN_PLAN.ko.md](./REDESIGN_PLAN.ko.md)에 고정한다.
 - [x] 앱 내비게이션 모드/탭 판단을 순수 모듈로 분리한다.
 - [x] 히스토리와 공유 해시 처리를 순수 헬퍼로 분리한다.
+
+## 재설계 실행 (UX_REDESIGN_BRIEF.ko.md 기준)
+
+- [x] UX 재설계 브리프 문서 [UX_REDESIGN_BRIEF.ko.md](./UX_REDESIGN_BRIEF.ko.md) 작성
+- [ ] 홈/작성 진입 슬라이스 리라이트: 저널 메타포 제거, 위자드 제거, 질문 우선 진입 적용
+- [ ] 작성 페이지 리라이트: 어두운 표면 통일, 액션 바 단순화
+- [ ] 다시 보기 리라이트: 단순화, 시각 정체성 통일
+- [ ] CSS 변수 전역 정리: 디자인 시스템 값과 일치
+
 - [ ] 로그인 (Google / Kakao). 자세한 계약은 [ACCOUNT_STORAGE_PLAN.ko.md](./ACCOUNT_STORAGE_PLAN.ko.md).
 - [ ] 계정 기반 클라우드 저장과 멀티 디바이스 동기화
 - [ ] 서버 저장 기반 공유 링크 발행 (현재는 URL 해시만 지원)
