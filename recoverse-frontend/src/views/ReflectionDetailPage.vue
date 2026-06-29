@@ -18,11 +18,11 @@
         <button class="primaryAction" type="button" @click="$emit('edit')">
           {{ reflection.isCompleted ? "답변 수정하기" : "이어쓰기" }}
         </button>
-        <button class="secondaryAction" type="button" @click="$emit('review-again')">
-          같은 질문 다시보기
+        <button class="tertiaryAction" type="button" @click="$emit('review-again')">
+          같은 질문 비교
         </button>
         <button
-          class="secondaryAction"
+          class="tertiaryAction"
           type="button"
           :disabled="shareableItems.length === 0"
           @click="openShareOptions"
@@ -249,12 +249,14 @@ p {
 .actionPanel {
   padding: 14px;
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
   gap: 10px;
 }
 
 .primaryAction,
 .secondaryAction,
+.tertiaryAction,
 .shareButton {
   border-radius: 999px;
   font-weight: 900;
@@ -262,10 +264,17 @@ p {
 }
 
 .secondaryAction,
+.tertiaryAction,
 .shareButton {
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.04);
   color: var(--color-text);
+}
+
+.tertiaryAction {
+  padding: 9px 12px;
+  font-size: 12px;
+  color: var(--color-text-dim);
 }
 
 .primaryAction {
@@ -274,7 +283,8 @@ p {
   color: var(--color-primary-contrast);
 }
 
-.secondaryAction:disabled {
+.secondaryAction:disabled,
+.tertiaryAction:disabled {
   opacity: 0.45;
 }
 
