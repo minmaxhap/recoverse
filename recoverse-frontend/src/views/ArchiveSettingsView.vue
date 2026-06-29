@@ -3,8 +3,18 @@
     <header class="settingsHead">
       <span class="eyebrow">Settings</span>
       <h2>설정</h2>
-      <p>앱 표시 방식, 임시저장 상태, 내 기억 데이터를 관리합니다. 오래 보관하려면 회고 백업을 내려받아 주세요.</p>
+      <p>앱 표시 방식, 임시저장 상태, 내 기억 데이터를 관리합니다.</p>
     </header>
+
+    <section class="privacyPanel" aria-label="개인정보 안내">
+      <span class="privacyEyebrow">개인정보</span>
+      <h3>모든 기억은 이 기기에만 저장돼요</h3>
+      <ul>
+        <li>회고 데이터는 브라우저 localStorage에만 저장됩니다. 서버, 계정, 외부 분석은 없습니다.</li>
+        <li>공유 링크는 URL 해시에 직접 인코딩되며, 원본 회고는 공유되지 않습니다.</li>
+        <li>브라우저 데이터 삭제, 시크릿 모드 종료, 다른 기기 접속 시 회고가 사라질 수 있어요. 회고 백업하기로 JSON을 내려받아 두세요.</li>
+      </ul>
+    </section>
 
     <section v-if="telemetry" class="usagePanel" aria-label="내 사용 기록">
       <header>
@@ -192,5 +202,40 @@ defineEmits<{
   color: var(--color-text-dim);
   font-size: 12px;
   line-height: 1.4;
+}
+
+.privacyPanel {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(184, 166, 232, 0.32);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(184, 166, 232, 0.10), rgba(110, 90, 154, 0.08));
+  padding: 18px 20px;
+}
+
+.privacyEyebrow {
+  color: var(--color-star);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.privacyPanel h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.privacyPanel ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  color: var(--color-text-dim);
+  font-size: 13px;
+  line-height: 1.55;
 }
 </style>

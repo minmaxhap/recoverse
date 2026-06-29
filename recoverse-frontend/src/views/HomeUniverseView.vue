@@ -23,6 +23,10 @@
               질문 카드로 작성하기
             </button>
           </div>
+          <p class="privacyBadge">
+            <span class="privacyDot" aria-hidden="true"></span>
+            모든 기억은 이 기기에만 저장돼요. 계정도 서버도 필요 없어요.
+          </p>
         </section>
 
         <section v-else class="memoryField" aria-label="연도별 기억 묶음">
@@ -352,6 +356,29 @@ const nodePositions = [
 .ghostCta:hover,
 .ghostCta:focus-visible {
   border-color: var(--color-gold);
+}
+
+.privacyBadge {
+  margin: 6px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(184, 166, 232, 0.32);
+  border-radius: 999px;
+  background: rgba(184, 166, 232, 0.08);
+  color: var(--color-text-dim);
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.privacyDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--color-star);
+  box-shadow: 0 0 8px rgba(184, 166, 232, 0.6);
 }
 
 .memoryField {
