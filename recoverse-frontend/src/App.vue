@@ -73,6 +73,7 @@
         @reflection-export="onExportReflections"
         @reflection-import-file="onImportReflectionFile"
         @clear-all="clearAll"
+        @load-sample="loadSampleReflection"
       />
     </main>
     <AppBottomNav

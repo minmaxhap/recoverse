@@ -16,6 +16,17 @@
       </ul>
     </section>
 
+    <section class="samplePanel" aria-label="샘플 회고">
+      <header>
+        <span class="sampleEyebrow">앱 살펴보기</span>
+        <h3>샘플 회고로 화면을 둘러보세요</h3>
+      </header>
+      <p>제주 여행을 다녀온 사람의 회고 예시를 불러옵니다. 내 회고 옆에 함께 놓이고, 언제든 삭제할 수 있어요.</p>
+      <button type="button" class="sampleCta" @click="$emit('load-sample')">
+        샘플 회고 열기
+      </button>
+    </section>
+
     <section v-if="telemetry" class="usagePanel" aria-label="내 사용 기록">
       <header>
         <span class="usageEyebrow">내 기록</span>
@@ -99,6 +110,7 @@ defineEmits<{
   "reflection-export": [];
   "reflection-import-file": [event: Event];
   "clear-all": [];
+  "load-sample": [];
 }>();
 </script>
 
@@ -237,5 +249,56 @@ defineEmits<{
   color: var(--color-text-dim);
   font-size: 13px;
   line-height: 1.55;
+}
+
+.samplePanel {
+  display: grid;
+  gap: 10px;
+  border: 1px solid var(--color-soft-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+  padding: 18px 20px;
+}
+
+.samplePanel header {
+  display: grid;
+  gap: 4px;
+}
+
+.sampleEyebrow {
+  color: var(--color-gold);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.samplePanel h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.samplePanel p {
+  margin: 0;
+  color: var(--color-text-dim);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.sampleCta {
+  justify-self: start;
+  border: 1px solid var(--color-border-gold);
+  border-radius: 999px;
+  background: rgba(244, 197, 106, 0.14);
+  color: var(--color-text);
+  padding: 10px 16px;
+  font-weight: 900;
+}
+
+.sampleCta:hover,
+.sampleCta:focus-visible {
+  border-color: var(--color-gold);
 }
 </style>
