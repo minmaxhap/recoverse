@@ -5,6 +5,36 @@
       <h2>설정</h2>
       <p>앱 표시 방식, 임시저장 상태, 내 기억 데이터를 관리합니다. 오래 보관하려면 회고 백업을 내려받아 주세요.</p>
     </header>
+
+    <section v-if="telemetry" class="usagePanel" aria-label="내 사용 기록">
+      <header>
+        <span class="usageEyebrow">내 기록</span>
+        <h3>이 기기에서만 보이는 사용 요약입니다</h3>
+      </header>
+      <dl class="usageGrid">
+        <div>
+          <dt>접속한 날</dt>
+          <dd>{{ telemetry.totalSessions }}일</dd>
+        </div>
+        <div>
+          <dt>남긴 답변</dt>
+          <dd>{{ telemetry.totalAnswers }}개</dd>
+        </div>
+        <div>
+          <dt>현재 연속</dt>
+          <dd>{{ telemetry.currentStreak }}일</dd>
+        </div>
+        <div>
+          <dt>최장 연속</dt>
+          <dd>{{ telemetry.longestStreak }}일</dd>
+        </div>
+      </dl>
+      <p v-if="telemetrySummary" class="usageHint">
+        처음 연 지 {{ telemetrySummary.daysSinceFirst }}일 ·
+        마지막 방문 {{ telemetrySummary.daysSinceLast === 0 ? "오늘" : `${telemetrySummary.daysSinceLast}일 전` }}
+      </p>
+    </section>
+
     <section class="settingsPanel">
       <ArchiveSettingsTools
         :language="language"
@@ -40,6 +70,7 @@ import type {
   SettingsSection,
 } from "../components/ArchiveSettingsTools.vue";
 import type { AppLanguage } from "../types/recoverse";
+import type { TelemetryState } from "../lib/localTelemetry";
 
 defineProps<{
   language: AppLanguage;
@@ -47,6 +78,8 @@ defineProps<{
   activeSection: SettingsSection;
   themeOptions: Array<{ id: RecoverseTheme; label: string; description: string }>;
   reflectionCount: number;
+  telemetry?: TelemetryState | null;
+  telemetrySummary?: { daysSinceFirst: number; daysSinceLast: number } | null;
 }>();
 
 defineEmits<{
@@ -95,5 +128,69 @@ defineEmits<{
 
 .settingsPanel {
   display: grid;
+}
+
+.usagePanel {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--color-soft-border);
+  border-radius: 18px;
+  background: var(--color-surface);
+  padding: 18px 20px;
+}
+
+.usagePanel header {
+  display: grid;
+  gap: 4px;
+}
+
+.usageEyebrow {
+  color: var(--color-gold);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.usagePanel h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.usageGrid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.usageGrid div {
+  border: 1px solid var(--color-soft-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 11px 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.usageGrid dt {
+  color: var(--color-text-dim);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.usageGrid dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.usageHint {
+  margin: 0;
+  color: var(--color-text-dim);
+  font-size: 12px;
+  line-height: 1.4;
 }
 </style>

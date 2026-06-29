@@ -65,6 +65,8 @@
         :active-section="activeSettingsSection"
         :theme-options="themeOptions"
         :reflection-count="reflections.length"
+        :telemetry="telemetry"
+        :telemetry-summary="telemetrySummary"
         @update:language="language = $event"
         @update:theme="setAppTheme"
         @change-language="saveLanguage"
@@ -138,6 +140,14 @@ import {
 } from "./lib/appHistory";
 import { createQuickReflection } from "./lib/quickReflection";
 import { createSampleReflection, SAMPLE_REFLECTION_ID } from "./lib/sampleReflection";
+import {
+  describeTelemetry,
+  loadTelemetry,
+  recordAnswer,
+  recordSession,
+  resetTelemetry,
+  type TelemetryState,
+} from "./lib/localTelemetry";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
 const language = ref<AppLanguage>(loadPreferredLanguage());
@@ -156,6 +166,7 @@ const themeOptions: Array<{
 const reflections = ref<Reflection[]>(loadReflections());
 const activeReflectionId = ref<string | null>(reflections.value[0]?.id ?? null);
 const sharedReflectionSnapshot = ref<SharedReflectionSnapshot | null>(null);
+const telemetry = ref<TelemetryState>(loadTelemetry());
 
 const mode = ref<AppMode>("home-universe");
 const modeBackStack = ref<AppMode[]>([]);
@@ -164,6 +175,8 @@ const isHandlingBrowserBack = ref(false);
 const showBottomNav = computed(() => shouldShowBottomNav(mode.value));
 
 const activeBottomTab = computed<BottomTabId | null>(() => getActiveBottomTab(mode.value));
+
+const telemetrySummary = computed(() => describeTelemetry(telemetry.value));
 
 const activeReflection = computed(() => {
   if (!activeReflectionId.value) return null;
@@ -398,6 +411,10 @@ function saveActiveReflectionAnswer(payload: {
   );
   reflections.value = saveReflection(next);
   activeReflectionId.value = next.id;
+
+  if (!payload.skipped && payload.value.trim().length > 0) {
+    telemetry.value = recordAnswer();
+  }
 }
 
 function onExportReflections() {
@@ -437,9 +454,12 @@ function clearAll() {
   reflections.value = [];
   saveReflections([]);
   activeReflectionId.value = null;
+  resetTelemetry();
+  telemetry.value = loadTelemetry();
 }
 
 onMounted(() => {
+  telemetry.value = recordSession();
   window.history.replaceState(createHistoryState(mode.value), "", window.location.href);
   openSharedSnapshotFromHash();
   window.addEventListener("popstate", onBrowserBack);

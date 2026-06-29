@@ -137,6 +137,13 @@ const quickReflectionPath = await compileTsModule(
 );
 const quickReflection = await import(pathToFileURL(quickReflectionPath).href);
 
+const localTelemetryPath = await compileTsModule(
+  new URL("../src/lib/localTelemetry.ts", import.meta.url),
+  "localTelemetry.mjs",
+  [['"./safeLocalStorage"', '"./safeLocalStorage.mjs"']]
+);
+const localTelemetry = await import(pathToFileURL(localTelemetryPath).href);
+
 globalThis.localStorage = new MemoryStorage();
 
 test("creates a reflection draft from the year template light question set", () => {
@@ -665,4 +672,68 @@ test("quickReflection produces unique ids across calls", () => {
   assert.notEqual(a.id, b.id);
   assert.notEqual(a.questionGroups[0].id, b.questionGroups[0].id);
   assert.notEqual(a.questionGroups[0].questions[0].id, b.questionGroups[0].questions[0].id);
+});
+
+test("telemetry counts at most one session per local day", () => {
+  localStorage.clear();
+  const day1 = new Date("2026-06-29T09:00:00+09:00");
+  const day1Later = new Date("2026-06-29T18:00:00+09:00");
+  const after1 = localTelemetry.recordSession(day1);
+  const after2 = localTelemetry.recordSession(day1Later);
+  assert.equal(after1.totalSessions, 1);
+  assert.equal(after2.totalSessions, 1);
+  assert.equal(after2.currentStreak, 1);
+  assert.equal(after2.longestStreak, 1);
+});
+
+test("telemetry extends a streak when consecutive days appear", () => {
+  localStorage.clear();
+  const day1 = new Date("2026-06-29T09:00:00+09:00");
+  const day2 = new Date("2026-06-30T09:00:00+09:00");
+  const day3 = new Date("2026-07-01T09:00:00+09:00");
+  localTelemetry.recordSession(day1);
+  localTelemetry.recordSession(day2);
+  const state = localTelemetry.recordSession(day3);
+  assert.equal(state.totalSessions, 3);
+  assert.equal(state.currentStreak, 3);
+  assert.equal(state.longestStreak, 3);
+});
+
+test("telemetry resets the streak when a day is skipped", () => {
+  localStorage.clear();
+  const day1 = new Date("2026-06-29T09:00:00+09:00");
+  const day3 = new Date("2026-07-01T09:00:00+09:00");
+  localTelemetry.recordSession(day1);
+  const state = localTelemetry.recordSession(day3);
+  assert.equal(state.totalSessions, 2);
+  assert.equal(state.currentStreak, 1);
+  assert.equal(state.longestStreak, 1);
+});
+
+test("telemetry recordAnswer accumulates the answer count", () => {
+  localStorage.clear();
+  localTelemetry.recordSession(new Date("2026-06-29T09:00:00+09:00"));
+  localTelemetry.recordAnswer(new Date("2026-06-29T09:05:00+09:00"));
+  const after = localTelemetry.recordAnswer(new Date("2026-06-29T09:06:00+09:00"));
+  assert.equal(after.totalAnswers, 2);
+});
+
+test("telemetry describeTelemetry returns local-day deltas", () => {
+  localStorage.clear();
+  localTelemetry.recordSession(new Date("2026-06-29T09:00:00+09:00"));
+  const state = localTelemetry.recordSession(new Date("2026-07-02T09:00:00+09:00"));
+  const summary = localTelemetry.describeTelemetry(state, new Date("2026-07-05T09:00:00+09:00"));
+  assert.equal(summary.daysSinceFirst, 6);
+  assert.equal(summary.daysSinceLast, 3);
+});
+
+test("telemetry resetTelemetry clears the stored counters", () => {
+  localStorage.clear();
+  localTelemetry.recordSession(new Date("2026-06-29T09:00:00+09:00"));
+  localTelemetry.recordAnswer(new Date("2026-06-29T09:05:00+09:00"));
+  localTelemetry.resetTelemetry();
+  const state = localTelemetry.loadTelemetry(new Date("2026-06-29T09:10:00+09:00"));
+  assert.equal(state.totalSessions, 0);
+  assert.equal(state.totalAnswers, 0);
+  assert.equal(state.currentStreak, 0);
 });
