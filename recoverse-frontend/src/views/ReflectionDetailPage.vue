@@ -2,8 +2,15 @@
   <section v-if="reflection" class="detailPage">
     <header class="detailHeader">
       <div>
-        <span class="eyebrow">검토와 다시 보기</span>
+        <span class="eyebrow">{{ reflection.isCompleted ? "이 시기의 나" : "이어쓰는 기억" }}</span>
         <h1>{{ reflection.title }}</h1>
+        <div class="detailMeta" aria-label="회고 상태">
+          <span>{{ answeredCount }}개 답변</span>
+          <span aria-hidden="true">·</span>
+          <span>{{ updatedDate }} 수정</span>
+          <span v-if="!reflection.isCompleted" aria-hidden="true">·</span>
+          <span v-if="!reflection.isCompleted">진행률 {{ reflection.completionRate }}%</span>
+        </div>
       </div>
     </header>
 
@@ -15,35 +22,33 @@
       </section>
 
       <section class="actionPanel" aria-label="회고 주요 행동">
-        <button class="primaryAction" type="button" @click="$emit('edit')">
-          {{ reflection.isCompleted ? "답변 수정하기" : "이어쓰기" }}
-        </button>
-        <button class="tertiaryAction" type="button" @click="$emit('review-again')">
-          같은 질문 비교
+        <button
+          v-if="reflection.isCompleted"
+          class="primaryAction"
+          type="button"
+          @click="$emit('review-again')"
+        >
+          같은 질문 다시 보기
         </button>
         <button
-          class="tertiaryAction"
+          v-else
+          class="primaryAction"
+          type="button"
+          @click="$emit('edit')"
+        >
+          이어쓰기
+        </button>
+        <button
+          class="secondaryAction"
           type="button"
           :disabled="shareableItems.length === 0"
           @click="openShareOptions"
         >
           공유하기
         </button>
-      </section>
-
-      <section class="metaGrid" aria-label="회고 상태">
-        <div>
-          <span>진행률</span>
-          <strong>{{ reflection.completionRate }}%</strong>
-        </div>
-        <div>
-          <span>답변</span>
-          <strong>{{ answeredCount }}개</strong>
-        </div>
-        <div>
-          <span>마지막 수정</span>
-          <strong>{{ updatedDate }}</strong>
-        </div>
+        <button v-if="reflection.isCompleted" class="tertiaryAction" type="button" @click="$emit('edit')">
+          답변 수정
+        </button>
       </section>
 
       <section v-if="shareableItems.length > 0" class="sharePanel">
@@ -204,10 +209,19 @@ p {
   font-size: 26px;
 }
 
+.detailMeta {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--color-text-dim);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .eyebrow,
 .heroLabel,
-.answerCard span,
-.metaGrid span {
+.answerCard span {
   color: var(--color-gold);
   font-size: 12px;
   font-weight: 900;
@@ -221,8 +235,7 @@ p {
 .heroPanel,
 .answerCard,
 .actionPanel,
-.sharePanel,
-.metaGrid > div {
+.sharePanel {
   border: 1px solid var(--color-soft-border);
   background: var(--color-surface);
   border-radius: 18px;
@@ -286,22 +299,6 @@ p {
 .secondaryAction:disabled,
 .tertiaryAction:disabled {
   opacity: 0.45;
-}
-
-.metaGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.metaGrid > div {
-  padding: 15px;
-  display: grid;
-  gap: 5px;
-}
-
-.metaGrid strong {
-  font-size: 20px;
 }
 
 .sharePanel {
@@ -374,10 +371,6 @@ p {
 
   .heroPanel h2 {
     font-size: 25px;
-  }
-
-  .metaGrid {
-    grid-template-columns: 1fr;
   }
 }
 </style>
