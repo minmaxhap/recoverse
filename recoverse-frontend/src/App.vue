@@ -57,38 +57,20 @@
         @answer-same="openNewReflection"
       />
 
-      <section v-else-if="mode === 'archive-settings'" class="settingsScreen">
-        <header class="settingsHead">
-          <span class="eyebrow">Settings</span>
-          <h2>설정</h2>
-          <p>앱 표시 방식, 임시저장 상태, 내 기억 데이터를 관리합니다. 오래 보관하려면 회고 백업을 내려받아 주세요.</p>
-        </header>
-        <section class="settingsPanel">
-          <ArchiveSettingsTools
-            :language="language"
-            :theme="appTheme"
-            :active-section="activeSettingsSection"
-            language-label="언어"
-            theme-label="테마"
-            :theme-options="themeOptions"
-            reflection-group-label="회고 데이터"
-            reflection-export-label="회고 백업하기"
-            reflection-import-label="회고 가져오기"
-            reflection-backup-hint="가져오기는 기존 회고를 지우지 않고 최신 항목만 병합합니다."
-            :reflection-count="reflections.length"
-            :reflection-export-disabled="reflections.length === 0"
-            danger-group-label="데이터 초기화"
-            clear-label="전체 회고 삭제"
-            :clear-disabled="reflections.length === 0"
-            @update:language="language = $event"
-            @update:theme="setAppTheme"
-            @change-language="saveLanguage"
-            @reflection-export="onExportReflections"
-            @reflection-import-file="onImportReflectionFile"
-            @clear-all="clearAll"
-          />
-        </section>
-      </section>
+      <ArchiveSettingsView
+        v-else-if="mode === 'archive-settings'"
+        :language="language"
+        :theme="appTheme"
+        :active-section="activeSettingsSection"
+        :theme-options="themeOptions"
+        :reflection-count="reflections.length"
+        @update:language="language = $event"
+        @update:theme="setAppTheme"
+        @change-language="saveLanguage"
+        @reflection-export="onExportReflections"
+        @reflection-import-file="onImportReflectionFile"
+        @clear-all="clearAll"
+      />
     </main>
     <AppBottomNav
       v-if="showBottomNav"
@@ -104,8 +86,8 @@ import { computed, onBeforeUnmount, onMounted, ref, nextTick } from "vue";
 import AppBottomNav from "./components/AppBottomNav.vue";
 import AppTopNav from "./components/AppTopNav.vue";
 import type { TopMenuAction } from "./components/AppTopNav.vue";
-import ArchiveSettingsTools from "./components/ArchiveSettingsTools.vue";
 import type { RecoverseTheme, SettingsSection } from "./components/ArchiveSettingsTools.vue";
+import ArchiveSettingsView from "./views/ArchiveSettingsView.vue";
 import HomeUniverseView from "./views/HomeUniverseView.vue";
 import NewReflectionPage from "./views/NewReflectionPage.vue";
 import ReflectionDetailPage from "./views/ReflectionDetailPage.vue";
@@ -140,12 +122,6 @@ import {
   mergeReflectionBackup,
   REFLECTION_BACKUP_SCHEMA,
 } from "./lib/reflectionBackup";
-import {
-  buildReflectionSyncPayload,
-  getAccountSaveUnavailableMessage,
-  getLocalOnlyStorageWarning,
-  type AccountStorageProvider,
-} from "./lib/reflectionSync";
 import {
   buildShareHash,
   buildSharedReflectionSnapshot,
@@ -234,23 +210,6 @@ function onTopMenuAction(action: TopMenuAction) {
 
   openSettingsSection(action);
 }
-
-function requestAccountSave(provider: AccountStorageProvider) {
-  const payload = buildReflectionSyncPayload(reflections.value, provider);
-  const message = [
-    getAccountSaveUnavailableMessage(provider),
-    getLocalOnlyStorageWarning(payload.reflections.length),
-    "지금 백업 파일을 내려받을까요?",
-  ].join("\n\n");
-
-  if (confirm(message)) {
-    onExportReflections();
-  }
-}
-
-// Currently surfaced only through the future account flow.
-// Keeping the reference makes the helper discoverable when wiring it up.
-void requestAccountSave;
 
 function openSharedSnapshotFromHash() {
   const snapshot = readShareHash(window.location.hash);
@@ -381,8 +340,9 @@ async function shareActiveReflection(questionIds: string[]) {
   const hash = buildShareHash(snapshot);
   const shareUrl = `${window.location.origin}${window.location.pathname}${window.location.search}${hash}`;
   sharedReflectionSnapshot.value = snapshot;
+  modeBackStack.value.push(mode.value);
   window.history.pushState(createHistoryState("shared-reflections"), "", shareUrl);
-  setMode("shared-reflections");
+  setMode("shared-reflections", { recordHistory: false });
 
   try {
     await navigator.clipboard?.writeText(shareUrl);
@@ -517,42 +477,5 @@ onBeforeUnmount(() => {
 
 .main {
   padding: 54px 0 0;
-}
-
-.settingsScreen {
-  display: grid;
-  gap: 16px;
-  padding: 24px 18px 32px;
-  color: var(--color-text);
-}
-
-.settingsHead {
-  display: grid;
-  gap: 6px;
-}
-
-.settingsHead .eyebrow {
-  color: var(--color-muted);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-}
-
-.settingsHead h2 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 900;
-}
-
-.settingsHead p {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.settingsPanel {
-  display: grid;
 }
 </style>

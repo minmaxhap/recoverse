@@ -467,10 +467,11 @@ test("appNavigation getActiveBottomTab maps modes to correct tabs", () => {
   assert.equal(getActiveBottomTab("home-universe"), "home");
   assert.equal(getActiveBottomTab("reflection-new"), "write");
   assert.equal(getActiveBottomTab("reflection-write"), "write");
-  assert.equal(getActiveBottomTab("reflection-detail"), "home");
   assert.equal(getActiveBottomTab("review-again"), "review");
-  assert.equal(getActiveBottomTab("shared-reflections"), "review");
-  assert.equal(getActiveBottomTab("archive-settings"), "home");
+  // Modes without a tab home of their own do not highlight any pill.
+  assert.equal(getActiveBottomTab("reflection-detail"), null);
+  assert.equal(getActiveBottomTab("shared-reflections"), null);
+  assert.equal(getActiveBottomTab("archive-settings"), null);
 });
 
 test("appNavigation isTabActive matches the navigateBottomTab guard logic", () => {

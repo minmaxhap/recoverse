@@ -489,6 +489,24 @@ h1 {
   }
 }
 
+@media (min-width: 920px) {
+  .memoryField {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .clusterField {
+    margin-right: clamp(320px, 28vw, 400px);
+  }
+
+  .previewPanel {
+    position: absolute;
+    top: clamp(76px, 12vh, 120px);
+    right: clamp(20px, 3vw, 36px);
+    bottom: auto;
+    width: clamp(300px, 26vw, 380px);
+  }
+}
+
 @media (max-width: 760px) {
   .homeScene {
     padding: 14px 14px calc(90px + env(safe-area-inset-bottom));
