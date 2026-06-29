@@ -248,6 +248,7 @@ p {
 }
 
 .heroPanel h2 {
+  font-family: var(--font-display);
   font-size: 32px;
   line-height: 1.28;
 }

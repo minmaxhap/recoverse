@@ -1,3 +1,5 @@
+@import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
+
 :root {
   --color-page: #08070F;
   --color-bg: #111322;
@@ -23,7 +25,24 @@
   --color-star: #B8A6E8;
   --color-chip: rgba(244,197,106,0.12);
 
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --font-body:
+    "Pretendard Variable", Pretendard,
+    -apple-system, BlinkMacSystemFont, system-ui, Roboto,
+    "Helvetica Neue", "Segoe UI",
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic",
+    "Apple Color Emoji", "Segoe UI Emoji",
+    sans-serif;
+  /* OS 내장 serif 우선 — iOS의 Apple SD Gothic Neo + Iowan Old Style은
+     한글/영문 모두 클래식한 비례를 유지하고, 추가 다운로드가 없다.
+     #20 단계에서 위계 정돈 시 weight·spacing 같이 정돈한다. */
+  --font-display:
+    "Iowan Old Style", "Apple SD Gothic Neo",
+    "Source Han Serif K", "Source Han Serif KR",
+    "Noto Serif CJK KR", "Nanum Myeongjo",
+    "Georgia", "Times New Roman",
+    serif;
+
+  font-family: var(--font-body);
   color: var(--color-ink);
   background: var(--color-page);
   font-synthesis: none;

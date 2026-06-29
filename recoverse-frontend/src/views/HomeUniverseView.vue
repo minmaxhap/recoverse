@@ -460,6 +460,7 @@ p {
 h1 {
   max-width: 680px;
   margin-top: 8px;
+  font-family: var(--font-display);
   font-size: clamp(40px, 8vw, 76px);
   line-height: 1.02;
   font-weight: 900;
