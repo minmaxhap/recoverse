@@ -27,15 +27,13 @@ export function shouldShowBottomNav(mode: AppMode): boolean {
   ].includes(mode);
 }
 
-export function getActiveBottomTab(mode: AppMode): BottomTabId {
+export function getActiveBottomTab(mode: AppMode): BottomTabId | null {
+  if (mode === "home-universe") return "home";
   if (mode === "reflection-new" || mode === "reflection-write") return "write";
-  if (mode === "review-again" || mode === "shared-reflections") return "review";
-  return "home";
+  if (mode === "review-again") return "review";
+  return null;
 }
 
 export function isTabActive(mode: AppMode, tabId: BottomTabId): boolean {
-  if (tabId === "home") return mode === "home-universe";
-  if (tabId === "write") return mode === "reflection-new" || mode === "reflection-write";
-  if (tabId === "review") return mode === "review-again";
-  return false;
+  return getActiveBottomTab(mode) === tabId;
 }

@@ -185,7 +185,7 @@ const isHandlingBrowserBack = ref(false);
 
 const showBottomNav = computed(() => shouldShowBottomNav(mode.value));
 
-const activeBottomTab = computed<BottomTabId>(() => getActiveBottomTab(mode.value));
+const activeBottomTab = computed<BottomTabId | null>(() => getActiveBottomTab(mode.value));
 
 const activeReflection = computed(() => {
   if (!activeReflectionId.value) return null;

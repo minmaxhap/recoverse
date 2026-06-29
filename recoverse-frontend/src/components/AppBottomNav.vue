@@ -21,7 +21,7 @@ import NavIcon from "./NavIcon.vue";
 export type BottomTabId = "write" | "home" | "review";
 
 const props = defineProps<{
-  activeTab: BottomTabId;
+  activeTab: BottomTabId | null;
   labels: Record<BottomTabId, string>;
 }>();
 
