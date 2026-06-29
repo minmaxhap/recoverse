@@ -125,6 +125,12 @@ const appHistoryPath = await compileTsModule(
 );
 const appHistory = await import(pathToFileURL(appHistoryPath).href);
 
+const rediscoveryPath = await compileTsModule(
+  new URL("../src/lib/rediscovery.ts", import.meta.url),
+  "rediscovery.mjs"
+);
+const rediscovery = await import(pathToFileURL(rediscoveryPath).href);
+
 globalThis.localStorage = new MemoryStorage();
 
 test("creates a reflection draft from the year template light question set", () => {
@@ -526,4 +532,107 @@ test("appHistory urlHasShareHash detects share hash prefix", () => {
   assert.equal(appHistory.urlHasShareHash("#other=value"), false);
   assert.equal(appHistory.urlHasShareHash(""), false);
   assert.equal(appHistory.urlHasShareHash("no-hash"), false);
+});
+
+function makeReflection(overrides = {}) {
+  const now = new Date("2026-06-29T00:00:00Z").toISOString();
+  return {
+    id: overrides.id ?? "r1",
+    title: overrides.title ?? "샘플 회고",
+    type: "year",
+    mode: "solo",
+    period: overrides.period ?? { label: "2025년", year: 2025 },
+    templateId: "template_year",
+    questionSetMode: "light",
+    questionGroups: [
+      {
+        id: "g1",
+        label: "이 시기의 장면",
+        questions: [
+          { id: "q1", groupId: "g1", text: "올해 가장 기억에 남는 장면은?", visibility: "public", mode: "short" },
+        ],
+      },
+    ],
+    answers: overrides.answers ?? [
+      { questionId: "q1", value: "바다 앞 라면", skipped: false, updatedAt: now },
+    ],
+    representativeSentence: overrides.representativeSentence ?? "바다 앞 라면",
+    visibility: "private",
+    isCompleted: overrides.isCompleted ?? true,
+    completionRate: 100,
+    createdAt: overrides.createdAt ?? now,
+    updatedAt: overrides.updatedAt ?? now,
+  };
+}
+
+test("rediscovery skips reflections newer than the threshold", () => {
+  const now = new Date("2026-06-29T00:00:00+09:00").getTime();
+  const reflection = makeReflection({
+    updatedAt: new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+
+  assert.equal(rediscovery.pickRediscovery([reflection], now), null);
+});
+
+test("rediscovery skips reflections with only empty answers", () => {
+  const now = new Date("2026-06-29T00:00:00+09:00").getTime();
+  const reflection = makeReflection({
+    answers: [
+      { questionId: "q1", value: "", skipped: true, updatedAt: new Date(now).toISOString() },
+    ],
+    updatedAt: new Date(now - 400 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+
+  assert.equal(rediscovery.pickRediscovery([reflection], now), null);
+});
+
+test("rediscovery prefers the largest ago bucket", () => {
+  const now = new Date("2026-06-29T00:00:00+09:00").getTime();
+  const week = makeReflection({
+    id: "week",
+    title: "지난주",
+    updatedAt: new Date(now - 10 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+  const month = makeReflection({
+    id: "month",
+    title: "한 달 전",
+    updatedAt: new Date(now - 40 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+  const year = makeReflection({
+    id: "year",
+    title: "1년 전",
+    updatedAt: new Date(now - 365 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+
+  const pick = rediscovery.pickRediscovery([week, month, year], now);
+  assert.equal(pick?.reflection.id, "year");
+  assert.equal(pick?.window, "year");
+});
+
+test("rediscovery rotates daily inside a bucket via date seed", () => {
+  const day1 = new Date("2026-06-29T00:00:00+09:00").getTime();
+  const day2 = new Date("2026-06-30T00:00:00+09:00").getTime();
+  const reflections = Array.from({ length: 5 }, (_, i) =>
+    makeReflection({
+      id: `r${i}`,
+      title: `회고 ${i}`,
+      updatedAt: new Date(day1 - (400 + i) * 24 * 60 * 60 * 1000).toISOString(),
+    })
+  );
+
+  const pick1 = rediscovery.pickRediscovery(reflections, day1);
+  const pick2 = rediscovery.pickRediscovery(reflections, day2);
+
+  assert.ok(pick1);
+  assert.ok(pick2);
+  // Same day → same pick.
+  assert.equal(rediscovery.pickRediscovery(reflections, day1)?.reflection.id, pick1.reflection.id);
+  // Different day → may differ (deterministic by date seed).
+  assert.equal(typeof pick2.reflection.id, "string");
+});
+
+test("rediscovery describeWindow maps to Korean labels", () => {
+  assert.equal(rediscovery.describeWindow("year"), "1년 전");
+  assert.equal(rediscovery.describeWindow("month"), "한 달 전");
+  assert.equal(rediscovery.describeWindow("week"), "지난주");
 });

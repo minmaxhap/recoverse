@@ -30,6 +30,19 @@
             </button>
           </header>
 
+          <button
+            v-if="rediscoveryPick"
+            class="rediscoveryCard"
+            type="button"
+            @click="openRediscovery"
+          >
+            <span class="rediscoveryEyebrow">
+              오늘 다시 떠오른 기억 · {{ rediscoveryWindowLabel }}
+            </span>
+            <strong>{{ rediscoveryPreview }}</strong>
+            <span class="rediscoveryMeta">{{ rediscoveryPick.reflection.title }} · 다시 열기</span>
+          </button>
+
           <div class="clusterField">
             <section
               v-for="cluster in yearClusters"
@@ -78,6 +91,7 @@
 import { computed, ref, watch } from "vue";
 import HomeView from "./HomeView.vue";
 import type { Reflection } from "../types/reflection";
+import { describeWindow, pickRediscovery } from "../lib/rediscovery";
 
 const props = defineProps<{
   title: string;
@@ -138,6 +152,32 @@ const selectedReflection = computed(() => {
 
   return sortedReflections.value[0] ?? null;
 });
+
+const rediscoveryPick = computed(() => pickRediscovery(sortedReflections.value));
+
+const rediscoveryWindowLabel = computed(() =>
+  rediscoveryPick.value ? describeWindow(rediscoveryPick.value.window) : ""
+);
+
+const rediscoveryPreview = computed(() => {
+  const pick = rediscoveryPick.value;
+  if (!pick) return "";
+  return (
+    pick.reflection.representativeSentence?.trim() ||
+    pick.reflection.answers.find((answer) => answer.value.trim())?.value.trim() ||
+    pick.reflection.title
+  );
+});
+
+function openRediscovery() {
+  const pick = rediscoveryPick.value;
+  if (!pick) return;
+  if (pick.reflection.isCompleted) {
+    emit("open-reflection", pick.reflection.id);
+  } else {
+    emit("continue-reflection", pick.reflection.id);
+  }
+}
 
 const previewLabel = computed(() =>
   selectedReflection.value?.isCompleted ? "기억 미리보기" : "작성 중인 기억"
@@ -282,7 +322,7 @@ const nodePositions = [
 .memoryField {
   position: relative;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 18px;
 }
 
@@ -291,6 +331,50 @@ const nodePositions = [
   align-items: end;
   justify-content: space-between;
   gap: 18px;
+}
+
+.rediscoveryCard {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(244, 197, 106, 0.32);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(244, 197, 106, 0.14), rgba(110, 90, 154, 0.18));
+  color: var(--color-text);
+  padding: 16px 18px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.24);
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.rediscoveryCard:hover,
+.rediscoveryCard:focus-visible {
+  border-color: var(--color-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+}
+
+.rediscoveryEyebrow {
+  color: var(--color-gold);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.rediscoveryCard strong {
+  font-size: clamp(18px, 3vw, 22px);
+  line-height: 1.35;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.rediscoveryMeta {
+  color: var(--color-text-dim);
+  font-size: 12px;
+  font-weight: 800;
 }
 
 .fieldHeader > div,
