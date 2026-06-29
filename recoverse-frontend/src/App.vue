@@ -59,7 +59,7 @@
         <header class="settingsHead">
           <span class="eyebrow">Settings</span>
           <h2>설정</h2>
-          <p>언어, 테마, 회고 백업과 데이터 초기화를 관리합니다.</p>
+          <p>앱 표시 방식과 내 기억 데이터를 관리합니다.</p>
         </header>
         <section class="settingsPanel">
           <ArchiveSettingsTools
@@ -73,6 +73,7 @@
             reflection-export-label="회고 백업하기"
             reflection-import-label="회고 가져오기"
             reflection-backup-hint="가져오기는 기존 회고를 지우지 않고 최신 항목만 병합합니다."
+            :reflection-count="reflections.length"
             :reflection-export-disabled="reflections.length === 0"
             danger-group-label="데이터 초기화"
             clear-label="전체 회고 삭제"

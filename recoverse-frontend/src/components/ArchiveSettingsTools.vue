@@ -1,35 +1,55 @@
 <template>
   <div class="tools">
-    <section id="settings-language" class="toolGroup" :class="{ active: activeSection === 'language' }">
-      <span class="groupLabel">{{ languageLabel }}</span>
-      <LanguageSelector
-        :model-value="language"
-        :label="languageLabel"
-        @update:model-value="$emit('update:language', $event)"
-        @change="$emit('change-language')"
-      />
-    </section>
+    <section class="settingsSection" aria-labelledby="app-settings-title">
+      <header class="sectionHead">
+        <span class="sectionKicker">앱 설정</span>
+        <h3 id="app-settings-title">화면과 언어</h3>
+      </header>
 
-    <section id="settings-theme" class="toolGroup" :class="{ active: activeSection === 'theme' }">
-      <span class="groupLabel">{{ themeLabel }}</span>
-      <div class="themeGrid">
-        <button
-          v-for="item in themeOptions"
-          :key="item.id"
-          type="button"
-          :class="{ selected: item.id === theme }"
-          @click="$emit('update:theme', item.id)"
-        >
-          <strong>{{ item.label }}</strong>
-          <span>{{ item.description }}</span>
-        </button>
+      <div class="settingStack">
+        <section id="settings-language" class="toolGroup" :class="{ active: activeSection === 'language' }">
+          <span class="groupLabel">{{ languageLabel }}</span>
+          <LanguageSelector
+            :model-value="language"
+            :label="languageLabel"
+            @update:model-value="$emit('update:language', $event)"
+            @change="$emit('change-language')"
+          />
+        </section>
+
+        <section id="settings-theme" class="toolGroup" :class="{ active: activeSection === 'theme' }">
+          <span class="groupLabel">{{ themeLabel }}</span>
+          <div class="themeGrid">
+            <button
+              v-for="item in themeOptions"
+              :key="item.id"
+              class="themeButton"
+              type="button"
+              :class="{ selected: item.id === theme }"
+              @click="$emit('update:theme', item.id)"
+            >
+              <strong>{{ item.label }}</strong>
+              <span>{{ item.description }}</span>
+            </button>
+          </div>
+        </section>
       </div>
     </section>
 
-    <section id="settings-backup" class="toolGroup" :class="{ active: activeSection === 'backup' || activeSection === 'import' }">
-      <span class="groupLabel">{{ reflectionGroupLabel }}</span>
+    <section id="settings-backup" class="settingsSection" :class="{ active: activeSection === 'backup' || activeSection === 'import' }" aria-labelledby="data-settings-title">
+      <header class="sectionHead">
+        <span class="sectionKicker">내 기억 데이터</span>
+        <h3 id="data-settings-title">{{ reflectionGroupLabel }}</h3>
+        <p>저장된 기억 {{ reflectionCount }}개</p>
+      </header>
+
       <div class="buttonRow">
-        <button type="button" :disabled="reflectionExportDisabled" @click="$emit('reflection-export')">
+        <button
+          class="dataButton"
+          type="button"
+          :disabled="reflectionExportDisabled"
+          @click="$emit('reflection-export')"
+        >
           {{ reflectionExportLabel }}
         </button>
         <label class="file">
@@ -40,8 +60,11 @@
       <p class="hint">{{ reflectionBackupHint }}</p>
     </section>
 
-    <section id="settings-danger" class="toolGroup dangerGroup">
-      <span class="groupLabel">{{ dangerGroupLabel }}</span>
+    <section id="settings-danger" class="settingsSection dangerSection" aria-labelledby="danger-settings-title">
+      <header class="sectionHead">
+        <span class="sectionKicker">위험한 작업</span>
+        <h3 id="danger-settings-title">{{ dangerGroupLabel }}</h3>
+      </header>
       <button class="danger" type="button" :disabled="clearDisabled" @click="$emit('clear-all')">
         {{ clearLabel }}
       </button>
@@ -71,6 +94,7 @@ defineProps<{
   reflectionExportLabel: string;
   reflectionImportLabel: string;
   reflectionBackupHint: string;
+  reflectionCount: number;
   reflectionExportDisabled: boolean;
   dangerGroupLabel: string;
   clearLabel: string;
@@ -90,37 +114,69 @@ defineEmits<{
 <style scoped>
 .tools {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   justify-items: stretch;
-  min-width: min(680px, 100%);
+  width: min(760px, 100%);
+}
+
+.settingsSection,
+.toolGroup {
+  border: 1px solid rgba(184, 166, 232, 0.14);
+  background:
+    linear-gradient(145deg, rgba(26, 33, 51, 0.9), rgba(17, 19, 34, 0.96)),
+    var(--color-surface);
+  border-radius: 18px;
+}
+
+.settingsSection {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+}
+
+.settingsSection.active,
+.toolGroup.active {
+  border-color: rgba(244, 197, 106, 0.6);
+  box-shadow: 0 0 0 1px rgba(244, 197, 106, 0.12);
+}
+
+.sectionHead {
+  display: grid;
+  gap: 4px;
+}
+
+.sectionKicker,
+.groupLabel {
+  color: var(--color-star);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.sectionHead h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.sectionHead p,
+.hint,
+.themeButton span {
+  margin: 0;
+  color: var(--color-text-dim);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.settingStack {
+  display: grid;
+  gap: 10px;
 }
 
 .toolGroup {
-  border: 1px solid var(--color-soft-border);
-  border-radius: 14px;
-  background: var(--color-surface);
   display: grid;
-  gap: 8px;
-  padding: 10px;
-}
-
-.toolGroup.active {
-  border-color: var(--color-gold);
-  box-shadow: 0 0 0 1px rgba(244, 197, 106, 0.18);
-}
-
-.groupLabel {
-  color: var(--color-muted);
-  font-size: 11px;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.buttonRow {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
+  gap: 9px;
+  padding: 12px;
 }
 
 .themeGrid {
@@ -132,29 +188,34 @@ defineEmits<{
 button,
 .file {
   font: inherit;
-  border: 1px solid var(--color-border-gold);
-  background: rgba(240, 192, 96, 0.08);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.04);
   color: var(--color-text);
   border-radius: 12px;
   padding: 10px 12px;
 }
 
-.themeGrid button {
+.themeButton {
   display: grid;
   gap: 4px;
   text-align: left;
 }
 
-.themeGrid button.selected {
+.themeButton.selected {
   border-color: var(--color-gold);
-  background: rgba(244, 197, 106, 0.16);
+  background: rgba(244, 197, 106, 0.14);
 }
 
-.themeGrid span,
-.hint {
-  color: var(--color-text-dim);
-  font-size: 12px;
-  line-height: 1.45;
+.buttonRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.dataButton,
+.file {
+  border-color: rgba(184, 166, 232, 0.24);
 }
 
 button {
@@ -175,19 +236,20 @@ button:disabled {
   display: none;
 }
 
+.dangerSection {
+  border-color: rgba(239, 68, 68, 0.28);
+}
+
 .danger {
+  width: fit-content;
   border-color: rgba(224, 85, 85, 0.55);
   background: rgba(224, 85, 85, 0.08);
   color: #ff8f8f;
 }
 
-.dangerGroup {
-  border-color: rgba(239, 68, 68, 0.35);
-}
-
 @media (max-width: 899px) {
   .tools {
-    min-width: 0;
+    width: 100%;
   }
 
   .themeGrid {

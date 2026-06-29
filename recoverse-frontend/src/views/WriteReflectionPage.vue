@@ -1,7 +1,7 @@
 <template>
   <section v-if="reflection" class="writePage">
     <header class="writeHeader">
-      <button class="textButton" type="button" @click="$emit('save-later')">
+      <button class="textButton" type="button" @click="saveLater">
         나중에 이어쓰기
       </button>
       <div class="titleBlock">
@@ -129,6 +129,18 @@ function saveAndNext() {
     skipped: draft.value.trim().length === 0,
   });
   moveNextOrFinish();
+}
+
+function saveLater() {
+  if (currentQuestion.value && (draft.value.trim().length > 0 || currentAnswer.value)) {
+    emit("save-answer", {
+      questionId: currentQuestion.value.id,
+      value: draft.value,
+      skipped: false,
+    });
+  }
+
+  emit("save-later");
 }
 </script>
 
