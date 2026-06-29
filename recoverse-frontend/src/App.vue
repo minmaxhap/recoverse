@@ -11,6 +11,7 @@
         title="내 회고 홈"
         :reflections="reflections"
         @start-writing="openNewReflection"
+        @start-quick="startQuickReflection"
         @open-reflection="openReflectionDetail"
         @continue-reflection="continueReflection"
         @load-sample="loadSampleReflection"
@@ -135,6 +136,7 @@ import {
   popFallbackMode,
   urlHasShareHash,
 } from "./lib/appHistory";
+import { createQuickReflection } from "./lib/quickReflection";
 import { createSampleReflection, SAMPLE_REFLECTION_ID } from "./lib/sampleReflection";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
@@ -359,6 +361,13 @@ function startReflectionDraft(payload: {
   title?: string;
 }) {
   const reflection = createReflectionDraft(payload);
+  reflections.value = saveReflection(reflection);
+  activeReflectionId.value = reflection.id;
+  setMode("reflection-write");
+}
+
+function startQuickReflection() {
+  const reflection = createQuickReflection();
   reflections.value = saveReflection(reflection);
   activeReflectionId.value = reflection.id;
   setMode("reflection-write");

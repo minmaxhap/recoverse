@@ -131,6 +131,12 @@ const rediscoveryPath = await compileTsModule(
 );
 const rediscovery = await import(pathToFileURL(rediscoveryPath).href);
 
+const quickReflectionPath = await compileTsModule(
+  new URL("../src/lib/quickReflection.ts", import.meta.url),
+  "quickReflection.mjs"
+);
+const quickReflection = await import(pathToFileURL(quickReflectionPath).href);
+
 globalThis.localStorage = new MemoryStorage();
 
 test("creates a reflection draft from the year template light question set", () => {
@@ -635,4 +641,28 @@ test("rediscovery describeWindow maps to Korean labels", () => {
   assert.equal(rediscovery.describeWindow("year"), "1년 전");
   assert.equal(rediscovery.describeWindow("month"), "한 달 전");
   assert.equal(rediscovery.describeWindow("week"), "지난주");
+});
+
+test("quickReflection builds a single-question draft a normalizer accepts", () => {
+  const now = new Date("2026-06-29T03:00:00Z");
+  const draft = quickReflection.createQuickReflection(now);
+
+  assert.equal(draft.questionGroups.length, 1);
+  assert.equal(draft.questionGroups[0].questions.length, 1);
+  assert.equal(draft.isCompleted, false);
+  assert.equal(draft.completionRate, 0);
+  assert.equal(draft.answers.length, 0);
+  assert.ok(draft.title.includes("의 한 줄"));
+
+  const normalized = reflectionStore.normalizeReflection(draft);
+  assert.ok(normalized, "quick draft should pass normalization");
+  assert.equal(normalized.questionGroups[0].questions[0].text, "지금 마음에 남은 한 가지는?");
+});
+
+test("quickReflection produces unique ids across calls", () => {
+  const a = quickReflection.createQuickReflection(new Date("2026-06-29T03:00:00Z"));
+  const b = quickReflection.createQuickReflection(new Date("2026-06-29T03:00:00Z"));
+  assert.notEqual(a.id, b.id);
+  assert.notEqual(a.questionGroups[0].id, b.questionGroups[0].id);
+  assert.notEqual(a.questionGroups[0].questions[0].id, b.questionGroups[0].questions[0].id);
 });

@@ -14,9 +14,15 @@
         <section v-if="reflections.length === 0" class="emptyState">
           <span class="eyebrow">내 기억 공간</span>
           <h1>내 기억이 쌓이는 공간</h1>
-          <button class="primaryCta" type="button" @click="$emit('start-writing')">
-            첫 기억 작성하기
-          </button>
+          <p class="emptyHint">한 문장만 남겨도 시간이 지난 뒤 다시 만날 수 있어요.</p>
+          <div class="emptyActions">
+            <button class="primaryCta" type="button" @click="$emit('start-quick')">
+              30초로 한 줄 남기기
+            </button>
+            <button class="ghostCta" type="button" @click="$emit('start-writing')">
+              질문 카드로 작성하기
+            </button>
+          </div>
         </section>
 
         <section v-else class="memoryField" aria-label="연도별 기억 묶음">
@@ -101,6 +107,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "start-writing": [];
+  "start-quick": [];
   "open-reflection": [reflectionId: string];
   "continue-reflection": [reflectionId: string];
   "load-sample": [];
@@ -316,7 +323,35 @@ const nodePositions = [
   display: grid;
   align-content: center;
   justify-items: start;
-  gap: 22px;
+  gap: 18px;
+}
+
+.emptyHint {
+  max-width: 460px;
+  color: var(--color-text-dim);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.emptyActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ghostCta {
+  min-height: 52px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  padding: 13px 18px;
+  font-weight: 900;
+}
+
+.ghostCta:hover,
+.ghostCta:focus-visible {
+  border-color: var(--color-gold);
 }
 
 .memoryField {
