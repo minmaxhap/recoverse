@@ -27,9 +27,10 @@
         <p>{{ currentQuestion?.hint ?? "짧은 문장으로 시작해도 괜찮아요. 길게 쓰고 싶으면 그대로 이어 쓰세요." }}</p>
 
         <textarea
+          ref="answerTextarea"
           v-model="draft"
           rows="7"
-          placeholder="지금 가장 먼저 떠오르는 장면이나 감정을 적어보세요."
+          placeholder="여기에 짧게 적어요. 길게 써도 괜찮아요."
           @input="saveCurrentDraft"
           @keydown.ctrl.enter.prevent="saveAndNext"
           @keydown.meta.enter.prevent="saveAndNext"
@@ -56,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useReflectionDraftAutosave } from "../composables/useReflectionDraftAutosave";
 import type { Reflection } from "../types/reflection";
 
@@ -72,7 +73,16 @@ const emit = defineEmits<{
 }>();
 
 const activeIndex = ref(0);
+const answerTextarea = ref<HTMLTextAreaElement | null>(null);
 const questions = computed(() => props.reflection?.questionGroups.flatMap((group) => group.questions) ?? []);
+
+function focusAnswer() {
+  nextTick(() => {
+    answerTextarea.value?.focus();
+  });
+}
+
+onMounted(focusAnswer);
 const currentQuestion = computed(() => questions.value[activeIndex.value]);
 const currentGroup = computed(() => {
   if (!props.reflection || !currentQuestion.value) return null;
@@ -110,6 +120,14 @@ watch(
   () => props.reflection?.id,
   () => {
     activeIndex.value = 0;
+    focusAnswer();
+  }
+);
+
+watch(
+  () => currentQuestion.value?.id,
+  () => {
+    focusAnswer();
   }
 );
 
@@ -269,17 +287,33 @@ function saveLater() {
 
 .questionCard textarea {
   width: 100%;
-  border: 0;
-  border-top: 1px solid rgba(184, 166, 232, 0.24);
-  border-radius: 0;
-  background: transparent;
+  min-height: 168px;
+  border: 1px solid rgba(184, 166, 232, 0.22);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
   color: inherit;
   resize: vertical;
-  padding: 18px 0 0;
+  padding: 16px 18px;
   font-size: 18px;
   line-height: 1.6;
   outline: none;
+  transition: border-color 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
   scroll-margin-bottom: 180px;
+}
+
+.questionCard textarea::placeholder {
+  color: rgba(232, 224, 208, 0.42);
+  font-style: italic;
+}
+
+.questionCard textarea:hover {
+  border-color: rgba(244, 197, 106, 0.32);
+}
+
+.questionCard textarea:focus {
+  border-color: var(--color-gold);
+  background: rgba(244, 197, 106, 0.07);
+  box-shadow: 0 0 0 3px rgba(244, 197, 106, 0.18);
 }
 
 .writeActions {
