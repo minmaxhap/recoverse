@@ -18,9 +18,9 @@
           <span>기억의 이름</span>
           <input
             v-model="periodLabel"
-            :placeholder="selectedTemplate?.periodPlaceholder ?? '제주 여행'"
+            :placeholder="selectedTemplate?.periodPlaceholder ?? '예: 제주 여행'"
             autocomplete="off"
-            @keydown.enter.prevent="start"
+            @keydown.enter.prevent="primaryAction"
           />
         </label>
 
@@ -49,7 +49,32 @@
           </button>
         </div>
 
-        <button class="primaryCta" type="button" :disabled="!canStart" @click="start">
+        <div v-if="duplicateReflection" class="duplicateNotice" role="status">
+          <p>
+            이미 <strong>{{ duplicateReflection.title }}</strong> 회고가 있어요.
+            새로 만드는 대신 이어서 열 수 있어요.
+          </p>
+          <div class="duplicateActions">
+            <button
+              type="button"
+              class="primaryCta"
+              @click="$emit('open-existing', duplicateReflection!.id)"
+            >
+              기존 회고 열기
+            </button>
+            <button type="button" class="ghostButton" @click="start">
+              그래도 새로 만들기
+            </button>
+          </div>
+        </div>
+
+        <button
+          v-else
+          class="primaryCta"
+          type="button"
+          :disabled="!canStart"
+          @click="start"
+        >
           첫 질문 열기
         </button>
       </section>
@@ -65,10 +90,15 @@ import {
   getTemplateQuestionCount,
   reflectionTemplates,
 } from "../data/reflectionTemplates";
-import type { ReflectionPeriod, ReflectionQuestionSetMode } from "../types/reflection";
+import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "../types/reflection";
+
+const props = defineProps<{
+  reflections?: Reflection[];
+}>();
 
 const emit = defineEmits<{
   "back-home": [];
+  "open-existing": [reflectionId: string];
   create: [
     payload: {
       templateId: string;
@@ -85,7 +115,7 @@ const templates = [
 ];
 const selectedTemplateId = ref("template_travel");
 const selectedQuestionSetMode = ref<ReflectionQuestionSetMode>("light");
-const periodLabel = ref("제주 여행");
+const periodLabel = ref("");
 
 const selectedTemplate = computed(() => getReflectionTemplate(selectedTemplateId.value));
 
@@ -123,8 +153,26 @@ const canStart = computed(() => {
 
 function selectTemplate(templateId: string) {
   selectedTemplateId.value = templateId;
-  const template = getReflectionTemplate(templateId);
-  if (template) periodLabel.value = template.periodPlaceholder;
+}
+
+const duplicateReflection = computed(() => {
+  const label = periodLabel.value.trim();
+  if (!label) return null;
+  return (
+    props.reflections?.find(
+      (reflection) =>
+        reflection.templateId === selectedTemplateId.value &&
+        reflection.period.label.trim() === label
+    ) ?? null
+  );
+});
+
+function primaryAction() {
+  if (duplicateReflection.value) {
+    emit("open-existing", duplicateReflection.value.id);
+    return;
+  }
+  start();
 }
 
 function getQuestionCount(templateId: string) {
@@ -302,6 +350,39 @@ h1 {
 
 .primaryCta:disabled {
   opacity: 0.45;
+}
+
+.duplicateNotice {
+  display: grid;
+  gap: 12px;
+  border: 1px solid rgba(244, 197, 106, 0.32);
+  border-radius: 14px;
+  background: rgba(244, 197, 106, 0.08);
+  padding: 14px 16px;
+}
+
+.duplicateNotice p {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.duplicateNotice strong {
+  color: var(--color-gold);
+}
+
+.duplicateActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.duplicateActions .primaryCta,
+.duplicateActions .ghostButton {
+  width: auto;
+  min-height: 44px;
+  padding: 10px 16px;
 }
 
 @media (max-width: 720px) {

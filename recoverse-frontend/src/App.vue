@@ -18,8 +18,10 @@
 
       <NewReflectionPage
         v-else-if="mode === 'reflection-new'"
+        :reflections="reflections"
         @back-home="setMode('home-universe')"
         @create="startReflectionDraft"
+        @open-existing="continueReflection"
       />
 
       <WriteReflectionPage
@@ -396,19 +398,6 @@ function startReflectionDraft(payload: {
   questionSetMode: ReflectionQuestionSetMode;
   title?: string;
 }) {
-  const duplicate = reflections.value.find(
-    (reflection) =>
-      reflection.templateId === payload.templateId &&
-      reflection.period.label.trim() === payload.period.label.trim()
-  );
-
-  if (duplicate) {
-    activeReflectionId.value = duplicate.id;
-    alert("같은 기간의 회고가 이미 있어요. 새로 만들지 않고 기존 회고를 이어서 열게요.");
-    setMode(duplicate.isCompleted ? "reflection-detail" : "reflection-write");
-    return;
-  }
-
   const reflection = createReflectionDraft(payload);
   reflections.value = saveReflection(reflection);
   activeReflectionId.value = reflection.id;
