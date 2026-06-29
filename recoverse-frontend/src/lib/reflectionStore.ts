@@ -1,4 +1,5 @@
 import { buildQuestionGroupsForMode, getReflectionTemplate } from "../data/reflectionTemplates";
+import { readLocalStorageValue, writeLocalStorageValue } from "./safeLocalStorage";
 import type {
   Answer,
   Question,
@@ -11,6 +12,16 @@ import type {
 } from "../types/reflection";
 
 export const REFLECTION_STORAGE_KEY = "recoverse_reflections_v1";
+export type ReflectionStorageStatus = {
+  readonly ok: boolean;
+  readonly reason: "read_failed" | "write_failed" | "storage_unavailable" | null;
+};
+
+let reflectionStorageStatus: ReflectionStorageStatus = {
+  ok: true,
+  reason: null,
+};
+
 
 function safeParse<T>(raw: string | null): T | null {
   if (!raw) return null;
@@ -18,6 +29,7 @@ function safeParse<T>(raw: string | null): T | null {
   try {
     return JSON.parse(raw) as T;
   } catch {
+    reflectionStorageStatus = { ok: false, reason: "read_failed" };
     return null;
   }
 }
@@ -169,18 +181,33 @@ function firstAnswerValue(answers: Answer[]): string | undefined {
 }
 
 export function loadReflections(): Reflection[] {
-  const parsed = safeParse<any>(localStorage.getItem(REFLECTION_STORAGE_KEY));
+  const stored = readLocalStorageValue(REFLECTION_STORAGE_KEY);
+  if (!stored.ok) {
+    reflectionStorageStatus = { ok: false, reason: stored.reason };
+    return [];
+  }
+
+  const parsed = safeParse<any>(stored.value);
   const reflections = Array.isArray(parsed?.reflections)
     ? (parsed.reflections.map(normalizeReflection).filter(Boolean) as Reflection[])
     : [];
+
+  if (parsed) {
+    reflectionStorageStatus = { ok: true, reason: null };
+  }
 
   return reflections.sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
 }
 
 export function saveReflections(reflections: Reflection[]): Reflection[] {
   const normalized = reflections.map(normalizeReflection).filter(Boolean) as Reflection[];
-  localStorage.setItem(REFLECTION_STORAGE_KEY, JSON.stringify({ reflections: normalized }));
+  const result = writeLocalStorageValue(REFLECTION_STORAGE_KEY, JSON.stringify({ reflections: normalized }));
+  reflectionStorageStatus = result.ok ? { ok: true, reason: null } : { ok: false, reason: result.reason };
   return normalized;
+}
+
+export function getReflectionStorageStatus(): ReflectionStorageStatus {
+  return reflectionStorageStatus;
 }
 
 export function saveReflection(reflection: Reflection): Reflection[] {

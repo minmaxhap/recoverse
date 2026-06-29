@@ -8,7 +8,12 @@
         <span class="eyebrow">{{ currentGroup?.label ?? "기억 작성" }}</span>
         <h1>{{ reflection.title }}</h1>
       </div>
-      <div class="progressText">{{ currentStep }} / {{ questions.length }}</div>
+      <div class="statusBlock">
+        <div class="progressText">{{ currentStep }} / {{ questions.length }}</div>
+        <p class="saveStatus" :class="{ error: draftSaveStatus === 'error' }">
+          {{ draftSaveLabel }}
+        </p>
+      </div>
     </header>
 
     <div class="progressTrack" aria-hidden="true">
@@ -25,6 +30,7 @@
           v-model="draft"
           rows="7"
           placeholder="지금 가장 먼저 떠오르는 장면이나 감정을 적어보세요."
+          @input="saveCurrentDraft"
           @keydown.ctrl.enter.prevent="saveAndNext"
           @keydown.meta.enter.prevent="saveAndNext"
         ></textarea>
@@ -51,7 +57,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import type { Answer, Question, QuestionGroup, Reflection } from "../types/reflection";
+import { useReflectionDraftAutosave } from "../composables/useReflectionDraftAutosave";
+import type { Reflection } from "../types/reflection";
 
 const props = defineProps<{
   reflection: Reflection | null;
@@ -65,38 +72,37 @@ const emit = defineEmits<{
 }>();
 
 const activeIndex = ref(0);
-const draft = ref("");
-
-const questions = computed<Question[]>(() =>
-  props.reflection?.questionGroups.flatMap((group) => group.questions) ?? []
+const questions = computed(() => props.reflection?.questionGroups.flatMap((group) => group.questions) ?? []);
+const currentQuestion = computed(() => questions.value[activeIndex.value]);
+const currentGroup = computed(() => {
+  if (!props.reflection || !currentQuestion.value) return null;
+  return props.reflection.questionGroups.find((group) => group.id === currentQuestion.value?.groupId);
+});
+const currentAnswer = computed(() =>
+  props.reflection?.answers.find((answer) => answer.questionId === currentQuestion.value?.id)
 );
-const currentQuestion = computed<Question | null>(() => questions.value[activeIndex.value] ?? null);
-const currentGroup = computed<QuestionGroup | null>(() => {
-  if (!props.reflection || !currentQuestion.value) return null;
-  return (
-    props.reflection.questionGroups.find((group) => group.id === currentQuestion.value?.groupId) ??
-    null
-  );
-});
-const currentAnswer = computed<Answer | null>(() => {
-  if (!props.reflection || !currentQuestion.value) return null;
-  return (
-    props.reflection.answers.find((answer) => answer.questionId === currentQuestion.value?.id) ??
-    null
-  );
-});
 const currentStep = computed(() => Math.min(activeIndex.value + 1, questions.value.length));
-const isLastQuestion = computed(() => activeIndex.value >= questions.value.length - 1);
+const isLastQuestion = computed(() => activeIndex.value === questions.value.length - 1);
 const progressPercent = computed(() => {
   if (questions.value.length === 0) return 0;
   return (currentStep.value / questions.value.length) * 100;
 });
+const {
+  draft,
+  draftSaveStatus,
+  draftSaveLabel,
+  hydrateCurrentDraft,
+  saveCurrentDraft,
+  clearCurrentDraft,
+} = useReflectionDraftAutosave({
+  reflection: computed(() => props.reflection),
+  question: currentQuestion,
+  currentAnswer,
+});
 
 watch(
-  () => currentAnswer.value?.value,
-  (value) => {
-    draft.value = value ?? "";
-  },
+  () => [props.reflection?.id, currentQuestion.value?.id, currentAnswer.value?.value] as const,
+  hydrateCurrentDraft,
   { immediate: true }
 );
 
@@ -112,12 +118,12 @@ function goPrevious() {
 }
 
 function moveNextOrFinish() {
-  if (isLastQuestion.value) {
-    emit("finish");
+  if (activeIndex.value < questions.value.length - 1) {
+    activeIndex.value += 1;
     return;
   }
 
-  activeIndex.value += 1;
+  emit("finish");
 }
 
 function saveAndNext() {
@@ -128,16 +134,21 @@ function saveAndNext() {
     value: draft.value,
     skipped: draft.value.trim().length === 0,
   });
+  clearCurrentDraft();
   moveNextOrFinish();
 }
 
 function saveLater() {
   if (currentQuestion.value && (draft.value.trim().length > 0 || currentAnswer.value)) {
+    saveCurrentDraft();
     emit("save-answer", {
       questionId: currentQuestion.value.id,
       value: draft.value,
-      skipped: false,
+      skipped: draft.value.trim().length === 0,
     });
+    clearCurrentDraft();
+  } else {
+    clearCurrentDraft();
   }
 
   emit("save-later");
@@ -182,9 +193,28 @@ function saveLater() {
   letter-spacing: 0;
 }
 
+.statusBlock {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+}
+
 .progressText {
   color: var(--color-text-dim);
   font-weight: 900;
+}
+
+.saveStatus {
+  margin: 0;
+  color: var(--color-star);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.saveStatus.error {
+  color: #ff8f8f;
 }
 
 .progressTrack {
@@ -225,12 +255,16 @@ function saveLater() {
   font-size: 28px;
   line-height: 1.28;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
 }
 
 .questionCard p {
   margin: 0;
   color: var(--color-text-dim);
   line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
 }
 
 .questionCard textarea {
@@ -268,6 +302,7 @@ function saveLater() {
 .primary,
 .secondary,
 .textButton {
+  min-height: 44px;
   border-radius: 999px;
   font-weight: 900;
   padding: 12px 15px;
@@ -308,6 +343,10 @@ function saveLater() {
   .writeHeader {
     grid-template-columns: 1fr;
     align-items: stretch;
+  }
+
+  .statusBlock {
+    justify-items: start;
   }
 
   .writeActions {

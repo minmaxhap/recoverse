@@ -59,7 +59,7 @@
         <header class="settingsHead">
           <span class="eyebrow">Settings</span>
           <h2>설정</h2>
-          <p>앱 표시 방식과 내 기억 데이터를 관리합니다.</p>
+          <p>앱 표시 방식, 임시저장 상태, 내 기억 데이터를 관리합니다. 오래 보관하려면 회고 백업을 내려받아 주세요.</p>
         </header>
         <section class="settingsPanel">
           <ArchiveSettingsTools
@@ -112,6 +112,12 @@ import SharedReflectionPage from "./views/SharedReflectionPage.vue";
 import WriteReflectionPage from "./views/WriteReflectionPage.vue";
 import { downloadBlob } from "./lib/downloadBlob";
 import {
+  loadPreferredLanguage,
+  loadPreferredTheme,
+  savePreferredLanguage,
+  savePreferredTheme,
+} from "./lib/localPreferenceStore";
+import {
   type AppMode,
   type BottomTabId,
   bottomNavLabels,
@@ -154,16 +160,8 @@ import {
 import { createSampleReflection, SAMPLE_REFLECTION_ID } from "./lib/sampleReflection";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
-const LANGUAGE_KEY = "recoverse_language";
-const THEME_KEY = "recoverse_theme";
-
-const language = ref<AppLanguage>(
-  localStorage.getItem(LANGUAGE_KEY) === "en" ? "en" : "ko"
-);
-const savedTheme = localStorage.getItem(THEME_KEY);
-const appTheme = ref<RecoverseTheme>(
-  savedTheme === "letter" || savedTheme === "journey" ? savedTheme : "universe"
-);
+const language = ref<AppLanguage>(loadPreferredLanguage());
+const appTheme = ref<RecoverseTheme>(loadPreferredTheme());
 const activeSettingsSection = ref<SettingsSection>("settings");
 const themeOptions: Array<{
   id: RecoverseTheme;
@@ -193,12 +191,12 @@ const activeReflection = computed(() => {
 });
 
 function saveLanguage() {
-  localStorage.setItem(LANGUAGE_KEY, language.value);
+  savePreferredLanguage(language.value);
 }
 
 function setAppTheme(theme: RecoverseTheme) {
   appTheme.value = theme;
-  localStorage.setItem(THEME_KEY, theme);
+  savePreferredTheme(theme);
 }
 
 function openSettingsSection(section: SettingsSection) {
@@ -273,7 +271,7 @@ function onHashChange() {
 function confirmLeavingWriteMode() {
   if (mode.value !== "reflection-write") return true;
   return confirm(
-    "작성 중인 회고를 벗어나려 합니다. 저장하고 다음을 누르지 않은 현재 답변은 저장되지 않을 수 있어요. 이동할까요?"
+    "작성 중인 답변은 이 기기에 임시저장돼요. 다른 화면으로 이동할까요?"
   );
 }
 

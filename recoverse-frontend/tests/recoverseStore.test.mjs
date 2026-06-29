@@ -46,11 +46,29 @@ async function compileTsModule(inputUrl, outputName, replacements = []) {
   return outputPath;
 }
 
+await writeFile(join(tempDir, "recoverseTypes.mjs"), "export {};\\n", "utf8");
 await compileTsModule(new URL("../src/data/reflectionTemplates.ts", import.meta.url), "reflectionTemplates.mjs");
+const safeLocalStoragePath = await compileTsModule(
+  new URL("../src/lib/safeLocalStorage.ts", import.meta.url),
+  "safeLocalStorage.mjs"
+);
 const reflectionStorePath = await compileTsModule(
   new URL("../src/lib/reflectionStore.ts", import.meta.url),
   "reflectionStore.mjs",
-  [['"../data/reflectionTemplates"', '"./reflectionTemplates.mjs"']]
+  [
+    ['"../data/reflectionTemplates"', '"./reflectionTemplates.mjs"'],
+    ['"./safeLocalStorage"', '"./safeLocalStorage.mjs"'],
+  ]
+);
+const reflectionDraftStorePath = await compileTsModule(
+  new URL("../src/lib/reflectionDraftStore.ts", import.meta.url),
+  "reflectionDraftStore.mjs",
+  [['"./safeLocalStorage"', '"./safeLocalStorage.mjs"']]
+);
+const localPreferenceStorePath = await compileTsModule(
+  new URL("../src/lib/localPreferenceStore.ts", import.meta.url),
+  "localPreferenceStore.mjs",
+  [['"./safeLocalStorage"', '"./safeLocalStorage.mjs"']]
 );
 const reflectionBackupPath = await compileTsModule(
   new URL("../src/lib/reflectionBackup.ts", import.meta.url),
@@ -86,6 +104,8 @@ const questionTimelinePath = await compileTsModule(
 );
 
 const reflectionStore = await import(pathToFileURL(reflectionStorePath).href);
+const reflectionDraftStore = await import(pathToFileURL(reflectionDraftStorePath).href);
+const localPreferenceStore = await import(pathToFileURL(localPreferenceStorePath).href);
 const reflectionBackup = await import(pathToFileURL(reflectionBackupPath).href);
 const reflectionSync = await import(pathToFileURL(reflectionSyncPath).href);
 const reflectionShare = await import(pathToFileURL(reflectionSharePath).href);
@@ -160,6 +180,118 @@ test("saves loads updates and deletes reflection data", () => {
   reflectionStore.deleteReflection(reflection.id);
   loaded = reflectionStore.loadReflections();
   assert.equal(loaded.length, 0);
+});
+
+test("keeps current writing drafts separate from completed answers", () => {
+  localStorage.clear();
+
+  const saved = reflectionDraftStore.saveReflectionDraft({
+    reflectionId: "reflection_a",
+    questionId: "question_a",
+    value: "아직 다듬는 중인 문장 ",
+  });
+
+  assert.equal(saved.ok, true);
+  assert.equal(
+    reflectionDraftStore.loadReflectionDraft("reflection_a", "question_a").value,
+    "아직 다듬는 중인 문장 "
+  );
+  assert.equal(reflectionDraftStore.loadReflectionDraft("reflection_a", "missing"), null);
+
+  reflectionDraftStore.clearReflectionDraft("reflection_a", "question_a");
+  assert.equal(reflectionDraftStore.loadReflectionDraft("reflection_a", "question_a"), null);
+});
+
+test("ignores malformed draft storage instead of crashing", () => {
+  localStorage.clear();
+  localStorage.setItem(reflectionDraftStore.REFLECTION_DRAFT_STORAGE_KEY, "not-json");
+
+  assert.deepEqual(reflectionDraftStore.loadReflectionDrafts(), []);
+});
+test("does not crash when draft storage cannot be read or written", () => {
+  const originalStorage = globalThis.localStorage;
+  const failingStorage = new MemoryStorage();
+  failingStorage.getItem = () => {
+    throw new Error("storage blocked");
+  };
+  failingStorage.setItem = () => {
+    throw new Error("quota exceeded");
+  };
+
+  try {
+    globalThis.localStorage = failingStorage;
+    assert.deepEqual(reflectionDraftStore.loadReflectionDrafts(), []);
+    assert.deepEqual(
+      reflectionDraftStore.saveReflectionDraft({
+        reflectionId: "reflection_a",
+        questionId: "question_a",
+        value: "draft",
+      }),
+      { ok: false, reason: "write_failed" }
+    );
+  } finally {
+    globalThis.localStorage = originalStorage;
+  }
+});
+
+test("does not crash when reflection storage cannot be read", () => {
+  const originalStorage = globalThis.localStorage;
+  const failingStorage = new MemoryStorage();
+  failingStorage.getItem = () => {
+    throw new Error("storage blocked");
+  };
+
+  try {
+    globalThis.localStorage = failingStorage;
+    assert.deepEqual(reflectionStore.loadReflections(), []);
+    assert.deepEqual(reflectionStore.getReflectionStorageStatus(), { ok: false, reason: "read_failed" });
+  } finally {
+    globalThis.localStorage = originalStorage;
+  }
+});
+
+test("falls back when preference storage is blocked", () => {
+  const originalStorage = globalThis.localStorage;
+  const failingStorage = new MemoryStorage();
+  failingStorage.getItem = () => {
+    throw new Error("storage blocked");
+  };
+  failingStorage.setItem = () => {
+    throw new Error("quota exceeded");
+  };
+
+  try {
+    globalThis.localStorage = failingStorage;
+    assert.equal(localPreferenceStore.loadPreferredLanguage(), "ko");
+    assert.equal(localPreferenceStore.loadPreferredTheme(), "universe");
+    assert.equal(localPreferenceStore.savePreferredLanguage("en"), false);
+    assert.equal(localPreferenceStore.savePreferredTheme("letter"), false);
+  } finally {
+    globalThis.localStorage = originalStorage;
+  }
+});
+
+test("does not crash when reflection storage cannot be written", () => {
+  const originalStorage = globalThis.localStorage;
+  const failingStorage = new MemoryStorage();
+  failingStorage.setItem = () => {
+    throw new Error("quota exceeded");
+  };
+
+  try {
+    globalThis.localStorage = failingStorage;
+    const reflection = reflectionStore.createReflectionDraft({
+      templateId: "template_year",
+      period: { label: "2026년", year: 2026 },
+      questionSetMode: "light",
+    });
+    const saved = reflectionStore.saveReflections([reflection]);
+
+    assert.equal(saved.length, 1);
+    assert.deepEqual(reflectionStore.getReflectionStorageStatus(), { ok: false, reason: "write_failed" });
+  } finally {
+    globalThis.localStorage = originalStorage;
+  }
 });
 
 test("exports reflection backups with the canonical schema", async () => {
