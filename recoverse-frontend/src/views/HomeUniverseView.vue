@@ -465,18 +465,21 @@ const nodePositions = [
 
 .ghostCta {
   min-height: 52px;
-  border: 1px solid var(--color-border);
+  border: 1px solid rgba(244, 197, 106, 0.42);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--color-text);
+  background: transparent;
+  color: var(--color-gold);
   padding: 13px 18px;
   font-weight: var(--heading-weight);
   letter-spacing: 0.01em;
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
 }
 
 .ghostCta:hover,
 .ghostCta:focus-visible {
   border-color: var(--color-gold);
+  background: rgba(244, 197, 106, 0.08);
+  color: var(--color-text);
 }
 
 .privacyBadge {

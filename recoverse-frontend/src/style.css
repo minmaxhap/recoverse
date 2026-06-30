@@ -1,9 +1,12 @@
 @import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 
 :root {
-  --color-page: #08070F;
-  --color-bg: #111322;
-  --color-surface: #1A2133;
+  /* slightly warmer midnight than #08070F — keeps the dark feel but
+     stops reading as cold SaaS navy. surfaces stay cool-ish so the
+     amber gold reads against them. */
+  --color-page: #0C0A14;
+  --color-bg: #14152A;
+  --color-surface: #1B2036;
   --color-surface-2: #1A2540;
   --color-paper: rgba(255,255,255,0.06);
   --color-ink: #E8E0D0;

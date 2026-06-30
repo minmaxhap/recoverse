@@ -305,18 +305,40 @@ h1 {
 }
 
 .quickChips button,
-.templateChip,
-.ghostButton {
+.templateChip {
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.04);
   color: var(--color-text);
 }
 
-.quickChips button,
-.ghostButton {
+.quickChips button {
   border-radius: 999px;
   padding: 10px 13px;
   font-weight: var(--label-weight);
+  transition: border-color 140ms ease, color 140ms ease;
+}
+
+.quickChips button:hover,
+.quickChips button:focus-visible {
+  border-color: rgba(244, 197, 106, 0.55);
+  color: var(--color-gold);
+}
+
+.ghostButton {
+  border: 1px solid rgba(244, 197, 106, 0.42);
+  background: transparent;
+  color: var(--color-gold);
+  border-radius: 999px;
+  padding: 10px 13px;
+  font-weight: var(--label-weight);
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+}
+
+.ghostButton:hover,
+.ghostButton:focus-visible {
+  border-color: var(--color-gold);
+  background: rgba(244, 197, 106, 0.08);
+  color: var(--color-text);
 }
 
 .templateChip {

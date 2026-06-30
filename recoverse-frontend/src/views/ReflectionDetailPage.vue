@@ -288,17 +288,36 @@ p {
 }
 
 .secondaryAction,
-.tertiaryAction,
 .shareButton {
-  border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(244, 197, 106, 0.42);
+  background: transparent;
+  color: var(--color-gold);
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+}
+
+.secondaryAction:hover:not(:disabled),
+.secondaryAction:focus-visible,
+.shareButton:hover:not(:disabled),
+.shareButton:focus-visible {
+  border-color: var(--color-gold);
+  background: rgba(244, 197, 106, 0.08);
   color: var(--color-text);
 }
 
 .tertiaryAction {
+  border: 0;
+  background: transparent;
+  color: var(--color-text-dim);
   padding: 9px 12px;
   font-size: 12px;
-  color: var(--color-text-dim);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.tertiaryAction:hover:not(:disabled),
+.tertiaryAction:focus-visible {
+  color: var(--color-text);
 }
 
 .primaryAction {

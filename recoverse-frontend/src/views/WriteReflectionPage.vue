@@ -357,10 +357,31 @@ function saveLater() {
   color: var(--color-primary-contrast);
 }
 
-.secondary,
+.secondary {
+  border: 1px solid rgba(244, 197, 106, 0.42);
+  background: transparent;
+  color: var(--color-gold);
+  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+}
+
+.secondary:hover:not(:disabled),
+.secondary:focus-visible {
+  border-color: var(--color-gold);
+  background: rgba(244, 197, 106, 0.08);
+  color: var(--color-text);
+}
+
 .textButton {
-  border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.04);
+  border: 0;
+  background: transparent;
+  color: var(--color-text-dim);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.textButton:hover,
+.textButton:focus-visible {
   color: var(--color-text);
 }
 
