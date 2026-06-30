@@ -201,14 +201,19 @@ function saveLater() {
 .eyebrow,
 .questionMeta {
   color: var(--color-gold);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 11px;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
 }
 
 .writeHeader h1 {
   margin: 3px 0 0;
-  font-size: 24px;
-  letter-spacing: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: var(--leading-tight);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .statusBlock {
@@ -219,15 +224,16 @@ function saveLater() {
 
 .progressText {
   color: var(--color-text-dim);
-  font-weight: 900;
+  font-weight: var(--label-weight);
+  letter-spacing: 0.02em;
 }
 
 .saveStatus {
   margin: 0;
   color: var(--color-star);
   font-size: 12px;
-  font-weight: 800;
-  line-height: 1.35;
+  font-weight: var(--label-weight);
+  line-height: var(--leading-tight);
   white-space: nowrap;
 }
 
@@ -270,9 +276,11 @@ function saveLater() {
 
 .questionCard h2 {
   margin: 0;
-  font-size: 28px;
-  line-height: 1.28;
-  letter-spacing: 0;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 5vw, 30px);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-display);
+  font-weight: var(--display-weight);
   overflow-wrap: anywhere;
   word-break: keep-all;
 }
@@ -338,7 +346,8 @@ function saveLater() {
 .textButton {
   min-height: 44px;
   border-radius: 999px;
-  font-weight: 900;
+  font-weight: var(--heading-weight);
+  letter-spacing: 0.01em;
   padding: 12px 15px;
 }
 

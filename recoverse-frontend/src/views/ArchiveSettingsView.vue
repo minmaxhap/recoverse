@@ -130,22 +130,25 @@ defineEmits<{
 .settingsHead .eyebrow {
   color: var(--color-muted);
   font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 1.4px;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
 }
 
 .settingsHead h2 {
   margin: 0;
-  font-size: 24px;
-  font-weight: 900;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 5.4vw, 28px);
+  line-height: var(--leading-tight);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .settingsHead p {
   margin: 0;
   color: var(--color-muted);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: var(--leading-body);
 }
 
 .settingsPanel {
@@ -169,16 +172,15 @@ defineEmits<{
 .usageEyebrow {
   color: var(--color-gold);
   font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
 }
 
 .usagePanel h3 {
   margin: 0;
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: 0;
+  font-size: 15px;
+  font-weight: var(--heading-weight);
 }
 
 .usageGrid {
@@ -200,13 +202,16 @@ defineEmits<{
 .usageGrid dt {
   color: var(--color-text-dim);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: var(--label-weight);
+  letter-spacing: 0.02em;
 }
 
 .usageGrid dd {
   margin: 0;
-  font-size: 20px;
-  font-weight: 900;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .usageHint {
@@ -229,16 +234,17 @@ defineEmits<{
 .privacyEyebrow {
   color: var(--color-star);
   font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
 }
 
 .privacyPanel h3 {
   margin: 0;
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .privacyPanel ul {
@@ -248,7 +254,7 @@ defineEmits<{
   gap: 6px;
   color: var(--color-text-dim);
   font-size: 13px;
-  line-height: 1.55;
+  line-height: var(--leading-body);
 }
 
 .samplePanel {
@@ -268,23 +274,24 @@ defineEmits<{
 .sampleEyebrow {
   color: var(--color-gold);
   font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.12em;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
   text-transform: uppercase;
 }
 
 .samplePanel h3 {
   margin: 0;
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .samplePanel p {
   margin: 0;
   color: var(--color-text-dim);
   font-size: 13px;
-  line-height: 1.55;
+  line-height: var(--leading-body);
 }
 
 .sampleCta {
@@ -294,7 +301,8 @@ defineEmits<{
   background: rgba(244, 197, 106, 0.14);
   color: var(--color-text);
   padding: 10px 16px;
-  font-weight: 900;
+  font-weight: var(--heading-weight);
+  letter-spacing: 0.01em;
 }
 
 .sampleCta:hover,

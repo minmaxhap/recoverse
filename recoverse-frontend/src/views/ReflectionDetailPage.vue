@@ -206,7 +206,11 @@ p {
 }
 
 .detailHeader h1 {
-  font-size: 26px;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 5.4vw, 30px);
+  line-height: var(--leading-tight);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .detailMeta {
@@ -216,15 +220,18 @@ p {
   gap: 6px;
   color: var(--color-text-dim);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: var(--label-weight);
+  letter-spacing: 0.02em;
 }
 
 .eyebrow,
 .heroLabel,
 .answerCard span {
   color: var(--color-gold);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 11px;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
 }
 
 .detailShell {
@@ -249,15 +256,17 @@ p {
 
 .heroPanel h2 {
   font-family: var(--font-display);
-  font-size: 32px;
-  line-height: 1.28;
+  font-size: clamp(26px, 6vw, 34px);
+  line-height: var(--leading-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .heroPanel p,
 .answerCard p,
 .sharePanel p {
   color: var(--color-text-dim);
-  line-height: 1.6;
+  line-height: var(--leading-body);
 }
 
 .actionPanel {
@@ -273,7 +282,8 @@ p {
 .tertiaryAction,
 .shareButton {
   border-radius: 999px;
-  font-weight: 900;
+  font-weight: var(--heading-weight);
+  letter-spacing: 0.01em;
   padding: 11px 14px;
 }
 
@@ -308,7 +318,7 @@ p {
 
 .sharePanel summary {
   cursor: pointer;
-  font-weight: 900;
+  font-weight: var(--heading-weight);
 }
 
 .shareList,
@@ -339,8 +349,10 @@ p {
 }
 
 .answerCard h3 {
-  font-size: 18px;
-  line-height: 1.35;
+  font-size: 17px;
+  line-height: var(--leading-tight);
+  font-weight: var(--heading-weight);
+  letter-spacing: -0.005em;
 }
 
 .answerCard.empty {

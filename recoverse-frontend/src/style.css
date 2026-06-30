@@ -33,14 +33,27 @@
     "Apple Color Emoji", "Segoe UI Emoji",
     sans-serif;
   /* OS 내장 serif 우선 — iOS의 Apple SD Gothic Neo + Iowan Old Style은
-     한글/영문 모두 클래식한 비례를 유지하고, 추가 다운로드가 없다.
-     #20 단계에서 위계 정돈 시 weight·spacing 같이 정돈한다. */
+     한글/영문 모두 클래식한 비례를 유지하고, 추가 다운로드가 없다. */
   --font-display:
     "Iowan Old Style", "Apple SD Gothic Neo",
     "Source Han Serif K", "Source Han Serif KR",
     "Noto Serif CJK KR", "Nanum Myeongjo",
     "Georgia", "Times New Roman",
     serif;
+
+  /* Type scale — 위계는 weight/leading으로, size는 clamp 으로 흐름 잡음 */
+  --display-weight: 500;        /* serif는 light~regular 가 가장 단정함 */
+  --heading-weight: 700;        /* body sans 위계 1 */
+  --label-weight: 600;          /* UI 라벨 / 버튼 */
+  --eyebrow-weight: 700;
+
+  --leading-display: 1.12;
+  --leading-heading: 1.28;
+  --leading-body: 1.6;
+  --leading-tight: 1.32;
+
+  --tracking-display: -0.01em;
+  --tracking-eyebrow: 0.06em;
 
   font-family: var(--font-body);
   color: var(--color-ink);

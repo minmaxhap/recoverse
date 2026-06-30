@@ -254,16 +254,20 @@ function start() {
 
 .eyebrow {
   color: var(--color-gold);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 11px;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
 }
 
 h1 {
   max-width: 640px;
   margin: 0;
-  font-size: clamp(34px, 7vw, 64px);
-  line-height: 1.02;
-  letter-spacing: 0;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 6.6vw, 54px);
+  line-height: var(--leading-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .topicField {
@@ -273,8 +277,9 @@ h1 {
 
 .topicField span {
   color: var(--color-text-dim);
-  font-size: 13px;
-  font-weight: 900;
+  font-size: 12px;
+  font-weight: var(--label-weight);
+  letter-spacing: 0.02em;
 }
 
 .topicField input {
@@ -285,8 +290,10 @@ h1 {
   background: transparent;
   color: var(--color-text);
   padding: 12px 2px;
-  font-size: clamp(24px, 6vw, 42px);
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 5.4vw, 36px);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
   outline: none;
 }
 
@@ -309,7 +316,7 @@ h1 {
 .ghostButton {
   border-radius: 999px;
   padding: 10px 13px;
-  font-weight: 900;
+  font-weight: var(--label-weight);
 }
 
 .templateChip {
@@ -326,10 +333,14 @@ h1 {
   display: block;
 }
 
+.templateChip strong {
+  font-weight: var(--heading-weight);
+}
+
 .templateChip span {
   color: var(--color-text-dim);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: var(--label-weight);
 }
 
 .templateChip.selected {
@@ -345,7 +356,8 @@ h1 {
   background: var(--color-gold);
   color: var(--color-primary-contrast);
   padding: 13px 18px;
-  font-weight: 900;
+  font-weight: var(--heading-weight);
+  letter-spacing: 0.01em;
 }
 
 .primaryCta:disabled {

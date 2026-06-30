@@ -149,14 +149,19 @@ defineEmits<{
 .groupLabel {
   color: var(--color-star);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
 }
 
 .sectionHead h3 {
   margin: 0;
   color: var(--color-text);
+  font-family: var(--font-display);
   font-size: 18px;
-  line-height: 1.25;
+  line-height: var(--leading-tight);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .sectionHead p,
@@ -165,7 +170,7 @@ defineEmits<{
   margin: 0;
   color: var(--color-text-dim);
   font-size: 12px;
-  line-height: 1.45;
+  line-height: var(--leading-body);
 }
 
 .settingStack {

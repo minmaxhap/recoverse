@@ -74,7 +74,8 @@ const items = computed<Array<{
 .navItem span {
   max-width: 100%;
   font-size: 11px;
-  font-weight: 900;
+  font-weight: var(--label-weight);
+  letter-spacing: 0.02em;
   line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -92,14 +92,19 @@ p {
 .eyebrow,
 .periodLabel {
   color: var(--color-star);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 11px;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
 }
 
 .reviewHeader h1 {
   margin-top: 6px;
-  font-size: clamp(30px, 6vw, 58px);
-  line-height: 1.05;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 5.8vw, 48px);
+  line-height: var(--leading-display);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .reviewList {
@@ -140,13 +145,16 @@ p {
 }
 
 .reflectionCard strong {
-  font-size: clamp(20px, 3vw, 28px);
-  line-height: 1.2;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 3vw, 26px);
+  line-height: var(--leading-tight);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .reflectionCard p {
   color: var(--color-text-dim);
-  line-height: 1.55;
+  line-height: var(--leading-body);
   overflow-wrap: anywhere;
 }
 
@@ -158,7 +166,8 @@ p {
   padding: 7px 10px;
   font-size: 12px;
   font-style: normal;
-  font-weight: 900;
+  font-weight: var(--label-weight);
+  letter-spacing: 0.02em;
 }
 
 .emptyState {

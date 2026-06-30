@@ -115,14 +115,20 @@ const visibleItems = computed(() => {
 }
 
 .sharedHeader h1 {
-  font-size: 26px;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 6vw, 32px);
+  line-height: var(--leading-tight);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .eyebrow,
 .answerCard span {
   color: var(--color-gold);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 11px;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
 }
 
 .sharedShell,
@@ -149,7 +155,7 @@ const visibleItems = computed(() => {
 .answerCard p {
   margin: 0;
   color: var(--color-text-dim);
-  line-height: 1.6;
+  line-height: var(--leading-body);
 }
 
 .answerCard {
@@ -158,8 +164,11 @@ const visibleItems = computed(() => {
 }
 
 .answerCard h2 {
-  font-size: 20px;
-  line-height: 1.35;
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: var(--leading-tight);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .sameQuestionCta {
@@ -171,7 +180,8 @@ const visibleItems = computed(() => {
 
 .primaryCta {
   border-radius: 999px;
-  font-weight: 900;
+  font-weight: var(--heading-weight);
+  letter-spacing: 0.01em;
   padding: 11px 14px;
 }
 

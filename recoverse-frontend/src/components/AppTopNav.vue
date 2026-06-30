@@ -57,8 +57,8 @@ function choose(action: TopMenuAction) {
   color: var(--color-gold);
   padding: 0;
   font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
@@ -85,7 +85,8 @@ function choose(action: TopMenuAction) {
 
 .profileMenu summary span {
   font-size: 12px;
-  font-weight: 900;
+  font-weight: var(--heading-weight);
+  letter-spacing: 0.02em;
 }
 
 .menuPanel {
@@ -110,7 +111,8 @@ function choose(action: TopMenuAction) {
   padding: 10px 12px;
   text-align: left;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: var(--heading-weight);
+  letter-spacing: 0.005em;
 }
 
 .menuPanel button:hover {

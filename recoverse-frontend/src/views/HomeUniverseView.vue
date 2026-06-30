@@ -334,7 +334,7 @@ const nodePositions = [
   max-width: 460px;
   color: var(--color-text-dim);
   font-size: 15px;
-  line-height: 1.55;
+  line-height: var(--leading-body);
 }
 
 .emptyActions {
@@ -350,7 +350,8 @@ const nodePositions = [
   background: rgba(255, 255, 255, 0.04);
   color: var(--color-text);
   padding: 13px 18px;
-  font-weight: 900;
+  font-weight: var(--heading-weight);
+  letter-spacing: 0.01em;
 }
 
 .ghostCta:hover,
@@ -420,15 +421,18 @@ const nodePositions = [
 
 .rediscoveryEyebrow {
   color: var(--color-gold);
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.02em;
+  font-size: 11px;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
 }
 
 .rediscoveryCard strong {
-  font-size: clamp(18px, 3vw, 22px);
-  line-height: 1.35;
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: clamp(19px, 3vw, 22px);
+  line-height: var(--leading-tight);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
   overflow-wrap: anywhere;
   word-break: keep-all;
 }
@@ -436,7 +440,8 @@ const nodePositions = [
 .rediscoveryMeta {
   color: var(--color-text-dim);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: var(--label-weight);
+  letter-spacing: 0.02em;
 }
 
 .fieldHeader > div,
@@ -446,8 +451,10 @@ const nodePositions = [
 
 .eyebrow {
   color: var(--color-star);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 11px;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
 }
 
 h1,
@@ -461,9 +468,10 @@ h1 {
   max-width: 680px;
   margin-top: 8px;
   font-family: var(--font-display);
-  font-size: clamp(40px, 8vw, 76px);
-  line-height: 1.02;
-  font-weight: 900;
+  font-size: clamp(36px, 7vw, 64px);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  font-weight: var(--display-weight);
   color: var(--color-text);
 }
 
@@ -501,8 +509,10 @@ h1 {
   top: 50%;
   transform: translateY(-50%);
   color: rgba(232, 224, 208, 0.58);
+  font-family: var(--font-display);
   font-size: clamp(20px, 3vw, 34px);
-  font-weight: 900;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .memoryObject {
@@ -568,13 +578,16 @@ h1 {
 }
 
 .previewPanel h2 {
+  font-family: var(--font-display);
   font-size: 24px;
-  line-height: 1.18;
+  line-height: var(--leading-tight);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
 }
 
 .previewPanel p {
   color: var(--color-text-dim);
-  line-height: 1.55;
+  line-height: var(--leading-body);
   overflow-wrap: anywhere;
 }
 
@@ -590,7 +603,8 @@ h1 {
   color: var(--color-text-dim);
   padding: 7px 10px;
   font-size: 12px;
-  font-weight: 900;
+  font-weight: var(--label-weight);
+  letter-spacing: 0.02em;
 }
 
 .primaryCta,
@@ -600,7 +614,8 @@ h1 {
   background: var(--color-gold);
   color: var(--color-primary-contrast);
   padding: 13px 18px;
-  font-weight: 900;
+  font-weight: var(--heading-weight);
+  letter-spacing: 0.01em;
 }
 
 .primaryCta {
