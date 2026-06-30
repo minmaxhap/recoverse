@@ -76,7 +76,7 @@
 import type { AppLanguage } from "../types/recoverse";
 import LanguageSelector from "./LanguageSelector.vue";
 
-export type RecoverseTheme = "universe" | "letter" | "journey";
+export type RecoverseTheme = "book" | "letter" | "journey";
 export type SettingsSection = "settings" | "language" | "theme" | "import" | "backup";
 
 defineProps<{
@@ -112,153 +112,39 @@ defineEmits<{
 </script>
 
 <style scoped>
-.tools {
-  display: grid;
-  gap: 12px;
-  justify-items: stretch;
-  width: min(760px, 100%);
-}
+.tools { display: grid; gap: 12px; justify-items: stretch; width: min(760px, 100%); }
 
 .settingsSection,
 .toolGroup {
-  border: 1px solid rgba(184, 166, 232, 0.14);
-  background:
-    linear-gradient(145deg, rgba(26, 33, 51, 0.9), rgba(17, 19, 34, 0.96)),
-    var(--color-surface);
-  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 253, 248, 0.86);
+  border-radius: var(--radius-card);
+  box-shadow: 0 12px 28px rgba(58, 49, 43, 0.07);
 }
 
-.settingsSection {
-  display: grid;
-  gap: 14px;
-  padding: 16px;
-}
-
-.settingsSection.active,
-.toolGroup.active {
-  border-color: rgba(244, 197, 106, 0.6);
-  box-shadow: 0 0 0 1px rgba(244, 197, 106, 0.12);
-}
-
-.sectionHead {
-  display: grid;
-  gap: 4px;
-}
-
-.sectionKicker,
-.groupLabel {
-  color: var(--color-star);
-  font-size: 11px;
-  font-weight: var(--eyebrow-weight);
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-}
-
-.sectionHead h3 {
-  margin: 0;
-  color: var(--color-text);
-  font-family: var(--font-display);
-  font-size: 18px;
-  line-height: var(--leading-tight);
-  font-weight: var(--display-weight);
-  letter-spacing: var(--tracking-display);
-}
-
-.sectionHead p,
-.hint,
-.themeButton span {
-  margin: 0;
-  color: var(--color-text-dim);
-  font-size: 12px;
-  line-height: var(--leading-body);
-}
-
-.settingStack {
-  display: grid;
-  gap: 10px;
-}
-
-.toolGroup {
-  display: grid;
-  gap: 9px;
-  padding: 12px;
-}
-
-.themeGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-
-button,
-.file {
-  font: inherit;
-  border: 1px solid var(--color-border);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--color-text);
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-
-.themeButton {
-  display: grid;
-  gap: 4px;
-  text-align: left;
-}
-
-.themeButton.selected {
-  border-color: var(--color-gold);
-  background: rgba(244, 197, 106, 0.14);
-}
-
-.buttonRow {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.dataButton,
-.file {
-  border-color: rgba(184, 166, 232, 0.24);
-}
-
-button {
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.file {
-  cursor: pointer;
-  user-select: none;
-}
-
-.file input {
-  display: none;
-}
-
-.dangerSection {
-  border-color: rgba(239, 68, 68, 0.28);
-}
-
-.danger {
-  width: fit-content;
-  border-color: rgba(224, 85, 85, 0.55);
-  background: rgba(224, 85, 85, 0.08);
-  color: #ff8f8f;
-}
+.settingsSection { display: grid; gap: 14px; padding: 16px; }
+.settingsSection.active, .toolGroup.active { border-color: rgba(111, 127, 107, 0.52); box-shadow: 0 0 0 3px rgba(111, 127, 107, 0.10); }
+.sectionHead { display: grid; gap: 4px; }
+.sectionKicker, .groupLabel { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+.sectionHead h3 { margin: 0; color: var(--text-primary); font-family: var(--font-display); font-size: 20px; line-height: var(--leading-tight); font-weight: var(--display-weight); letter-spacing: 0; }
+.sectionHead p, .hint, .themeButton span { margin: 0; color: var(--text-secondary); font-size: 12px; line-height: var(--leading-body); }
+.settingStack { display: grid; gap: 10px; }
+.toolGroup { display: grid; gap: 9px; padding: 12px; background: rgba(251, 244, 236, 0.44); }
+.themeGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+button, .file { font: inherit; border: 1px solid var(--border-subtle); background: rgba(255, 253, 248, 0.72); color: var(--text-primary); border-radius: var(--radius-card); padding: 10px 12px; }
+.themeButton { display: grid; gap: 4px; text-align: left; }
+.themeButton.selected { border-color: var(--accent-sage); background: var(--surface-sage); }
+.buttonRow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.dataButton, .file { border-color: var(--border-strong); }
+button { cursor: pointer; }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+.file { cursor: pointer; user-select: none; }
+.file input { display: none; }
+.dangerSection { border-color: rgba(163, 78, 62, 0.26); }
+.danger { width: fit-content; border-color: rgba(163, 78, 62, 0.55); background: rgba(234, 215, 207, 0.44); color: var(--color-danger); }
 
 @media (max-width: 899px) {
-  .tools {
-    width: 100%;
-  }
-
-  .themeGrid {
-    grid-template-columns: 1fr;
-  }
+  .tools { width: 100%; }
+  .themeGrid { grid-template-columns: 1fr; }
 }
 </style>

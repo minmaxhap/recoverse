@@ -115,198 +115,22 @@ defineEmits<{
 </script>
 
 <style scoped>
-.settingsScreen {
-  display: grid;
-  gap: 16px;
-  padding: 24px 18px 32px;
-  color: var(--color-text);
-}
-
-.settingsHead {
-  display: grid;
-  gap: 6px;
-}
-
-.settingsHead .eyebrow {
-  color: var(--color-muted);
-  font-size: 11px;
-  font-weight: var(--eyebrow-weight);
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-}
-
-.settingsHead h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(22px, 5.4vw, 28px);
-  line-height: var(--leading-tight);
-  font-weight: var(--display-weight);
-  letter-spacing: var(--tracking-display);
-}
-
-.settingsHead p {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: 13px;
-  line-height: var(--leading-body);
-}
-
-.settingsPanel {
-  display: grid;
-}
-
-.usagePanel {
-  display: grid;
-  gap: 12px;
-  border: 1px solid var(--color-soft-border);
-  border-radius: 18px;
-  background: var(--color-surface);
-  padding: 18px 20px;
-}
-
-.usagePanel header {
-  display: grid;
-  gap: 4px;
-}
-
-.usageEyebrow {
-  color: var(--color-gold);
-  font-size: 11px;
-  font-weight: var(--eyebrow-weight);
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-}
-
-.usagePanel h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: var(--heading-weight);
-}
-
-.usageGrid {
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.usageGrid div {
-  border: 1px solid var(--color-soft-border);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  padding: 11px 14px;
-  display: grid;
-  gap: 4px;
-}
-
-.usageGrid dt {
-  color: var(--color-text-dim);
-  font-size: 12px;
-  font-weight: var(--label-weight);
-  letter-spacing: 0.02em;
-}
-
-.usageGrid dd {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: var(--display-weight);
-  letter-spacing: var(--tracking-display);
-}
-
-.usageHint {
-  margin: 0;
-  color: var(--color-text-dim);
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.privacyPanel {
-  display: grid;
-  gap: 10px;
-  border: 1px solid rgba(184, 166, 232, 0.32);
-  border-radius: 18px;
-  background:
-    linear-gradient(145deg, rgba(184, 166, 232, 0.10), rgba(110, 90, 154, 0.08));
-  padding: 18px 20px;
-}
-
-.privacyEyebrow {
-  color: var(--color-star);
-  font-size: 11px;
-  font-weight: var(--eyebrow-weight);
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-}
-
-.privacyPanel h3 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: var(--display-weight);
-  letter-spacing: var(--tracking-display);
-}
-
-.privacyPanel ul {
-  margin: 0;
-  padding-left: 18px;
-  display: grid;
-  gap: 6px;
-  color: var(--color-text-dim);
-  font-size: 13px;
-  line-height: var(--leading-body);
-}
-
-.samplePanel {
-  display: grid;
-  gap: 10px;
-  border: 1px solid var(--color-soft-border);
-  border-radius: 18px;
-  background: var(--color-surface);
-  padding: 18px 20px;
-}
-
-.samplePanel header {
-  display: grid;
-  gap: 4px;
-}
-
-.sampleEyebrow {
-  color: var(--color-gold);
-  font-size: 11px;
-  font-weight: var(--eyebrow-weight);
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-}
-
-.samplePanel h3 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: var(--display-weight);
-  letter-spacing: var(--tracking-display);
-}
-
-.samplePanel p {
-  margin: 0;
-  color: var(--color-text-dim);
-  font-size: 13px;
-  line-height: var(--leading-body);
-}
-
-.sampleCta {
-  justify-self: start;
-  border: 1px solid var(--color-border-gold);
-  border-radius: 999px;
-  background: rgba(244, 197, 106, 0.14);
-  color: var(--color-text);
-  padding: 10px 16px;
-  font-weight: var(--heading-weight);
-  letter-spacing: 0.01em;
-}
-
-.sampleCta:hover,
-.sampleCta:focus-visible {
-  border-color: var(--color-gold);
-}
+.settingsScreen { display: grid; gap: 16px; padding: 24px var(--space-page-x) calc(108px + env(safe-area-inset-bottom)); color: var(--text-primary); }
+.settingsHead { display: grid; gap: 6px; width: min(760px, 100%); }
+.settingsHead .eyebrow, .usageEyebrow, .privacyEyebrow, .sampleEyebrow { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+.settingsHead h2 { margin: 0; font-family: var(--font-display); font-size: clamp(30px, 5.4vw, 44px); line-height: var(--leading-tight); font-weight: var(--display-weight); letter-spacing: 0; }
+.settingsHead p, .samplePanel p, .usageHint { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
+.settingsPanel { display: grid; }
+.usagePanel, .privacyPanel, .samplePanel { display: grid; gap: 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(255, 253, 248, 0.86); padding: 18px 20px; box-shadow: 0 12px 28px rgba(58, 49, 43, 0.07); }
+.privacyPanel { background: linear-gradient(145deg, rgba(255,253,248,0.92), rgba(221,229,216,0.46)); }
+.usagePanel header, .samplePanel header { display: grid; gap: 4px; }
+.usagePanel h3, .samplePanel h3, .privacyPanel h3 { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: var(--display-weight); letter-spacing: 0; }
+.usageGrid { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.usageGrid div { border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(251, 244, 236, 0.54); padding: 11px 14px; display: grid; gap: 4px; }
+.usageGrid dt { color: var(--text-secondary); font-size: 12px; font-weight: var(--label-weight); }
+.usageGrid dd { margin: 0; font-family: var(--font-display); font-size: 23px; font-weight: var(--display-weight); }
+.privacyPanel ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
+.sampleCta { justify-self: start; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); background: var(--accent-espresso); color: var(--surface-paper); padding: 10px 16px; font-weight: var(--heading-weight); letter-spacing: 0; }
+.sampleCta:hover, .sampleCta:focus-visible { border-color: var(--accent-sage); }
+@media (max-width: 720px) { .settingsScreen { padding: 16px 14px calc(104px + env(safe-area-inset-bottom)); } .usageGrid { grid-template-columns: 1fr; } }
 </style>

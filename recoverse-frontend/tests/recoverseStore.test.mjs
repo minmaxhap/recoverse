@@ -282,7 +282,7 @@ test("falls back when preference storage is blocked", () => {
   try {
     globalThis.localStorage = failingStorage;
     assert.equal(localPreferenceStore.loadPreferredLanguage(), "ko");
-    assert.equal(localPreferenceStore.loadPreferredTheme(), "universe");
+    assert.equal(localPreferenceStore.loadPreferredTheme(), "book");
     assert.equal(localPreferenceStore.savePreferredLanguage("en"), false);
     assert.equal(localPreferenceStore.savePreferredTheme("letter"), false);
   } finally {
@@ -466,7 +466,7 @@ test("appNavigation bottomNavLabels maps every BottomTabId", () => {
 test("appNavigation shouldShowBottomNav returns true for every AppMode", () => {
   const { shouldShowBottomNav } = appNav;
   const modes = [
-    "home-universe",
+    "home-book",
     "reflection-new",
     "reflection-write",
     "reflection-detail",
@@ -483,7 +483,7 @@ test("appNavigation shouldShowBottomNav returns true for every AppMode", () => {
 test("appNavigation getActiveBottomTab maps modes to correct tabs", () => {
   const { getActiveBottomTab } = appNav;
 
-  assert.equal(getActiveBottomTab("home-universe"), "home");
+  assert.equal(getActiveBottomTab("home-book"), "home");
   assert.equal(getActiveBottomTab("reflection-new"), "write");
   assert.equal(getActiveBottomTab("reflection-write"), "write");
   assert.equal(getActiveBottomTab("review-again"), "review");
@@ -496,9 +496,9 @@ test("appNavigation getActiveBottomTab maps modes to correct tabs", () => {
 test("appNavigation isTabActive matches the navigateBottomTab guard logic", () => {
   const { isTabActive } = appNav;
 
-  assert.ok(isTabActive("home-universe", "home"));
-  assert.ok(!isTabActive("home-universe", "write"));
-  assert.ok(!isTabActive("home-universe", "review"));
+  assert.ok(isTabActive("home-book", "home"));
+  assert.ok(!isTabActive("home-book", "write"));
+  assert.ok(!isTabActive("home-book", "review"));
 
   assert.ok(isTabActive("reflection-new", "write"));
   assert.ok(isTabActive("reflection-write", "write"));
@@ -515,7 +515,7 @@ test("appNavigation isTabActive matches the navigateBottomTab guard logic", () =
 });
 
 test("appHistory createHistoryState creates correct state object", () => {
-  assert.deepEqual(appHistory.createHistoryState("home-universe"), { recoverseMode: "home-universe" });
+  assert.deepEqual(appHistory.createHistoryState("home-book"), { recoverseMode: "home-book" });
   assert.deepEqual(appHistory.createHistoryState("reflection-write"), { recoverseMode: "reflection-write" });
 });
 
@@ -537,7 +537,7 @@ test("appHistory popFallbackMode pops from stack or returns default", () => {
   assert.equal(stack.length, 1);
   assert.equal(appHistory.popFallbackMode(stack, "default"), "a");
   assert.equal(stack.length, 0);
-  assert.equal(appHistory.popFallbackMode(stack, "home-universe"), "home-universe");
+  assert.equal(appHistory.popFallbackMode(stack, "home-book"), "home-book");
 });
 
 test("appHistory urlHasShareHash detects share hash prefix", () => {

@@ -4,7 +4,7 @@ import { readLocalStorageValue, writeLocalStorageValue } from "./safeLocalStorag
 export const LANGUAGE_STORAGE_KEY = "recoverse_language";
 export const THEME_STORAGE_KEY = "recoverse_theme";
 
-export type StoredRecoverseTheme = "universe" | "letter" | "journey";
+export type StoredRecoverseTheme = "book" | "letter" | "journey";
 
 function readPreference(key: string): string | null {
   const result = readLocalStorageValue(key);
@@ -21,7 +21,7 @@ export function savePreferredLanguage(language: AppLanguage): boolean {
 
 export function loadPreferredTheme(): StoredRecoverseTheme {
   const savedTheme = readPreference(THEME_STORAGE_KEY);
-  return savedTheme === "letter" || savedTheme === "journey" ? savedTheme : "universe";
+  return savedTheme === "letter" || savedTheme === "journey" || savedTheme === "book" ? savedTheme : "book";
 }
 
 export function savePreferredTheme(theme: StoredRecoverseTheme): boolean {

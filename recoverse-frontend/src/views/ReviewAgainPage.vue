@@ -62,14 +62,10 @@ function previewText(reflection: Reflection) {
 
 <style scoped>
 .reviewPage {
-  height: calc(100dvh - 54px);
-  min-height: 560px;
-  background:
-    radial-gradient(circle at 72% 18%, rgba(110, 90, 154, 0.18), transparent 30%),
-    var(--color-page);
-  color: var(--color-text);
-  padding: 22px 20px calc(112px + env(safe-area-inset-bottom));
-  overflow: hidden;
+  min-height: calc(100dvh - 54px);
+  background: var(--surface-base);
+  color: var(--text-primary);
+  padding: 22px var(--space-page-x) calc(112px + env(safe-area-inset-bottom));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 16px;
@@ -77,21 +73,13 @@ function previewText(reflection: Reflection) {
 
 .reviewHeader,
 .reviewList,
-.emptyState {
-  width: min(920px, 100%);
-  margin: 0 auto;
-}
+.emptyState { width: min(940px, 100%); margin: 0 auto; }
 
-h1,
-h2,
-p {
-  margin: 0;
-  letter-spacing: 0;
-}
+h1, h2, p { margin: 0; letter-spacing: 0; }
 
 .eyebrow,
 .periodLabel {
-  color: var(--color-star);
+  color: var(--accent-sage);
   font-size: 11px;
   font-weight: var(--eyebrow-weight);
   letter-spacing: var(--tracking-eyebrow);
@@ -101,103 +89,52 @@ p {
 .reviewHeader h1 {
   margin-top: 6px;
   font-family: var(--font-display);
-  font-size: clamp(28px, 5.8vw, 48px);
+  font-size: clamp(30px, 5.8vw, 52px);
   line-height: var(--leading-display);
   font-weight: var(--display-weight);
-  letter-spacing: var(--tracking-display);
 }
 
 .reviewList {
   min-height: 0;
   overflow: auto;
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
   align-content: start;
   padding-right: 4px;
 }
 
 .reflectionCard,
 .emptyState {
-  border: 1px solid rgba(184, 166, 232, 0.16);
-  border-radius: 18px;
-  background:
-    linear-gradient(145deg, rgba(26, 33, 51, 0.9), rgba(17, 19, 34, 0.96)),
-    var(--color-surface);
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  background: rgba(255, 253, 248, 0.86);
+  box-shadow: 0 14px 32px rgba(58, 49, 43, 0.08);
 }
 
 .reflectionCard {
   width: 100%;
-  color: var(--color-text);
+  min-height: 190px;
+  color: var(--text-primary);
   padding: 18px;
   display: grid;
   gap: 8px;
   text-align: left;
-  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+  align-content: start;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
-.reflectionCard:hover {
-  border-color: rgba(244, 197, 106, 0.58);
-  background:
-    linear-gradient(145deg, rgba(26, 33, 51, 0.98), rgba(17, 19, 34, 0.98)),
-    var(--color-surface);
-  transform: translateY(-1px);
-}
+.reflectionCard:hover { border-color: var(--border-strong); transform: translateY(-1px); box-shadow: var(--shadow-paper); }
+.reflectionCard strong { font-family: var(--font-display); font-size: clamp(21px, 3vw, 28px); line-height: var(--leading-tight); font-weight: var(--display-weight); }
+.reflectionCard p { color: var(--text-secondary); line-height: var(--leading-body); overflow-wrap: anywhere; }
+.reflectionCard em { width: fit-content; border: 1px solid var(--border-subtle); border-radius: var(--radius-pill); color: var(--text-secondary); padding: 7px 10px; font-size: 12px; font-style: normal; font-weight: var(--label-weight); }
 
-.reflectionCard strong {
-  font-family: var(--font-display);
-  font-size: clamp(20px, 3vw, 26px);
-  line-height: var(--leading-tight);
-  font-weight: var(--display-weight);
-  letter-spacing: var(--tracking-display);
-}
-
-.reflectionCard p {
-  color: var(--color-text-dim);
-  line-height: var(--leading-body);
-  overflow-wrap: anywhere;
-}
-
-.reflectionCard em {
-  width: fit-content;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  color: var(--color-text-dim);
-  padding: 7px 10px;
-  font-size: 12px;
-  font-style: normal;
-  font-weight: var(--label-weight);
-  letter-spacing: 0.02em;
-}
-
-.emptyState {
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 10px;
-  padding: 28px;
-  text-align: center;
-}
-
-.emptyState p {
-  color: var(--color-text-dim);
-  line-height: 1.55;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .reflectionCard {
-    transition: none;
-  }
-}
+.emptyState { display: grid; place-items: center; align-content: center; gap: 10px; padding: 28px; text-align: center; }
+.emptyState p { color: var(--text-secondary); line-height: 1.55; }
 
 @media (max-width: 720px) {
-  .reviewPage {
-    min-height: 0;
-    padding: 16px 14px calc(104px + env(safe-area-inset-bottom));
-  }
-
-  .reflectionCard {
-    padding: 16px;
-  }
+  .reviewPage { padding: 16px 14px calc(104px + env(safe-area-inset-bottom)); }
+  .reviewList { grid-template-columns: 1fr; }
+  .reflectionCard { padding: 16px; }
 }
 </style>

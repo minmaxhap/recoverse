@@ -1,7 +1,6 @@
 <template>
   <label class="languageSelect">
-    <span class="noWrap">{{ label }}</span>
-    <select :value="modelValue" @change="onChange">
+    <select :value="modelValue" :aria-label="label" @change="onChange">
       <option value="ko">한국어</option>
       <option value="en">English</option>
     </select>
@@ -29,16 +28,6 @@ function onChange(event: Event) {
 </script>
 
 <style scoped>
-.languageSelect {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #4b5563;
-}
-
-.languageSelect select {
-  padding: 8px 10px;
-  border-radius: 10px;
-}
+.languageSelect { display: grid; gap: 8px; font-size: 12px; color: var(--text-secondary); }
+.languageSelect select { min-height: 42px; border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: var(--surface-paper); color: var(--text-primary); padding: 9px 11px; }
 </style>

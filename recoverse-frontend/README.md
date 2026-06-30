@@ -2,16 +2,35 @@
 
 Vue 3, TypeScript, Vite 기반의 Recoverse 프론트엔드입니다.
 
-## 화면 구조
+## 현재 상태
 
-- `HomeUniverseView`: 첫 진입 장면과 오늘 다시 떠오른 기억
-- `NewReflectionPage`: 유형 → 기간 → 질문 세트 3단계 wizard
-- `WriteReflectionPage`: 질문 카드 한 개씩 답변 작성
-- `ReflectionDetailPage`: 대표 문장과 질문/답변 감상, 공유 진입
-- `ReviewAgainPage`: 같은 질문/연도/주제/랜덤 다시 보기
-- `SharedReflectionPage`: URL 해시로 받은 읽기 전용 회고
+현재 코드는 기존 회고 MVP 구조를 유지하고 있습니다. 루트 문서들은 다음 구현 패스를 위해 **Story Book x Time Capsule** 모바일 디자인으로 갱신되었습니다.
 
-설정(언어, 테마, 회고 백업/가져오기, 전체 삭제)은 상단 프로필 메뉴에서 `ArchiveSettingsTools` 단일 패널로 연다.
+주요 기준:
+
+- 디자인 토큰: [`../DESIGN.md`](../DESIGN.md)
+- 한국어 디자인 시스템: [`../DESIGN_SYSTEM.ko.md`](../DESIGN_SYSTEM.ko.md)
+- 사용자 흐름: [`../USER_FLOW.md`](../USER_FLOW.md)
+- 아키텍처 매핑: [`../ARCHITECTURE.ko.md`](../ARCHITECTURE.ko.md)
+
+## 현재 화면 구조
+
+| 파일 | 현재 역할 | 새 목표 |
+| --- | --- | --- |
+| `HomeUniverseView.vue` | 첫 진입 장면과 샘플 회고 | Home, 회고 앨범 일부 |
+| `NewReflectionPage.vue` | 새 회고 wizard | 회고 시작 |
+| `WriteReflectionPage.vue` | 질문 카드 작성 | 질문 작성 |
+| `ReflectionDetailPage.vue` | 회고 상세와 공유 | 회고 상세, 작성 완료 후 진입 |
+| `ReviewAgainPage.vue` | 다시 보기/비교 | 회고 앨범, 친구 비교, 연말 회고 |
+| `SharedReflectionPage.vue` | URL 해시 읽기 전용 공유 | 공유 회고 상세 |
+| `ArchiveSettingsTools.vue` | 설정/백업/초기화 | 설정 |
+
+추가 목표 화면:
+
+- Splash
+- 작성 완료
+- 여행 회고
+- 디자인 시스템
 
 ## 실행
 
@@ -42,7 +61,15 @@ node node_modules\vite\bin\vite.js build
 ```text
 recoverse_reflections_v1   # 모든 회고
 recoverse_language         # ko / en
-recoverse_theme            # universe / letter / journey
+recoverse_theme            # 현재 구현 테마
 ```
 
 공유 스냅샷은 저장하지 않고 URL 해시 (`#share=...`)에 base64url로 인코딩합니다.
+
+## 디자인 구현 규칙
+
+- 새 UI 값은 `../DESIGN.md`의 토큰으로 먼저 정의한다.
+- 우주/행성/갤럭시 메타포는 기본 화면에서 제거한다.
+- 이모지는 아이콘으로 쓰지 않는다.
+- 카드, 버튼, 입력, 하단 탭은 디자인 시스템 컴포넌트로 재사용한다.
+- 구현 후 375 / 768 / 1280px에서 실제 브라우저 스크린샷으로 확인한다.

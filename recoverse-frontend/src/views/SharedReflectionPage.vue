@@ -87,133 +87,22 @@ const visibleItems = computed(() => {
 </script>
 
 <style scoped>
-.sharedPage {
-  min-height: 100vh;
-  background: var(--color-page);
-  color: var(--color-text);
-  padding: 26px;
-}
-
-.sharedHeader,
-.sharedShell {
-  width: min(900px, 100%);
-  margin: 0 auto;
-}
-
-.sharedHeader {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 22px;
-}
-
-.sharedHeader h1,
-.sameQuestionCta h2,
-.answerCard h2 {
-  margin: 0;
-  letter-spacing: 0;
-}
-
-.sharedHeader h1 {
-  font-family: var(--font-display);
-  font-size: clamp(26px, 6vw, 32px);
-  line-height: var(--leading-tight);
-  font-weight: var(--display-weight);
-  letter-spacing: var(--tracking-display);
-}
-
-.eyebrow,
-.answerCard span {
-  color: var(--color-gold);
-  font-size: 11px;
-  font-weight: var(--eyebrow-weight);
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-}
-
-.sharedShell,
-.answerList {
-  display: grid;
-  gap: 12px;
-}
-
-.notice,
-.answerCard,
-.sameQuestionCta {
-  border: 1px solid var(--color-soft-border);
-  border-radius: 18px;
-  background: var(--color-surface);
-  padding: 18px;
-}
-
-.notice strong {
-  display: block;
-  margin-bottom: 6px;
-}
-
-.notice p,
-.answerCard p {
-  margin: 0;
-  color: var(--color-text-dim);
-  line-height: var(--leading-body);
-}
-
-.answerCard {
-  display: grid;
-  gap: 8px;
-}
-
-.answerCard h2 {
-  font-family: var(--font-display);
-  font-size: 19px;
-  line-height: var(--leading-tight);
-  font-weight: var(--display-weight);
-  letter-spacing: var(--tracking-display);
-}
-
-.sameQuestionCta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.primaryCta {
-  border-radius: 999px;
-  font-weight: var(--heading-weight);
-  letter-spacing: 0.01em;
-  padding: 11px 14px;
-}
-
-.primaryCta {
-  border: 0;
-  background: var(--color-gold);
-  color: var(--color-primary-contrast);
-}
-
-.emptyState {
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 16px;
-  text-align: center;
-}
-
-.emptyState p {
-  max-width: 390px;
-  color: var(--color-text-dim);
-  line-height: 1.6;
-}
-
-@media (max-width: 720px) {
-  .sharedPage {
-    padding: 16px;
-  }
-
-  .sharedHeader,
-  .sameQuestionCta {
-    align-items: stretch;
-    flex-direction: column;
-  }
-}
+.sharedPage { min-height: 100vh; background: var(--surface-base); color: var(--text-primary); padding: 24px var(--space-page-x) calc(108px + env(safe-area-inset-bottom)); }
+.sharedHeader, .sharedShell { width: min(920px, 100%); margin: 0 auto; }
+.sharedHeader { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+.sharedHeader h1, .sameQuestionCta h2, .answerCard h2 { margin: 0; letter-spacing: 0; }
+.sharedHeader h1 { font-family: var(--font-display); font-size: clamp(28px, 6vw, 42px); line-height: var(--leading-tight); font-weight: var(--display-weight); }
+.eyebrow, .answerCard span { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+.sharedShell, .answerList { display: grid; gap: 12px; }
+.notice, .answerCard, .sameQuestionCta { border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(255, 253, 248, 0.86); padding: 18px; box-shadow: 0 12px 28px rgba(58, 49, 43, 0.07); }
+.notice { background: linear-gradient(145deg, rgba(255,253,248,0.94), rgba(221,229,216,0.42)); }
+.notice strong { display: block; margin-bottom: 6px; }
+.notice p, .answerCard p { margin: 0; color: var(--text-secondary); line-height: var(--leading-body); }
+.answerCard { display: grid; gap: 8px; }
+.answerCard h2 { font-family: var(--font-display); font-size: 21px; line-height: var(--leading-tight); font-weight: var(--display-weight); }
+.sameQuestionCta { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.primaryCta { border: 0; border-radius: var(--radius-pill); background: var(--accent-espresso); color: var(--surface-paper); font-weight: var(--heading-weight); letter-spacing: 0; padding: 12px 15px; }
+.emptyState { display: grid; place-items: center; align-content: center; gap: 16px; text-align: center; }
+.emptyState p { max-width: 390px; color: var(--text-secondary); line-height: 1.6; }
+@media (max-width: 720px) { .sharedPage { padding: 16px 14px calc(104px + env(safe-area-inset-bottom)); } .sharedHeader, .sameQuestionCta { align-items: stretch; flex-direction: column; } }
 </style>

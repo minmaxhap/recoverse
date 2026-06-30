@@ -2,38 +2,34 @@
 
 ## 현재 방향
 
-Recoverse는 Vue 3 + TypeScript + Vite 기반의 localStorage 우선 MVP다.
-사용자에게 보이는 모든 흐름은 `Reflection`을 단일 데이터 단위로 다룬다.
+Recoverse는 Vue 3 + TypeScript + Vite 기반의 localStorage 우선 MVP다. 이번 전환은 데이터 구조를 바꾸는 작업이 아니라, 기존 `Reflection` 중심 기능 위에 **Story Book x Time Capsule** 모바일 디자인을 입히는 작업이다.
 
-## 화면과 모드
+## 현재 구현과 목표 화면 매핑
 
-`App.vue`는 단일 `mode` 상태로 다음 화면을 전환한다.
-
-| 모드 | 화면 | 진입 경로 |
+| 현재 모드/컴포넌트 | 현재 역할 | 새 목표 화면 |
 | --- | --- | --- |
-| `home-universe` | `HomeUniverseView` | 기본 진입, 하단 `홈` 탭 |
-| `reflection-new` | `NewReflectionPage` | 하단 `기억 작성` 탭 |
-| `reflection-write` | `WriteReflectionPage` | 새 회고 시작 또는 이어쓰기 |
-| `reflection-detail` | `ReflectionDetailPage` | 홈에서 회고 열기 |
-| `review-again` | `ReviewAgainPage` | 하단 `다시 보기` 탭 |
-| `shared-reflections` | `SharedReflectionPage` | 공유 URL 해시 또는 공유 액션 |
-| `archive-settings` | `ArchiveSettingsTools` 단일 패널 | 상단 프로필 메뉴 |
-
-상단 네비게이션은 `AppTopNav`(브랜드 + 프로필 메뉴), 하단은 `AppBottomNav`(홈/작성/다시 보기 3탭)다.
-이전 단계에서 있던 `planet-detail`, `galaxy-detail`, `observation`, `archive-library`,
-`archive-time`, `archive-organize` 모드는 모두 제거했다.
+| `home-universe` / `HomeUniverseView` | 홈/빈 상태/샘플 회고 | Home, 회고 앨범 일부 |
+| `reflection-new` / `NewReflectionPage` | 새 회고 시작 | 회고 시작 |
+| `reflection-write` / `WriteReflectionPage` | 질문별 작성 | 질문 작성 |
+| `reflection-detail` / `ReflectionDetailPage` | 회고 상세/공유 진입 | 회고 상세, 작성 완료 후 진입 |
+| `review-again` / `ReviewAgainPage` | 다시 보기/비교 | 회고 앨범, 친구 비교, 연말 회고 |
+| `shared-reflections` / `SharedReflectionPage` | URL 해시 공유 | 공유된 회고 상세 |
+| `archive-settings` / `ArchiveSettingsTools` | 설정/백업/초기화 | 설정 |
+| 신규 필요 | 없음 | Splash, 여행 회고, 디자인 시스템 |
 
 ## 데이터 단위
+
+핵심 데이터 계약은 유지한다.
 
 ```ts
 type Reflection = {
   id: string;
   title: string;
-  type: ReflectionType;          // year | half_year | travel | life_chapter | project | relationship | custom
-  mode: ReflectionMode;          // solo | with_friends
-  period: ReflectionPeriod;      // label, year?, startDate?, endDate?
+  type: ReflectionType;
+  mode: ReflectionMode;
+  period: ReflectionPeriod;
   templateId: string;
-  questionSetMode: ReflectionQuestionSetMode; // light | deep | share | compare
+  questionSetMode: ReflectionQuestionSetMode;
   questionGroups: QuestionGroup[];
   answers: Answer[];
   representativeSentence?: string;
@@ -46,57 +42,78 @@ type Reflection = {
 };
 ```
 
-자세한 타입 정의는 [`src/types/reflection.ts`](recoverse-frontend/src/types/reflection.ts)에 있다.
+자세한 타입 정의는 [`recoverse-frontend/src/types/reflection.ts`](recoverse-frontend/src/types/reflection.ts)에 있다.
 
 ## 저장소
 
-브라우저 `localStorage`가 단일 진실 공급원이다.
+브라우저 `localStorage`가 현재 단일 진실 공급원이다.
 
 | 키 | 역할 |
 | --- | --- |
-| `recoverse_reflections_v1` | 모든 회고 데이터 (작성, 다시 보기, 공유, 백업 기준) |
+| `recoverse_reflections_v1` | 모든 회고 데이터 |
 | `recoverse_language` | 화면 언어 (`ko` / `en`) |
-| `recoverse_theme` | 테마 (`universe` / `letter` / `journey`) |
+| `recoverse_theme` | 현재 구현 테마 (`universe` / `letter` / `journey`) |
 
-공유 스냅샷은 저장하지 않고 URL 해시 (`#share=...`)에 base64url로 인코딩한다 (`recoverse_shared_reflection_v1` 스키마).
+새 디자인의 기본 테마 이름은 `book-capsule`을 목표로 한다. 기존 테마 키를 즉시 깨지 말고 마이그레이션 계층을 둔다.
 
 ## 모듈 구성
 
 ```text
-src/
-├─ App.vue                          # 모드 라우팅, 회고 store 연동, 백업/공유 액션
+recoverse-frontend/src/
+├─ App.vue
 ├─ main.ts
 ├─ style.css
 ├─ views/
-│  ├─ HomeUniverseView.vue          # 첫 진입 장면, 오늘 다시 떠오른 기억
-│  ├─ HomeView.vue                  # 홈 컨테이너 슬롯
-│  ├─ NewReflectionPage.vue         # 3단계 새 회고 wizard
-│  ├─ WriteReflectionPage.vue       # 질문 카드 단위 작성
-│  ├─ ReflectionDetailPage.vue      # 회고 감상/공유
-│  ├─ ReviewAgainPage.vue           # 다시 보기 (같은 질문/연도/주제/랜덤)
-│  └─ SharedReflectionPage.vue      # 읽기 전용 공유 화면
+│  ├─ HomeUniverseView.vue
+│  ├─ HomeView.vue
+│  ├─ NewReflectionPage.vue
+│  ├─ WriteReflectionPage.vue
+│  ├─ ReflectionDetailPage.vue
+│  ├─ ReviewAgainPage.vue
+│  ├─ SharedReflectionPage.vue
+│  └─ ArchiveSettingsView.vue
 ├─ components/
 │  ├─ AppTopNav.vue
 │  ├─ AppBottomNav.vue
 │  ├─ NavIcon.vue
-│  ├─ ArchiveSettingsTools.vue      # 언어/테마/회고 백업/초기화
+│  ├─ ArchiveSettingsTools.vue
 │  └─ LanguageSelector.vue
 ├─ lib/
-│  ├─ reflectionStore.ts            # CRUD + normalize + draft 생성
-│  ├─ reflectionBackup.ts           # JSON 백업 export / 병합 import
-│  ├─ reflectionShare.ts            # URL 해시 인코딩/디코딩
-│  ├─ reflectionSync.ts             # 계정 저장 페이로드 (서버 연결 전 placeholder)
-│  ├─ sampleReflection.ts           # 빈 상태에서 보여줄 샘플 회고
-│  ├─ questionTimeline.ts           # 같은 질문 타임라인 빌드
-│  └─ downloadBlob.ts
-├─ types/
-│  ├─ reflection.ts                 # Reflection / Question / Answer 등 핵심 타입
-│  └─ recoverse.ts                  # AppLanguage 하나
+│  ├─ reflectionStore.ts
+│  ├─ reflectionBackup.ts
+│  ├─ reflectionShare.ts
+│  ├─ reflectionSync.ts
+│  ├─ sampleReflection.ts
+│  ├─ questionTimeline.ts
+│  └─ quickReflection.ts
 └─ data/
-   └─ reflectionTemplates.ts        # 4개 MVP 템플릿 + 질문 세트 모드 빌더
+   └─ reflectionTemplates.ts
 ```
 
-테스트는 `tests/recoverseStore.test.mjs` 한 파일이며 reflection store/backup/sync/share/timeline/sample 10개 시나리오를 다룬다.
+## 디자인 토큰 적용 위치
+
+우선순위:
+
+1. `src/style.css`에 [DESIGN.md](./DESIGN.md)의 토큰을 CSS 변수로 선언한다.
+2. 기존 우주 테마 변수와 충돌하는 변수는 `book-capsule` 기준 이름으로 교체한다.
+3. 컴포넌트 내부 raw color와 임의 px는 토큰으로 치환한다.
+4. 아이콘은 SVG 선형 아이콘으로 유지하고 이모지는 쓰지 않는다.
+
+## 새 화면 구현 후보
+
+기존 단일 `mode` 전환 방식을 유지한다면 다음 모드가 추가될 수 있다.
+
+| 신규 모드 | 화면 |
+| --- | --- |
+| `splash` | Splash |
+| `reflection-complete` | 작성 완료 |
+| `album` | 회고 앨범 |
+| `year-review` | 연말 회고 |
+| `travel-review` | 여행 회고 |
+| `friend-compare` | 친구 비교 |
+| `design-system` | 디자인 시스템 |
+
+라우터를 도입하지 않는 한 `App.vue`의 mode union과 `appNavigation` 헬퍼를 함께 갱신한다.
 
 ## 검증 명령
 
@@ -107,17 +124,12 @@ node node_modules\vue-tsc\bin\vue-tsc.js -b
 node node_modules\vite\bin\vite.js build
 ```
 
-## 다음 단계 후보
-
-- 계정 저장(Google/Kakao). 자세한 계약은 [`ACCOUNT_STORAGE_PLAN.ko.md`](./ACCOUNT_STORAGE_PLAN.ko.md).
-- 서버 저장 기반 공유 링크 발행 (현재는 URL 해시만).
-- PDF 내보내기, 이미지 첨부, 실시간 그룹 협업은 보류.
+디자인 구현 후에는 실제 브라우저에서 375 / 768 / 1280px 시각 QA를 추가한다.
 
 ## 제외 범위
 
-- 로그인과 OAuth (UI placeholder만 존재)
-- 클라우드 저장
-- 실제 공유 링크 서버
+- 기존 `recoverse_reflections_v1` 스키마 변경
+- OAuth/서버 저장의 즉시 구현
 - PDF 내보내기
 - 실시간 그룹 협업
-- Three.js 기반 3D 우주 화면
+- Three.js/WebGL 기반 3D 화면

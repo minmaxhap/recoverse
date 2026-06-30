@@ -176,9 +176,9 @@ function saveLater() {
 <style scoped>
 .writePage {
   min-height: 100vh;
-  background: var(--color-page);
-  color: var(--color-text);
-  padding: 26px 26px 178px;
+  background: var(--surface-base);
+  color: var(--text-primary);
+  padding: 24px var(--space-page-x) 188px;
 }
 
 .writeHeader,
@@ -195,32 +195,31 @@ function saveLater() {
     "status status";
   align-items: end;
   column-gap: 16px;
-  row-gap: 10px;
+  row-gap: 12px;
 }
 
 .titleBlock {
   grid-area: title;
+  min-width: 0;
 }
 
 .leaveLink {
   grid-area: leave;
   align-self: start;
-  margin-top: 6px;
-  border: 0;
-  background: transparent;
-  color: var(--color-text-dim);
-  padding: 4px 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 253, 248, 0.72);
+  color: var(--text-secondary);
+  padding: 9px 13px;
   font-size: 13px;
   font-weight: var(--label-weight);
-  letter-spacing: 0.01em;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
+  letter-spacing: 0;
 }
 
 .leaveLink:hover,
 .leaveLink:focus-visible {
-  color: var(--color-text);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
 }
 
 .statusBlock {
@@ -231,13 +230,9 @@ function saveLater() {
   gap: 10px;
 }
 
-.titleBlock {
-  min-width: 0;
-}
-
 .eyebrow,
 .questionMeta {
-  color: var(--color-gold);
+  color: var(--accent-sage);
   font-size: 11px;
   font-weight: var(--eyebrow-weight);
   letter-spacing: var(--tracking-eyebrow);
@@ -245,48 +240,45 @@ function saveLater() {
 }
 
 .writeHeader h1 {
-  margin: 3px 0 0;
+  margin: 4px 0 0;
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: clamp(24px, 5vw, 34px);
   line-height: var(--leading-tight);
   font-weight: var(--display-weight);
-  letter-spacing: var(--tracking-display);
+  letter-spacing: 0;
 }
 
-.progressText {
-  color: var(--color-text-dim);
+.progressText,
+.saveStatus {
+  color: var(--text-secondary);
   font-size: 12px;
   font-weight: var(--label-weight);
-  letter-spacing: 0.02em;
+  line-height: var(--leading-tight);
 }
 
 .saveStatus {
-  margin: 0;
-  color: var(--color-star);
-  font-size: 12px;
-  font-weight: var(--label-weight);
-  line-height: var(--leading-tight);
+  color: var(--accent-sage);
   white-space: nowrap;
 }
 
 .saveStatus.error {
-  color: #ff8f8f;
+  color: var(--color-danger);
 }
 
 .progressTrack {
   width: min(840px, 100%);
-  height: 4px;
-  margin: 18px auto 34px;
+  height: 5px;
+  margin: 18px auto 32px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-parchment);
 }
 
 .progressTrack span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--color-gold);
+  background: var(--accent-sage);
 }
 
 .questionShell {
@@ -295,23 +287,24 @@ function saveLater() {
 }
 
 .questionCard {
-  border: 1px solid var(--color-soft-border);
-  border-radius: 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
   background:
-    linear-gradient(145deg, rgba(26, 33, 51, 0.96), rgba(17, 19, 34, 0.98)),
-    var(--color-surface);
-  color: var(--color-text);
-  padding: 26px;
+    linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(255, 253, 248, 0.88)),
+    var(--surface-paper);
+  color: var(--text-primary);
+  padding: clamp(22px, 4vw, 30px);
   display: grid;
   gap: 14px;
+  box-shadow: var(--shadow-paper);
 }
 
 .questionCard h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(24px, 5vw, 30px);
+  font-size: clamp(28px, 5.8vw, 40px);
   line-height: var(--leading-heading);
-  letter-spacing: var(--tracking-display);
+  letter-spacing: 0;
   font-weight: var(--display-weight);
   overflow-wrap: anywhere;
   word-break: keep-all;
@@ -319,41 +312,40 @@ function saveLater() {
 
 .questionCard p {
   margin: 0;
-  color: var(--color-text-dim);
-  line-height: 1.5;
+  color: var(--text-secondary);
+  line-height: 1.55;
   overflow-wrap: anywhere;
   word-break: keep-all;
 }
 
 .questionCard textarea {
   width: 100%;
-  min-height: 168px;
-  border: 1px solid rgba(184, 166, 232, 0.22);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.04);
-  color: inherit;
+  min-height: 220px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background:
+    linear-gradient(transparent 31px, rgba(202, 188, 168, 0.28) 32px),
+    rgba(251, 244, 236, 0.62);
+  background-size: 100% 32px;
+  color: var(--text-primary);
   resize: vertical;
-  padding: 16px 18px;
-  font-size: 18px;
-  line-height: 1.6;
+  padding: 18px 20px;
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 32px;
   outline: none;
   transition: border-color 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
   scroll-margin-bottom: 180px;
 }
 
 .questionCard textarea::placeholder {
-  color: rgba(232, 224, 208, 0.42);
-  font-style: italic;
+  color: rgba(117, 105, 95, 0.58);
 }
 
-.questionCard textarea:hover {
-  border-color: rgba(244, 197, 106, 0.32);
-}
-
+.questionCard textarea:hover,
 .questionCard textarea:focus {
-  border-color: var(--color-gold);
-  background: rgba(244, 197, 106, 0.07);
-  box-shadow: 0 0 0 3px rgba(244, 197, 106, 0.18);
+  border-color: var(--accent-sage);
+  box-shadow: 0 0 0 4px rgba(111, 127, 107, 0.12);
 }
 
 .writeActions {
@@ -367,9 +359,10 @@ function saveLater() {
   grid-template-columns: 1fr 1.35fr;
   gap: 10px;
   padding: 10px;
-  border: 1px solid var(--color-soft-border);
+  border: 1px solid var(--border-subtle);
   border-radius: 20px;
-  background: rgba(11, 15, 30, 0.94);
+  background: rgba(255, 253, 248, 0.92);
+  box-shadow: var(--shadow-lifted);
   backdrop-filter: blur(16px);
 }
 
@@ -377,36 +370,34 @@ function saveLater() {
 .secondary,
 .textButton {
   min-height: 44px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-weight: var(--heading-weight);
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   padding: 12px 15px;
 }
 
 .primary {
   border: 0;
-  background: var(--color-gold);
-  color: var(--color-primary-contrast);
+  background: var(--accent-sage);
+  color: var(--surface-paper);
 }
 
 .secondary {
-  border: 1px solid rgba(244, 197, 106, 0.42);
+  border: 1px solid var(--border-strong);
   background: transparent;
-  color: var(--color-gold);
-  transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+  color: var(--text-secondary);
 }
 
 .secondary:hover:not(:disabled),
 .secondary:focus-visible {
-  border-color: var(--color-gold);
-  background: rgba(244, 197, 106, 0.08);
-  color: var(--color-text);
+  border-color: var(--accent-sage);
+  color: var(--text-primary);
 }
 
 .textButton {
   border: 0;
   background: transparent;
-  color: var(--color-text-dim);
+  color: var(--text-secondary);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 4px;
@@ -414,7 +405,7 @@ function saveLater() {
 
 .textButton:hover,
 .textButton:focus-visible {
-  color: var(--color-text);
+  color: var(--text-primary);
 }
 
 .emptyState {
@@ -427,7 +418,7 @@ function saveLater() {
 
 .emptyState p {
   max-width: 360px;
-  color: var(--color-text-dim);
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -436,12 +427,20 @@ function saveLater() {
     padding: 16px 16px 196px;
   }
 
-  /* keep the header's 1fr|auto grid — title flows, leaveLink stays a
-     small right-aligned text link; status sits underneath. */
+  .writeHeader {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "title"
+      "leave"
+      "status";
+  }
+
+  .leaveLink {
+    justify-self: start;
+  }
 
   .writeActions {
     bottom: calc(82px + env(safe-area-inset-bottom));
-    /* primary takes more space than secondary, but keep them on one row */
     grid-template-columns: 0.85fr 1.4fr;
   }
 
@@ -462,7 +461,7 @@ function saveLater() {
   }
 
   .questionCard h2 {
-    font-size: 24px;
+    font-size: 27px;
   }
 }
 </style>

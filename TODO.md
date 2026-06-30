@@ -4,47 +4,45 @@
 
 ## 작업 규칙
 
-- 한 번에 하나의 단계만 진행한다.
-- 각 단계는 테스트 가능한 상태로 마감하고 커밋한다.
 - 코드 변경 전에 현재 UX 흐름과 데이터 경계를 먼저 확인한다.
 - 기존 `recoverse_reflections_v1` 백업과 가져오기 호환성을 깨지 않는다.
-- 결정이 필요한 제품 범위만 사용자에게 묻고, 구현 세부는 코드베이스 패턴에 맞춰 진행한다.
+- 디자인 구현은 [DESIGN.md](./DESIGN.md)와 [DESIGN_SYSTEM.ko.md](./DESIGN_SYSTEM.ko.md)의 토큰을 따른다.
+- 한 번에 하나의 화면군만 바꾸고 테스트 가능한 상태로 마감한다.
+- 구현 후 브라우저 시각 QA를 한다.
 
-## 현재 완료된 기반
+## 완료된 문서 기반
 
-- 회고 작성/감상/다시 보기/공유의 단일 흐름
-- 같은 유형·기간 중복 생성 방지와 이어쓰기 진입
-- URL 해시 기반 읽기 전용 공유
-- 회고 백업/가져오기 (`recoverse_reflections_v1`)
-- 언어(ko/en)와 테마(우주/편지방/지도) 전환
-- 모바일 키보드 대응, 접근성 focus ring, 샘플 회고 미리보기
-- Capsule/Galaxy/Observation 잔재 정리와 dead code 제거
+- [x] Recoverse Mobile Design Bible 작성
+- [x] 루트 `DESIGN.md` 추가
+- [x] 제품 계획을 Story Book x Time Capsule 방향으로 갱신
+- [x] 사용자 흐름을 12개 핵심 화면 기준으로 갱신
+- [x] 아키텍처 문서에 현재 Vue 모드와 목표 화면 매핑 추가
 
-## 다음 작업 후보
+## 다음 구현 작업
 
-별도 결정이 필요하므로 진행 전 우선순위를 확인한다.
+- [ ] `src/style.css`에 `book-capsule` 디자인 토큰 적용
+- [ ] `HomeUniverseView`를 Home 화면 디자인으로 교체
+- [ ] `NewReflectionPage`를 회고 시작 화면으로 단순화
+- [ ] `WriteReflectionPage`를 질문 작성/편지지 입력 디자인으로 교체
+- [ ] 작성 완료 전용 화면 또는 모드 추가
+- [ ] `ReviewAgainPage`를 회고 앨범 중심으로 재구성
+- [ ] 회고 상세를 편지형 레이아웃으로 정리
+- [ ] 연말 회고 화면 추가 또는 기존 데이터 기반 섹션 추가
+- [ ] 여행 회고 화면 추가 또는 기존 travel 타입 상세를 확장
+- [ ] 친구 비교 화면 추가
+- [ ] 설정 화면을 새 디자인으로 정리
+- [ ] 디자인 시스템 화면 추가
 
-- [x] 재설계 계획을 [REDESIGN_PLAN.ko.md](./REDESIGN_PLAN.ko.md)에 고정한다.
-- [x] 앱 내비게이션 모드/탭 판단을 순수 모듈로 분리한다.
-- [x] 히스토리와 공유 해시 처리를 순수 헬퍼로 분리한다.
-
-## 재설계 실행 (UX_REDESIGN_BRIEF.ko.md 기준)
-
-- [x] UX 재설계 브리프 문서 [UX_REDESIGN_BRIEF.ko.md](./UX_REDESIGN_BRIEF.ko.md) 작성
-- [x] 작성 진입 리라이트: 4단계 위자드 제거, 한 화면 입력 후 질문 카드 진입
-- [x] 홈 리라이트: 저널 메타포 제거, 밤하늘 오브젝트 필드 적용
-- [x] 작성 페이지 리라이트: 어두운 표면 통일, 액션 바 단순화
-- [x] 다시 보기 리라이트: 단순화, 시각 정체성 통일
-- [x] CSS 변수 전역 정리: 디자인 시스템 값과 일치
+## 보류 작업
 
 - [ ] 로그인 (Google / Kakao). 자세한 계약은 [ACCOUNT_STORAGE_PLAN.ko.md](./ACCOUNT_STORAGE_PLAN.ko.md).
 - [ ] 계정 기반 클라우드 저장과 멀티 디바이스 동기화
-- [ ] 서버 저장 기반 공유 링크 발행 (현재는 URL 해시만 지원)
+- [ ] 서버 저장 기반 공유 링크 발행
 - [ ] 접근 권한/비밀번호가 있는 공유 링크
 - [ ] PDF 내보내기
-- [ ] 실시간 그룹 협업 (`mode: with_friends`)
+- [ ] 실시간 그룹 협업
 - [ ] 이미지/첨부파일 업로드
-- [ ] Three.js 기반 3D 우주 화면
+- [ ] Three.js/WebGL 화면
 
 ## 기본 검증 명령
 
@@ -55,4 +53,13 @@ cd recoverse-frontend
 node tests\recoverseStore.test.mjs
 node node_modules\vue-tsc\bin\vue-tsc.js -b
 node node_modules\vite\bin\vite.js build
+```
+
+디자인 구현 후 추가로 확인한다.
+
+```text
+375px 모바일 / 768px 태블릿 / 1280px 데스크톱 스크린샷
+텍스트 overflow 없음
+phone frame clipping 없음
+주요 버튼 focus/active 상태 확인
 ```

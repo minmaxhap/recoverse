@@ -5,8 +5,8 @@
       @menu-action="onTopMenuAction"
     />
     <main class="main">
-      <HomeUniverseView
-        v-if="mode === 'home-universe'"
+      <HomeBookView
+        v-if="mode === 'home-book'"
         brand-label="Recoverse"
         title="내 회고 홈"
         :reflections="reflections"
@@ -20,7 +20,7 @@
       <NewReflectionPage
         v-else-if="mode === 'reflection-new'"
         :reflections="reflections"
-        @back-home="setMode('home-universe')"
+        @back-home="setMode('home-book')"
         @create="startReflectionDraft"
         @open-existing="continueReflection"
       />
@@ -29,7 +29,7 @@
         v-else-if="mode === 'reflection-write'"
         :reflection="activeReflection"
         @save-answer="saveActiveReflectionAnswer"
-        @save-later="setMode('home-universe')"
+        @save-later="setMode('home-book')"
         @back-new="setMode('reflection-new')"
         @finish="setMode('reflection-detail')"
       />
@@ -37,7 +37,7 @@
       <ReflectionDetailPage
         v-else-if="mode === 'reflection-detail'"
         :reflection="activeReflection"
-        @back-home="setMode('home-universe')"
+        @back-home="setMode('home-book')"
         @edit="setMode('reflection-write')"
         @review-again="openReviewAgain"
         @share="shareActiveReflection"
@@ -46,7 +46,7 @@
       <ReviewAgainPage
         v-else-if="mode === 'review-again'"
         :reflections="reflections"
-        @back-home="setMode('home-universe')"
+        @back-home="setMode('home-book')"
         @open-reflection="openReflectionDetail"
       />
 
@@ -54,7 +54,7 @@
         v-else-if="mode === 'shared-reflections'"
         :reflection="activeReflection"
         :snapshot="sharedReflectionSnapshot"
-        @back-home="setMode('home-universe')"
+        @back-home="setMode('home-book')"
         @answer-same="openNewReflection"
       />
 
@@ -92,7 +92,7 @@ import AppTopNav from "./components/AppTopNav.vue";
 import type { TopMenuAction } from "./components/AppTopNav.vue";
 import type { RecoverseTheme, SettingsSection } from "./components/ArchiveSettingsTools.vue";
 import ArchiveSettingsView from "./views/ArchiveSettingsView.vue";
-import HomeUniverseView from "./views/HomeUniverseView.vue";
+import HomeBookView from "./views/HomeBookView.vue";
 import NewReflectionPage from "./views/NewReflectionPage.vue";
 import ReflectionDetailPage from "./views/ReflectionDetailPage.vue";
 import ReviewAgainPage from "./views/ReviewAgainPage.vue";
@@ -159,7 +159,7 @@ const themeOptions: Array<{
   label: string;
   description: string;
 }> = [
-  { id: "universe", label: "우주", description: "기본 기억 공간" },
+  { id: "book", label: "책장", description: "책과 타임캡슐" },
   { id: "letter", label: "편지방", description: "낡은 편지와 잉크" },
   { id: "journey", label: "지도", description: "여행 지도와 항해 일지" },
 ];
@@ -169,7 +169,7 @@ const activeReflectionId = ref<string | null>(reflections.value[0]?.id ?? null);
 const sharedReflectionSnapshot = ref<SharedReflectionSnapshot | null>(null);
 const telemetry = ref<TelemetryState>(loadTelemetry());
 
-const mode = ref<AppMode>("home-universe");
+const mode = ref<AppMode>("home-book");
 const modeBackStack = ref<AppMode[]>([]);
 const isHandlingBrowserBack = ref(false);
 
@@ -213,17 +213,6 @@ function openSettingsSection(section: SettingsSection) {
 }
 
 function onTopMenuAction(action: TopMenuAction) {
-  if (action === "backup") {
-    if (!confirmLeavingWriteMode()) return;
-    if (reflections.value.length > 0) {
-      onExportReflections();
-      return;
-    }
-    alert("백업할 회고가 아직 없어요.");
-    openSettingsSection("backup");
-    return;
-  }
-
   openSettingsSection(action);
 }
 
@@ -241,7 +230,7 @@ function onHashChange() {
   if (openSharedSnapshotFromHash()) return;
   if (sharedReflectionSnapshot.value) {
     sharedReflectionSnapshot.value = null;
-    setMode("home-universe");
+    setMode("home-book");
   }
 }
 
@@ -282,7 +271,7 @@ function navigateBottomTab(tabId: BottomTabId) {
   if (!confirmLeavingWriteMode()) return;
 
   if (tabId === "home") {
-    setMode("home-universe");
+    setMode("home-book");
     return;
   }
   if (tabId === "write") {
@@ -301,7 +290,7 @@ function onBrowserBack() {
     return;
   }
 
-  const previousMode = popFallbackMode(modeBackStack.value, "home-universe");
+  const previousMode = popFallbackMode(modeBackStack.value, "home-book");
   isHandlingBrowserBack.value = true;
   setMode(previousMode, { recordHistory: false });
   isHandlingBrowserBack.value = false;
@@ -437,13 +426,14 @@ async function onImportReflectionFile(e: Event) {
     alert(
       `회고 가져오기 완료: 추가 ${result.added}개, 업데이트 ${result.updated}개, 유지 ${result.skipped}개`
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const importErrorMessage = err instanceof Error ? err.message : "";
     const reason =
-      err?.message === "RECOVERSE_REFLECTION_IMPORT_INVALID_JSON"
+      importErrorMessage === "RECOVERSE_REFLECTION_IMPORT_INVALID_JSON"
         ? "JSON 파일을 읽을 수 없어요."
-        : err?.message === "RECOVERSE_REFLECTION_IMPORT_UNSUPPORTED_VERSION"
-          ? `${REFLECTION_BACKUP_SCHEMA} 백업 파일이 아니에요.`
-          : err?.message ?? "알 수 없는 오류";
+        : importErrorMessage === "RECOVERSE_REFLECTION_IMPORT_UNSUPPORTED_VERSION"
+          ? REFLECTION_BACKUP_SCHEMA + " 백업 파일이 아니에요."
+          : importErrorMessage || "알 수 없는 오류";
     alert(`회고 가져오기 실패: ${reason}`);
   } finally {
     input.value = "";
@@ -478,31 +468,31 @@ onBeforeUnmount(() => {
   min-height: 100vh;
   background: var(--color-page);
   color: var(--color-ink);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: var(--font-body);
 }
 
 .app[data-theme="letter"] {
-  --color-page: #17120f;
-  --color-bg: #17120f;
-  --color-surface: #251d18;
-  --color-surface-2: #30241e;
-  --color-text: #f1dfc4;
-  --color-ink: #f1dfc4;
-  --color-gold: #d7a35f;
-  --color-primary: #d7a35f;
-  --color-border-gold: rgba(215, 163, 95, 0.28);
+  --surface-base: #FBF1E8;
+  --surface-paper: #FFFDF8;
+  --surface-parchment: #EEDDCB;
+  --surface-sage: #DCE4D4;
+  --text-primary: #332720;
+  --text-secondary: #7A675A;
+  --accent-espresso: #3A2D26;
+  --accent-sage: #728069;
+  --accent-wax: #9A5540;
 }
 
 .app[data-theme="journey"] {
-  --color-page: #111915;
-  --color-bg: #111915;
-  --color-surface: #1a2720;
-  --color-surface-2: #22342b;
-  --color-text: #e8dfca;
-  --color-ink: #e8dfca;
-  --color-gold: #c7a96a;
-  --color-primary: #c7a96a;
-  --color-border-gold: rgba(199, 169, 106, 0.28);
+  --surface-base: #F8F2E7;
+  --surface-paper: #FFFDF8;
+  --surface-parchment: #E8DDC8;
+  --surface-sage: #D8E3DA;
+  --text-primary: #2E2A22;
+  --text-secondary: #706B5E;
+  --accent-espresso: #342E25;
+  --accent-sage: #687C68;
+  --accent-wax: #8C6044;
 }
 
 .main {

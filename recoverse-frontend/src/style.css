@@ -1,66 +1,74 @@
 @import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 
 :root {
-  /* slightly warmer midnight than #08070F — keeps the dark feel but
-     stops reading as cold SaaS navy. surfaces stay cool-ish so the
-     amber gold reads against them. */
-  --color-page: #0C0A14;
-  --color-bg: #14152A;
-  --color-surface: #1B2036;
-  --color-surface-2: #1A2540;
-  --color-paper: rgba(255,255,255,0.06);
-  --color-ink: #E8E0D0;
-  --color-text: #E8E0D0;
-  --color-muted: #8A8A9A;
-  --color-text-dim: #8A8A9A;
-  --color-border: rgba(255,255,255,0.08);
-  --color-soft-border: rgba(255,255,255,0.05);
-  --color-border-gold: rgba(244,197,106,0.2);
-  --color-primary: #F4C56A;
-  --color-gold: #F4C56A;
-  --color-gold-dim: #9A7A3A;
-  --color-primary-contrast: #1A1000;
-  --color-danger: #e05555;
-  --color-planet-1: #F2A27E;
-  --color-planet-2: #7BAFD4;
-  --color-planet-3: #A47BC4;
-  --color-accent: #6E5A9A;
-  --color-star: #B8A6E8;
-  --color-chip: rgba(244,197,106,0.12);
+  --surface-base: #FBF4EC;
+  --surface-paper: #FFFDF8;
+  --surface-parchment: #EFE6D6;
+  --surface-sage: #DDE5D8;
+  --surface-blue: #D9E4E6;
+  --surface-blush: #EAD7CF;
+  --surface-ink-wash: rgba(58, 49, 43, 0.05);
+  --text-primary: #2F261F;
+  --text-secondary: #75695F;
+  --text-tertiary: #A99A8B;
+  --border-subtle: #E5D9C8;
+  --border-strong: #CABCA8;
+  --accent-espresso: #3A312B;
+  --accent-sage: #6F7F6B;
+  --accent-wax: #8E4E38;
+  --accent-sky: #7598A1;
+  --shadow-paper: 0 18px 44px rgba(58, 49, 43, 0.10);
+  --shadow-lifted: 0 24px 70px rgba(58, 49, 43, 0.14);
+  --radius-card: 8px;
+  --radius-panel: 18px;
+  --radius-pill: 999px;
+  --space-page-x: clamp(16px, 4vw, 28px);
+  --space-section: clamp(18px, 4vw, 32px);
+
+  --color-page: var(--surface-base);
+  --color-bg: var(--surface-base);
+  --color-surface: var(--surface-paper);
+  --color-surface-2: var(--surface-parchment);
+  --color-paper: var(--surface-paper);
+  --color-ink: var(--text-primary);
+  --color-text: var(--text-primary);
+  --color-muted: var(--text-secondary);
+  --color-text-dim: var(--text-secondary);
+  --color-border: var(--border-subtle);
+  --color-soft-border: var(--border-subtle);
+  --color-border-gold: rgba(111, 127, 107, 0.38);
+  --color-primary: var(--accent-espresso);
+  --color-gold: var(--accent-sage);
+  --color-gold-dim: var(--text-tertiary);
+  --color-primary-contrast: #FFFDF8;
+  --color-danger: #A34E3E;
+  --color-star: var(--accent-sage);
+  --color-chip: rgba(111, 127, 107, 0.12);
 
   --font-body:
     "Pretendard Variable", Pretendard,
     -apple-system, BlinkMacSystemFont, system-ui, Roboto,
     "Helvetica Neue", "Segoe UI",
     "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic",
-    "Apple Color Emoji", "Segoe UI Emoji",
     sans-serif;
-  /* OS 내장 serif 우선 — iOS의 Apple SD Gothic Neo + Iowan Old Style은
-     한글/영문 모두 클래식한 비례를 유지하고, 추가 다운로드가 없다. */
   --font-display:
-    "Iowan Old Style", "Apple SD Gothic Neo",
-    "Source Han Serif K", "Source Han Serif KR",
-    "Noto Serif CJK KR", "Nanum Myeongjo",
-    "Georgia", "Times New Roman",
-    serif;
+    "Noto Serif CJK KR", "Noto Serif KR", "Nanum Myeongjo",
+    "Iowan Old Style", Georgia, "Times New Roman", serif;
 
-  /* Type scale — 위계는 weight/leading으로, size는 clamp 으로 흐름 잡음 */
-  --display-weight: 500;        /* serif는 light~regular 가 가장 단정함 */
-  --heading-weight: 700;        /* body sans 위계 1 */
-  --label-weight: 600;          /* UI 라벨 / 버튼 */
-  --eyebrow-weight: 700;
-
-  --leading-display: 1.12;
-  --leading-heading: 1.28;
-  --leading-body: 1.6;
-  --leading-tight: 1.32;
-
-  --tracking-display: -0.01em;
-  --tracking-eyebrow: 0.06em;
+  --display-weight: 500;
+  --heading-weight: 700;
+  --label-weight: 650;
+  --eyebrow-weight: 750;
+  --leading-display: 1.15;
+  --leading-heading: 1.3;
+  --leading-body: 1.64;
+  --leading-tight: 1.36;
+  --tracking-display: 0;
+  --tracking-eyebrow: 0.08em;
 
   font-family: var(--font-body);
-  color: var(--color-ink);
-  background: var(--color-page);
+  color: var(--text-primary);
+  background: var(--surface-base);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -71,11 +79,19 @@
   box-sizing: border-box;
 }
 
+html {
+  background: var(--surface-base);
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: var(--color-page);
+  background:
+    linear-gradient(90deg, rgba(58, 49, 43, 0.025) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(58, 49, 43, 0.02) 1px, transparent 1px),
+    var(--surface-base);
+  background-size: 42px 42px;
   scroll-padding-bottom: 96px;
 }
 
@@ -107,11 +123,60 @@ textarea:focus-visible,
 select:focus-visible,
 a:focus-visible,
 [tabindex]:focus-visible {
-  outline: 3px solid var(--color-gold) !important;
+  outline: 3px solid rgba(111, 127, 107, 0.42) !important;
   outline-offset: 3px !important;
-  box-shadow: 0 0 0 6px rgba(244, 197, 106, 0.18) !important;
+  box-shadow: 0 0 0 6px rgba(111, 127, 107, 0.12) !important;
 }
 
 #app {
   min-height: 100vh;
+}
+
+.bookCapsulePage {
+  min-height: calc(100dvh - 54px);
+  color: var(--text-primary);
+  background: transparent;
+}
+
+.paperPanel {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-paper);
+  box-shadow: var(--shadow-paper);
+}
+
+.primaryButton,
+.paperButton {
+  min-height: 48px;
+  border-radius: var(--radius-pill);
+  padding: 13px 18px;
+  font-weight: var(--heading-weight);
+  letter-spacing: 0;
+}
+
+.primaryButton {
+  border: 0;
+  background: var(--accent-espresso);
+  color: var(--surface-paper);
+}
+
+.paperButton {
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 253, 248, 0.72);
+  color: var(--text-primary);
+}
+
+.screenEyebrow {
+  color: var(--accent-sage);
+  font-size: 11px;
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.serifTitle {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  line-height: var(--leading-display);
+  letter-spacing: 0;
 }
