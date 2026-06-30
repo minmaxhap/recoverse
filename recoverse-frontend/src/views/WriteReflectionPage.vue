@@ -1,18 +1,18 @@
 <template>
   <section v-if="reflection" class="writePage">
     <header class="writeHeader">
-      <button class="textButton" type="button" @click="saveLater">
-        나중에 이어쓰기
-      </button>
       <div class="titleBlock">
         <span class="eyebrow">{{ currentGroup?.label ?? "기억 작성" }}</span>
         <h1>{{ reflection.title }}</h1>
       </div>
+      <button class="leaveLink" type="button" @click="saveLater">
+        저장하고 나가기
+      </button>
       <div class="statusBlock">
-        <div class="progressText">{{ currentStep }} / {{ questions.length }}</div>
-        <p class="saveStatus" :class="{ error: draftSaveStatus === 'error' }">
+        <span class="progressText">{{ currentStep }} / {{ questions.length }}</span>
+        <span class="saveStatus" :class="{ error: draftSaveStatus === 'error' }">
           {{ draftSaveLabel }}
-        </p>
+        </span>
       </div>
     </header>
 
@@ -189,9 +189,46 @@ function saveLater() {
 
 .writeHeader {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "title  leave"
+    "status status";
+  align-items: end;
+  column-gap: 16px;
+  row-gap: 10px;
+}
+
+.titleBlock {
+  grid-area: title;
+}
+
+.leaveLink {
+  grid-area: leave;
+  align-self: start;
+  margin-top: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-dim);
+  padding: 4px 0;
+  font-size: 13px;
+  font-weight: var(--label-weight);
+  letter-spacing: 0.01em;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.leaveLink:hover,
+.leaveLink:focus-visible {
+  color: var(--color-text);
+}
+
+.statusBlock {
+  grid-area: status;
+  display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .titleBlock {
@@ -216,14 +253,9 @@ function saveLater() {
   letter-spacing: var(--tracking-display);
 }
 
-.statusBlock {
-  display: grid;
-  gap: 4px;
-  justify-items: end;
-}
-
 .progressText {
   color: var(--color-text-dim);
+  font-size: 12px;
   font-weight: var(--label-weight);
   letter-spacing: 0.02em;
 }
@@ -401,21 +433,16 @@ function saveLater() {
 
 @media (max-width: 720px) {
   .writePage {
-    padding: 16px 16px 212px;
+    padding: 16px 16px 196px;
   }
 
-  .writeHeader {
-    grid-template-columns: 1fr;
-    align-items: stretch;
-  }
-
-  .statusBlock {
-    justify-items: start;
-  }
+  /* keep the header's 1fr|auto grid — title flows, leaveLink stays a
+     small right-aligned text link; status sits underneath. */
 
   .writeActions {
     bottom: calc(82px + env(safe-area-inset-bottom));
-    grid-template-columns: 1fr;
+    /* primary takes more space than secondary, but keep them on one row */
+    grid-template-columns: 0.85fr 1.4fr;
   }
 
   .writePage:focus-within {
