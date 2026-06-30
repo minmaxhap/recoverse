@@ -7,6 +7,7 @@
             v-for="star in stars"
             :key="star.id"
             class="star"
+            :class="[`tier-${star.tier}`, star.tint ? `tint-${star.tint}` : null]"
             :style="star.style"
           ></span>
         </div>
@@ -119,33 +120,73 @@ const emit = defineEmits<{
 
 const selectedReflectionId = ref<string | null>(null);
 
-const starPositions = [
-  { x: 8, y: 14, size: 2 },
-  { x: 15, y: 32, size: 1 },
-  { x: 22, y: 18, size: 2 },
-  { x: 29, y: 76, size: 1 },
-  { x: 36, y: 40, size: 2 },
-  { x: 43, y: 12, size: 1 },
-  { x: 48, y: 68, size: 2 },
-  { x: 55, y: 30, size: 1 },
-  { x: 61, y: 84, size: 2 },
-  { x: 67, y: 18, size: 1 },
-  { x: 73, y: 56, size: 2 },
-  { x: 79, y: 24, size: 1 },
-  { x: 86, y: 72, size: 2 },
-  { x: 92, y: 38, size: 1 },
-  { x: 11, y: 88, size: 2 },
-  { x: 95, y: 12, size: 1 },
-  { x: 5, y: 56, size: 1 },
+type StarTier = "dust" | "soft" | "bright";
+
+interface StarSpec {
+  x: number; // % from left
+  y: number; // % from top
+  tier: StarTier;
+  tint?: "warm" | "cool"; // optional color tint
+}
+
+// Hand-placed so empty regions feel intentional rather than tiled.
+// "bright" stars anchor the eye; "soft" and "dust" fill ambient depth.
+const starSpecs: StarSpec[] = [
+  // bright anchors — sparse, 4 across the canvas
+  { x: 18, y: 22, tier: "bright", tint: "cool" },
+  { x: 72, y: 18, tier: "bright" },
+  { x: 36, y: 78, tier: "bright", tint: "warm" },
+  { x: 88, y: 64, tier: "bright" },
+
+  // soft middle layer
+  { x: 8, y: 38, tier: "soft" },
+  { x: 28, y: 52, tier: "soft", tint: "cool" },
+  { x: 44, y: 14, tier: "soft" },
+  { x: 56, y: 44, tier: "soft" },
+  { x: 64, y: 68, tier: "soft", tint: "warm" },
+  { x: 80, y: 32, tier: "soft" },
+  { x: 14, y: 70, tier: "soft" },
+  { x: 50, y: 86, tier: "soft", tint: "cool" },
+  { x: 92, y: 12, tier: "soft" },
+
+  // dust — many, tiny, low contrast
+  { x: 5, y: 14, tier: "dust" },
+  { x: 12, y: 28, tier: "dust" },
+  { x: 21, y: 8, tier: "dust" },
+  { x: 24, y: 64, tier: "dust" },
+  { x: 33, y: 32, tier: "dust" },
+  { x: 41, y: 60, tier: "dust" },
+  { x: 47, y: 28, tier: "dust" },
+  { x: 53, y: 12, tier: "dust" },
+  { x: 60, y: 26, tier: "dust" },
+  { x: 67, y: 50, tier: "dust" },
+  { x: 71, y: 8, tier: "dust" },
+  { x: 76, y: 78, tier: "dust" },
+  { x: 84, y: 22, tier: "dust" },
+  { x: 90, y: 48, tier: "dust" },
+  { x: 94, y: 84, tier: "dust" },
+  { x: 16, y: 88, tier: "dust" },
+  { x: 30, y: 18, tier: "dust" },
+  { x: 58, y: 76, tier: "dust" },
+  { x: 78, y: 56, tier: "dust" },
+  { x: 4, y: 78, tier: "dust" },
 ];
 
-const stars = Array.from({ length: 34 }, (_, index) => ({
+// Stable, varied per-star delay so the field doesn't pulse in sync.
+function pseudoRandom(seed: number): number {
+  const x = Math.sin(seed * 99713.61) * 41863.17;
+  return x - Math.floor(x);
+}
+
+const stars = starSpecs.map((spec, index) => ({
   id: `star-${index}`,
+  tier: spec.tier,
+  tint: spec.tint ?? null,
   style: {
-    "--x": `${starPositions[index % starPositions.length].x}%`,
-    "--y": `${starPositions[index % starPositions.length].y}%`,
-    "--size": `${starPositions[index % starPositions.length].size}px`,
-    "--delay": `${(index % 8) * -0.65}s`,
+    "--x": `${spec.x}%`,
+    "--y": `${spec.y}%`,
+    "--delay": `${(pseudoRandom(index + 1) * -6).toFixed(2)}s`,
+    "--duration": `${(4.6 + pseudoRandom(index + 11) * 4).toFixed(2)}s`,
   },
 }));
 
@@ -308,14 +349,93 @@ const nodePositions = [
   position: absolute;
   left: var(--x);
   top: var(--y);
-  width: var(--size);
-  height: var(--size);
   border-radius: 999px;
   background: var(--color-star);
-  opacity: 0.68;
-  animation: starPulse 5.2s ease-in-out infinite;
+  transform: translate(-50%, -50%);
+  animation: starPulse var(--duration, 6s) ease-in-out infinite;
   animation-delay: var(--delay);
-  box-shadow: 0 0 12px rgba(184, 166, 232, 0.32);
+  will-change: opacity, transform;
+}
+
+.star.tier-dust {
+  --pulse-min: 0.18;
+  --pulse-max: 0.45;
+  width: 1.5px;
+  height: 1.5px;
+  box-shadow: 0 0 3px rgba(232, 224, 208, 0.35);
+  background: rgba(232, 224, 208, 0.85);
+}
+
+.star.tier-soft {
+  --pulse-min: 0.42;
+  --pulse-max: 0.78;
+  width: 2.4px;
+  height: 2.4px;
+  box-shadow:
+    0 0 4px rgba(184, 166, 232, 0.45),
+    0 0 10px rgba(184, 166, 232, 0.22);
+}
+
+.star.tier-bright {
+  --pulse-min: 0.72;
+  --pulse-max: 1;
+  width: 3.2px;
+  height: 3.2px;
+  background: #ffffff;
+  box-shadow:
+    0 0 4px rgba(255, 255, 255, 0.95),
+    0 0 14px rgba(184, 166, 232, 0.55),
+    0 0 22px rgba(244, 197, 106, 0.18);
+}
+
+/* 4-point cross ray on bright anchors */
+.star.tier-bright::before,
+.star.tier-bright::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  transform: translate(-50%, -50%);
+  filter: blur(0.5px);
+}
+
+.star.tier-bright::before {
+  width: 22px;
+  height: 1px;
+}
+
+.star.tier-bright::after {
+  width: 1px;
+  height: 22px;
+}
+
+.star.tint-warm {
+  background: #f7d9a0;
+  box-shadow:
+    0 0 4px rgba(247, 217, 160, 0.6),
+    0 0 14px rgba(244, 197, 106, 0.35);
+}
+
+.star.tint-cool {
+  background: #cbd5ff;
+  box-shadow:
+    0 0 4px rgba(203, 213, 255, 0.55),
+    0 0 14px rgba(123, 175, 212, 0.35);
+}
+
+.star.tier-bright.tint-warm {
+  box-shadow:
+    0 0 5px rgba(247, 217, 160, 0.95),
+    0 0 18px rgba(244, 197, 106, 0.55),
+    0 0 26px rgba(244, 197, 106, 0.22);
+}
+
+.star.tier-bright.tint-cool {
+  box-shadow:
+    0 0 5px rgba(203, 213, 255, 0.95),
+    0 0 18px rgba(123, 175, 212, 0.55),
+    0 0 26px rgba(123, 175, 212, 0.22);
 }
 
 .emptyState,
@@ -635,11 +755,13 @@ h1 {
 @keyframes starPulse {
   0%,
   100% {
-    opacity: 0.38;
+    opacity: var(--pulse-min, 0.38);
+    transform: translate(-50%, -50%) scale(0.96);
   }
 
   50% {
-    opacity: 0.86;
+    opacity: var(--pulse-max, 0.86);
+    transform: translate(-50%, -50%) scale(1.04);
   }
 }
 
@@ -680,7 +802,15 @@ h1 {
   }
 
   h1 {
-    font-size: clamp(34px, 11vw, 48px);
+    font-size: clamp(30px, 9vw, 44px);
+  }
+
+  .star.tier-bright::before {
+    width: 16px;
+  }
+
+  .star.tier-bright::after {
+    height: 16px;
   }
 
   .clusterField {
