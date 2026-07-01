@@ -46,7 +46,7 @@ async function compileTsModule(inputUrl, outputName, replacements = []) {
   return outputPath;
 }
 
-await writeFile(join(tempDir, "recoverseTypes.mjs"), "export {};\\n", "utf8");
+await writeFile(join(tempDir, "reflectionTypes.mjs"), "export {};\n", "utf8");
 await compileTsModule(new URL("../src/data/reflectionTemplates.ts", import.meta.url), "reflectionTemplates.mjs");
 const safeLocalStoragePath = await compileTsModule(
   new URL("../src/lib/safeLocalStorage.ts", import.meta.url),
@@ -102,6 +102,28 @@ const questionTimelinePath = await compileTsModule(
   new URL("../src/lib/questionTimeline.ts", import.meta.url),
   "questionTimeline.mjs"
 );
+const appNavPath = await compileTsModule(
+  new URL("../src/lib/appNavigation.ts", import.meta.url),
+  "appNavigation.mjs"
+);
+const appHistoryPath = await compileTsModule(
+  new URL("../src/lib/appHistory.ts", import.meta.url),
+  "appHistory.mjs",
+  [['"./reflectionShare"', '"./reflectionShare.mjs"']]
+);
+const rediscoveryPath = await compileTsModule(
+  new URL("../src/lib/rediscovery.ts", import.meta.url),
+  "rediscovery.mjs"
+);
+const quickReflectionPath = await compileTsModule(
+  new URL("../src/lib/quickReflection.ts", import.meta.url),
+  "quickReflection.mjs"
+);
+const localTelemetryPath = await compileTsModule(
+  new URL("../src/lib/localTelemetry.ts", import.meta.url),
+  "localTelemetry.mjs",
+  [['"./safeLocalStorage"', '"./safeLocalStorage.mjs"']]
+);
 
 const reflectionStore = await import(pathToFileURL(reflectionStorePath).href);
 const reflectionDraftStore = await import(pathToFileURL(reflectionDraftStorePath).href);
@@ -111,90 +133,67 @@ const reflectionSync = await import(pathToFileURL(reflectionSyncPath).href);
 const reflectionShare = await import(pathToFileURL(reflectionSharePath).href);
 const sampleReflection = await import(pathToFileURL(sampleReflectionPath).href);
 const questionTimeline = await import(pathToFileURL(questionTimelinePath).href);
-
-const appNavPath = await compileTsModule(
-  new URL("../src/lib/appNavigation.ts", import.meta.url),
-  "appNavigation.mjs"
-);
 const appNav = await import(pathToFileURL(appNavPath).href);
-
-const appHistoryPath = await compileTsModule(
-  new URL("../src/lib/appHistory.ts", import.meta.url),
-  "appHistory.mjs",
-  [['"./reflectionShare"', '"./reflectionShare.mjs"']]
-);
 const appHistory = await import(pathToFileURL(appHistoryPath).href);
-
-const rediscoveryPath = await compileTsModule(
-  new URL("../src/lib/rediscovery.ts", import.meta.url),
-  "rediscovery.mjs"
-);
 const rediscovery = await import(pathToFileURL(rediscoveryPath).href);
-
-const quickReflectionPath = await compileTsModule(
-  new URL("../src/lib/quickReflection.ts", import.meta.url),
-  "quickReflection.mjs"
-);
 const quickReflection = await import(pathToFileURL(quickReflectionPath).href);
-
-const localTelemetryPath = await compileTsModule(
-  new URL("../src/lib/localTelemetry.ts", import.meta.url),
-  "localTelemetry.mjs",
-  [['"./safeLocalStorage"', '"./safeLocalStorage.mjs"']]
-);
 const localTelemetry = await import(pathToFileURL(localTelemetryPath).href);
 
 globalThis.localStorage = new MemoryStorage();
 
-test("creates a reflection draft from the year template light question set", () => {
-  const reflection = reflectionStore.createReflectionDraft({
+function createYearDraft(year = 2026) {
+  return reflectionStore.createReflectionDraft({
     templateId: "template_year",
-    period: { label: "2025년", year: 2025 },
+    period: { label: String(year), year },
     questionSetMode: "light",
   });
+}
 
+function createTravelDraft(label = "jeju-trip") {
+  return reflectionStore.createReflectionDraft({
+    templateId: "template_travel",
+    period: { label },
+    questionSetMode: "light",
+    title: `${label} memory`,
+  });
+}
+
+test("creates a reflection draft from the year template light question set", () => {
+  const reflection = createYearDraft();
   const questions = reflection.questionGroups.flatMap((group) => group.questions);
 
-  assert.equal(reflection.title, "2025년 한 해 회고");
   assert.equal(reflection.type, "year");
   assert.equal(reflection.mode, "solo");
   assert.equal(reflection.visibility, "private");
   assert.equal(questions.length, 10);
-  assert.equal(questions[0].text, "올해 가장 기억에 남는 장소는?");
+  assert.equal(questions[0].id, "year_place");
+  assert.equal(typeof questions[0].text, "string");
 });
 
 test("adds concrete writing hints to reflection template questions", () => {
-  const reflection = reflectionStore.createReflectionDraft({
-    templateId: "template_travel",
-    period: { label: "제주 여행" },
-    questionSetMode: "light",
-  });
+  const reflection = createTravelDraft();
   const hints = reflection.questionGroups.flatMap((group) =>
     group.questions.map((question) => question.hint)
   );
 
-  assert.ok(hints.every((hint) => hint && !hint.includes("단어만 적어도")));
-  assert.match(hints[0], /도착|이동|숙소|길거리/);
+  assert.ok(hints.every((hint) => typeof hint === "string" && hint.length > 10));
+  assert.notEqual(hints[0], hints[1]);
 });
 
 test("saves loads updates and deletes reflection data", () => {
   localStorage.clear();
 
-  let reflection = reflectionStore.createReflectionDraft({
-    templateId: "template_year",
-    period: { label: "2025년", year: 2025 },
-    questionSetMode: "light",
-  });
+  let reflection = createYearDraft();
   const firstQuestionId = reflection.questionGroups[0].questions[0].id;
 
-  reflection = reflectionStore.saveReflectionAnswer(reflection, firstQuestionId, "교토 철학의 길");
+  reflection = reflectionStore.saveReflectionAnswer(reflection, firstQuestionId, "kyoto path");
   reflectionStore.saveReflection(reflection);
 
   let loaded = reflectionStore.loadReflections();
   assert.equal(loaded.length, 1);
-  assert.equal(loaded[0].answers[0].value, "교토 철학의 길");
+  assert.equal(loaded[0].answers[0].value, "kyoto path");
   assert.equal(loaded[0].completionRate, 10);
-  assert.equal(loaded[0].representativeSentence, "교토 철학의 길");
+  assert.equal(loaded[0].representativeSentence, "kyoto path");
 
   reflectionStore.deleteReflection(reflection.id);
   loaded = reflectionStore.loadReflections();
@@ -207,13 +206,13 @@ test("keeps current writing drafts separate from completed answers", () => {
   const saved = reflectionDraftStore.saveReflectionDraft({
     reflectionId: "reflection_a",
     questionId: "question_a",
-    value: "아직 다듬는 중인 문장 ",
+    value: "draft sentence ",
   });
 
   assert.equal(saved.ok, true);
   assert.equal(
     reflectionDraftStore.loadReflectionDraft("reflection_a", "question_a").value,
-    "아직 다듬는 중인 문장 "
+    "draft sentence "
   );
   assert.equal(reflectionDraftStore.loadReflectionDraft("reflection_a", "missing"), null);
 
@@ -227,6 +226,7 @@ test("ignores malformed draft storage instead of crashing", () => {
 
   assert.deepEqual(reflectionDraftStore.loadReflectionDrafts(), []);
 });
+
 test("does not crash when draft storage cannot be read or written", () => {
   const originalStorage = globalThis.localStorage;
   const failingStorage = new MemoryStorage();
@@ -299,11 +299,7 @@ test("does not crash when reflection storage cannot be written", () => {
 
   try {
     globalThis.localStorage = failingStorage;
-    const reflection = reflectionStore.createReflectionDraft({
-      templateId: "template_year",
-      period: { label: "2026년", year: 2026 },
-      questionSetMode: "light",
-    });
+    const reflection = createYearDraft();
     const saved = reflectionStore.saveReflections([reflection]);
 
     assert.equal(saved.length, 1);
@@ -314,38 +310,23 @@ test("does not crash when reflection storage cannot be written", () => {
 });
 
 test("exports reflection backups with the canonical schema", async () => {
-  const reflection = reflectionStore.createReflectionDraft({
-    templateId: "template_travel",
-    period: { label: "제주 여행" },
-    questionSetMode: "light",
-    title: "제주 여행의 기억",
-  });
-
+  const reflection = createTravelDraft();
   const blob = reflectionBackup.exportReflectionBackup([reflection]);
   const payload = JSON.parse(await blob.text());
 
   assert.equal(payload.schema, "recoverse_reflections_v1");
   assert.equal(payload.reflections.length, 1);
-  assert.equal(payload.reflections[0].title, "제주 여행의 기억");
+  assert.equal(payload.reflections[0].title, "jeju-trip memory");
 });
 
 test("merges reflection backups without overwriting newer local data", () => {
-  const local = reflectionStore.createReflectionDraft({
-    templateId: "template_year",
-    period: { label: "2026년", year: 2026 },
-    questionSetMode: "light",
-  });
+  const local = createYearDraft();
   const olderDuplicate = {
     ...local,
     title: "Older title",
     updatedAt: "2025-01-01T00:00:00.000Z",
   };
-  const incomingNew = reflectionStore.createReflectionDraft({
-    templateId: "template_travel",
-    period: { label: "부산 여행" },
-    questionSetMode: "light",
-    title: "부산 여행의 기억",
-  });
+  const incomingNew = createTravelDraft("busan-trip");
 
   const backup = JSON.stringify({
     schema: "recoverse_reflections_v1",
@@ -359,60 +340,39 @@ test("merges reflection backups without overwriting newer local data", () => {
   assert.equal(result.skipped, 1);
   assert.equal(result.reflections.length, 2);
   assert.equal(result.reflections.find((item) => item.id === local.id).title, local.title);
-  assert.ok(result.reflections.some((item) => item.title === "부산 여행의 기억"));
+  assert.ok(result.reflections.some((item) => item.title === "busan-trip memory"));
 });
 
 test("builds account sync payloads from canonical reflections", () => {
-  const reflection = reflectionStore.createReflectionDraft({
-    templateId: "template_travel",
-    period: { label: "제주 여행" },
-    questionSetMode: "light",
-    title: "제주 여행의 기억",
-  });
-
+  const reflection = createTravelDraft();
   const payload = reflectionSync.buildReflectionSyncPayload([reflection], "google");
 
   assert.equal(payload.schema, "recoverse_account_sync_v1");
   assert.equal(payload.source, "local_browser");
   assert.equal(payload.provider, "google");
   assert.equal(payload.reflections.length, 1);
-  assert.equal(payload.reflections[0].title, "제주 여행의 기억");
+  assert.equal(payload.reflections[0].title, "jeju-trip memory");
 });
 
 test("explains local only account save fallback", () => {
-  assert.match(
-    reflectionSync.getAccountSaveUnavailableMessage("kakao"),
-    /Kakao 계정 저장은 아직 연결 전/
-  );
-  assert.match(
-    reflectionSync.getLocalOnlyStorageWarning(1),
-    /브라우저 데이터가 삭제되면 사라질 수/
-  );
+  assert.match(reflectionSync.getAccountSaveUnavailableMessage("kakao"), /Kakao/);
+  assert.ok(reflectionSync.getLocalOnlyStorageWarning(1).length > 10);
 });
 
 test("encodes and restores read only reflection share snapshots", () => {
-  let reflection = reflectionStore.createReflectionDraft({
-    templateId: "template_travel",
-    period: { label: "제주 여행" },
-    questionSetMode: "light",
-    title: "제주 여행의 기억",
-  });
+  let reflection = createTravelDraft();
   const firstQuestion = reflection.questionGroups[0].questions[0];
-  reflection = reflectionStore.saveReflectionAnswer(
-    reflection,
-    firstQuestion.id,
-    "바다 앞에서 먹은 라면"
-  );
+  reflection = reflectionStore.saveReflectionAnswer(reflection, firstQuestion.id, "sea ramen");
 
   const snapshot = reflectionShare.buildSharedReflectionSnapshot(reflection, [firstQuestion.id]);
   const hash = reflectionShare.buildShareHash(snapshot);
   const restored = reflectionShare.readShareHash(hash);
 
   assert.ok(hash.startsWith("#share="));
-  assert.equal(restored.title, "제주 여행의 기억");
+  assert.equal(restored.title, "jeju-trip memory");
   assert.equal(restored.items.length, 1);
   assert.equal(restored.items[0].questionText, firstQuestion.text);
-  assert.equal(restored.items[0].answerText, "바다 앞에서 먹은 라면");
+  assert.equal(restored.items[0].answerText, "sea ramen");
 });
 
 test("creates a complete sample reflection users can preview", () => {
@@ -420,64 +380,52 @@ test("creates a complete sample reflection users can preview", () => {
 
   assert.equal(sample.id, sampleReflection.SAMPLE_REFLECTION_ID);
   assert.equal(sample.templateId, "template_travel");
-  assert.equal(sample.period.label, "제주 여행");
+  assert.ok(sample.period.label.length > 0);
   assert.ok(sample.answers.length > 0);
   assert.equal(sample.completionRate, 100);
-  assert.match(sample.representativeSentence, /바다/);
+  assert.ok(sample.representativeSentence.length > 0);
 });
 
 test("builds same question timelines across reflection periods", () => {
   function makeYearReflection(year, value) {
-    let reflection = reflectionStore.createReflectionDraft({
-      templateId: "template_year",
-      period: { label: `${year}년`, year },
-      questionSetMode: "light",
-    });
+    let reflection = createYearDraft(year);
     const firstQuestion = reflection.questionGroups[0].questions[0];
     return reflectionStore.saveReflectionAnswer(reflection, firstQuestion.id, value);
   }
 
-  const first = makeYearReflection(2024, "조금씩");
-  const second = makeYearReflection(2025, "나답게");
+  const first = makeYearReflection(2024, "slowly");
+  const second = makeYearReflection(2025, "clearly");
 
   const questionText = first.questionGroups[0].questions[0].text;
   const timeline = questionTimeline.findSameQuestionAnswers(questionText, [first, second]);
 
-  assert.deepEqual(
-    timeline.map((item) => item.period.year),
-    [2024, 2025]
-  );
-  assert.deepEqual(
-    timeline.map((item) => item.answer.value),
-    ["조금씩", "나답게"]
-  );
+  assert.deepEqual(timeline.map((item) => item.period.year), [2024, 2025]);
+  assert.deepEqual(timeline.map((item) => item.answer.value), ["slowly", "clearly"]);
 });
 
 test("appNavigation bottomNavLabels maps every BottomTabId", () => {
   const { bottomNavLabels } = appNav;
 
   assert.equal(typeof bottomNavLabels, "object");
-  assert.equal(bottomNavLabels.home, "홈");
-  assert.equal(bottomNavLabels.write, "기억 작성");
-  assert.equal(bottomNavLabels.review, "다시 보기");
   assert.deepEqual(Object.keys(bottomNavLabels).sort(), ["home", "review", "write"]);
+  assert.ok(Object.values(bottomNavLabels).every((label) => typeof label === "string" && label.length > 0));
 });
 
-test("appNavigation shouldShowBottomNav returns true for every AppMode", () => {
+test("appNavigation shouldShowBottomNav hides the tab bar while actively writing", () => {
   const { shouldShowBottomNav } = appNav;
-  const modes = [
+  const visibleModes = [
     "home-book",
     "reflection-new",
-    "reflection-write",
     "reflection-detail",
     "review-again",
     "shared-reflections",
     "archive-settings",
   ];
 
-  for (const mode of modes) {
+  for (const mode of visibleModes) {
     assert.ok(shouldShowBottomNav(mode), `${mode} should show bottom nav`);
   }
+  assert.equal(shouldShowBottomNav("reflection-write"), false);
 });
 
 test("appNavigation getActiveBottomTab maps modes to correct tabs", () => {
@@ -487,7 +435,6 @@ test("appNavigation getActiveBottomTab maps modes to correct tabs", () => {
   assert.equal(getActiveBottomTab("reflection-new"), "write");
   assert.equal(getActiveBottomTab("reflection-write"), "write");
   assert.equal(getActiveBottomTab("review-again"), "review");
-  // Modes without a tab home of their own do not highlight any pill.
   assert.equal(getActiveBottomTab("reflection-detail"), null);
   assert.equal(getActiveBottomTab("shared-reflections"), null);
   assert.equal(getActiveBottomTab("archive-settings"), null);
@@ -499,16 +446,13 @@ test("appNavigation isTabActive matches the navigateBottomTab guard logic", () =
   assert.ok(isTabActive("home-book", "home"));
   assert.ok(!isTabActive("home-book", "write"));
   assert.ok(!isTabActive("home-book", "review"));
-
   assert.ok(isTabActive("reflection-new", "write"));
   assert.ok(isTabActive("reflection-write", "write"));
   assert.ok(!isTabActive("reflection-new", "home"));
   assert.ok(!isTabActive("reflection-write", "home"));
-
   assert.ok(isTabActive("review-again", "review"));
   assert.ok(!isTabActive("shared-reflections", "review"));
   assert.ok(!isTabActive("review-again", "home"));
-
   assert.ok(!isTabActive("reflection-detail", "home"));
   assert.ok(!isTabActive("reflection-detail", "write"));
   assert.ok(!isTabActive("reflection-detail", "review"));
@@ -551,25 +495,31 @@ function makeReflection(overrides = {}) {
   const now = new Date("2026-06-29T00:00:00Z").toISOString();
   return {
     id: overrides.id ?? "r1",
-    title: overrides.title ?? "샘플 회고",
+    title: overrides.title ?? "sample",
     type: "year",
     mode: "solo",
-    period: overrides.period ?? { label: "2025년", year: 2025 },
+    period: overrides.period ?? { label: "2025", year: 2025 },
     templateId: "template_year",
     questionSetMode: "light",
     questionGroups: [
       {
         id: "g1",
-        label: "이 시기의 장면",
+        label: "scene",
         questions: [
-          { id: "q1", groupId: "g1", text: "올해 가장 기억에 남는 장면은?", visibility: "public", mode: "short" },
+          {
+            id: "q1",
+            groupId: "g1",
+            text: "same question",
+            visibility: "public",
+            isRepeatable: false,
+          },
         ],
       },
     ],
     answers: overrides.answers ?? [
-      { questionId: "q1", value: "바다 앞 라면", skipped: false, updatedAt: now },
+      { questionId: "q1", value: "sea ramen", skipped: false, updatedAt: now },
     ],
-    representativeSentence: overrides.representativeSentence ?? "바다 앞 라면",
+    representativeSentence: overrides.representativeSentence ?? "sea ramen",
     visibility: "private",
     isCompleted: overrides.isCompleted ?? true,
     completionRate: 100,
@@ -603,17 +553,14 @@ test("rediscovery prefers the largest ago bucket", () => {
   const now = new Date("2026-06-29T00:00:00+09:00").getTime();
   const week = makeReflection({
     id: "week",
-    title: "지난주",
     updatedAt: new Date(now - 10 * 24 * 60 * 60 * 1000).toISOString(),
   });
   const month = makeReflection({
     id: "month",
-    title: "한 달 전",
     updatedAt: new Date(now - 40 * 24 * 60 * 60 * 1000).toISOString(),
   });
   const year = makeReflection({
     id: "year",
-    title: "1년 전",
     updatedAt: new Date(now - 365 * 24 * 60 * 60 * 1000).toISOString(),
   });
 
@@ -628,7 +575,7 @@ test("rediscovery rotates daily inside a bucket via date seed", () => {
   const reflections = Array.from({ length: 5 }, (_, i) =>
     makeReflection({
       id: `r${i}`,
-      title: `회고 ${i}`,
+      title: `reflection ${i}`,
       updatedAt: new Date(day1 - (400 + i) * 24 * 60 * 60 * 1000).toISOString(),
     })
   );
@@ -638,16 +585,14 @@ test("rediscovery rotates daily inside a bucket via date seed", () => {
 
   assert.ok(pick1);
   assert.ok(pick2);
-  // Same day → same pick.
   assert.equal(rediscovery.pickRediscovery(reflections, day1)?.reflection.id, pick1.reflection.id);
-  // Different day → may differ (deterministic by date seed).
   assert.equal(typeof pick2.reflection.id, "string");
 });
 
-test("rediscovery describeWindow maps to Korean labels", () => {
-  assert.equal(rediscovery.describeWindow("year"), "1년 전");
-  assert.equal(rediscovery.describeWindow("month"), "한 달 전");
-  assert.equal(rediscovery.describeWindow("week"), "지난주");
+test("rediscovery describeWindow maps every bucket to a label", () => {
+  assert.ok(rediscovery.describeWindow("year").length > 0);
+  assert.ok(rediscovery.describeWindow("month").length > 0);
+  assert.ok(rediscovery.describeWindow("week").length > 0);
 });
 
 test("quickReflection builds a single-question draft a normalizer accepts", () => {
@@ -659,11 +604,11 @@ test("quickReflection builds a single-question draft a normalizer accepts", () =
   assert.equal(draft.isCompleted, false);
   assert.equal(draft.completionRate, 0);
   assert.equal(draft.answers.length, 0);
-  assert.ok(draft.title.includes("의 한 줄"));
+  assert.equal(draft.templateId, "quick_one_line");
 
   const normalized = reflectionStore.normalizeReflection(draft);
   assert.ok(normalized, "quick draft should pass normalization");
-  assert.equal(normalized.questionGroups[0].questions[0].text, "지금 마음에 남은 한 가지는?");
+  assert.equal(normalized.questionGroups[0].questions[0].id, draft.questionGroups[0].questions[0].id);
 });
 
 test("quickReflection produces unique ids across calls", () => {

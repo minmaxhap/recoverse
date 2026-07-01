@@ -45,5 +45,5 @@ export function getLocalOnlyStorageWarning(reflectionCount: number): string {
     return "아직 저장할 회고가 없어요.";
   }
 
-  return "현재 회고는 이 브라우저에 임시 저장되어 있어요. 브라우저 데이터가 삭제되면 사라질 수 있으니 백업 파일을 보관해 주세요.";
+  return "현재 회고는 이 브라우저에만 저장돼요. 브라우저 데이터가 삭제되면 사라질 수 있으니 백업 파일을 보관해 주세요.";
 }

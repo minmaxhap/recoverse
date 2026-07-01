@@ -8,7 +8,7 @@
       <HomeBookView
         v-if="mode === 'home-book'"
         brand-label="Recoverse"
-        title="내 회고 홈"
+        title="나의 회고 책"
         :reflections="reflections"
         @start-writing="openNewReflection"
         @start-quick="startQuickReflection"
@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, nextTick } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import AppBottomNav from "./components/AppBottomNav.vue";
 import AppTopNav from "./components/AppTopNav.vue";
 import type { TopMenuAction } from "./components/AppTopNav.vue";
@@ -109,9 +109,9 @@ import {
   type AppMode,
   type BottomTabId,
   bottomNavLabels,
-  shouldShowBottomNav,
   getActiveBottomTab,
   isTabActive,
+  shouldShowBottomNav,
 } from "./lib/appNavigation";
 import type { AppLanguage } from "./types/recoverse";
 import {
@@ -122,9 +122,9 @@ import {
   saveReflections,
 } from "./lib/reflectionStore";
 import {
+  REFLECTION_BACKUP_SCHEMA,
   exportReflectionBackup,
   mergeReflectionBackup,
-  REFLECTION_BACKUP_SCHEMA,
 } from "./lib/reflectionBackup";
 import {
   buildShareHash,
@@ -134,13 +134,13 @@ import {
 } from "./lib/reflectionShare";
 import {
   createHistoryState,
-  shouldRecordHistory,
-  urlWithoutHash,
   popFallbackMode,
+  shouldRecordHistory,
   urlHasShareHash,
+  urlWithoutHash,
 } from "./lib/appHistory";
 import { createQuickReflection } from "./lib/quickReflection";
-import { createSampleReflection, SAMPLE_REFLECTION_ID } from "./lib/sampleReflection";
+import { SAMPLE_REFLECTION_ID, createSampleReflection } from "./lib/sampleReflection";
 import {
   describeTelemetry,
   loadTelemetry,
@@ -159,9 +159,9 @@ const themeOptions: Array<{
   label: string;
   description: string;
 }> = [
-  { id: "book", label: "책장", description: "책과 타임캡슐" },
-  { id: "letter", label: "편지방", description: "낡은 편지와 잉크" },
-  { id: "journey", label: "지도", description: "여행 지도와 항해 일지" },
+  { id: "book", label: "책장", description: "린넨 책과 크림 종이" },
+  { id: "letter", label: "편지", description: "봉투와 왁스 실링" },
+  { id: "journey", label: "여행", description: "앨범과 창가의 빛" },
 ];
 
 const reflections = ref<Reflection[]>(loadReflections());
@@ -174,11 +174,8 @@ const modeBackStack = ref<AppMode[]>([]);
 const isHandlingBrowserBack = ref(false);
 
 const showBottomNav = computed(() => shouldShowBottomNav(mode.value));
-
 const activeBottomTab = computed<BottomTabId | null>(() => getActiveBottomTab(mode.value));
-
 const telemetrySummary = computed(() => describeTelemetry(telemetry.value));
-
 const activeReflection = computed(() => {
   if (!activeReflectionId.value) return null;
   return reflections.value.find((reflection) => reflection.id === activeReflectionId.value) ?? null;
@@ -236,9 +233,7 @@ function onHashChange() {
 
 function confirmLeavingWriteMode() {
   if (mode.value !== "reflection-write") return true;
-  return confirm(
-    "작성 중인 답변은 이 기기에 임시저장돼요. 다른 화면으로 이동할까요?"
-  );
+  return confirm("작성 중인 답변은 이 기기에 임시 저장돼요. 다른 화면으로 이동할까요?");
 }
 
 function clearShareHash() {
@@ -250,20 +245,20 @@ function clearShareHash() {
   );
 }
 
-function setMode(m: AppMode, options: { recordHistory?: boolean } = {}) {
+function setMode(nextMode: AppMode, options: { recordHistory?: boolean } = {}) {
   const previousMode = mode.value;
 
-  if (m !== "shared-reflections") {
+  if (nextMode !== "shared-reflections") {
     sharedReflectionSnapshot.value = null;
     clearShareHash();
   }
 
-  if (previousMode !== m && shouldRecordHistory(options) && !isHandlingBrowserBack.value) {
+  if (previousMode !== nextMode && shouldRecordHistory(options) && !isHandlingBrowserBack.value) {
     modeBackStack.value.push(previousMode);
-    window.history.pushState(createHistoryState(m), "", window.location.href);
+    window.history.pushState(createHistoryState(nextMode), "", window.location.href);
   }
 
-  mode.value = m;
+  mode.value = nextMode;
 }
 
 function navigateBottomTab(tabId: BottomTabId) {
@@ -423,16 +418,14 @@ async function onImportReflectionFile(e: Event) {
     const result = mergeReflectionBackup(reflections.value, text);
     reflections.value = saveReflections(result.reflections);
     activeReflectionId.value = reflections.value[0]?.id ?? null;
-    alert(
-      `회고 가져오기 완료: 추가 ${result.added}개, 업데이트 ${result.updated}개, 유지 ${result.skipped}개`
-    );
+    alert(`회고 가져오기 완료: 추가 ${result.added}개, 업데이트 ${result.updated}개, 유지 ${result.skipped}개`);
   } catch (err: unknown) {
     const importErrorMessage = err instanceof Error ? err.message : "";
     const reason =
       importErrorMessage === "RECOVERSE_REFLECTION_IMPORT_INVALID_JSON"
         ? "JSON 파일을 읽을 수 없어요."
         : importErrorMessage === "RECOVERSE_REFLECTION_IMPORT_UNSUPPORTED_VERSION"
-          ? REFLECTION_BACKUP_SCHEMA + " 백업 파일이 아니에요."
+          ? `${REFLECTION_BACKUP_SCHEMA} 백업 파일이 아니에요.`
           : importErrorMessage || "알 수 없는 오류";
     alert(`회고 가져오기 실패: ${reason}`);
   } finally {
@@ -441,7 +434,7 @@ async function onImportReflectionFile(e: Event) {
 }
 
 function clearAll() {
-  if (!confirm("진짜로 전체 회고를 삭제할까요? (되돌리기 없음)")) return;
+  if (!confirm("전체 회고를 정말 삭제할까요? 이 작업은 되돌릴 수 없어요.")) return;
   reflections.value = [];
   saveReflections([]);
   activeReflectionId.value = null;
@@ -495,7 +488,5 @@ onBeforeUnmount(() => {
   --accent-wax: #8C6044;
 }
 
-.main {
-  padding: 54px 0 0;
-}
+.main { padding: 54px 0 0; }
 </style>

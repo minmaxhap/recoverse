@@ -172,3 +172,21 @@ Rules:
 - Borders must be warm, never neutral gray.
 - Object shadows stay soft and warm; no hard black shadows.
 - Paper texture must not reduce text contrast.
+
+## 8. Photography & Illustration
+
+Recoverse photos are editorial anchors, not decoration. A screen should usually have one primary photo moment, then rely on paper cards, stamps, borders, and typography for the rest of the composition.
+
+Photo usage rules:
+
+- Use at most one large photo per screen section and avoid photo grids unless the screen is explicitly an album.
+- Default product photo frames use `object-fit: contain` with a warm paper background so envelopes, journals, flowers, and taped photos are not cut off.
+- Crop only when the photo is intentionally used as nonessential texture, and never crop away the main object of a user-provided image.
+- Pair photos with functional copy or state changes. Do not add a photo just to fill empty space.
+- Prefer wide, low-pressure frames for landscape images and square paper frames for envelope or seal images.
+
+Illustration rules:
+
+- Use line icons, wax seals, small ordinal stamps, and paper folds before adding another bitmap image.
+- Question cards are primarily typographic. They may use a small stamp or accent mark, not a repeated thumbnail.
+- Empty states may use one quiet photo if it clarifies the metaphor of an unopened book, blank journal, or stored letter.

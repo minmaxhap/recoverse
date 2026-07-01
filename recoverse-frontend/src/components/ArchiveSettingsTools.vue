@@ -38,9 +38,9 @@
 
     <section id="settings-backup" class="settingsSection" :class="{ active: activeSection === 'backup' || activeSection === 'import' }" aria-labelledby="data-settings-title">
       <header class="sectionHead">
-        <span class="sectionKicker">내 기억 데이터</span>
+        <span class="sectionKicker">내 회고 데이터</span>
         <h3 id="data-settings-title">{{ reflectionGroupLabel }}</h3>
-        <p>저장된 기억 {{ reflectionCount }}개</p>
+        <p>저장된 회고 {{ reflectionCount }}개</p>
       </header>
 
       <div class="buttonRow">
@@ -113,15 +113,8 @@ defineEmits<{
 
 <style scoped>
 .tools { display: grid; gap: 12px; justify-items: stretch; width: min(760px, 100%); }
-
 .settingsSection,
-.toolGroup {
-  border: 1px solid var(--border-subtle);
-  background: rgba(255, 253, 248, 0.86);
-  border-radius: var(--radius-card);
-  box-shadow: 0 12px 28px rgba(58, 49, 43, 0.07);
-}
-
+.toolGroup { border: 1px solid var(--border-subtle); background: rgba(255, 253, 248, 0.86); border-radius: var(--radius-card); box-shadow: 0 12px 28px rgba(58, 49, 43, 0.07); }
 .settingsSection { display: grid; gap: 14px; padding: 16px; }
 .settingsSection.active, .toolGroup.active { border-color: rgba(111, 127, 107, 0.52); box-shadow: 0 0 0 3px rgba(111, 127, 107, 0.10); }
 .sectionHead { display: grid; gap: 4px; }
@@ -142,9 +135,5 @@ button:disabled { opacity: 0.55; cursor: not-allowed; }
 .file input { display: none; }
 .dangerSection { border-color: rgba(163, 78, 62, 0.26); }
 .danger { width: fit-content; border-color: rgba(163, 78, 62, 0.55); background: rgba(234, 215, 207, 0.44); color: var(--color-danger); }
-
-@media (max-width: 899px) {
-  .tools { width: 100%; }
-  .themeGrid { grid-template-columns: 1fr; }
-}
+@media (max-width: 899px) { .tools { width: 100%; } .themeGrid { grid-template-columns: 1fr; } }
 </style>

@@ -4,7 +4,7 @@
       <span class="brandIcon" aria-hidden="true">R</span>
       <span>Recoverse</span>
     </button>
-    <button class="settingsButton" type="button" aria-label="?? ??" @click="$emit('menu-action', 'settings')">
+    <button class="settingsButton" type="button" aria-label="설정 열기" @click="$emit('menu-action', 'settings')">
       <span></span>
       <span></span>
     </button>
@@ -33,7 +33,7 @@ defineEmits<{
   justify-content: space-between;
   padding: 0 max(18px, env(safe-area-inset-right)) 0 max(18px, env(safe-area-inset-left));
   border-bottom: 1px solid rgba(229, 217, 200, 0.78);
-  background: rgba(251, 244, 236, 0.88);
+  background: rgba(251, 244, 236, 0.9);
   backdrop-filter: blur(18px);
 }
 

@@ -17,30 +17,26 @@
             </div>
           </div>
 
-          <div class="timeCapsuleCard" aria-hidden="true">
-            <div class="paperBundle">
-              <span class="driedFlower"></span>
-              <span class="letterLine short"></span>
-              <span class="letterLine"></span>
-              <span class="letterLine medium"></span>
-            </div>
-            <div class="envelopeCard">
-              <span>To. future me</span>
-              <strong>R</strong>
-            </div>
-          </div>
+          <figure class="photoHeroCard editorialPhotoFrame">
+            <img :src="heroPhoto.src" :alt="heroPhoto.alt" />
+            <figcaption>
+              <span>{{ title }}</span>
+              <strong>Story Book x Time Capsule</strong>
+            </figcaption>
+          </figure>
         </section>
 
         <section class="promptSection" aria-labelledby="prompt-title">
           <div class="sectionHeader">
             <span class="screenEyebrow">Quick prompts</span>
-            <h2 id="prompt-title">30초만 작성하면 이런 회고가 만들어져요</h2>
+            <h2 id="prompt-title">짧게 써도 회고 한 장이 만들어져요</h2>
           </div>
           <div class="promptGrid">
             <article v-for="prompt in homePromptCards" :key="prompt.title" class="promptCard">
               <span>{{ prompt.category }}</span>
               <strong>{{ prompt.title }}</strong>
-              <small>{{ prompt.mark }}</small>
+              <p>{{ prompt.description }}</p>
+              <i aria-hidden="true">{{ prompt.mark }}</i>
             </article>
           </div>
         </section>
@@ -73,13 +69,31 @@
           </div>
 
           <div v-else class="emptyAlbum paperPanel">
-            <span class="screenEyebrow">First page</span>
-            <h3>아직 책장이 비어 있어요.</h3>
-            <p>짧은 답변 하나만 남기면 이곳에 첫 회고 카드가 생깁니다.</p>
-            <button class="primaryButton" type="button" @click="$emit('start-writing')">
-              첫 회고 시작하기
-            </button>
+            <figure class="emptyAlbumPhoto editorialPhotoFrame">
+              <img src="/design/album-flower-landscape.jpg" alt="말린 꽃과 여행 사진이 놓인 열린 앨범" />
+            </figure>
+            <div>
+              <span class="screenEyebrow">First page</span>
+              <h3>아직 책장이 비어 있어요.</h3>
+              <p>지금 떠오른 장면 하나만 남기면 첫 회고 카드가 생깁니다.</p>
+              <button class="primaryButton" type="button" @click="$emit('start-writing')">
+                첫 회고 시작하기
+              </button>
+            </div>
           </div>
+        </section>
+
+        <section class="moodSection" aria-label="Recoverse 무드 보드">
+          <article class="letterPanel">
+            <figure class="letterPhoto editorialPhotoFrame">
+              <img src="/design/sealed-envelope-stack.jpg" alt="초록색 왁스 실링이 붙은 종이 봉투 더미" />
+            </figure>
+            <div>
+              <span class="screenEyebrow">Time capsule</span>
+              <h2>나중의 나에게 닿는 작은 편지</h2>
+              <p>종이, 봉투, 왁스 실링의 질감을 앱 전체의 카드와 버튼 규칙으로 이어갑니다.</p>
+            </div>
+          </article>
         </section>
 
         <section class="compareSection" aria-label="친구 비교 미리보기">
@@ -115,10 +129,15 @@ const emit = defineEmits<{
   "load-sample": [];
 }>();
 
+const heroPhoto = {
+  src: "/design/blank-journal.jpg",
+  alt: "햇빛 아래 펼쳐진 빈 저널과 안개꽃",
+};
+
 const homePromptCards = [
-  { category: "올해의 성취", title: "어쨌든 버텼다.", mark: "leaf" },
-  { category: "올해의 발견", title: "나는 주식을 못한다.", mark: "line" },
-  { category: "가장 밝았던 날", title: "몽골의 넓은 초원 속에 있는 나.", mark: "photo" },
+  { category: "올해의 성취", title: "어쨌든 버텼다.", description: "가장 짧은 문장으로도 한 해의 표지가 됩니다.", mark: "01" },
+  { category: "올해의 발견", title: "나는 느린 시간을 좋아한다.", description: "나중에 다시 읽을 수 있는 취향의 단서를 남겨요.", mark: "02" },
+  { category: "가장 빛났던 날", title: "몸이 먼저 기억하는 장면.", description: "사진 없이도 선명한 장면을 한 문장으로 보관합니다.", mark: "03" },
 ];
 
 const friendInitials = ["J", "M", "S", "H", "+12"];
@@ -147,396 +166,65 @@ function openMemory(reflectionId: string, isCompleted: boolean) {
 </script>
 
 <style scoped>
-.homeBookPage {
-  padding: 18px var(--space-page-x) calc(104px + env(safe-area-inset-bottom));
-}
-
-.homeBookShell {
-  width: min(980px, 100%);
-  margin: 0 auto;
-  display: grid;
-  gap: var(--space-section);
-}
-
-.heroSection {
-  min-height: min(560px, calc(100dvh - 170px));
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.86fr);
-  align-items: center;
-  gap: clamp(24px, 6vw, 58px);
-}
-
-.heroCopy {
-  display: grid;
-  gap: 18px;
-  align-content: center;
-}
-
-.heroCopy h1 {
-  margin: 0;
-  font-size: clamp(48px, 8vw, 76px);
-  color: var(--text-primary);
-}
-
-.heroCopy h1::after {
-  content: "";
-  width: 64px;
-  height: 12px;
-  display: block;
-  margin-top: 10px;
-  background: linear-gradient(90deg, var(--accent-wax) 0 22%, transparent 22% 32%, var(--accent-wax) 32% 54%, transparent 54% 64%, var(--accent-wax) 64% 100%);
-  mask: radial-gradient(12px 7px at 8px 5px, #000 58%, transparent 62%) repeat-x;
-  mask-size: 22px 12px;
-  opacity: 0.9;
-}
-
-.heroCopy p {
-  max-width: 390px;
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: var(--leading-body);
-  word-break: keep-all;
-}
-
-.heroActions {
-  display: grid;
-  grid-template-columns: minmax(0, 220px) minmax(0, 180px);
-  gap: 10px;
-  align-items: center;
-}
-
-.timeCapsuleCard {
-  position: relative;
-  min-height: 420px;
-  border-radius: 26px;
-  background:
-    radial-gradient(circle at 34% 20%, rgba(255,255,255,0.85), transparent 28%),
-    linear-gradient(145deg, #F6EFE3, #E5D6C3);
-  box-shadow: var(--shadow-lifted);
-  overflow: hidden;
-}
-
-.paperBundle,
-.envelopeCard {
-  position: absolute;
-  border: 1px solid rgba(202, 188, 168, 0.78);
-  background: rgba(255, 253, 248, 0.72);
-  box-shadow: 0 16px 36px rgba(58, 49, 43, 0.12);
-}
-
-.paperBundle {
-  right: 48px;
-  top: 44px;
-  width: 210px;
-  height: 250px;
-  transform: rotate(7deg);
-  display: grid;
-  align-content: end;
-  gap: 11px;
-  padding: 26px;
-}
-
-.letterLine {
-  height: 1px;
-  background: rgba(117, 105, 95, 0.34);
-}
-
-.letterLine.short { width: 56%; }
-.letterLine.medium { width: 76%; }
-
-.driedFlower {
-  position: absolute;
-  left: 92px;
-  top: 38px;
-  width: 74px;
-  height: 138px;
-  border-left: 1px solid rgba(111, 127, 107, 0.62);
-  transform: rotate(-18deg);
-}
-
-.driedFlower::before,
-.driedFlower::after {
-  content: "";
-  position: absolute;
-  width: 48px;
-  height: 48px;
-  border: 1px solid rgba(111, 127, 107, 0.36);
-  border-radius: 50%;
-}
-
-.driedFlower::before { left: -34px; top: 18px; }
-.driedFlower::after { left: 4px; top: 48px; }
-
-.envelopeCard {
-  left: 34px;
-  bottom: 58px;
-  width: 250px;
-  height: 150px;
-  transform: rotate(-8deg);
-  display: grid;
-  place-items: center;
-  color: var(--text-secondary);
-  font-family: var(--font-display);
-  font-style: italic;
-}
-
-.envelopeCard strong {
-  position: absolute;
-  right: 38px;
-  bottom: 28px;
-  width: 58px;
-  height: 58px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: var(--accent-sage);
-  color: var(--surface-paper);
-  font-style: normal;
-  box-shadow: inset 0 0 0 5px rgba(255,255,255,0.12), 0 10px 18px rgba(58,49,43,0.18);
-}
-
-.sectionHeader {
-  display: grid;
-  gap: 7px;
-}
-
-.sectionHeader.row {
-  grid-template-columns: 1fr auto;
-  align-items: end;
-  gap: 14px;
-}
-
-.sectionHeader h2,
-.compareSection h2,
-.emptyAlbum h3 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: var(--display-weight);
-  line-height: var(--leading-tight);
-  letter-spacing: 0;
-  color: var(--text-primary);
-}
-
+.homeBookPage { padding: 18px var(--space-page-x) calc(104px + env(safe-area-inset-bottom)); }
+.homeBookShell { width: min(980px, 100%); margin: 0 auto; display: grid; gap: var(--space-section); }
+.heroSection { min-height: min(560px, calc(100dvh - 170px)); display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(280px, 0.88fr); align-items: center; gap: clamp(24px, 6vw, 58px); }
+.heroCopy { display: grid; gap: 18px; align-content: center; }
+.heroCopy h1 { margin: 0; font-size: clamp(48px, 8vw, 76px); color: var(--text-primary); }
+.heroCopy h1::after { content: ""; width: 64px; height: 12px; display: block; margin-top: 10px; background: linear-gradient(90deg, var(--accent-wax) 0 22%, transparent 22% 32%, var(--accent-wax) 32% 54%, transparent 54% 64%, var(--accent-wax) 64% 100%); mask: radial-gradient(12px 7px at 8px 5px, #000 58%, transparent 62%) repeat-x; mask-size: 22px 12px; opacity: 0.9; }
+.heroCopy p { max-width: 390px; margin: 0; color: var(--text-secondary); font-size: 16px; line-height: var(--leading-body); word-break: keep-all; }
+.heroActions { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 180px); gap: 10px; align-items: center; }
+.photoHeroCard { position: relative; margin: 0; min-height: 420px; border-radius: 26px; overflow: hidden; }
+.photoHeroCard img { min-height: 420px; padding: 12px; }
+.photoHeroCard figcaption { position: absolute; left: 18px; right: 18px; bottom: 18px; z-index: 1; width: fit-content; max-width: calc(100% - 36px); border: 1px solid rgba(229, 217, 200, 0.76); border-radius: 8px; background: rgba(255, 253, 248, 0.88); padding: 10px 12px; color: var(--text-primary); box-shadow: 0 12px 28px rgba(58, 49, 43, 0.12); backdrop-filter: blur(12px); }
+.photoHeroCard figcaption span { font-size: 12px; font-weight: var(--label-weight); }
+.photoHeroCard figcaption strong { font-family: var(--font-display); font-size: 24px; font-weight: var(--display-weight); }
+.sectionHeader { display: grid; gap: 7px; }
+.sectionHeader.row { grid-template-columns: 1fr auto; align-items: end; gap: 14px; }
+.sectionHeader h2, .compareSection h2, .emptyAlbum h3, .letterPanel h2 { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); line-height: var(--leading-tight); letter-spacing: 0; color: var(--text-primary); }
 .sectionHeader h2 { font-size: clamp(22px, 4vw, 30px); }
-
-.promptSection,
-.albumSection {
-  display: grid;
-  gap: 14px;
-}
-
-.promptGrid,
-.memoryGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.promptCard,
-.memoryCard,
-.emptyAlbum,
-.compareSection {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-card);
-  background: rgba(255, 253, 248, 0.82);
-  box-shadow: 0 14px 32px rgba(58, 49, 43, 0.08);
-}
-
-.promptCard {
-  min-height: 176px;
-  display: grid;
-  align-content: space-between;
-  gap: 16px;
-  padding: 18px;
-}
-
-.promptCard span,
-.memoryCard span {
-  color: var(--text-tertiary);
-  font-size: 12px;
-  font-weight: var(--label-weight);
-}
-
-.promptCard strong {
-  font-family: var(--font-display);
-  font-size: clamp(22px, 3vw, 30px);
-  line-height: var(--leading-tight);
-  font-weight: var(--display-weight);
-  word-break: keep-all;
-}
-
-.promptCard small {
-  justify-self: end;
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--border-strong);
-  display: grid;
-  place-items: center;
-  color: transparent;
-  position: relative;
-}
-
-.promptCard small::after {
-  content: "";
-  width: 14px;
-  height: 14px;
-  border: 1px solid var(--accent-sage);
-  transform: rotate(-12deg);
-}
-
-.memoryGrid {
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-}
-
-.memoryCard {
-  width: 100%;
-  min-height: 190px;
-  color: var(--text-primary);
-  padding: 18px;
-  text-align: left;
-  display: grid;
-  gap: 8px;
-  align-content: start;
-  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
-}
-
-.memoryCard:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-paper);
-}
-
-.memoryCard.draft {
-  background: linear-gradient(145deg, rgba(221, 229, 216, 0.78), rgba(255, 253, 248, 0.9));
-}
-
-.memoryCard strong {
-  font-family: var(--font-display);
-  font-size: 22px;
-  line-height: var(--leading-tight);
-  font-weight: var(--display-weight);
-}
-
-.memoryCard p,
-.emptyAlbum p {
-  margin: 0;
-  color: var(--text-secondary);
-  line-height: var(--leading-body);
-  overflow-wrap: anywhere;
-}
-
-.memoryCard em {
-  align-self: end;
-  width: fit-content;
-  color: var(--accent-sage);
-  font-size: 12px;
-  font-style: normal;
-  font-weight: var(--label-weight);
-}
-
-.emptyAlbum {
-  display: grid;
-  gap: 12px;
-  justify-items: start;
-  padding: 24px;
-}
-
-.compact {
-  min-height: 40px;
-  padding: 10px 14px;
-  font-size: 13px;
-}
-
-.compareSection {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 18px;
-  padding: 22px;
-  background:
-    linear-gradient(120deg, rgba(255,253,248,0.9), rgba(239,230,214,0.76)),
-    var(--surface-paper);
-}
-
-.compareSection h2 {
-  max-width: 540px;
-  margin-top: 6px;
-  font-size: clamp(20px, 3.8vw, 28px);
-}
-
-.friendStack {
-  display: flex;
-  align-items: center;
-}
-
-.friendStack span {
-  width: 38px;
-  height: 38px;
-  margin-left: -8px;
-  border: 2px solid var(--surface-paper);
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: var(--surface-sage);
-  color: var(--text-primary);
-  font-size: 12px;
-  font-weight: var(--heading-weight);
-}
-
-.friendStack span:first-child {
-  margin-left: 0;
-}
-
+.promptSection, .albumSection, .moodSection { display: grid; gap: 14px; }
+.promptGrid, .memoryGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.promptCard, .memoryCard, .emptyAlbum, .compareSection, .letterPanel { border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(255, 253, 248, 0.86); box-shadow: 0 14px 32px rgba(58, 49, 43, 0.08); }
+.promptCard { position: relative; min-height: 210px; display: grid; gap: 10px; align-content: start; padding: 18px; overflow: hidden; }
+.promptCard::after { content: ""; position: absolute; right: 14px; bottom: 14px; width: 46px; height: 52px; border: 1px solid rgba(169, 154, 139, 0.52); border-radius: 4px; background: linear-gradient(135deg, rgba(255,253,248,0.72), rgba(239,230,214,0.52)); transform: rotate(-3deg); }
+.promptCard span, .memoryCard span { color: var(--text-tertiary); font-size: 12px; font-weight: var(--label-weight); }
+.promptCard strong { position: relative; z-index: 1; font-family: var(--font-display); font-size: clamp(21px, 3vw, 28px); line-height: var(--leading-tight); font-weight: var(--display-weight); word-break: keep-all; }
+.promptCard p { position: relative; z-index: 1; margin: 0; color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); word-break: keep-all; }
+.promptCard i { position: absolute; right: 24px; bottom: 27px; z-index: 1; color: var(--text-tertiary); font-family: var(--font-display); font-size: 15px; font-style: normal; }
+.memoryGrid { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.memoryCard { width: 100%; min-height: 190px; color: var(--text-primary); padding: 18px; text-align: left; display: grid; gap: 8px; align-content: start; transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
+.memoryCard:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: var(--shadow-paper); }
+.memoryCard.draft { background: linear-gradient(145deg, rgba(221, 229, 216, 0.78), rgba(255, 253, 248, 0.9)); }
+.memoryCard strong { font-family: var(--font-display); font-size: 22px; line-height: var(--leading-tight); font-weight: var(--display-weight); }
+.memoryCard p, .emptyAlbum p, .letterPanel p { margin: 0; color: var(--text-secondary); line-height: var(--leading-body); overflow-wrap: anywhere; }
+.memoryCard em { align-self: end; width: fit-content; color: var(--accent-sage); font-size: 12px; font-style: normal; font-weight: var(--label-weight); }
+.emptyAlbum { display: grid; grid-template-columns: 210px 1fr; gap: 18px; align-items: center; padding: 16px; }
+.emptyAlbumPhoto { width: 100%; height: 180px; margin: 0; border-radius: 8px; overflow: hidden; }
+.emptyAlbumPhoto img { padding: 8px; }
+.emptyAlbum div { display: grid; gap: 12px; justify-items: start; }
+.compact { min-height: 40px; padding: 10px 14px; font-size: 13px; }
+.moodSection { display: grid; }
+.letterPanel { display: grid; grid-template-columns: minmax(210px, 0.46fr) 1fr; gap: 18px; align-items: center; padding: 14px; background: linear-gradient(135deg, rgba(255, 253, 248, 0.94), rgba(239, 230, 214, 0.66)); }
+.letterPhoto { width: 100%; height: 210px; margin: 0; border-radius: 8px; overflow: hidden; }
+.letterPhoto img { padding: 8px; }
+.letterPanel div { display: grid; gap: 8px; }
+.letterPanel h2 { font-size: clamp(22px, 4vw, 32px); }
+.compareSection { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 18px; padding: 22px; background: linear-gradient(120deg, rgba(255,253,248,0.9), rgba(239,230,214,0.76)), var(--surface-paper); }
+.compareSection h2 { max-width: 540px; margin-top: 6px; font-size: clamp(20px, 3.8vw, 28px); }
+.friendStack { display: flex; align-items: center; }
+.friendStack span { width: 38px; height: 38px; margin-left: -8px; border: 2px solid var(--surface-paper); border-radius: 999px; display: grid; place-items: center; background: var(--surface-sage); color: var(--text-primary); font-size: 12px; font-weight: var(--heading-weight); }
+.friendStack span:first-child { margin-left: 0; }
 @media (max-width: 760px) {
-  .homeBookPage {
-    padding-top: 14px;
-  }
-
-  .heroSection {
-    min-height: auto;
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-
-  .heroCopy h1 {
-    font-size: clamp(44px, 13vw, 58px);
-  }
-
-  .heroActions,
-  .sectionHeader.row,
-  .compareSection {
-    grid-template-columns: 1fr;
-  }
-
-  .timeCapsuleCard {
-    min-height: 300px;
-  }
-
-  .paperBundle {
-    right: 24px;
-    top: 26px;
-    width: 170px;
-    height: 205px;
-  }
-
-  .envelopeCard {
-    left: 20px;
-    bottom: 38px;
-    width: 210px;
-    height: 122px;
-  }
-
-  .promptGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .promptCard {
-    min-height: 148px;
-  }
-
-  .friendStack {
-    justify-self: start;
-  }
+  .homeBookPage { padding-top: 14px; }
+  .heroSection, .letterPanel, .emptyAlbum { grid-template-columns: 1fr; }
+  .heroSection { min-height: auto; gap: 18px; }
+  .heroCopy h1 { font-size: clamp(44px, 13vw, 58px); }
+  .heroActions, .sectionHeader.row, .compareSection { grid-template-columns: 1fr; }
+  .photoHeroCard, .photoHeroCard img { height: 180px; min-height: 180px; }
+  .photoHeroCard figcaption { display: none; }
+  .promptGrid { grid-template-columns: 1fr; }
+  .promptCard { min-height: 176px; }
+  .friendStack { justify-self: start; }
 }
 </style>

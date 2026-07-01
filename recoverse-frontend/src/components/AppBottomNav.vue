@@ -90,4 +90,30 @@ const navigationItems = computed<Array<{
   background: var(--surface-sage);
   color: var(--text-primary);
 }
+
+@media (min-width: 900px) {
+  .bottomNav {
+    top: 8px;
+    bottom: auto;
+    z-index: 46;
+    width: min(340px, calc(100% - 220px));
+    padding: 4px;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(58, 49, 43, 0.10);
+  }
+
+  .navItem {
+    min-height: 38px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .navItem span {
+    font-size: 12px;
+  }
+}
 </style>

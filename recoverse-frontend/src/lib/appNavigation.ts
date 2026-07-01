@@ -10,16 +10,15 @@ export type AppMode =
 export type BottomTabId = "write" | "home" | "review";
 
 export const bottomNavLabels: Record<BottomTabId, string> = {
-  home: "홈",
-  write: "기억 작성",
-  review: "다시 보기",
+  home: "나의 책",
+  write: "작성하기",
+  review: "다시보기",
 };
 
 export function shouldShowBottomNav(mode: AppMode): boolean {
   return [
     "home-book",
     "reflection-new",
-    "reflection-write",
     "reflection-detail",
     "review-again",
     "shared-reflections",

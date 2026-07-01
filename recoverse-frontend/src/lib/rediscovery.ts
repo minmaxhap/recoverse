@@ -21,7 +21,7 @@ function daysBetween(now: number, iso: string): number {
 }
 
 function localDayKey(now: number): string {
-  // Local date key (sv-SE → YYYY-MM-DD), so the daily rotation flips at the user's midnight.
+  // Local date key (sv-SE => YYYY-MM-DD), so the daily rotation flips at the user's midnight.
   return new Date(now).toLocaleDateString("sv-SE");
 }
 
@@ -42,8 +42,7 @@ function classifyWindow(daysAgo: number): RediscoveryWindow {
 
 /**
  * Pick today's rediscovery memory: prefer the largest "ago" bucket
- * (1 year > 1 month > 1 week), then rotate inside the bucket by date seed
- * so the user sees a different memory each day.
+ * (1 year > 1 month > 1 week), then rotate inside the bucket by date seed.
  */
 export function pickRediscovery(
   reflections: readonly Reflection[],

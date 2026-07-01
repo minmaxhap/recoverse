@@ -11,9 +11,6 @@ function localDateLabel(date: Date): string {
 /**
  * A single-question reflection that lets a brand-new user produce a memory
  * in roughly 30 seconds without entering the full wizard.
- *
- * It is still a real Reflection (same schema, same storage path) — the
- * shortcut just lives in the entry surface, not the data layer.
  */
 export function createQuickReflection(now: Date = new Date()): Reflection {
   const iso = now.toISOString();
@@ -24,7 +21,7 @@ export function createQuickReflection(now: Date = new Date()): Reflection {
 
   return {
     id,
-    title: `${dateLabel}의 한 줄`,
+    title: `${dateLabel}의 30초 메모`,
     type: "custom",
     mode: "solo",
     period: { label: dateLabel, year: now.getFullYear() },

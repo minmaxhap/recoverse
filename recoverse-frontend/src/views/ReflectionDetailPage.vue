@@ -2,7 +2,7 @@
   <section v-if="reflection" class="detailPage">
     <header class="detailHeader">
       <div>
-        <span class="eyebrow">{{ reflection.isCompleted ? "이 시기의 나" : "이어쓰는 기억" }}</span>
+        <span class="eyebrow">{{ reflection.isCompleted ? "다시 열어보는 회고" : "이어쓰는 기억" }}</span>
         <h1>{{ reflection.title }}</h1>
         <div class="detailMeta" aria-label="회고 상태">
           <span>{{ answeredCount }}개 답변</span>
@@ -16,9 +16,14 @@
 
     <main class="detailShell">
       <section class="heroPanel">
-        <span class="heroLabel">{{ reflection.period.label }}</span>
-        <h2>{{ representativeScene }}</h2>
-        <p>{{ representativeEmotion }}</p>
+        <figure class="detailPhoto editorialPhotoFrame">
+          <img :src="detailPhoto.src" :alt="detailPhoto.alt" />
+        </figure>
+        <div>
+          <span class="heroLabel">{{ reflection.period.label }}</span>
+          <h2>{{ representativeScene }}</h2>
+          <p>{{ representativeEmotion }}</p>
+        </div>
       </section>
 
       <section class="actionPanel" aria-label="회고 주요 행동">
@@ -30,12 +35,7 @@
         >
           같은 질문 다시 보기
         </button>
-        <button
-          v-else
-          class="primaryAction"
-          type="button"
-          @click="$emit('edit')"
-        >
+        <button v-else class="primaryAction" type="button" @click="$emit('edit')">
           이어쓰기
         </button>
         <button
@@ -82,7 +82,7 @@
           <span>{{ item.groupLabel }}</span>
           <h3>{{ item.question.text }}</h3>
           <p v-if="item.answerText">{{ item.answerText }}</p>
-          <p v-else-if="item.answer?.skipped">이 질문은 지금은 넘겼어요.</p>
+          <p v-else-if="item.answer?.skipped">이 질문은 지금은 건너뛰었어요.</p>
           <p v-else>아직 비어 있는 질문이에요. 필요하면 이어쓰기에서 천천히 채울 수 있어요.</p>
         </article>
       </section>
@@ -99,7 +99,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import type { Answer, Question, Reflection } from "../types/reflection";
+import type { Question, Reflection } from "../types/reflection";
 
 const props = defineProps<{
   reflection: Reflection | null;
@@ -125,9 +125,20 @@ const answeredCount = computed(() =>
 const firstAnsweredText = computed(() =>
   props.reflection?.answers.find((answer) => answer.value.trim())?.value.trim() ?? ""
 );
+const detailPhoto = computed(() =>
+  props.reflection?.isCompleted
+    ? {
+        src: "/design/album-flower-landscape.jpg",
+        alt: "말린 꽃과 여행 사진이 놓인 열린 앨범",
+      }
+    : {
+        src: "/design/blank-journal.jpg",
+        alt: "햇빛 아래 펼쳐진 빈 저널과 안개꽃",
+      }
+);
 const representativeScene = computed(() => {
   if (!props.reflection) return "";
-  return props.reflection.representativeSentence ?? (firstAnsweredText.value || "아직 대표 장면이 없어요.");
+  return props.reflection.representativeSentence ?? (firstAnsweredText.value || "아직 저장된 장면이 없어요.");
 });
 const representativeEmotion = computed(() => {
   const emotionQuestion = questions.value.find((question) => question.text.includes("감정"));
@@ -136,8 +147,8 @@ const representativeEmotion = computed(() => {
     : "";
   if (emotionAnswer) return `가장 가까운 감정: ${emotionAnswer}`;
   return answeredCount.value > 0
-    ? "지금은 답변 전체를 천천히 읽어보는 화면입니다."
-    : "첫 답변을 남기면 이곳에 기억의 요약이 생깁니다.";
+    ? "지금까지의 답변을 천천히 읽어보는 화면입니다."
+    : "첫 답변을 남기면 기억의 요약이 생깁니다.";
 });
 const updatedDate = computed(() => {
   if (!props.reflection) return "";
@@ -148,7 +159,7 @@ const answerItems = computed(() => {
 
   return props.reflection.questionGroups.flatMap((group) =>
     group.questions.map((question) => {
-      const answer = answerMap.value.get(question.id) as Answer | undefined;
+      const answer = answerMap.value.get(question.id);
       return {
         groupLabel: group.label,
         question,
@@ -180,43 +191,21 @@ function openShareOptions() {
 </script>
 
 <style scoped>
-.detailPage {
-  min-height: 100vh;
-  background: var(--surface-base);
-  color: var(--text-primary);
-  padding: 24px var(--space-page-x) calc(112px + env(safe-area-inset-bottom));
-}
-
-.detailHeader,
-.detailShell { width: min(940px, 100%); margin: 0 auto; }
+.detailPage { min-height: 100vh; background: var(--surface-base); color: var(--text-primary); padding: 24px var(--space-page-x) calc(112px + env(safe-area-inset-bottom)); }
+.detailHeader, .detailShell { width: min(940px, 100%); margin: 0 auto; }
 .detailHeader { margin-bottom: 22px; }
 h1, h2, h3, p { margin: 0; letter-spacing: 0; }
-
-.detailHeader h1 {
-  font-family: var(--font-display);
-  font-size: clamp(28px, 5.4vw, 42px);
-  line-height: var(--leading-tight);
-  font-weight: var(--display-weight);
-}
-
+.detailHeader h1 { font-family: var(--font-display); font-size: clamp(28px, 5.4vw, 42px); line-height: var(--leading-tight); font-weight: var(--display-weight); }
 .detailMeta { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 6px; color: var(--text-secondary); font-size: 12px; font-weight: var(--label-weight); }
 .eyebrow, .heroLabel, .answerCard span { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 .detailShell { display: grid; gap: 14px; }
-
-.heroPanel,
-.answerCard,
-.actionPanel,
-.sharePanel {
-  border: 1px solid var(--border-subtle);
-  background: rgba(255, 253, 248, 0.86);
-  border-radius: var(--radius-card);
-  box-shadow: 0 14px 32px rgba(58, 49, 43, 0.08);
-}
-
-.heroPanel { padding: clamp(22px, 4vw, 30px); display: grid; gap: 10px; background: linear-gradient(145deg, rgba(255,253,248,0.96), rgba(239,230,214,0.62)); }
+.heroPanel, .answerCard, .actionPanel, .sharePanel { border: 1px solid var(--border-subtle); background: rgba(255, 253, 248, 0.86); border-radius: var(--radius-card); box-shadow: 0 14px 32px rgba(58, 49, 43, 0.08); }
+.heroPanel { padding: 14px; display: grid; grid-template-columns: minmax(220px, 0.45fr) minmax(0, 1fr); gap: 18px; align-items: center; background: linear-gradient(145deg, rgba(255,253,248,0.96), rgba(239,230,214,0.62)); }
+.detailPhoto { width: 100%; height: 240px; margin: 0; border-radius: 8px; overflow: hidden; }
+.detailPhoto img { padding: 8px; }
+.heroPanel div { display: grid; gap: 10px; }
 .heroPanel h2 { font-family: var(--font-display); font-size: clamp(28px, 6vw, 42px); line-height: var(--leading-display); font-weight: var(--display-weight); overflow-wrap: anywhere; }
 .heroPanel p, .answerCard p, .sharePanel p { color: var(--text-secondary); line-height: var(--leading-body); }
-
 .actionPanel { padding: 12px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; }
 .primaryAction, .secondaryAction, .tertiaryAction, .shareButton { border-radius: var(--radius-pill); font-weight: var(--heading-weight); letter-spacing: 0; padding: 11px 14px; }
 .primaryAction { border: 0; background: var(--accent-espresso); color: var(--surface-paper); }
@@ -225,7 +214,6 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
 .tertiaryAction { border: 0; background: transparent; color: var(--text-secondary); padding: 9px 12px; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
 .tertiaryAction:hover:not(:disabled), .tertiaryAction:focus-visible { color: var(--text-primary); }
 .secondaryAction:disabled, .tertiaryAction:disabled { opacity: 0.45; }
-
 .sharePanel { padding: 16px; }
 .sharePanel summary { cursor: pointer; font-weight: var(--heading-weight); }
 .shareList, .answerList { display: grid; gap: 10px; }
@@ -236,10 +224,10 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
 .answerCard.empty { border-style: dashed; }
 .emptyState { display: grid; place-items: center; align-content: center; gap: 14px; text-align: center; }
 .emptyState p { max-width: 380px; color: var(--text-secondary); line-height: 1.6; }
-
 @media (max-width: 720px) {
   .detailPage { padding: 16px 16px calc(108px + env(safe-area-inset-bottom)); }
-  .actionPanel { grid-template-columns: 1fr; }
+  .actionPanel, .heroPanel { grid-template-columns: 1fr; }
+  .detailPhoto { height: 190px; }
   .heroPanel h2 { font-size: 26px; }
 }
 </style>
