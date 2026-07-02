@@ -84,11 +84,9 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    linear-gradient(90deg, rgba(58, 49, 43, 0.025) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(58, 49, 43, 0.02) 1px, transparent 1px),
-    var(--surface-base);
-  background-size: 42px 42px;
+  background-color: var(--surface-base);
+  background-image: url("data:image/svg+xml;utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='140'%20height='140'%3E%3Cfilter%20id='n'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='0.9'%20numOctaves='2'%20stitchTiles='stitch'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url(%23n)'%20opacity='0.14'/%3E%3C/svg%3E");
+  background-repeat: repeat;
   scroll-padding-bottom: 96px;
 }
 
@@ -182,4 +180,112 @@ a:focus-visible,
   font-weight: var(--display-weight);
   line-height: var(--leading-display);
   letter-spacing: 0;
+}
+
+.ribbonBookmark {
+  position: absolute;
+  top: -1px;
+  right: 24px;
+  width: 14px;
+  height: 34px;
+  background: var(--accent-wax);
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 4px rgba(142, 78, 56, 0.28);
+  pointer-events: none;
+}
+
+.ribbonBookmark::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  width: 14px;
+  height: 6px;
+  background: linear-gradient(180deg, var(--accent-wax) 0%, var(--accent-wax) 50%, transparent 50%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+@media (max-width: 720px) {
+  .ribbonBookmark {
+    right: 18px;
+    width: 12px;
+    height: 30px;
+  }
+
+  .ribbonBookmark::after {
+    width: 12px;
+    height: 5px;
+    bottom: -5px;
+  }
+}
+
+.letterPaper {
+  position: relative;
+  padding: 22px 20px 22px 34px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--surface-paper);
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 33px,
+    rgba(202, 188, 168, 0.42) 33px,
+    rgba(202, 188, 168, 0.42) 34px
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 10px 22px rgba(47, 38, 31, 0.06);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 34px;
+}
+
+.letterPaper::before {
+  content: "";
+  position: absolute;
+  left: 20px;
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  background: var(--surface-blush);
+  border-radius: 1px;
+}
+
+.letterPaper textarea,
+.letterPaper .letterInput {
+  width: 100%;
+  min-height: 238px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  outline: none;
+  resize: vertical;
+  line-height: 34px;
+}
+
+.letterPaper textarea::placeholder {
+  color: rgba(117, 105, 95, 0.5);
+}
+
+@media (max-width: 720px) {
+  .letterPaper {
+    padding: 18px 16px 18px 28px;
+    font-size: 16px;
+    line-height: 30px;
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 29px,
+      rgba(202, 188, 168, 0.42) 29px,
+      rgba(202, 188, 168, 0.42) 30px
+    );
+  }
+
+  .letterPaper::before {
+    left: 16px;
+  }
+
+  .letterPaper textarea,
+  .letterPaper .letterInput {
+    line-height: 30px;
+  }
 }

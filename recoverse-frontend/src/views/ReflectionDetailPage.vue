@@ -1,29 +1,23 @@
 <template>
   <section v-if="reflection" class="detailPage">
-    <header class="detailHeader">
-      <div>
-        <span class="eyebrow">{{ reflection.isCompleted ? "다시 열어보는 회고" : "이어쓰는 기억" }}</span>
-        <h1>{{ reflection.title }}</h1>
-        <div class="detailMeta" aria-label="회고 상태">
-          <span>{{ answeredCount }}개 답변</span>
-          <span aria-hidden="true">·</span>
-          <span>{{ updatedDate }} 수정</span>
-          <span v-if="!reflection.isCompleted" aria-hidden="true">·</span>
-          <span v-if="!reflection.isCompleted">진행률 {{ reflection.completionRate }}%</span>
-        </div>
-      </div>
-    </header>
-
     <main class="detailShell">
-      <section class="heroPanel">
-        <figure class="detailPhoto editorialPhotoFrame">
+      <section class="coverPanel paperPanel">
+        <span class="ribbonBookmark" aria-hidden="true"></span>
+        <span class="periodLabel">{{ reflection.period.label }}</span>
+        <h1>{{ reflection.title }}</h1>
+        <p class="coverMeta">
+          {{ updatedDate }} · 답변 {{ answeredCount }}개
+          <template v-if="!reflection.isCompleted"> · 진행률 {{ reflection.completionRate }}%</template>
+        </p>
+        <figure v-if="detailPhoto" class="coverPhoto editorialPhotoFrame">
           <img :src="detailPhoto.src" :alt="detailPhoto.alt" />
         </figure>
-        <div>
-          <span class="heroLabel">{{ reflection.period.label }}</span>
-          <h2>{{ representativeScene }}</h2>
-          <p>{{ representativeEmotion }}</p>
-        </div>
+      </section>
+
+      <section v-if="representativeScene" class="quotePanel" aria-label="이 회고의 한 문장">
+        <span class="quoteEyebrow">이 회고의 한 문장</span>
+        <p class="quoteText">"{{ representativeScene }}"</p>
+        <p v-if="representativeEmotion" class="quoteEmotion">{{ representativeEmotion }}</p>
       </section>
 
       <section class="actionPanel" aria-label="회고 주요 행동">
@@ -74,16 +68,16 @@
 
       <section class="answerList" aria-label="질문과 답변">
         <article
-          v-for="item in answerItems"
+          v-for="(item, idx) in answerItems"
           :key="item.question.id"
-          class="answerCard"
-          :class="{ empty: !item.answerText }"
+          class="answerRow"
+          :class="{ empty: !item.answerText, first: idx === 0 }"
         >
-          <span>{{ item.groupLabel }}</span>
+          <span class="qLabel">Q{{ idx + 1 }} · {{ item.groupLabel }}</span>
           <h3>{{ item.question.text }}</h3>
           <p v-if="item.answerText">{{ item.answerText }}</p>
-          <p v-else-if="item.answer?.skipped">이 질문은 지금은 건너뛰었어요.</p>
-          <p v-else>아직 비어 있는 질문이에요. 필요하면 이어쓰기에서 천천히 채울 수 있어요.</p>
+          <p v-else-if="item.answer?.skipped" class="muted">이 질문은 지금은 건너뛰었어요.</p>
+          <p v-else class="muted">아직 비어 있는 질문이에요. 이어쓰기에서 천천히 채울 수 있어요.</p>
         </article>
       </section>
     </main>
@@ -191,43 +185,67 @@ function openShareOptions() {
 </script>
 
 <style scoped>
-.detailPage { min-height: 100vh; background: var(--surface-base); color: var(--text-primary); padding: 24px var(--space-page-x) calc(112px + env(safe-area-inset-bottom)); }
-.detailHeader, .detailShell { width: min(940px, 100%); margin: 0 auto; }
-.detailHeader { margin-bottom: 22px; }
+.detailPage { min-height: 100vh; background: transparent; color: var(--text-primary); padding: 22px var(--space-page-x) calc(112px + env(safe-area-inset-bottom)); }
+.detailShell { width: min(720px, 100%); margin: 0 auto; display: grid; gap: 18px; }
 h1, h2, h3, p { margin: 0; letter-spacing: 0; }
-.detailHeader h1 { font-family: var(--font-display); font-size: clamp(28px, 5.4vw, 42px); line-height: var(--leading-tight); font-weight: var(--display-weight); }
-.detailMeta { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 6px; color: var(--text-secondary); font-size: 12px; font-weight: var(--label-weight); }
-.eyebrow, .heroLabel, .answerCard span { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
-.detailShell { display: grid; gap: 14px; }
-.heroPanel, .answerCard, .actionPanel, .sharePanel { border: 1px solid var(--border-subtle); background: rgba(255, 253, 248, 0.86); border-radius: var(--radius-card); box-shadow: 0 14px 32px rgba(58, 49, 43, 0.08); }
-.heroPanel { padding: 14px; display: grid; grid-template-columns: minmax(220px, 0.45fr) minmax(0, 1fr); gap: 18px; align-items: center; background: linear-gradient(145deg, rgba(255,253,248,0.96), rgba(239,230,214,0.62)); }
-.detailPhoto { width: 100%; height: 240px; margin: 0; border-radius: 8px; overflow: hidden; }
-.detailPhoto img { padding: 8px; }
-.heroPanel div { display: grid; gap: 10px; }
-.heroPanel h2 { font-family: var(--font-display); font-size: clamp(28px, 6vw, 42px); line-height: var(--leading-display); font-weight: var(--display-weight); overflow-wrap: anywhere; }
-.heroPanel p, .answerCard p, .sharePanel p { color: var(--text-secondary); line-height: var(--leading-body); }
-.actionPanel { padding: 12px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; }
+
+.coverPanel { position: relative; padding: 26px 24px 24px; border-radius: 16px; display: grid; gap: 10px; overflow: visible; }
+.coverPanel::after {
+  content: "";
+  position: absolute;
+  top: 18px;
+  right: 60px;
+  width: 42px;
+  height: 10px;
+  background: linear-gradient(90deg, var(--accent-wax) 0 22%, transparent 22% 32%, var(--accent-wax) 32% 54%, transparent 54% 64%, var(--accent-wax) 64% 100%);
+  mask: radial-gradient(10px 6px at 7px 4px, #000 58%, transparent 62%) repeat-x;
+  mask-size: 20px 10px;
+  opacity: 0.75;
+  pointer-events: none;
+}
+.periodLabel { color: var(--accent-wax); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+.coverPanel h1 { font-family: var(--font-display); font-size: clamp(28px, 6vw, 40px); line-height: 1.24; font-weight: var(--display-weight); color: var(--accent-espresso); word-break: keep-all; }
+.coverMeta { color: var(--text-tertiary); font-size: 13px; }
+.coverPhoto { margin: 12px 0 0; width: 100%; height: 220px; border-radius: 10px; overflow: hidden; }
+.coverPhoto img { padding: 8px; }
+
+.quotePanel { padding: 22px 20px; border-radius: 14px; background: var(--surface-sage); border: 1px solid var(--border-subtle); display: grid; gap: 10px; }
+.quoteEyebrow { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+.quoteText { font-family: var(--font-display); font-size: clamp(18px, 3.6vw, 22px); line-height: 1.5; color: var(--text-primary); word-break: keep-all; }
+.quoteEmotion { color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
+
+.actionPanel { padding: 10px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; border: 1px solid var(--border-subtle); border-radius: 14px; background: rgba(255, 253, 248, 0.86); }
 .primaryAction, .secondaryAction, .tertiaryAction, .shareButton { border-radius: var(--radius-pill); font-weight: var(--heading-weight); letter-spacing: 0; padding: 11px 14px; }
-.primaryAction { border: 0; background: var(--accent-espresso); color: var(--surface-paper); }
+.primaryAction { border: 0; background: var(--accent-espresso); color: var(--surface-paper); box-shadow: 0 12px 26px rgba(58, 49, 43, 0.22); }
 .secondaryAction, .shareButton { border: 1px solid var(--border-strong); background: transparent; color: var(--text-primary); }
 .secondaryAction:hover:not(:disabled), .secondaryAction:focus-visible, .shareButton:hover:not(:disabled), .shareButton:focus-visible { border-color: var(--accent-sage); background: rgba(111, 127, 107, 0.08); }
 .tertiaryAction { border: 0; background: transparent; color: var(--text-secondary); padding: 9px 12px; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
 .tertiaryAction:hover:not(:disabled), .tertiaryAction:focus-visible { color: var(--text-primary); }
 .secondaryAction:disabled, .tertiaryAction:disabled { opacity: 0.45; }
-.sharePanel { padding: 16px; }
+
+.sharePanel { padding: 16px; border: 1px solid var(--border-subtle); border-radius: 14px; background: rgba(255, 253, 248, 0.86); }
 .sharePanel summary { cursor: pointer; font-weight: var(--heading-weight); }
-.shareList, .answerList { display: grid; gap: 10px; }
-.shareList { margin: 12px 0; }
-.shareOption { border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(251, 244, 236, 0.56); padding: 10px; display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; }
-.answerCard { padding: 18px; display: grid; gap: 8px; }
-.answerCard h3 { font-size: 17px; line-height: var(--leading-tight); font-weight: var(--heading-weight); }
-.answerCard.empty { border-style: dashed; }
+.sharePanel p { margin-top: 8px; color: var(--text-secondary); line-height: var(--leading-body); font-size: 13px; }
+.shareList { display: grid; gap: 8px; margin: 12px 0; }
+.shareOption { border: 1px solid var(--border-subtle); border-radius: 10px; background: rgba(251, 244, 236, 0.56); padding: 10px; display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; }
+
+.answerList { display: grid; gap: 0; padding: 8px 4px; }
+.answerRow { padding: 20px 4px; border-top: 1px solid var(--border-subtle); display: grid; gap: 7px; }
+.answerRow.first { border-top: 0; padding-top: 8px; }
+.qLabel { color: var(--text-tertiary); font-size: 11px; font-weight: var(--label-weight); letter-spacing: 0.06em; }
+.answerRow h3 { font-family: var(--font-display); font-size: 17px; line-height: 1.4; font-weight: var(--display-weight); color: var(--accent-espresso); word-break: keep-all; }
+.answerRow p { color: var(--text-primary); line-height: 1.7; font-size: 15px; word-break: keep-all; }
+.answerRow p.muted { color: var(--text-tertiary); font-size: 14px; font-style: italic; }
+
 .emptyState { display: grid; place-items: center; align-content: center; gap: 14px; text-align: center; }
 .emptyState p { max-width: 380px; color: var(--text-secondary); line-height: 1.6; }
+
 @media (max-width: 720px) {
   .detailPage { padding: 16px 16px calc(108px + env(safe-area-inset-bottom)); }
-  .actionPanel, .heroPanel { grid-template-columns: 1fr; }
-  .detailPhoto { height: 190px; }
-  .heroPanel h2 { font-size: 26px; }
+  .actionPanel { grid-template-columns: 1fr; }
+  .coverPanel { padding: 22px 20px; }
+  .coverPanel::after { right: 44px; }
+  .coverPhoto { height: 180px; }
+  .coverPanel h1 { font-size: 26px; }
 }
 </style>
