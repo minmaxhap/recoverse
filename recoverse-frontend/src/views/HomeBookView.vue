@@ -5,14 +5,17 @@
         <section class="heroSection">
           <div class="heroCopy">
             <span class="screenEyebrow">{{ brandLabel }}</span>
-            <h1 class="serifTitle">30초면<br />충분해요.</h1>
-            <p>질문에 답하다 보면 오늘 하루도, 여행도, 연말도 하나의 추억이 됩니다.</p>
+            <h1 class="serifTitle">미래의 나에게<br />배달되는<br />30초 회고.</h1>
+            <p>
+              질문 하나에 답하면 오늘의 생각이 봉투처럼 보관되고,
+              시간이 지난 뒤 다시 도착합니다.
+            </p>
             <div class="heroActions">
               <button class="primaryButton" type="button" @click="$emit('start-quick')">
-                30초 만에 시작하기
+                첫 회고 배달하기
               </button>
               <button class="paperButton" type="button" @click="$emit('start-writing')">
-                질문 카드 고르기
+                연말/여행 회고 고르기
               </button>
             </div>
           </div>
@@ -25,6 +28,13 @@
             </figcaption>
           </figure>
         </section>
+
+        <DeliveryLoopPanel
+          :arrival-preview="todayDeliveryCard?.preview ?? ''"
+          :arrival-reflection-id="todayDeliveryCard?.reflection.id"
+          @open-arrival="openCompletedMemory"
+          @start-quick="$emit('start-quick')"
+        />
 
         <section class="albumSection" aria-labelledby="album-title">
           <div class="sectionHeader row">
@@ -63,8 +73,8 @@
               <span class="screenEyebrow">First page</span>
               <h3>아직 책장이 비어 있어요.</h3>
               <p>지금 떠오른 장면 하나만 남기면 첫 회고 카드가 생깁니다.</p>
-              <button class="primaryButton" type="button" @click="$emit('start-writing')">
-                첫 회고 시작하기
+              <button class="primaryButton" type="button" @click="$emit('start-quick')">
+                첫 회고 배달하기
               </button>
             </div>
           </div>
@@ -72,8 +82,8 @@
 
         <section class="promptSection" aria-labelledby="prompt-title">
           <div class="sectionHeader">
-            <span class="screenEyebrow">Quick prompts</span>
-            <h2 id="prompt-title">짧게 써도 회고 한 장이 만들어져요</h2>
+            <span class="screenEyebrow">Question cards</span>
+            <h2 id="prompt-title">선택보다 답변이 먼저입니다.</h2>
           </div>
           <div class="promptGrid">
             <article v-for="prompt in homePromptCards" :key="prompt.title" class="promptCard">
@@ -92,8 +102,8 @@
             </figure>
             <div>
               <span class="screenEyebrow">Time capsule</span>
-              <h2>나중의 나에게 닿는 작은 편지</h2>
-              <p>종이 결과 리본 북마크, 편지지 결까지 — 앱 전체의 결을 이어갑니다.</p>
+              <h2>기록 앱이 아니라, 다시 발견하는 장치</h2>
+              <p>답변을 많이 쌓는 것보다 나중에 다시 열고 싶게 만드는 경험을 우선합니다.</p>
             </div>
           </article>
         </section>
@@ -104,6 +114,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import DeliveryLoopPanel from "../components/DeliveryLoopPanel.vue";
 import HomeView from "./HomeView.vue";
 import type { Reflection } from "../types/reflection";
 
@@ -148,12 +159,20 @@ const memoryCards = computed(() =>
   }))
 );
 
+const todayDeliveryCard = computed(() =>
+  memoryCards.value.find((card) => card.reflection.isCompleted) ?? null
+);
+
 function openMemory(reflectionId: string, isCompleted: boolean) {
   if (isCompleted) {
     emit("open-reflection", reflectionId);
     return;
   }
   emit("continue-reflection", reflectionId);
+}
+
+function openCompletedMemory(reflectionId: string) {
+  emit("open-reflection", reflectionId);
 }
 </script>
 

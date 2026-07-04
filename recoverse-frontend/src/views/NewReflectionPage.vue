@@ -11,20 +11,20 @@
       <section class="entryCard" aria-labelledby="entry-title">
         <figure class="entryPhoto editorialPhotoFrame">
           <img src="/design/sealed-envelope-stack.jpg" alt="초록색 왁스 실링이 붙은 종이 봉투 더미" />
-          <figcaption>질문을 고르면 오늘의 회고 봉투가 열립니다.</figcaption>
+          <figcaption>필요하면 템플릿을 고르고, 아니면 바로 첫 질문으로 들어갑니다.</figcaption>
         </figure>
 
         <div class="entryForm">
           <div class="entryCopy">
-            <span class="eyebrow">첫 질문으로 바로 들어가기</span>
-            <h1 id="entry-title">무엇을 돌아볼까요?</h1>
+            <span class="eyebrow">Template is optional</span>
+            <h1 id="entry-title">고르느라 멈추지 않게.</h1>
           </div>
 
           <label class="topicField">
-            <span>기억의 이름</span>
+            <span>회고 시점, 비워두면 자동으로 정해져요</span>
             <input
               v-model="periodLabel"
-              :placeholder="selectedTemplate?.periodPlaceholder ?? '제주 여행'"
+              :placeholder="selectedTemplate?.periodPlaceholder ?? defaultPeriodLabel"
               autocomplete="off"
               @keydown.enter.prevent="primaryAction"
             />
@@ -72,7 +72,7 @@
           </div>
 
           <button v-else class="primaryCta" type="button" :disabled="!canStart" @click="start">
-            첫 질문 열기
+            이 질문으로 시작하기
           </button>
         </div>
       </section>
@@ -111,6 +111,7 @@ const templates = [
   ...reflectionTemplates.filter((template) => template.id === "template_travel"),
   ...reflectionTemplates.filter((template) => template.id !== "template_travel"),
 ];
+const defaultPeriodLabel = "오늘";
 const selectedTemplateId = ref("template_travel");
 const selectedQuestionSetMode = ref<ReflectionQuestionSetMode>("light");
 const periodLabel = ref("");
@@ -123,6 +124,10 @@ const templateVisualById: Record<string, { mark: string }> = {
 };
 
 const selectedTemplate = computed(() => getReflectionTemplate(selectedTemplateId.value));
+
+const effectivePeriodLabel = computed(
+  () => periodLabel.value.trim() || selectedTemplate.value?.periodPlaceholder || defaultPeriodLabel
+);
 
 const quickPeriodChips = computed(() => {
   const year = new Date().getFullYear();
@@ -140,7 +145,7 @@ const quickPeriodChips = computed(() => {
 
 const generatedTitle = computed(() => {
   const template = selectedTemplate.value;
-  const label = periodLabel.value.trim();
+  const label = effectivePeriodLabel.value;
   if (!template || !label) return "새 기억";
   if (template.id === "template_travel") return `${label}의 기억`;
   if (template.id === "template_life_chapter") return `${label}의 회고`;
@@ -149,11 +154,7 @@ const generatedTitle = computed(() => {
 
 const canStart = computed(() => {
   const template = selectedTemplate.value;
-  return Boolean(
-    template &&
-      periodLabel.value.trim() &&
-      buildQuestionGroupsForMode(template, selectedQuestionSetMode.value).length > 0
-  );
+  return Boolean(template && buildQuestionGroupsForMode(template, selectedQuestionSetMode.value).length > 0);
 });
 
 const duplicateReflection = computed(() => {
@@ -202,7 +203,7 @@ function parseYear(label: string): number | undefined {
 }
 
 function start() {
-  const label = periodLabel.value.trim();
+  const label = effectivePeriodLabel.value;
   if (!canStart.value || !label) return;
 
   emit("create", {

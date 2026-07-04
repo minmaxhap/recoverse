@@ -18,7 +18,6 @@ export const bottomNavLabels: Record<BottomTabId, string> = {
 export function shouldShowBottomNav(mode: AppMode): boolean {
   return [
     "home-book",
-    "reflection-new",
     "reflection-detail",
     "review-again",
     "shared-reflections",

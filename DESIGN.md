@@ -4,6 +4,15 @@
 
 Recoverse feels like opening a saved letter years later: quiet, tactile, personal, and slightly ceremonial. The product is not a productivity tracker; it is a small archive of remembered states. The signature is **Book x Time Capsule**: paper-like surfaces, editorial Korean typography, envelope folds, wax-seal confirmations, tiny stamps, and calm sage accents that make every reflection feel preserved rather than logged.
 
+Recoverse's product position is **future-delivered 30-second reflection**. It should never present itself as a general journal, note app, or productivity workspace. The first screen must answer the loop in one glance: write one small answer now, preserve it like a letter, and rediscover it later when the past answer arrives again.
+
+Primary copy should use delivery and rediscovery language:
+- "미래의 나에게 배달되는 30초 회고."
+- "첫 회고 배달하기"
+- "오늘 도착한 과거 회고"
+
+Avoid copy that makes the user feel they must organize, name, or manage an archive before writing. Template choice, comparison, sharing, settings, and backup are secondary surfaces, not first-run value.
+
 ## 2. Color
 
 | Role | Token | Light | Dark | Usage |
