@@ -45,6 +45,12 @@
         </button>
       </section>
 
+      <section class="dangerZone">
+        <button class="deleteAction" type="button" @click="confirmDelete">
+          이 회고 삭제하기
+        </button>
+      </section>
+
       <section v-if="shareableItems.length > 0" class="sharePanel">
         <details ref="shareDetailsRef">
           <summary>공유할 답변 고르기</summary>
@@ -94,16 +100,19 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
 import type { Question, Reflection } from "../types/reflection";
+import { getPreviewSentence } from "../lib/reflectionPreview";
+import { confirmDialog } from "../composables/useAppDialog";
 
 const props = defineProps<{
   reflection: Reflection | null;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   "back-home": [];
   edit: [];
   "review-again": [];
   share: [questionIds: string[]];
+  delete: [];
 }>();
 
 const shareSelection = ref<string[]>([]);
@@ -115,9 +124,6 @@ const questions = computed<Question[]>(() =>
 const answerMap = computed(() => new Map(props.reflection?.answers.map((answer) => [answer.questionId, answer]) ?? []));
 const answeredCount = computed(() =>
   props.reflection?.answers.filter((answer) => answer.value.trim().length > 0).length ?? 0
-);
-const firstAnsweredText = computed(() =>
-  props.reflection?.answers.find((answer) => answer.value.trim())?.value.trim() ?? ""
 );
 const detailPhoto = computed(() =>
   props.reflection?.isCompleted
@@ -132,7 +138,7 @@ const detailPhoto = computed(() =>
 );
 const representativeScene = computed(() => {
   if (!props.reflection) return "";
-  return props.reflection.representativeSentence ?? (firstAnsweredText.value || "아직 저장된 장면이 없어요.");
+  return getPreviewSentence(props.reflection, 140);
 });
 const representativeEmotion = computed(() => {
   const emotionQuestion = questions.value.find((question) => question.text.includes("감정"));
@@ -182,6 +188,17 @@ function openShareOptions() {
   shareDetailsRef.value.open = true;
   shareDetailsRef.value.scrollIntoView({ block: "center", behavior: "smooth" });
 }
+
+async function confirmDelete() {
+  const confirmed = await confirmDialog("삭제하면 되돌릴 수 없어요.", {
+    title: "이 회고를 삭제할까요?",
+    confirmLabel: "삭제하기",
+    cancelLabel: "취소",
+    danger: true,
+  });
+  if (!confirmed) return;
+  emit("delete");
+}
 </script>
 
 <style scoped>
@@ -197,9 +214,10 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
   right: 60px;
   width: 42px;
   height: 10px;
-  background: linear-gradient(90deg, var(--accent-wax) 0 22%, transparent 22% 32%, var(--accent-wax) 32% 54%, transparent 54% 64%, var(--accent-wax) 64% 100%);
-  mask: radial-gradient(10px 6px at 7px 4px, #000 58%, transparent 62%) repeat-x;
-  mask-size: 20px 10px;
+  background:
+    radial-gradient(circle at 5px 5px, var(--accent-wax) 0 4px, transparent 4px),
+    radial-gradient(circle at 21px 5px, var(--accent-wax) 0 4px, transparent 4px),
+    radial-gradient(circle at 37px 5px, var(--accent-wax) 0 4px, transparent 4px);
   opacity: 0.75;
   pointer-events: none;
 }
@@ -222,6 +240,10 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
 .tertiaryAction { border: 0; background: transparent; color: var(--text-secondary); padding: 9px 12px; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
 .tertiaryAction:hover:not(:disabled), .tertiaryAction:focus-visible { color: var(--text-primary); }
 .secondaryAction:disabled, .tertiaryAction:disabled { opacity: 0.45; }
+
+.dangerZone { display: flex; justify-content: center; padding: 4px; }
+.deleteAction { border: 0; background: transparent; color: var(--color-danger); opacity: 0.72; padding: 8px 12px; font-size: 13px; font-weight: var(--label-weight); text-decoration: underline; text-underline-offset: 4px; }
+.deleteAction:hover, .deleteAction:focus-visible { opacity: 1; }
 
 .sharePanel { padding: 16px; border: 1px solid var(--border-subtle); border-radius: 14px; background: rgba(255, 253, 248, 0.86); }
 .sharePanel summary { cursor: pointer; font-weight: var(--heading-weight); }

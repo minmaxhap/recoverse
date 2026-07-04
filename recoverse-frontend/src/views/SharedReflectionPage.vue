@@ -32,7 +32,7 @@
           <span class="eyebrow">나도 답해보기</span>
           <h2>같은 질문으로 내 회고를 시작할 수 있어요.</h2>
         </div>
-        <button class="primaryCta" type="button" @click="$emit('answer-same')">
+        <button class="primaryCta" type="button" @click="answerSame">
           나도 같은 질문에 답하기
         </button>
       </section>
@@ -43,7 +43,7 @@
     <span class="eyebrow">읽기 전용 공유</span>
     <h1>공유된 기억을 찾을 수 없어요.</h1>
     <p>링크가 잘렸거나 공유할 답변이 없는 상태예요. 새 회고를 시작하거나 다시 받은 링크로 열어주세요.</p>
-    <button class="primaryCta" type="button" @click="$emit('answer-same')">
+    <button class="primaryCta" type="button" @click="$emit('start-new')">
       새 기억 작성하기
     </button>
   </section>
@@ -59,9 +59,10 @@ const props = defineProps<{
   snapshot?: SharedReflectionSnapshot | null;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   "back-home": [];
-  "answer-same": [];
+  "answer-same": [payload: { questions: string[] }];
+  "start-new": [];
 }>();
 
 const shareTitle = computed(() => props.snapshot?.title ?? props.reflection?.title ?? "");
@@ -87,6 +88,12 @@ const visibleItems = computed(() => {
     })
   );
 });
+
+function answerSame() {
+  const questions = visibleItems.value.map((item) => item.questionText).filter(Boolean);
+  if (questions.length === 0) return;
+  emit("answer-same", { questions });
+}
 </script>
 
 <style scoped>
@@ -96,7 +103,7 @@ const visibleItems = computed(() => {
 .sharedPhoto { width: 100%; height: 124px; margin: 0; border-radius: 8px; overflow: hidden; }
 .sharedPhoto img { padding: 7px; }
 .sharedHeader h1, .sameQuestionCta h2, .answerCard h2 { margin: 0; letter-spacing: 0; }
-.sharedHeader h1 { font-family: var(--font-display); font-size: clamp(28px, 6vw, 42px); line-height: var(--leading-tight); font-weight: var(--display-weight); }
+.sharedHeader h1 { font-family: var(--font-display); font-size: clamp(28px, 6vw, 42px); line-height: var(--leading-tight); font-weight: var(--display-weight); word-break: keep-all; }
 .eyebrow, .answerCard span { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 .sharedShell, .answerList { display: grid; gap: 12px; }
 .notice, .answerCard, .sameQuestionCta { border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(255, 253, 248, 0.86); padding: 18px; box-shadow: 0 12px 28px rgba(58, 49, 43, 0.07); }
@@ -104,7 +111,7 @@ const visibleItems = computed(() => {
 .notice strong { display: block; margin-bottom: 6px; }
 .notice p, .answerCard p { margin: 0; color: var(--text-secondary); line-height: var(--leading-body); }
 .answerCard { display: grid; gap: 8px; }
-.answerCard h2 { font-family: var(--font-display); font-size: 21px; line-height: var(--leading-tight); font-weight: var(--display-weight); }
+.answerCard h2 { font-family: var(--font-display); font-size: 21px; line-height: var(--leading-tight); font-weight: var(--display-weight); word-break: keep-all; overflow-wrap: anywhere; }
 .sameQuestionCta { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
 .primaryCta { border: 0; border-radius: var(--radius-pill); background: var(--accent-espresso); color: var(--surface-paper); font-weight: var(--heading-weight); letter-spacing: 0; padding: 12px 15px; }
 .emptyState { display: grid; place-items: center; align-content: center; gap: 16px; text-align: center; }

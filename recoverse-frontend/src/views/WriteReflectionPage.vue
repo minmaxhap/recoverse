@@ -188,14 +188,14 @@ function saveLater() {
 </script>
 
 <style scoped>
-.writePage { min-height: 100vh; background: transparent; color: var(--text-primary); padding: 24px var(--space-page-x) 188px; }
+.writePage { min-height: 100vh; background: transparent; color: var(--text-primary); padding: 24px var(--space-page-x) 200px; }
 .writeHeader, .questionShell, .stepDots { width: min(960px, 100%); margin: 0 auto; }
 .writeHeader { display: grid; grid-template-columns: 1fr auto; align-items: end; column-gap: 16px; row-gap: 12px; }
 .titleBlock { min-width: 0; }
 .leaveLink { align-self: start; border: 1px solid var(--border-subtle); border-radius: var(--radius-pill); background: rgba(255, 253, 248, 0.72); color: var(--text-secondary); padding: 9px 13px; font-size: 13px; font-weight: var(--label-weight); letter-spacing: 0; }
 .leaveLink:hover, .leaveLink:focus-visible { color: var(--text-primary); border-color: var(--border-strong); }
 .eyebrow, .questionMeta { color: var(--accent-wax); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
-.writeHeader h1 { margin: 4px 0 0; font-family: var(--font-display); font-size: clamp(24px, 5vw, 34px); line-height: var(--leading-tight); font-weight: var(--display-weight); letter-spacing: 0; }
+.writeHeader h1 { margin: 4px 0 0; font-family: var(--font-display); font-size: clamp(24px, 5vw, 34px); line-height: var(--leading-tight); font-weight: var(--display-weight); letter-spacing: 0; word-break: keep-all; }
 
 .stepDots { display: flex; align-items: center; gap: 6px; margin: 18px auto 26px; }
 .stepDots .dot { width: 22px; height: 4px; border-radius: 2px; background: var(--border-strong); transition: background-color 200ms ease; }
@@ -222,7 +222,7 @@ function saveLater() {
 .saveBadge .dotMark { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .charCount { color: var(--text-tertiary); }
 
-.writeActions { position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 35; width: min(840px, calc(100% - 32px)); transform: translateX(-50%); display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 20px; background: rgba(255, 253, 248, 0.92); box-shadow: var(--shadow-lifted); backdrop-filter: blur(16px); }
+.writeActions { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 35; width: min(840px, calc(100% - 32px)); transform: translateX(-50%); display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 20px; background: rgba(255, 253, 248, 0.92); box-shadow: var(--shadow-lifted); backdrop-filter: blur(16px); }
 .primary, .secondary { min-height: 44px; border-radius: var(--radius-pill); font-weight: var(--heading-weight); letter-spacing: 0; padding: 12px 15px; }
 .primary { border: 0; background: var(--accent-espresso); color: var(--surface-paper); box-shadow: 0 12px 26px rgba(58, 49, 43, 0.24); }
 .secondary { border: 1px solid var(--border-strong); background: transparent; color: var(--text-secondary); }
@@ -231,15 +231,15 @@ function saveLater() {
 .emptyState p { max-width: 360px; color: var(--text-secondary); line-height: 1.6; }
 
 @media (max-width: 760px) {
-  .writePage { padding: 16px 16px 196px; }
+  .writePage { padding: 16px 16px 208px; }
   .writeHeader { grid-template-columns: 1fr; }
   .leaveLink { justify-self: start; }
   .stepDots .dot { flex: 1; width: auto; max-width: 40px; }
   .questionShell { grid-template-columns: 1fr; }
   .writingPhotoPanel { display: none; }
-  .writeActions { bottom: calc(82px + env(safe-area-inset-bottom)); grid-template-columns: 0.85fr 1.4fr; }
-  .writePage:focus-within { padding-bottom: 32px; }
-  .writePage:focus-within .writeActions { position: sticky; left: auto; bottom: 12px; width: 100%; transform: none; }
+  .writeActions { bottom: calc(94px + env(safe-area-inset-bottom)); grid-template-columns: 0.85fr 1.4fr; }
+  .writePage:focus-within { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+  .writePage:focus-within .writeActions { position: sticky; left: auto; bottom: calc(90px + env(safe-area-inset-bottom)); width: 100%; transform: none; }
   .questionCard h2 { font-size: 25px; }
 }
 </style>

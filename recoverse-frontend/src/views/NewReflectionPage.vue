@@ -16,7 +16,7 @@
 
         <div class="entryForm">
           <div class="entryCopy">
-            <span class="eyebrow">Template is optional</span>
+            <span class="eyebrow">템플릿은 선택사항이에요</span>
             <h1 id="entry-title">고르느라 멈추지 않게.</h1>
           </div>
 
@@ -54,6 +54,42 @@
               <strong>{{ template.label }}</strong>
               <span>{{ getQuestionCount(template.id) }}문항</span>
             </button>
+            <button
+              class="templateChip customChip"
+              :class="{ selected: isCustomMode }"
+              type="button"
+              @click="selectTemplate(CUSTOM_MODE_ID)"
+            >
+              <span class="templateStamp" aria-hidden="true">+</span>
+              <strong>직접 만들기</strong>
+              <span>질문을 내가 적어요</span>
+            </button>
+          </div>
+
+          <div v-if="isCustomMode" class="customQuestionEditor">
+            <label v-for="(question, idx) in customQuestions" :key="idx" class="customQuestionRow">
+              <span>질문 {{ idx + 1 }}</span>
+              <div class="customQuestionInput">
+                <input
+                  v-model="customQuestions[idx]"
+                  type="text"
+                  placeholder="예: 올해 가장 기억에 남는 순간은?"
+                  autocomplete="off"
+                />
+                <button
+                  type="button"
+                  class="removeQuestionButton"
+                  :disabled="customQuestions.length <= 1"
+                  aria-label="이 질문 삭제"
+                  @click="removeCustomQuestion(idx)"
+                >
+                  ✕
+                </button>
+              </div>
+            </label>
+            <button type="button" class="addQuestionButton" @click="addCustomQuestion">
+              + 질문 추가하기
+            </button>
           </div>
 
           <div v-if="duplicateReflection" class="duplicateNotice" role="status">
@@ -72,7 +108,7 @@
           </div>
 
           <button v-else class="primaryCta" type="button" :disabled="!canStart" @click="start">
-            이 질문으로 시작하기
+            {{ isCustomMode ? "이 질문들로 시작하기" : "이 질문 묶음으로 시작하기" }}
           </button>
         </div>
       </section>
@@ -105,7 +141,16 @@ const emit = defineEmits<{
       title?: string;
     },
   ];
+  "create-custom": [
+    payload: {
+      period: ReflectionPeriod;
+      title?: string;
+      questions: string[];
+    },
+  ];
 }>();
+
+const CUSTOM_MODE_ID = "custom_questions";
 
 const templates = [
   ...reflectionTemplates.filter((template) => template.id === "template_travel"),
@@ -115,12 +160,15 @@ const defaultPeriodLabel = "오늘";
 const selectedTemplateId = ref("template_travel");
 const selectedQuestionSetMode = ref<ReflectionQuestionSetMode>("light");
 const periodLabel = ref("");
+const customQuestions = ref<string[]>(["", ""]);
+
+const isCustomMode = computed(() => selectedTemplateId.value === CUSTOM_MODE_ID);
 
 const templateVisualById: Record<string, { mark: string }> = {
-  template_travel: { mark: "TR" },
-  template_year: { mark: "YR" },
-  template_period: { mark: "PD" },
-  template_life_chapter: { mark: "LC" },
+  template_travel: { mark: "01" },
+  template_year: { mark: "02" },
+  template_period: { mark: "03" },
+  template_life_chapter: { mark: "04" },
 };
 
 const selectedTemplate = computed(() => getReflectionTemplate(selectedTemplateId.value));
@@ -144,20 +192,26 @@ const quickPeriodChips = computed(() => {
 });
 
 const generatedTitle = computed(() => {
-  const template = selectedTemplate.value;
   const label = effectivePeriodLabel.value;
-  if (!template || !label) return "새 기억";
+  if (!label) return "새 기억";
+  if (isCustomMode.value) return `${label} 회고`;
+  const template = selectedTemplate.value;
+  if (!template) return "새 기억";
   if (template.id === "template_travel") return `${label}의 기억`;
   if (template.id === "template_life_chapter") return `${label}의 회고`;
   return `${label} ${template.label}`;
 });
 
 const canStart = computed(() => {
+  if (isCustomMode.value) {
+    return customQuestions.value.some((question) => question.trim().length > 0);
+  }
   const template = selectedTemplate.value;
   return Boolean(template && buildQuestionGroupsForMode(template, selectedQuestionSetMode.value).length > 0);
 });
 
 const duplicateReflection = computed(() => {
+  if (isCustomMode.value) return null;
   const label = periodLabel.value.trim();
   if (!label) return null;
   return (
@@ -202,16 +256,33 @@ function parseYear(label: string): number | undefined {
   return Number.isFinite(year) ? year : undefined;
 }
 
+function addCustomQuestion() {
+  customQuestions.value.push("");
+}
+
+function removeCustomQuestion(index: number) {
+  if (customQuestions.value.length <= 1) return;
+  customQuestions.value.splice(index, 1);
+}
+
 function start() {
   const label = effectivePeriodLabel.value;
   if (!canStart.value || !label) return;
 
+  const period = { label, year: parseYear(label) };
+
+  if (isCustomMode.value) {
+    emit("create-custom", {
+      period,
+      title: generatedTitle.value,
+      questions: customQuestions.value.map((question) => question.trim()).filter(Boolean),
+    });
+    return;
+  }
+
   emit("create", {
     templateId: selectedTemplateId.value,
-    period: {
-      label,
-      year: parseYear(label),
-    },
+    period,
     questionSetMode: selectedQuestionSetMode.value,
     title: generatedTitle.value,
   });
@@ -229,7 +300,7 @@ function start() {
 .entryForm { display: grid; align-content: center; gap: clamp(18px, 3vh, 26px); padding: clamp(8px, 2vw, 18px); }
 .entryCopy { display: grid; gap: 10px; }
 .eyebrow { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
-h1 { max-width: 640px; margin: 0; font-family: var(--font-display); font-size: clamp(36px, 7vw, 58px); line-height: var(--leading-display); font-weight: var(--display-weight); letter-spacing: 0; }
+h1 { max-width: 640px; margin: 0; font-family: var(--font-display); font-size: clamp(36px, 7vw, 58px); line-height: var(--leading-display); font-weight: var(--display-weight); letter-spacing: 0; word-break: keep-all; }
 .topicField { display: grid; gap: 8px; }
 .topicField span, .templateChip span { color: var(--text-secondary); font-size: 12px; font-weight: var(--label-weight); }
 .topicField input { width: 100%; border: 0; border-bottom: 1px solid var(--border-strong); border-radius: 0; background: transparent; color: var(--text-primary); padding: 12px 2px; font-family: var(--font-display); font-size: clamp(24px, 5.4vw, 38px); font-weight: var(--display-weight); letter-spacing: 0; outline: none; }
@@ -239,6 +310,21 @@ h1 { max-width: 640px; margin: 0; font-family: var(--font-display); font-size: c
 .templateStamp { width: 38px; height: 38px; border: 1px solid var(--border-strong); border-radius: 50%; display: grid; place-items: center; color: var(--accent-sage); font-family: var(--font-display); font-size: 14px; font-weight: var(--display-weight); }
 .templateChip strong { font-weight: var(--heading-weight); }
 .templateChip.selected { border-color: rgba(111, 127, 107, 0.46); background: var(--surface-sage); }
+.customChip .templateStamp { color: var(--accent-wax); font-size: 20px; }
+.customChip.selected { border-color: rgba(142, 78, 56, 0.4); background: var(--surface-blush); }
+
+.customQuestionEditor { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(251, 244, 236, 0.44); }
+.customQuestionRow { display: grid; gap: 5px; }
+.customQuestionRow span { color: var(--text-secondary); font-size: 12px; font-weight: var(--label-weight); }
+.customQuestionInput { display: flex; gap: 8px; align-items: center; }
+.customQuestionInput input { flex: 1; min-width: 0; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface-paper); color: var(--text-primary); padding: 10px 12px; font-size: 15px; }
+.customQuestionInput input:focus-visible { outline: none; border-color: var(--accent-sage); }
+.removeQuestionButton { flex-shrink: 0; width: 34px; height: 34px; border: 1px solid var(--border-subtle); border-radius: 50%; background: transparent; color: var(--text-tertiary); }
+.removeQuestionButton:hover:not(:disabled), .removeQuestionButton:focus-visible { color: var(--color-danger); border-color: var(--color-danger); }
+.removeQuestionButton:disabled { opacity: 0.35; }
+.addQuestionButton { justify-self: start; border: 1px dashed var(--border-strong); border-radius: var(--radius-pill); background: transparent; color: var(--text-secondary); padding: 9px 14px; font-size: 13px; font-weight: var(--label-weight); }
+.addQuestionButton:hover, .addQuestionButton:focus-visible { color: var(--text-primary); border-color: var(--accent-sage); }
+
 .primaryCta { width: min(270px, 100%); min-height: 52px; border: 0; border-radius: var(--radius-pill); background: var(--accent-espresso); color: var(--surface-paper); padding: 13px 18px; font-weight: var(--heading-weight); }
 .primaryCta:disabled { opacity: 0.45; }
 .duplicateNotice { display: grid; gap: 12px; border: 1px solid rgba(142, 78, 56, 0.22); border-radius: var(--radius-card); background: rgba(234, 215, 207, 0.42); padding: 14px 16px; }

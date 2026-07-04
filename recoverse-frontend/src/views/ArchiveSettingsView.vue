@@ -2,7 +2,7 @@
   <section class="settingsScreen">
     <header class="settingsHead">
       <div>
-        <span class="eyebrow">Settings</span>
+        <span class="eyebrow">환경 설정</span>
         <h2>설정</h2>
         <p>표시 방식, 임시 저장 상태, 내 기억 데이터를 관리합니다.</p>
       </div>
@@ -23,7 +23,7 @@
 
     <section class="samplePanel" aria-label="샘플 회고">
       <header>
-        <span class="sampleEyebrow">Preview</span>
+        <span class="sampleEyebrow">미리보기</span>
         <h3>샘플 회고로 화면을 둘러보세요.</h3>
       </header>
       <p>제주 여행을 예시로, 질문 작성부터 상세 회고까지의 흐름을 바로 확인할 수 있어요.</p>

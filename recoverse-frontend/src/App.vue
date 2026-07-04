@@ -15,6 +15,7 @@
         @open-reflection="openReflectionDetail"
         @continue-reflection="continueReflection"
         @load-sample="loadSampleReflection"
+        @view-all="openReviewAgain"
       />
 
       <NewReflectionPage
@@ -22,6 +23,7 @@
         :reflections="reflections"
         @back-home="setMode('home-book')"
         @create="startReflectionDraft"
+        @create-custom="startCustomReflectionDraft"
         @open-existing="continueReflection"
       />
 
@@ -41,6 +43,7 @@
         @edit="setMode('reflection-write')"
         @review-again="openReviewAgain"
         @share="shareActiveReflection"
+        @delete="deleteActiveReflection"
       />
 
       <ReviewAgainPage
@@ -55,7 +58,8 @@
         :reflection="activeReflection"
         :snapshot="sharedReflectionSnapshot"
         @back-home="setMode('home-book')"
-        @answer-same="openNewReflection"
+        @answer-same="startSharedQuestionReflection"
+        @start-new="openNewReflection"
       />
 
       <ArchiveSettingsView
@@ -82,12 +86,14 @@
       :labels="bottomNavLabels"
       @navigate="navigateBottomTab"
     />
+    <AppDialog />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
 import AppBottomNav from "./components/AppBottomNav.vue";
+import AppDialog from "./components/AppDialog.vue";
 import AppTopNav from "./components/AppTopNav.vue";
 import type { TopMenuAction } from "./components/AppTopNav.vue";
 import type { RecoverseTheme, SettingsSection } from "./components/ArchiveSettingsTools.vue";
@@ -115,7 +121,9 @@ import {
 } from "./lib/appNavigation";
 import type { AppLanguage } from "./types/recoverse";
 import {
+  createCustomReflectionDraft,
   createReflectionDraft,
+  deleteReflection,
   loadReflections,
   saveReflection,
   saveReflectionAnswer,
@@ -149,6 +157,7 @@ import {
   resetTelemetry,
   type TelemetryState,
 } from "./lib/localTelemetry";
+import { alertDialog, confirmDialog, promptDialog } from "./composables/useAppDialog";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
 const language = ref<AppLanguage>(loadPreferredLanguage());
@@ -190,9 +199,9 @@ function setAppTheme(theme: RecoverseTheme) {
   savePreferredTheme(theme);
 }
 
-function openSettingsSection(section: SettingsSection) {
+async function openSettingsSection(section: SettingsSection) {
   activeSettingsSection.value = section;
-  if (!confirmLeavingWriteMode()) return;
+  if (!(await confirmLeavingWriteMode())) return;
   setMode("archive-settings");
 
   nextTick(() => {
@@ -232,8 +241,12 @@ function onHashChange() {
 }
 
 function confirmLeavingWriteMode() {
-  if (mode.value !== "reflection-write") return true;
-  return confirm("작성 중인 답변은 이 기기에 임시 저장돼요. 다른 화면으로 이동할까요?");
+  if (mode.value !== "reflection-write") return Promise.resolve(true);
+  return confirmDialog("작성 중인 답변은 이 기기에 임시 저장돼요. 다른 화면으로 이동할까요?", {
+    title: "화면을 나가시겠어요?",
+    confirmLabel: "이동하기",
+    cancelLabel: "계속 쓰기",
+  });
 }
 
 function clearShareHash() {
@@ -261,9 +274,9 @@ function setMode(nextMode: AppMode, options: { recordHistory?: boolean } = {}) {
   mode.value = nextMode;
 }
 
-function navigateBottomTab(tabId: BottomTabId) {
+async function navigateBottomTab(tabId: BottomTabId) {
   if (isTabActive(mode.value, tabId)) return;
-  if (!confirmLeavingWriteMode()) return;
+  if (!(await confirmLeavingWriteMode())) return;
 
   if (tabId === "home") {
     setMode("home-book");
@@ -279,8 +292,8 @@ function navigateBottomTab(tabId: BottomTabId) {
   }
 }
 
-function onBrowserBack() {
-  if (!confirmLeavingWriteMode()) {
+async function onBrowserBack() {
+  if (!(await confirmLeavingWriteMode())) {
     window.history.pushState(createHistoryState(mode.value), "", window.location.href);
     return;
   }
@@ -312,6 +325,15 @@ function continueReflection(reflectionId: string) {
 function openReviewAgain() {
   sharedReflectionSnapshot.value = null;
   setMode("review-again");
+}
+
+function deleteActiveReflection() {
+  const reflection = activeReflection.value;
+  if (!reflection) return;
+
+  reflections.value = deleteReflection(reflection.id);
+  activeReflectionId.value = reflections.value[0]?.id ?? null;
+  setMode("home-book");
 }
 
 async function shareActiveReflection(questionIds: string[]) {
@@ -346,9 +368,14 @@ async function shareActiveReflection(questionIds: string[]) {
 
   try {
     await navigator.clipboard?.writeText(shareUrl);
-    alert("읽기 전용 공유 링크를 복사했어요.");
+    await alertDialog("읽기 전용 공유 링크를 복사했어요.");
   } catch {
-    window.prompt("읽기 전용 공유 링크를 복사해 주세요.", shareUrl);
+    await promptDialog("읽기 전용 공유 링크를 복사해 주세요.", {
+      title: "공유 링크",
+      defaultValue: shareUrl,
+      readonly: true,
+      confirmLabel: "닫기",
+    });
   }
 }
 
@@ -361,6 +388,28 @@ function startReflectionDraft(payload: {
   const reflection = createReflectionDraft(payload);
   reflections.value = saveReflection(reflection);
   activeReflectionId.value = reflection.id;
+  setMode("reflection-write");
+}
+
+function startCustomReflectionDraft(payload: {
+  period: ReflectionPeriod;
+  title?: string;
+  questions: string[];
+}) {
+  const reflection = createCustomReflectionDraft(payload);
+  reflections.value = saveReflection(reflection);
+  activeReflectionId.value = reflection.id;
+  setMode("reflection-write");
+}
+
+function startSharedQuestionReflection(payload: { questions: string[] }) {
+  const reflection = createCustomReflectionDraft({
+    period: { label: "오늘" },
+    questions: payload.questions,
+  });
+  reflections.value = saveReflection(reflection);
+  activeReflectionId.value = reflection.id;
+  sharedReflectionSnapshot.value = null;
   setMode("reflection-write");
 }
 
@@ -418,7 +467,9 @@ async function onImportReflectionFile(e: Event) {
     const result = mergeReflectionBackup(reflections.value, text);
     reflections.value = saveReflections(result.reflections);
     activeReflectionId.value = reflections.value[0]?.id ?? null;
-    alert(`회고 가져오기 완료: 추가 ${result.added}개, 업데이트 ${result.updated}개, 유지 ${result.skipped}개`);
+    await alertDialog(`추가 ${result.added}개, 업데이트 ${result.updated}개, 유지 ${result.skipped}개`, {
+      title: "회고 가져오기 완료",
+    });
   } catch (err: unknown) {
     const importErrorMessage = err instanceof Error ? err.message : "";
     const reason =
@@ -427,14 +478,20 @@ async function onImportReflectionFile(e: Event) {
         : importErrorMessage === "RECOVERSE_REFLECTION_IMPORT_UNSUPPORTED_VERSION"
           ? `${REFLECTION_BACKUP_SCHEMA} 백업 파일이 아니에요.`
           : importErrorMessage || "알 수 없는 오류";
-    alert(`회고 가져오기 실패: ${reason}`);
+    await alertDialog(reason, { title: "회고 가져오기 실패" });
   } finally {
     input.value = "";
   }
 }
 
-function clearAll() {
-  if (!confirm("전체 회고를 정말 삭제할까요? 이 작업은 되돌릴 수 없어요.")) return;
+async function clearAll() {
+  const confirmed = await confirmDialog("전체 회고를 정말 삭제할까요? 이 작업은 되돌릴 수 없어요.", {
+    title: "전체 회고 삭제",
+    confirmLabel: "삭제하기",
+    cancelLabel: "취소",
+    danger: true,
+  });
+  if (!confirmed) return;
   reflections.value = [];
   saveReflections([]);
   activeReflectionId.value = null;

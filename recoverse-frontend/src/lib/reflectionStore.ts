@@ -258,6 +258,49 @@ export function createReflectionDraft(options: {
   };
 }
 
+export function createCustomReflectionDraft(options: {
+  period: ReflectionPeriod;
+  questions: string[];
+  title?: string;
+  mode?: ReflectionMode;
+}): Reflection {
+  const now = new Date().toISOString();
+  const groupId = "custom_group";
+  const questions = options.questions
+    .map((text) => text.trim())
+    .filter(Boolean)
+    .map((text) => ({
+      id: uuid(),
+      text,
+      groupId,
+      isRepeatable: false,
+      visibility: "public" as const,
+    }));
+
+  if (questions.length === 0) {
+    throw new Error("Custom reflection requires at least one question");
+  }
+
+  const title = options.title?.trim() || `${options.period.label} 회고`;
+
+  return {
+    id: uuid(),
+    title,
+    type: "custom",
+    mode: options.mode ?? "solo",
+    period: options.period,
+    templateId: "custom",
+    questionSetMode: "light",
+    questionGroups: [{ id: groupId, label: "직접 만든 질문", questions }],
+    answers: [],
+    visibility: "private",
+    isCompleted: false,
+    completionRate: 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 export function saveReflectionAnswer(
   reflection: Reflection,
   questionId: string,

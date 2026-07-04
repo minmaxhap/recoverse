@@ -411,10 +411,12 @@ test("appNavigation bottomNavLabels maps every BottomTabId", () => {
   assert.ok(Object.values(bottomNavLabels).every((label) => typeof label === "string" && label.length > 0));
 });
 
-test("appNavigation shouldShowBottomNav hides the tab bar during creation flows", () => {
+test("appNavigation shouldShowBottomNav keeps the tab bar visible in every mode", () => {
   const { shouldShowBottomNav } = appNav;
   const visibleModes = [
     "home-book",
+    "reflection-new",
+    "reflection-write",
     "reflection-detail",
     "review-again",
     "shared-reflections",
@@ -424,8 +426,6 @@ test("appNavigation shouldShowBottomNav hides the tab bar during creation flows"
   for (const mode of visibleModes) {
     assert.ok(shouldShowBottomNav(mode), `${mode} should show bottom nav`);
   }
-  assert.equal(shouldShowBottomNav("reflection-new"), false);
-  assert.equal(shouldShowBottomNav("reflection-write"), false);
 });
 
 test("appNavigation getActiveBottomTab maps modes to correct tabs", () => {

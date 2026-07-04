@@ -50,7 +50,7 @@
         <figure class="emptyStatePhoto editorialPhotoFrame">
           <img src="/design/blank-journal.jpg" alt="햇빛 아래 펼쳐진 빈 저널과 안개꽃" />
         </figure>
-        <span class="eyebrow">Empty album</span>
+        <span class="eyebrow">빈 앨범</span>
         <h2>아직 다시 발견할 기억이 없어요.</h2>
         <p>기억 작성 탭에서 첫 답변을 남겨보세요.</p>
       </div>
@@ -61,6 +61,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import type { Reflection } from "../types/reflection";
+import { getPreviewSentence } from "../lib/reflectionPreview";
+import { describeWindow, pickRediscovery } from "../lib/rediscovery";
 
 const props = defineProps<{
   reflections: Reflection[];
@@ -95,17 +97,14 @@ const filteredReflections = computed(() => {
   return sortedReflections.value.filter(filter.match);
 });
 
-const upcomingReflection = computed(() => sortedReflections.value[0] ?? null);
+const rediscoveryPick = computed(() => pickRediscovery(props.reflections));
+const upcomingReflection = computed(() => rediscoveryPick.value?.reflection ?? null);
 
 const upcomingCopy = computed(() => {
-  const reflection = upcomingReflection.value;
-  if (!reflection) return "";
-  const period = reflection.period.label;
-  const preview =
-    reflection.representativeSentence?.trim() ||
-    reflection.answers.find((answer) => answer.value.trim())?.value.trim() ||
-    reflection.title;
-  return `지난 ${period}의 내가 남긴 "${truncate(preview, 32)}" 를 다시 열어보세요.`;
+  const pick = rediscoveryPick.value;
+  if (!pick) return "";
+  const preview = getPreviewSentence(pick.reflection, 32);
+  return `${describeWindow(pick.window)} 남긴 "${preview}"를 다시 열어보세요.`;
 });
 
 function matchLabel(r: Reflection, keywords: string[]) {
@@ -129,10 +128,6 @@ function shortDate(iso: string) {
   return `${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
 }
 
-function truncate(text: string, limit: number) {
-  if (text.length <= limit) return text;
-  return `${text.slice(0, limit)}…`;
-}
 </script>
 
 <style scoped>
@@ -141,7 +136,7 @@ function truncate(text: string, limit: number) {
 .reviewHeader { display: grid; gap: 6px; margin-bottom: 22px; }
 .eyebrow { color: var(--accent-wax); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 h1, h2, h3, p { margin: 0; letter-spacing: 0; }
-.reviewHeader h1 { font-family: var(--font-display); font-size: clamp(30px, 5.8vw, 44px); line-height: var(--leading-tight); font-weight: var(--display-weight); }
+.reviewHeader h1 { font-family: var(--font-display); font-size: clamp(30px, 5.8vw, 44px); line-height: var(--leading-tight); font-weight: var(--display-weight); word-break: keep-all; }
 
 .reviewShell { display: grid; gap: 20px; }
 
