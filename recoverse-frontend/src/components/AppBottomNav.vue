@@ -43,35 +43,37 @@ const navigationItems = computed<Array<{
 <style scoped>
 .bottomNav {
   position: fixed;
-  left: 50%;
-  right: auto;
-  bottom: calc(10px + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 40;
-  width: min(360px, calc(100% - 28px));
-  transform: translateX(-50%);
+  width: 100%;
+  transform: none;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 5px;
-  padding: 7px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 24px;
-  background: rgba(14, 20, 32, 0.88);
-  box-shadow: 0 18px 42px rgba(2, 5, 11, 0.5);
-  backdrop-filter: blur(18px);
+  gap: 4px;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: none;
+  backdrop-filter: blur(12px);
 }
 
 .navItem {
   min-width: 0;
-  min-height: 54px;
-  border: 1px solid transparent;
-  border-radius: 18px;
+  min-height: 52px;
+  border: 0;
+  border-radius: 12px;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-tertiary);
   display: grid;
   justify-items: center;
   align-content: center;
-  gap: 4px;
-  padding: 7px 4px;
+  gap: 3px;
+  padding: 6px 4px;
+  transition: color var(--motion-quick) var(--ease-soft);
 }
 
 .navItem span {
@@ -86,8 +88,6 @@ const navigationItems = computed<Array<{
 }
 
 .navItem.active {
-  border-color: rgba(232, 166, 76, 0.35);
-  background: var(--surface-parchment);
   color: var(--accent-espresso);
 }
 
@@ -95,11 +95,16 @@ const navigationItems = computed<Array<{
   .bottomNav {
     top: 8px;
     bottom: auto;
+    left: 50%;
+    right: auto;
     z-index: 46;
     width: min(340px, calc(100% - 220px));
+    transform: translateX(-50%);
     padding: 4px;
+    border: 0;
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(2, 5, 11, 0.42);
+    background: var(--surface-paper);
+    box-shadow: var(--shadow-paper);
   }
 
   .navItem {

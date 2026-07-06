@@ -161,9 +161,9 @@ const themeOptions: Array<{
   label: string;
   description: string;
 }> = [
-  { id: "book", label: "자정", description: "깊은 잉크빛 밤과 호박색 램프" },
-  { id: "letter", label: "황혼", description: "보랏빛 어스름과 왁스 실링" },
-  { id: "journey", label: "새벽", description: "푸르스름한 새벽과 달빛" },
+  { id: "book", label: "바이올렛", description: "기본 테마 · 보랏빛 포인트" },
+  { id: "letter", label: "블루", description: "차분한 파란색 포인트" },
+  { id: "journey", label: "그린", description: "산뜻한 초록색 포인트" },
 ];
 
 const reflections = ref<Reflection[]>(loadReflections());
@@ -513,29 +513,31 @@ onBeforeUnmount(() => {
 }
 
 .app[data-theme="letter"] {
-  /* 황혼 — warm violet ink */
-  --surface-base: #161125;
-  --surface-paper: #201A31;
-  --surface-parchment: #292140;
-  --surface-blue: #1A1B33;
-  --surface-blush: #2B1C29;
-  --border-subtle: #332B4A;
-  --border-strong: #4B4168;
-  --accent-espresso: #EFA457;
-  --accent-wax: #CE5A3E;
+  /* 블루 포인트 */
+  --accent-espresso: #3182F6;
+  --accent-sage: #1B64DA;
+  --surface-letter: #EAF2FE;
+  --surface-letter-deep: #D8E7FD;
+  --text-on-letter: #1B64DA;
+  --text-on-letter-soft: #4E8AE8;
+  --glow-lamp: 0 0 0 3px rgba(49, 130, 246, 0.16);
+  --shadow-letter: 0 4px 16px rgba(49, 130, 246, 0.12);
+  --color-chip: rgba(49, 130, 246, 0.08);
+  --color-border-gold: rgba(49, 130, 246, 0.35);
 }
 
 .app[data-theme="journey"] {
-  /* 새벽 — cool slate and moonlight */
-  --surface-base: #111B28;
-  --surface-paper: #1B2737;
-  --surface-parchment: #223143;
-  --surface-blue: #16283A;
-  --border-subtle: #2B3A4D;
-  --border-strong: #40556C;
-  --accent-espresso: #E2AC62;
-  --accent-sage: #B3A87E;
-  --accent-sky: #A5C6DA;
+  /* 그린 포인트 */
+  --accent-espresso: #00A76F;
+  --accent-sage: #00875A;
+  --surface-letter: #E9F8F0;
+  --surface-letter-deep: #D3F1E2;
+  --text-on-letter: #00875A;
+  --text-on-letter-soft: #34A87E;
+  --glow-lamp: 0 0 0 3px rgba(0, 167, 111, 0.16);
+  --shadow-letter: 0 4px 16px rgba(0, 167, 111, 0.12);
+  --color-chip: rgba(0, 167, 111, 0.08);
+  --color-border-gold: rgba(0, 167, 111, 0.35);
 }
 
 .main { padding: 54px 0 0; }

@@ -36,9 +36,9 @@ defineEmits<{
   align-items: center;
   justify-content: space-between;
   padding: 0 max(18px, env(safe-area-inset-right)) 0 max(18px, env(safe-area-inset-left));
-  border-bottom: 1px solid var(--border-subtle);
-  background: rgba(14, 20, 32, 0.86);
-  backdrop-filter: blur(18px);
+  border-bottom: 0;
+  background: rgba(247, 248, 250, 0.85);
+  backdrop-filter: blur(12px);
 }
 
 .brandLockup {
@@ -49,36 +49,39 @@ defineEmits<{
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .brandIcon {
-  width: 26px;
-  height: 26px;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
   display: grid;
   place-items: center;
-  background: var(--surface-paper);
-  color: var(--accent-sage);
-  font-size: 13px;
-  box-shadow: 0 6px 16px rgba(2, 5, 11, 0.4);
+  background: var(--accent-espresso);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .settingsButton {
   width: 36px;
   height: 36px;
-  border: 1px solid var(--border-subtle);
+  border: 0;
   border-radius: 999px;
-  background: rgba(23, 31, 46, 0.84);
-  color: var(--text-primary);
+  background: transparent;
+  color: var(--text-secondary);
   display: grid;
   place-items: center;
   padding: 8px;
-  box-shadow: 0 8px 20px rgba(2, 5, 11, 0.4);
+  transition: background-color var(--motion-quick) var(--ease-soft);
+}
+
+.settingsButton:hover {
+  background: var(--surface-parchment);
 }
 
 .settingsButton svg {

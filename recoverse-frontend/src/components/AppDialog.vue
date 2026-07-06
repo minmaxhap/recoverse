@@ -118,15 +118,15 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(3, 6, 12, 0.62);
+  background: rgba(25, 31, 40, 0.4);
   backdrop-filter: blur(2px);
 }
 
 .dialogPanel {
   position: relative;
   width: min(380px, 100%);
-  padding: 26px 22px 20px;
-  border: 1px solid var(--border-subtle);
+  padding: 24px 20px 20px;
+  border: 0;
   border-radius: var(--radius-panel);
   background: var(--surface-paper);
   box-shadow: var(--shadow-lifted);
@@ -135,21 +135,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 }
 
 .dialogRibbon {
-  position: absolute;
-  top: -1px;
-  left: 28px;
-  width: 12px;
-  height: 28px;
-  background: var(--accent-wax);
-  border-radius: 0 0 4px 4px;
-  box-shadow: 0 2px 4px rgba(2, 5, 11, 0.45);
+  display: none;
 }
 
 .dialogPanel h2 {
-  margin: 6px 0 0;
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: var(--display-weight);
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
   line-height: var(--leading-tight);
   color: var(--text-primary);
   word-break: keep-all;
@@ -172,24 +164,24 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 .dialogInputRow input {
   flex: 1;
   min-width: 0;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: rgba(14, 20, 32, 0.6);
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface-parchment);
   color: var(--text-primary);
-  padding: 10px 12px;
+  padding: 12px 14px;
   font-size: 13px;
 }
 
 .dialogInputRow input:focus-visible {
   outline: none;
-  border-color: var(--accent-sage);
+  box-shadow: var(--glow-lamp) !important;
 }
 
 .dialogCopyButton {
   flex-shrink: 0;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: rgba(23, 31, 46, 0.8);
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface-parchment);
   color: var(--text-primary);
   padding: 0 14px;
   font-size: 13px;
@@ -197,7 +189,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 }
 
 .dialogCopyButton:hover, .dialogCopyButton:focus-visible {
-  border-color: var(--accent-sage);
+  background: #E8EBEE;
 }
 
 .dialogActions {
@@ -216,26 +208,25 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 }
 
 .dialogCancel {
-  border: 1px solid var(--border-strong);
-  background: transparent;
+  border: 0;
+  background: var(--surface-parchment);
   color: var(--text-secondary);
 }
 
 .dialogCancel:hover, .dialogCancel:focus-visible {
   color: var(--text-primary);
-  border-color: var(--border-strong);
+  background: #E8EBEE;
 }
 
 .dialogAccept {
   border: 0;
   background: var(--accent-espresso);
   color: var(--color-primary-contrast);
-  box-shadow: 0 12px 26px rgba(2, 5, 11, 0.45);
 }
 
 .dialogAccept.danger {
   background: var(--color-danger);
-  color: #1C0B07;
+  color: #fff;
 }
 
 .dialogFade-enter-active, .dialogFade-leave-active {

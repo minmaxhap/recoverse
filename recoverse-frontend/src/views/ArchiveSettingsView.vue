@@ -1,41 +1,14 @@
 <template>
-  <section class="settingsScreen">
+  <section class="settingsScreen bookCapsulePage">
     <header class="settingsHead">
-      <div>
-        <span class="eyebrow">환경 설정</span>
-        <h2>설정</h2>
-        <p>표시 방식, 임시 저장 상태, 내 기억 데이터를 관리합니다.</p>
-      </div>
-      <figure class="settingsPhoto editorialPhotoFrame">
-        <NightSkyScene variant="constellation" />
-      </figure>
+      <h2>설정</h2>
+      <p>표시 방식, 임시 저장 상태, 내 기억 데이터를 관리합니다.</p>
     </header>
 
-    <section class="privacyPanel" aria-label="개인정보 안내">
-      <span class="privacyEyebrow">개인정보</span>
-      <h3>모든 기억은 이 기기에만 저장돼요.</h3>
-      <ul>
-        <li>회고 데이터는 브라우저 localStorage에만 저장됩니다. 서버, 계정, 외부 분석은 없습니다.</li>
-        <li>공유 링크는 URL 해시에 직접 인코딩되며 원본 회고를 공개하지 않습니다.</li>
-        <li>브라우저 데이터 삭제, 시크릿 모드 종료, 다른 기기 접속 시 회고가 사라질 수 있어요. 회고 백업으로 JSON을 내려받아 보관하세요.</li>
-      </ul>
-    </section>
-
-    <section class="samplePanel" aria-label="샘플 회고">
+    <section v-if="telemetry" class="usagePanel paperPanel" aria-label="내 사용 기록">
       <header>
-        <span class="sampleEyebrow">미리보기</span>
-        <h3>샘플 회고로 화면을 둘러보세요.</h3>
-      </header>
-      <p>제주 여행을 예시로, 질문 작성부터 상세 회고까지의 흐름을 바로 확인할 수 있어요.</p>
-      <button type="button" class="sampleCta" @click="$emit('load-sample')">
-        샘플 회고 열기
-      </button>
-    </section>
-
-    <section v-if="telemetry" class="usagePanel" aria-label="내 사용 기록">
-      <header>
-        <span class="usageEyebrow">내 기록</span>
-        <h3>이 기기에서만 보이는 사용 요약입니다.</h3>
+        <h3>내 기록</h3>
+        <p>이 기기에서만 보이는 사용 요약이에요.</p>
       </header>
       <dl class="usageGrid">
         <div>
@@ -61,33 +34,56 @@
       </p>
     </section>
 
-    <section class="settingsPanel">
-      <ArchiveSettingsTools
-        :theme="theme"
-        :active-section="activeSection"
-        theme-label="테마"
-        :theme-options="themeOptions"
-        reflection-group-label="회고 데이터"
-        reflection-export-label="회고 백업하기"
-        reflection-import-label="회고 가져오기"
-        reflection-backup-hint="가져오기는 기존 회고를 지우지 않고 최신 항목만 병합합니다."
-        :reflection-count="reflectionCount"
-        :reflection-export-disabled="reflectionCount === 0"
-        danger-group-label="데이터 초기화"
-        clear-label="전체 회고 삭제"
-        :clear-disabled="reflectionCount === 0"
-        @update:theme="$emit('update:theme', $event)"
-        @reflection-export="$emit('reflection-export')"
-        @reflection-import-file="$emit('reflection-import-file', $event)"
-        @clear-all="$emit('clear-all')"
-      />
+    <section class="samplePanel paperPanel" aria-label="샘플 회고">
+      <button type="button" class="listRow" @click="$emit('load-sample')">
+        <IconBadge icon="eye" tint="blue" />
+        <span class="rowBody">
+          <strong>샘플 회고 열기</strong>
+          <span>제주 여행 예시로 흐름을 둘러보세요</span>
+        </span>
+        <svg class="rowChevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m6 3.5 4.5 4.5L6 12.5" />
+        </svg>
+      </button>
+    </section>
+
+    <ArchiveSettingsTools
+      :theme="theme"
+      :active-section="activeSection"
+      theme-label="테마"
+      :theme-options="themeOptions"
+      reflection-group-label="회고 데이터"
+      reflection-export-label="회고 백업하기"
+      reflection-import-label="회고 가져오기"
+      reflection-backup-hint="가져오기는 기존 회고를 지우지 않고 최신 항목만 병합합니다."
+      :reflection-count="reflectionCount"
+      :reflection-export-disabled="reflectionCount === 0"
+      danger-group-label="데이터 초기화"
+      clear-label="전체 회고 삭제"
+      :clear-disabled="reflectionCount === 0"
+      @update:theme="$emit('update:theme', $event)"
+      @reflection-export="$emit('reflection-export')"
+      @reflection-import-file="$emit('reflection-import-file', $event)"
+      @clear-all="$emit('clear-all')"
+    />
+
+    <section class="privacyPanel" aria-label="개인정보 안내">
+      <div class="privacyHead">
+        <IconBadge icon="shield" tint="sage" :size="32" />
+        <h3>모든 기억은 이 기기에만 저장돼요</h3>
+      </div>
+      <ul>
+        <li>회고 데이터는 브라우저 localStorage에만 저장됩니다. 서버, 계정, 외부 분석은 없습니다.</li>
+        <li>공유 링크는 URL 해시에 직접 인코딩되며 원본 회고를 공개하지 않습니다.</li>
+        <li>브라우저 데이터 삭제, 시크릿 모드 종료, 다른 기기 접속 시 회고가 사라질 수 있어요. 회고 백업으로 JSON을 내려받아 보관하세요.</li>
+      </ul>
     </section>
   </section>
 </template>
 
 <script setup lang="ts">
 import ArchiveSettingsTools from "../components/ArchiveSettingsTools.vue";
-import NightSkyScene from "../components/scenes/NightSkyScene.vue";
+import IconBadge from "../components/IconBadge.vue";
 import type {
   RecoverseTheme,
   SettingsSection,
@@ -113,23 +109,56 @@ defineEmits<{
 </script>
 
 <style scoped>
-.settingsScreen { display: grid; gap: 16px; padding: 24px var(--space-page-x) calc(108px + env(safe-area-inset-bottom)); color: var(--text-primary); }
-.settingsHead { display: grid; grid-template-columns: minmax(0, 1fr) 190px; align-items: end; gap: 16px; width: min(760px, 100%); margin-inline: auto; }
-.settingsPhoto { width: 100%; height: 132px; margin: 0; border-radius: 8px; overflow: hidden; }
-.settingsHead .eyebrow, .usageEyebrow, .privacyEyebrow, .sampleEyebrow { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
-.settingsHead h2 { margin: 0; font-family: var(--font-display); font-size: clamp(30px, 5.4vw, 44px); line-height: var(--leading-tight); font-weight: var(--display-weight); letter-spacing: 0; }
-.settingsHead p, .samplePanel p, .usageHint { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
-.settingsPanel { display: grid; }
-.usagePanel, .privacyPanel, .samplePanel { display: grid; gap: 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: var(--surface-paper); padding: 18px 20px; box-shadow: 0 12px 28px rgba(2, 5, 11, 0.35); width: min(760px, 100%); margin-inline: auto; }
-.privacyPanel { background: linear-gradient(145deg, var(--surface-paper), rgba(199, 161, 94, 0.10)); }
-.usagePanel header, .samplePanel header { display: grid; gap: 4px; }
-.usagePanel h3, .samplePanel h3, .privacyPanel h3 { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: var(--display-weight); letter-spacing: 0; }
-.usageGrid { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.usageGrid div { border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: var(--surface-ink-wash); padding: 11px 14px; display: grid; gap: 4px; }
-.usageGrid dt { color: var(--text-secondary); font-size: 12px; font-weight: var(--label-weight); }
-.usageGrid dd { margin: 0; font-family: var(--font-display); font-size: 23px; font-weight: var(--display-weight); }
-.privacyPanel ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
-.sampleCta { justify-self: start; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--accent-espresso); color: var(--color-primary-contrast); padding: 10px 16px; font-weight: var(--heading-weight); letter-spacing: 0; }
-.sampleCta:hover, .sampleCta:focus-visible { border-color: var(--accent-sage); }
-@media (max-width: 720px) { .settingsScreen { padding: 16px 14px calc(104px + env(safe-area-inset-bottom)); } .settingsHead { grid-template-columns: 1fr; } .settingsPhoto { height: 154px; } .usageGrid { grid-template-columns: 1fr; } }
+.settingsScreen {
+  display: grid;
+  gap: 14px;
+  padding: 20px var(--space-page-x) calc(80px + env(safe-area-inset-bottom));
+  color: var(--text-primary);
+}
+
+.settingsScreen > * { width: min(560px, 100%); margin-inline: auto; }
+
+.settingsHead { display: grid; gap: 4px; padding: 0 2px; }
+.settingsHead h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-tight);
+}
+.settingsHead p { margin: 0; color: var(--text-tertiary); font-size: 13px; line-height: var(--leading-body); }
+
+.usagePanel { display: grid; gap: 14px; padding: 18px 20px; }
+.usagePanel header { display: grid; gap: 2px; }
+.usagePanel h3 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+.usagePanel header p { margin: 0; color: var(--text-tertiary); font-size: 12px; }
+.usageGrid { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.usageGrid div { border-radius: 12px; background: var(--surface-ink-wash); padding: 12px 14px; display: grid; gap: 2px; }
+.usageGrid dt { color: var(--text-tertiary); font-size: 12px; font-weight: var(--label-weight); }
+.usageGrid dd { margin: 0; font-size: 20px; font-weight: var(--display-weight); letter-spacing: var(--tracking-display); color: var(--text-primary); }
+.usageHint { margin: 0; color: var(--text-tertiary); font-size: 12px; }
+
+.samplePanel { overflow: hidden; padding: 4px 0; }
+.rowBody { display: grid; gap: 2px; min-width: 0; }
+.rowBody strong { font-size: 15px; font-weight: var(--label-weight); color: var(--text-primary); }
+.rowBody span { color: var(--text-tertiary); font-size: 12px; }
+
+.privacyPanel {
+  display: grid;
+  gap: 10px;
+  border-radius: var(--radius-card);
+  background: var(--surface-ink-wash);
+  padding: 16px 18px;
+}
+.privacyHead { display: flex; align-items: center; gap: 10px; }
+.privacyPanel h3 { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; word-break: keep-all; }
+.privacyPanel ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: var(--leading-body);
+}
 </style>

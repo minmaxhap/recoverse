@@ -1,32 +1,24 @@
 <template>
   <HomeView>
-    <section class="homeBookPage bookCapsulePage">
-      <main class="homeBookShell" aria-label="Recoverse 홈">
-        <section class="heroSection">
-          <div class="heroCopy">
-            <span class="screenEyebrow">{{ brandLabel }}</span>
-            <h1 class="serifTitle">미래의 나에게<br />배달되는<br />30초 회고.</h1>
-            <p>
-              질문 하나에 답하면 오늘의 생각이 봉투처럼 보관되고,
-              시간이 지난 뒤 다시 도착합니다.
-            </p>
-            <div class="heroActions">
-              <button class="primaryButton" type="button" @click="$emit('start-quick')">
-                첫 회고 배달하기
-              </button>
-              <button class="paperButton" type="button" @click="$emit('start-writing')">
-                연말/여행 회고 고르기
-              </button>
-            </div>
-          </div>
+    <section class="homePage bookCapsulePage">
+      <main class="homeShell" aria-label="Recoverse 홈">
+        <header class="greeting">
+          <span class="greetingDate">{{ todayLabel }}</span>
+          <h1>오늘도 짧게 남겨볼까요?</h1>
+        </header>
 
-          <figure class="photoHeroCard editorialPhotoFrame">
-            <NightSkyScene variant="hero" />
-            <figcaption>
-              <span>{{ brandLabel }}</span>
-              <strong>{{ title }}</strong>
-            </figcaption>
-          </figure>
+        <section class="todayCard paperPanel" aria-labelledby="today-question">
+          <div class="todayCardHead">
+            <IconBadge icon="pen" tint="accent" />
+            <span class="cardCaption">오늘의 질문</span>
+          </div>
+          <p id="today-question" class="todayQuestion">{{ quickQuestion }}</p>
+          <button class="primaryButton todayCta" type="button" @click="$emit('start-quick')">
+            30초 회고 시작
+          </button>
+          <button class="textLink" type="button" @click="$emit('start-writing')">
+            템플릿으로 시작 →
+          </button>
         </section>
 
         <DeliveryLoopPanel
@@ -38,54 +30,39 @@
           @start-quick="$emit('start-quick')"
         />
 
-        <section class="albumSection" aria-labelledby="album-title">
-          <div class="sectionHeader row">
-            <div>
-              <span class="screenEyebrow">책장</span>
-              <h2 id="album-title">나의 책장</h2>
-            </div>
+        <section v-if="memoryCards.length" class="recentSection" aria-labelledby="recent-title">
+          <div class="sectionHeader">
+            <h2 id="recent-title">최근 기록</h2>
             <button
               v-if="reflections.length > memoryCards.length"
-              class="albumBadge viewAllLink"
+              class="textLink"
               type="button"
               @click="$emit('view-all')"
             >
-              전체 {{ reflections.length }}편 모두 보기 →
+              전체보기
             </button>
-            <span v-else-if="memoryCards.length" class="albumBadge">전체 {{ reflections.length }}편</span>
           </div>
 
-          <div v-if="memoryCards.length" class="memoryGrid">
+          <div class="recentGroup paperPanel">
             <button
               v-for="(card, idx) in memoryCards"
               :key="card.reflection.id"
-              class="memoryCard paperPanel"
-              :class="[
-                { draft: !card.reflection.isCompleted },
-                `tone-${cardTones[idx % cardTones.length]}`,
-              ]"
+              class="listRow recentRow"
               type="button"
               @click="openMemory(card.reflection.id, card.reflection.isCompleted)"
             >
-              <span class="ribbonBookmark" aria-hidden="true"></span>
-              <strong>{{ card.reflection.title }}</strong>
-              <p>{{ card.preview }}</p>
-              <em>{{ card.reflection.isCompleted ? '다시 열기 →' : '이어쓰기 →' }}</em>
+              <IconBadge icon="envelope" :tint="rowTints[idx % rowTints.length]" :size="36" />
+              <span class="rowBody">
+                <strong>{{ card.reflection.title }}</strong>
+                <span class="rowMeta">
+                  {{ shortDate(card.reflection.updatedAt) }} · 답변 {{ countAnswers(card.reflection) }}개
+                  <em v-if="!card.reflection.isCompleted" class="draftChip">작성 중</em>
+                </span>
+              </span>
+              <svg class="rowChevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m6 3.5 4.5 4.5L6 12.5" />
+              </svg>
             </button>
-          </div>
-
-          <div v-else class="emptyAlbum paperPanel">
-            <figure class="emptyAlbumPhoto editorialPhotoFrame">
-              <NightSkyScene variant="empty" />
-            </figure>
-            <div>
-              <span class="screenEyebrow">첫 페이지</span>
-              <h3>아직 책장이 비어 있어요.</h3>
-              <p>지금 떠오른 장면 하나만 남기면 첫 회고 카드가 생깁니다.</p>
-              <button class="primaryButton" type="button" @click="$emit('start-quick')">
-                첫 회고 배달하기
-              </button>
-            </div>
           </div>
         </section>
       </main>
@@ -96,10 +73,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import DeliveryLoopPanel from "../components/DeliveryLoopPanel.vue";
-import NightSkyScene from "../components/scenes/NightSkyScene.vue";
+import IconBadge from "../components/IconBadge.vue";
 import HomeView from "./HomeView.vue";
 import type { Reflection } from "../types/reflection";
 import { getPreviewSentence } from "../lib/reflectionPreview";
+import { QUICK_QUESTION_TEXT } from "../lib/quickReflection";
 import { describeWindow, pickRediscovery } from "../lib/rediscovery";
 
 const props = defineProps<{
@@ -117,14 +95,23 @@ const emit = defineEmits<{
   "view-all": [];
 }>();
 
-const cardTones = ["paper", "sage", "blush", "blue", "parch"] as const;
+const quickQuestion = QUICK_QUESTION_TEXT;
+
+const rowTints = ["accent", "blue", "sage", "blush"] as const;
+
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"] as const;
+
+const todayLabel = computed(() => {
+  const now = new Date();
+  return `${now.getMonth() + 1}월 ${now.getDate()}일 ${WEEKDAYS[now.getDay()]}요일`;
+});
 
 const sortedReflections = computed(() =>
   [...props.reflections].sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
 );
 
 const memoryCards = computed(() =>
-  sortedReflections.value.slice(0, 6).map((reflection) => ({
+  sortedReflections.value.slice(0, 5).map((reflection) => ({
     reflection,
     preview: getPreviewSentence(reflection),
   }))
@@ -142,6 +129,16 @@ const todayDeliveryCard = computed(() => {
   };
 });
 
+function countAnswers(reflection: Reflection) {
+  return reflection.answers.filter((answer) => answer.value.trim()).length;
+}
+
+function shortDate(iso: string) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getMonth() + 1}.${date.getDate()}`;
+}
+
 function openMemory(reflectionId: string, isCompleted: boolean) {
   if (isCompleted) {
     emit("open-reflection", reflectionId);
@@ -156,88 +153,93 @@ function openCompletedMemory(reflectionId: string) {
 </script>
 
 <style scoped>
-.homeBookPage { padding: 18px var(--space-page-x) calc(104px + env(safe-area-inset-bottom)); }
-.homeBookShell { width: min(980px, 100%); margin: 0 auto; display: grid; gap: var(--space-section); }
+.homePage { padding: 20px var(--space-page-x) calc(80px + env(safe-area-inset-bottom)); }
+.homeShell { width: min(560px, 100%); margin: 0 auto; display: grid; gap: 20px; }
 
-.heroSection { min-height: min(520px, calc(100dvh - 170px)); display: grid; grid-template-columns: minmax(0, 0.96fr) minmax(280px, 0.84fr); align-items: center; gap: clamp(24px, 6vw, 58px); }
-.heroCopy { display: grid; gap: 18px; align-content: center; }
-.heroCopy h1 { margin: 0; font-size: clamp(46px, 8vw, 72px); color: var(--text-primary); word-break: keep-all; }
-.heroCopy h1::after {
-  content: "";
-  width: 62px;
-  height: 14px;
-  display: block;
-  margin-top: 10px;
-  background:
-    radial-gradient(circle at 7px 7px, var(--accent-wax) 0 6px, transparent 6px),
-    radial-gradient(circle at 31px 7px, var(--accent-wax) 0 6px, transparent 6px),
-    radial-gradient(circle at 55px 7px, var(--accent-wax) 0 6px, transparent 6px);
-  opacity: 0.9;
-}
-.heroCopy p { max-width: 400px; margin: 0; color: var(--text-secondary); font-size: 16px; line-height: var(--leading-body); word-break: keep-all; }
-.heroActions { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 180px); gap: 10px; align-items: center; }
-
-.photoHeroCard { position: relative; margin: 0; min-height: 420px; border-radius: 20px; overflow: hidden; }
-.photoHeroCard svg { position: absolute; inset: 0; }
-.photoHeroCard figcaption { position: absolute; left: 18px; right: 18px; bottom: 18px; z-index: 1; width: fit-content; max-width: calc(100% - 36px); border: 1px solid var(--border-subtle); border-radius: 8px; background: rgba(14, 20, 32, 0.82); padding: 10px 12px; color: var(--text-primary); box-shadow: 0 12px 28px rgba(2, 5, 11, 0.42); backdrop-filter: blur(12px); }
-.photoHeroCard figcaption span { font-size: 12px; font-weight: var(--label-weight); color: var(--text-secondary); }
-.photoHeroCard figcaption strong { font-family: var(--font-display); font-size: 20px; font-weight: var(--display-weight); color: var(--accent-espresso); }
-
-.sectionHeader { display: grid; gap: 7px; }
-.sectionHeader.row { grid-template-columns: 1fr auto; align-items: end; gap: 14px; }
-.sectionHeader h2, .emptyAlbum h3 { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); line-height: var(--leading-tight); letter-spacing: 0; color: var(--text-primary); word-break: keep-all; }
-.sectionHeader h2 { font-size: clamp(22px, 4vw, 30px); }
-.albumBadge { color: var(--accent-sage); font-size: 13px; font-weight: var(--label-weight); }
-.viewAllLink { border: 0; background: transparent; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
-.viewAllLink:hover, .viewAllLink:focus-visible { color: var(--accent-espresso); }
-
-.albumSection { display: grid; gap: 14px; }
-.memoryGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-
-.memoryCard {
-  position: relative;
-  width: 100%;
-  min-height: 200px;
+.greeting { display: grid; gap: 4px; padding: 4px 2px 0; }
+.greetingDate { color: var(--text-tertiary); font-size: 13px; font-weight: var(--label-weight); }
+.greeting h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-tight);
   color: var(--text-primary);
-  padding: 22px 22px 20px;
-  text-align: left;
-  display: grid;
-  gap: 8px;
-  align-content: start;
-  border-radius: 12px;
-  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
-  overflow: visible;
+  word-break: keep-all;
 }
-.memoryCard:hover { transform: translateY(-3px); border-color: rgba(232, 166, 76, 0.4); box-shadow: var(--shadow-lifted), inset 0 0 0 1px rgba(232, 166, 76, 0.25); }
-.memoryCard.tone-paper { background: var(--surface-paper); }
-.memoryCard.tone-sage { background: var(--surface-sage); }
-.memoryCard.tone-blush { background: var(--surface-blush); }
-.memoryCard.tone-blue { background: var(--surface-blue); }
-.memoryCard.tone-parch { background: var(--surface-parchment); }
-.memoryCard.draft { background: linear-gradient(145deg, var(--surface-sage), var(--surface-paper)); }
 
-.memoryCard strong { font-family: var(--font-display); font-size: 22px; line-height: var(--leading-tight); font-weight: var(--display-weight); word-break: keep-all; }
-.memoryCard p { margin: 0; color: var(--text-secondary); line-height: var(--leading-body); font-size: 14px; overflow-wrap: anywhere; word-break: keep-all; }
-.memoryCard em { align-self: end; width: fit-content; margin-top: 4px; color: var(--accent-espresso); font-size: 13px; font-style: normal; font-weight: var(--label-weight); }
+.todayCard { display: grid; gap: 14px; padding: 20px; }
+.todayCardHead { display: flex; align-items: center; gap: 10px; }
+.cardCaption { color: var(--text-tertiary); font-size: 13px; font-weight: var(--label-weight); }
+.todayQuestion {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  word-break: keep-all;
+}
+.todayCta { width: 100%; }
 
-.emptyAlbum { display: grid; grid-template-columns: 210px 1fr; gap: 18px; align-items: center; padding: 16px; border-radius: 12px; }
-.emptyAlbumPhoto { width: 100%; height: 180px; margin: 0; border-radius: 8px; overflow: hidden; }
-.emptyAlbum div { display: grid; gap: 12px; justify-items: start; }
+.textLink {
+  justify-self: center;
+  border: 0;
+  background: transparent;
+  padding: 4px 8px;
+  color: var(--accent-sage);
+  font-size: 13px;
+  font-weight: var(--label-weight);
+}
 
-.emptyAlbum p { margin: 0; }
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+  margin-bottom: 10px;
+}
+.sectionHeader h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.sectionHeader .textLink { justify-self: auto; padding: 4px 2px; }
 
-@media (max-width: 760px) {
-  .homeBookPage { padding-top: 14px; }
-  .heroSection, .emptyAlbum { grid-template-columns: 1fr; }
-  .heroSection { min-height: auto; gap: 20px; }
-  .heroCopy { order: 0; }
-  .photoHeroCard { order: 1; height: 200px; min-height: 200px; }
-  .photoHeroCard figcaption { display: none; }
-  .heroCopy h1 { font-size: clamp(44px, 12vw, 52px); }
-  .heroActions { grid-template-columns: 1fr; }
-  .memoryGrid { grid-template-columns: 1fr; }
-  .memoryCard { min-height: 176px; padding: 20px; }
-  .memoryCard strong { font-size: 21px; }
-  .sectionHeader.row { grid-template-columns: 1fr; }
+.recentGroup { overflow: hidden; padding: 4px 0; }
+.recentRow { border-radius: 0; }
+.recentRow + .recentRow { border-top: 1px solid var(--surface-ink-wash); }
+
+.rowBody { display: grid; gap: 3px; min-width: 0; }
+.rowBody strong {
+  font-size: 15px;
+  font-weight: var(--label-weight);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rowMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+.draftChip {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: var(--label-weight);
+  color: var(--accent-sage);
+  background: var(--color-chip);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+@media (min-width: 900px) {
+  .homePage { padding-top: 32px; }
+  .homeShell { width: min(640px, 100%); }
 }
 </style>

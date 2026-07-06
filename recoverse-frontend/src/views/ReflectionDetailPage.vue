@@ -1,20 +1,20 @@
 <template>
-  <section v-if="reflection" class="detailPage">
+  <section v-if="reflection" class="detailPage bookCapsulePage">
     <main class="detailShell">
       <section class="coverPanel paperPanel">
-        <span class="ribbonBookmark" aria-hidden="true"></span>
+        <span class="coverCaption">{{ reflection.period.label }}</span>
         <h1>{{ reflection.title }}</h1>
-        <p class="coverMeta">
-          {{ updatedDate }} · 답변 {{ answeredCount }}개
-          <template v-if="!reflection.isCompleted"> · 진행률 {{ reflection.completionRate }}%</template>
-        </p>
-        <figure class="coverPhoto editorialPhotoFrame">
-          <PostmarkStamp :label="reflection.period.label" />
-        </figure>
+        <p class="coverMeta">{{ updatedDate }} · 답변 {{ answeredCount }}개</p>
+        <div v-if="!reflection.isCompleted" class="coverProgress">
+          <div class="progressTrack">
+            <div class="progressFill" :style="{ width: `${reflection.completionRate}%` }"></div>
+          </div>
+          <span>{{ reflection.completionRate }}%</span>
+        </div>
       </section>
 
       <section v-if="representativeScene" class="quotePanel" aria-label="이 회고의 한 문장">
-        <span class="quoteEyebrow">이 회고의 한 문장</span>
+        <span class="quoteCaption">이 회고의 한 문장</span>
         <p class="quoteText">"{{ representativeScene }}"</p>
         <p v-if="representativeEmotion" class="quoteEmotion">{{ representativeEmotion }}</p>
       </section>
@@ -22,36 +22,32 @@
       <section class="actionPanel" aria-label="회고 주요 행동">
         <button
           v-if="reflection.isCompleted"
-          class="primaryAction"
+          class="primaryButton mainAction"
           type="button"
           @click="$emit('review-again')"
         >
           같은 질문 다시 보기
         </button>
-        <button v-else class="primaryAction" type="button" @click="$emit('edit')">
+        <button v-else class="primaryButton mainAction" type="button" @click="$emit('edit')">
           이어쓰기
         </button>
-        <button
-          class="secondaryAction"
-          type="button"
-          :class="{ active: shareOpen }"
-          :disabled="shareableItems.length === 0"
-          @click="toggleShareOptions"
-        >
-          공유하기
-        </button>
-        <button v-if="reflection.isCompleted" class="tertiaryAction" type="button" @click="$emit('edit')">
-          답변 수정
-        </button>
+        <div class="subActions">
+          <button
+            class="paperButton"
+            type="button"
+            :class="{ active: shareOpen }"
+            :disabled="shareableItems.length === 0"
+            @click="toggleShareOptions"
+          >
+            공유하기
+          </button>
+          <button v-if="reflection.isCompleted" class="paperButton" type="button" @click="$emit('edit')">
+            답변 수정
+          </button>
+        </div>
       </section>
 
-      <section class="dangerZone">
-        <button class="deleteAction" type="button" @click="confirmDelete">
-          이 회고 삭제하기
-        </button>
-      </section>
-
-      <section v-if="shareOpen && shareableItems.length > 0" ref="sharePanelRef" class="sharePanel">
+      <section v-if="shareOpen && shareableItems.length > 0" ref="sharePanelRef" class="sharePanel paperPanel">
         <p>친구에게 보여줘도 괜찮은 질문만 고르면 수정할 수 없는 읽기 전용 화면이 만들어집니다.</p>
         <div class="shareList">
           <label v-for="item in shareableItems" :key="item.question.id" class="shareOption">
@@ -60,7 +56,7 @@
           </label>
         </div>
         <button
-          class="shareButton"
+          class="primaryButton shareButton"
           type="button"
           :disabled="shareSelection.length === 0"
           @click="$emit('share', shareSelection)"
@@ -69,12 +65,12 @@
         </button>
       </section>
 
-      <section class="answerList" aria-label="질문과 답변">
+      <section class="answerList paperPanel" aria-label="질문과 답변">
         <article
           v-for="(item, idx) in answerItems"
           :key="item.question.id"
           class="answerRow"
-          :class="{ empty: !item.answerText, first: idx === 0 }"
+          :class="{ first: idx === 0 }"
         >
           <span class="qLabel">Q{{ idx + 1 }} · {{ item.groupLabel }}</span>
           <h3>{{ item.question.text }}</h3>
@@ -83,20 +79,25 @@
           <p v-else class="muted">아직 비어 있는 질문이에요. 이어쓰기에서 천천히 채울 수 있어요.</p>
         </article>
       </section>
+
+      <section class="dangerZone">
+        <button class="deleteAction" type="button" @click="confirmDelete">
+          이 회고 삭제하기
+        </button>
+      </section>
     </main>
   </section>
 
   <section v-else class="detailPage emptyState">
-    <span class="eyebrow">회고 열람</span>
+    <span class="emptyCaption">회고 열람</span>
     <h1>열어볼 기억을 찾지 못했어요.</h1>
     <p>홈으로 돌아가면 오늘 다시 떠오른 기억을 보거나 새 기억을 시작할 수 있어요.</p>
-    <button class="primaryAction" type="button" @click="$emit('back-home')">홈으로 돌아가기</button>
+    <button class="primaryButton" type="button" @click="$emit('back-home')">홈으로 돌아가기</button>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
-import PostmarkStamp from "../components/scenes/PostmarkStamp.vue";
 import type { Question, Reflection } from "../types/reflection";
 import { getPreviewSentence } from "../lib/reflectionPreview";
 import { confirmDialog } from "../composables/useAppDialog";
@@ -194,70 +195,86 @@ async function confirmDelete() {
 </script>
 
 <style scoped>
-.detailPage { min-height: 100vh; background: transparent; color: var(--text-primary); padding: 22px var(--space-page-x) calc(112px + env(safe-area-inset-bottom)); }
-.detailShell { width: min(720px, 100%); margin: 0 auto; display: grid; gap: 18px; }
+.detailPage { min-height: 100vh; color: var(--text-primary); padding: 16px var(--space-page-x) calc(80px + env(safe-area-inset-bottom)); }
+.detailShell { width: min(560px, 100%); margin: 0 auto; display: grid; gap: 16px; }
 h1, h2, h3, p { margin: 0; letter-spacing: 0; }
 
-.coverPanel { position: relative; padding: 26px 24px 24px; border-radius: 16px; display: grid; gap: 10px; overflow: visible; }
-.coverPanel::after {
-  content: "";
-  position: absolute;
-  top: 18px;
-  right: 60px;
-  width: 42px;
-  height: 10px;
-  background:
-    radial-gradient(circle at 5px 5px, var(--accent-wax) 0 4px, transparent 4px),
-    radial-gradient(circle at 21px 5px, var(--accent-wax) 0 4px, transparent 4px),
-    radial-gradient(circle at 37px 5px, var(--accent-wax) 0 4px, transparent 4px);
-  opacity: 0.75;
-  pointer-events: none;
+.coverPanel { display: grid; gap: 6px; padding: 20px; }
+.coverCaption { color: var(--text-tertiary); font-size: 13px; font-weight: var(--label-weight); }
+.coverPanel h1 {
+  font-size: 22px;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
+  line-height: 1.35;
+  color: var(--text-primary);
+  word-break: keep-all;
 }
-.coverPanel h1 { font-family: var(--font-display); font-size: clamp(28px, 6vw, 40px); line-height: 1.24; font-weight: var(--display-weight); color: var(--accent-espresso); word-break: keep-all; }
 .coverMeta { color: var(--text-tertiary); font-size: 13px; }
-.coverPhoto { margin: 12px 0 0; width: 100%; height: 220px; border-radius: 10px; overflow: hidden; }
+.coverProgress { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.coverProgress span { color: var(--accent-sage); font-size: 12px; font-weight: var(--label-weight); }
+.progressTrack { flex: 1; height: 4px; border-radius: 2px; background: var(--surface-parchment); overflow: hidden; }
+.progressFill { height: 100%; border-radius: 2px; background: var(--accent-espresso); transition: width var(--motion-standard) var(--ease-soft); }
 
-.quotePanel { padding: 22px 20px; border-radius: 14px; background: var(--surface-sage); border: 1px solid var(--border-subtle); display: grid; gap: 10px; }
-.quoteEyebrow { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
-.quoteText { font-family: var(--font-display); font-size: clamp(18px, 3.6vw, 22px); line-height: 1.5; color: var(--text-primary); word-break: keep-all; }
-.quoteEmotion { color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
+.quotePanel {
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border-radius: var(--radius-panel);
+  background: var(--surface-letter);
+  box-shadow: var(--shadow-letter);
+}
+.quoteCaption { color: var(--text-on-letter-soft); font-size: 13px; font-weight: var(--label-weight); }
+.quoteText { font-size: 17px; font-weight: 700; line-height: 1.6; letter-spacing: -0.01em; color: var(--text-on-letter); word-break: keep-all; }
+.quoteEmotion { color: var(--text-on-letter-soft); font-size: 13px; line-height: var(--leading-body); }
 
-.actionPanel { padding: 10px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--surface-paper); }
-.primaryAction, .secondaryAction, .tertiaryAction, .shareButton { border-radius: var(--radius-pill); font-weight: var(--heading-weight); letter-spacing: 0; padding: 11px 14px; }
-.primaryAction { border: 0; background: var(--accent-espresso); color: var(--color-primary-contrast); box-shadow: 0 12px 26px rgba(2, 5, 11, 0.4); }
-.secondaryAction, .shareButton { border: 1px solid var(--border-strong); background: transparent; color: var(--text-primary); }
-.secondaryAction:hover:not(:disabled), .secondaryAction:focus-visible, .shareButton:hover:not(:disabled), .shareButton:focus-visible { border-color: var(--accent-espresso); background: rgba(232, 166, 76, 0.08); }
-.secondaryAction.active { border-color: var(--accent-espresso); background: var(--surface-parchment); }
-.tertiaryAction { border: 0; background: transparent; color: var(--text-secondary); padding: 9px 12px; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
-.tertiaryAction:hover:not(:disabled), .tertiaryAction:focus-visible { color: var(--text-primary); }
-.secondaryAction:disabled, .tertiaryAction:disabled { opacity: 0.45; }
+.actionPanel { display: grid; gap: 8px; }
+.mainAction { width: 100%; }
+.subActions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.subActions .paperButton { min-height: 48px; font-size: 14px; }
+.subActions .paperButton.active { background: var(--surface-letter); color: var(--accent-sage); }
+.subActions .paperButton:disabled { opacity: 0.4; }
+
+.sharePanel { padding: 18px; display: grid; gap: 12px; }
+.sharePanel > p { color: var(--text-secondary); line-height: var(--leading-body); font-size: 13px; }
+.shareList { display: grid; gap: 4px; }
+.shareOption {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: start;
+  border-radius: 12px;
+  background: var(--surface-ink-wash);
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.shareOption input { accent-color: var(--accent-espresso); margin-top: 2px; }
+.shareButton { width: 100%; }
+
+.answerList { display: grid; padding: 4px 0; }
+.answerRow { padding: 18px 20px; display: grid; gap: 6px; }
+.answerRow + .answerRow { border-top: 1px solid var(--surface-ink-wash); }
+.qLabel { color: var(--text-tertiary); font-size: 12px; font-weight: var(--label-weight); }
+.answerRow h3 { font-size: 15px; line-height: 1.45; font-weight: 700; letter-spacing: -0.01em; color: var(--text-primary); word-break: keep-all; }
+.answerRow p { color: var(--text-secondary); line-height: 1.7; font-size: 15px; word-break: keep-all; }
+.answerRow p.muted { color: var(--text-tertiary); font-size: 14px; }
 
 .dangerZone { display: flex; justify-content: center; padding: 4px; }
-.deleteAction { border: 0; background: transparent; color: var(--color-danger); opacity: 0.72; padding: 8px 12px; font-size: 13px; font-weight: var(--label-weight); text-decoration: underline; text-underline-offset: 4px; }
+.deleteAction {
+  border: 0;
+  background: transparent;
+  color: var(--color-danger);
+  opacity: 0.8;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: var(--label-weight);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 .deleteAction:hover, .deleteAction:focus-visible { opacity: 1; }
 
-.sharePanel { padding: 16px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--surface-paper); }
-.sharePanel p { margin: 0; color: var(--text-secondary); line-height: var(--leading-body); font-size: 13px; }
-.shareList { display: grid; gap: 8px; margin: 12px 0; }
-.shareOption { border: 1px solid var(--border-subtle); border-radius: 10px; background: var(--surface-ink-wash); padding: 10px; display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; }
-
-.answerList { display: grid; gap: 0; padding: 8px 4px; }
-.answerRow { padding: 20px 4px; border-top: 1px solid var(--border-subtle); display: grid; gap: 7px; }
-.answerRow.first { border-top: 0; padding-top: 8px; }
-.qLabel { color: var(--text-tertiary); font-size: 11px; font-weight: var(--label-weight); letter-spacing: 0.06em; }
-.answerRow h3 { font-family: var(--font-display); font-size: 17px; line-height: 1.4; font-weight: var(--display-weight); color: var(--accent-espresso); word-break: keep-all; }
-.answerRow p { color: var(--text-primary); line-height: 1.7; font-size: 15px; word-break: keep-all; }
-.answerRow p.muted { color: var(--text-tertiary); font-size: 14px; font-style: italic; }
-
 .emptyState { display: grid; place-items: center; align-content: center; gap: 14px; text-align: center; }
-.emptyState p { max-width: 380px; color: var(--text-secondary); line-height: 1.6; }
-
-@media (max-width: 720px) {
-  .detailPage { padding: 16px 16px calc(108px + env(safe-area-inset-bottom)); }
-  .actionPanel { grid-template-columns: 1fr; }
-  .coverPanel { padding: 22px 20px; }
-  .coverPanel::after { right: 44px; }
-  .coverPhoto { height: 180px; }
-  .coverPanel h1 { font-size: 26px; }
-}
+.emptyCaption { color: var(--text-tertiary); font-size: 13px; font-weight: var(--label-weight); }
+.emptyState h1 { font-size: 20px; font-weight: var(--display-weight); letter-spacing: var(--tracking-display); }
+.emptyState p { max-width: 380px; color: var(--text-secondary); line-height: 1.6; font-size: 14px; }
 </style>

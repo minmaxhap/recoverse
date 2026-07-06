@@ -1,5 +1,7 @@
 import type { Reflection } from "../types/reflection";
 
+export const QUICK_QUESTION_TEXT = "지금 마음에 남은 한 가지는?";
+
 function pad(n: number): string {
   return n.toString().padStart(2, "0");
 }
@@ -35,7 +37,7 @@ export function createQuickReflection(now: Date = new Date()): Reflection {
           {
             id: questionId,
             groupId,
-            text: "지금 마음에 남은 한 가지는?",
+            text: QUICK_QUESTION_TEXT,
             hint: "단어 하나, 문장 한 줄로도 충분해요.",
             isRepeatable: false,
             visibility: "public",

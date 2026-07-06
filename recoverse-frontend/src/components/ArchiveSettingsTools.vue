@@ -1,61 +1,54 @@
 <template>
   <div class="tools">
-    <section class="settingsSection" aria-labelledby="app-settings-title">
+    <section id="settings-theme" class="settingsSection paperPanel" :class="{ active: activeSection === 'theme' }" aria-labelledby="app-settings-title">
       <header class="sectionHead">
-        <span class="sectionKicker">앱 설정</span>
-        <h3 id="app-settings-title">화면</h3>
+        <h3 id="app-settings-title">{{ themeLabel }}</h3>
       </header>
-
-      <div class="settingStack">
-        <section id="settings-theme" class="toolGroup" :class="{ active: activeSection === 'theme' }">
-          <span class="groupLabel">{{ themeLabel }}</span>
-          <div class="themeGrid">
-            <button
-              v-for="item in themeOptions"
-              :key="item.id"
-              class="themeButton"
-              type="button"
-              :class="{ selected: item.id === theme }"
-              @click="$emit('update:theme', item.id)"
-            >
-              <strong>{{ item.label }}</strong>
-              <span>{{ item.description }}</span>
-            </button>
-          </div>
-        </section>
+      <div class="themeGrid">
+        <button
+          v-for="item in themeOptions"
+          :key="item.id"
+          class="themeTile"
+          type="button"
+          :class="{ selected: item.id === theme }"
+          :aria-pressed="item.id === theme"
+          @click="$emit('update:theme', item.id)"
+        >
+          <span class="swatch" :class="`swatch-${item.id}`" aria-hidden="true"></span>
+          <strong>{{ item.label }}</strong>
+        </button>
       </div>
+      <p class="themeHint">{{ selectedThemeDescription }}</p>
     </section>
 
-    <section id="settings-backup" class="settingsSection" :class="{ active: activeSection === 'backup' || activeSection === 'import' }" aria-labelledby="data-settings-title">
+    <section id="settings-backup" class="settingsSection paperPanel" :class="{ active: activeSection === 'backup' || activeSection === 'import' }" aria-labelledby="data-settings-title">
       <header class="sectionHead">
-        <span class="sectionKicker">내 회고 데이터</span>
         <h3 id="data-settings-title">{{ reflectionGroupLabel }}</h3>
-        <p>저장된 회고 {{ reflectionCount }}개</p>
       </header>
-
-      <div class="buttonRow">
+      <div class="dataRows">
         <button
-          class="dataButton"
+          class="listRow"
           type="button"
           :disabled="reflectionExportDisabled"
           @click="$emit('reflection-export')"
         >
-          {{ reflectionExportLabel }}
+          <span class="rowLabel">{{ reflectionExportLabel }}</span>
+          <span class="rowValue">{{ reflectionCount }}개</span>
         </button>
-        <label class="file">
-          {{ reflectionImportLabel }}
+        <label class="listRow fileRow">
+          <span class="rowLabel">{{ reflectionImportLabel }}</span>
+          <span class="rowValue">JSON</span>
           <input type="file" accept="application/json" @change="$emit('reflection-import-file', $event)" />
         </label>
       </div>
       <p class="hint">{{ reflectionBackupHint }}</p>
     </section>
 
-    <section id="settings-danger" class="settingsSection dangerSection" aria-labelledby="danger-settings-title">
+    <section id="settings-danger" class="settingsSection paperPanel dangerSection" aria-labelledby="danger-settings-title">
       <header class="sectionHead">
-        <span class="sectionKicker">위험한 작업</span>
         <h3 id="danger-settings-title">{{ dangerGroupLabel }}</h3>
       </header>
-      <button class="danger" type="button" :disabled="clearDisabled" @click="$emit('clear-all')">
+      <button class="dangerRow" type="button" :disabled="clearDisabled" @click="$emit('clear-all')">
         {{ clearLabel }}
       </button>
     </section>
@@ -63,10 +56,12 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue";
+
 export type RecoverseTheme = "book" | "letter" | "journey";
 export type SettingsSection = "settings" | "theme" | "import" | "backup";
 
-defineProps<{
+const props = defineProps<{
   theme: RecoverseTheme;
   activeSection: SettingsSection;
   themeLabel: string;
@@ -92,31 +87,71 @@ defineEmits<{
   "reflection-import-file": [event: Event];
   "clear-all": [];
 }>();
+
+const selectedThemeDescription = computed(
+  () => props.themeOptions.find((option) => option.id === props.theme)?.description ?? ""
+);
 </script>
 
 <style scoped>
-.tools { display: grid; gap: 12px; justify-items: stretch; width: min(760px, 100%); margin-inline: auto; }
-.settingsSection,
-.toolGroup { border: 1px solid var(--border-subtle); background: var(--surface-paper); border-radius: var(--radius-card); box-shadow: 0 12px 28px rgba(2, 5, 11, 0.35); }
-.settingsSection { display: grid; gap: 14px; padding: 16px; }
-.settingsSection.active, .toolGroup.active { border-color: rgba(232, 166, 76, 0.52); box-shadow: 0 0 0 3px rgba(232, 166, 76, 0.10); }
-.sectionHead { display: grid; gap: 4px; }
-.sectionKicker, .groupLabel { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
-.sectionHead h3 { margin: 0; color: var(--text-primary); font-family: var(--font-display); font-size: 20px; line-height: var(--leading-tight); font-weight: var(--display-weight); letter-spacing: 0; }
-.sectionHead p, .hint, .themeButton span { margin: 0; color: var(--text-secondary); font-size: 12px; line-height: var(--leading-body); }
-.settingStack { display: grid; gap: 10px; }
-.toolGroup { display: grid; gap: 9px; padding: 12px; background: var(--surface-ink-wash); }
+.tools { display: grid; gap: 14px; width: min(560px, 100%); margin-inline: auto; }
+
+.settingsSection { display: grid; gap: 12px; padding: 18px 20px; transition: box-shadow var(--motion-quick) var(--ease-soft); }
+.settingsSection.active { box-shadow: var(--glow-lamp), var(--shadow-paper); }
+
+.sectionHead h3 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; color: var(--text-primary); }
+
 .themeGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-button, .file { font: inherit; border: 1px solid var(--border-subtle); background: rgba(23, 31, 46, 0.72); color: var(--text-primary); border-radius: var(--radius-card); padding: 10px 12px; }
-.themeButton { display: grid; gap: 4px; text-align: left; }
-.themeButton.selected { border-color: var(--accent-espresso); background: var(--surface-parchment); box-shadow: var(--glow-lamp); }
-.buttonRow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.dataButton, .file { border-color: var(--border-strong); }
-button { cursor: pointer; }
-button:disabled { opacity: 0.55; cursor: not-allowed; }
-.file { cursor: pointer; user-select: none; }
-.file input { display: none; }
-.dangerSection { border-color: rgba(216, 112, 91, 0.26); }
-.danger { width: fit-content; border-color: rgba(216, 112, 91, 0.55); background: rgba(216, 112, 91, 0.10); color: var(--color-danger); }
-@media (max-width: 899px) { .tools { width: 100%; } .themeGrid { grid-template-columns: 1fr; } }
+.themeTile {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--surface-ink-wash);
+  transition: box-shadow var(--motion-quick) var(--ease-soft), transform var(--motion-quick) var(--ease-spring);
+}
+.themeTile:active { transform: scale(0.97); }
+.themeTile.selected { background: var(--surface-paper); box-shadow: var(--glow-lamp); }
+.themeTile strong { font-size: 13px; font-weight: var(--label-weight); color: var(--text-secondary); }
+.themeTile.selected strong { color: var(--text-primary); }
+.swatch { width: 24px; height: 24px; border-radius: 50%; }
+.swatch-book { background: #6B5CFF; }
+.swatch-letter { background: #3182F6; }
+.swatch-journey { background: #00A76F; }
+.themeHint { margin: 0; color: var(--text-tertiary); font-size: 12px; }
+
+.dataRows { display: grid; margin: 0 -20px; }
+.listRow {
+  grid-template-columns: 1fr auto;
+  padding: 14px 20px;
+  font: inherit;
+  cursor: pointer;
+}
+.listRow:disabled { opacity: 0.4; cursor: not-allowed; }
+.listRow + .listRow { border-top: 1px solid var(--surface-ink-wash); }
+.rowLabel { font-size: 15px; font-weight: var(--label-weight); color: var(--text-primary); text-align: left; }
+.rowValue { color: var(--text-tertiary); font-size: 13px; }
+.fileRow { user-select: none; }
+.fileRow input { display: none; }
+.hint { margin: 0; color: var(--text-tertiary); font-size: 12px; line-height: var(--leading-body); }
+
+.dangerRow {
+  margin: 0 -20px;
+  padding: 14px 20px;
+  border: 0;
+  background: transparent;
+  color: var(--color-danger);
+  font-size: 15px;
+  font-weight: var(--label-weight);
+  text-align: left;
+  transition: background-color var(--motion-quick) var(--ease-soft);
+}
+.dangerRow:active:not(:disabled) { background: var(--surface-blush); }
+.dangerRow:disabled { opacity: 0.4; }
+
+@media (max-width: 899px) {
+  .tools { width: 100%; }
+}
 </style>

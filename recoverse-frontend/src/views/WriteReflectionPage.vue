@@ -1,37 +1,34 @@
 <template>
-  <section v-if="reflection" class="writePage">
+  <section v-if="reflection" class="writePage bookCapsulePage">
     <header class="writeHeader">
       <div class="titleBlock">
-        <span class="eyebrow">{{ currentGroup?.label ?? "오늘의 편지" }}</span>
-        <h1>{{ reflection.title }}</h1>
+        <span class="titleCaption">{{ reflection.title }}</span>
+        <span v-if="currentGroup" class="groupChip">{{ currentGroup.label }}</span>
       </div>
       <button class="leaveLink" type="button" @click="saveLater">
         저장하고 나가기
       </button>
     </header>
 
-    <div class="stepDots" role="progressbar" :aria-valuenow="currentStep" :aria-valuemin="1" :aria-valuemax="questions.length">
-      <span
-        v-for="i in questions.length"
-        :key="i"
-        :class="['dot', { done: i <= currentStep, current: i === currentStep }]"
-      ></span>
+    <div class="progressBlock">
       <span class="stepCount">{{ currentStep }} / {{ questions.length }}</span>
+      <div
+        class="progressTrack"
+        role="progressbar"
+        :aria-valuenow="currentStep"
+        :aria-valuemin="1"
+        :aria-valuemax="questions.length"
+      >
+        <div class="progressFill" :style="{ width: `${progressPercent}%` }"></div>
+      </div>
     </div>
 
     <main class="questionShell">
-      <aside class="writingPhotoPanel editorialPhotoFrame" aria-label="작성 무드">
-        <div class="sceneFrame">
-          <NightSkyScene variant="window" />
-        </div>
-        <p>완벽한 문장보다 나중에 다시 열어볼 수 있는 단서 하나를 남겨보세요.</p>
-      </aside>
-
       <article class="questionCard">
         <h2>{{ currentQuestion?.text }}</h2>
         <p class="questionHint">{{ currentQuestion?.hint ?? "지금 떠오른 문장으로 시작해도 괜찮아요. 길게 쓰지 않아도 그대로 이어갈 수 있어요." }}</p>
 
-        <div class="letterPaper">
+        <div class="answerCard">
           <textarea
             ref="answerTextarea"
             v-model="draft"
@@ -64,7 +61,7 @@
   </section>
 
   <section v-else class="writePage emptyState">
-    <span class="eyebrow">기억 작성</span>
+    <span class="emptyCaption">기억 작성</span>
     <h1>작성 중인 기억을 찾지 못했어요.</h1>
     <p>질문 카드부터 다시 시작하면 됩니다. 남긴 문장은 이 기기 안에만 저장돼요.</p>
     <button class="primary" type="button" @click="$emit('back-new')">새 기억 시작하기</button>
@@ -73,7 +70,6 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
-import NightSkyScene from "../components/scenes/NightSkyScene.vue";
 import { useReflectionDraftAutosave } from "../composables/useReflectionDraftAutosave";
 import type { Reflection } from "../types/reflection";
 
@@ -190,58 +186,142 @@ function saveLater() {
 </script>
 
 <style scoped>
-.writePage { min-height: 100vh; background: transparent; color: var(--text-primary); padding: 24px var(--space-page-x) 200px; }
-.writeHeader, .questionShell, .stepDots { width: min(960px, 100%); margin: 0 auto; }
-.writeHeader { display: grid; grid-template-columns: 1fr auto; align-items: end; column-gap: 16px; row-gap: 12px; }
-.titleBlock { min-width: 0; }
-.leaveLink { align-self: start; border: 1px solid var(--border-subtle); border-radius: var(--radius-pill); background: rgba(23, 31, 46, 0.72); color: var(--text-secondary); padding: 9px 13px; font-size: 13px; font-weight: var(--label-weight); letter-spacing: 0; }
-.leaveLink:hover, .leaveLink:focus-visible { color: var(--text-primary); border-color: var(--border-strong); }
-.eyebrow { color: var(--accent-wax); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
-.writeHeader h1 { margin: 4px 0 0; font-family: var(--font-display); font-size: clamp(24px, 5vw, 34px); line-height: var(--leading-tight); font-weight: var(--display-weight); letter-spacing: 0; word-break: keep-all; }
+.writePage { min-height: 100vh; color: var(--text-primary); padding: 16px var(--space-page-x) 180px; }
+.writeHeader, .questionShell, .progressBlock { width: min(640px, 100%); margin: 0 auto; }
 
-.stepDots { display: flex; align-items: center; gap: 6px; margin: 18px auto 26px; }
-.stepDots .dot { width: 22px; height: 4px; border-radius: 2px; background: var(--border-strong); transition: background-color 200ms ease; }
-.stepDots .dot.done { background: var(--accent-espresso); }
-.stepDots .stepCount { margin-left: auto; color: var(--text-tertiary); font-size: 12px; font-weight: var(--label-weight); }
+.writeHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.titleBlock { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.titleCaption {
+  color: var(--text-tertiary);
+  font-size: 13px;
+  font-weight: var(--label-weight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.groupChip {
+  flex-shrink: 0;
+  color: var(--accent-sage);
+  background: var(--color-chip);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: var(--label-weight);
+}
+.leaveLink {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-tertiary);
+  padding: 6px 4px;
+  font-size: 13px;
+  font-weight: var(--label-weight);
+}
+.leaveLink:hover, .leaveLink:focus-visible { color: var(--text-secondary); }
 
-.questionShell { display: grid; grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr); gap: 20px; align-items: start; }
-.writingPhotoPanel { position: sticky; top: 74px; margin: 0; border-radius: 12px; overflow: hidden; }
-.writingPhotoPanel .sceneFrame { height: 300px; padding: 8px; }
-.writingPhotoPanel p { margin: 0; padding: 14px; color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
+.progressBlock { display: grid; gap: 6px; margin-top: 14px; margin-bottom: 24px; }
+.stepCount { justify-self: end; color: var(--text-tertiary); font-size: 12px; font-weight: var(--label-weight); }
+.progressTrack { height: 4px; border-radius: 2px; background: var(--surface-parchment); overflow: hidden; }
+.progressFill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent-espresso);
+  transition: width var(--motion-standard) var(--ease-soft);
+}
 
-.questionCard { color: var(--text-primary); padding: 0; display: grid; gap: 16px; }
-.questionCard h2 { margin: 0; font-family: var(--font-display); font-size: clamp(26px, 5vw, 32px); line-height: 1.36; letter-spacing: 0; font-weight: var(--display-weight); color: var(--accent-espresso); overflow-wrap: anywhere; word-break: keep-all; }
+.questionShell { display: grid; gap: 20px; }
+.questionCard { display: grid; gap: 14px; }
+.questionCard h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--tracking-display);
+  line-height: 1.4;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
 .questionHint { margin: 0; color: var(--text-secondary); line-height: 1.55; font-size: 14px; overflow-wrap: anywhere; word-break: keep-all; }
 
-.questionCard :deep(.letterPaper) { min-height: 280px; }
-.questionCard :deep(.letterPaper textarea) { min-height: 262px; scroll-margin-bottom: 180px; }
-.questionCard :deep(.letterPaper textarea:focus) { outline: none; }
-.questionCard :deep(.letterPaper:focus-within) { border-color: var(--accent-espresso); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 0 0 4px rgba(232, 166, 76, 0.14), var(--shadow-letter); }
+.answerCard {
+  border-radius: var(--radius-card);
+  background: var(--surface-paper);
+  box-shadow: var(--shadow-paper);
+  padding: 18px;
+  transition: box-shadow var(--motion-quick) var(--ease-soft);
+}
+.answerCard:focus-within { box-shadow: var(--glow-lamp), var(--shadow-paper); }
+.answerCard textarea {
+  width: 100%;
+  min-height: 200px;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.7;
+  outline: none !important;
+  box-shadow: none !important;
+  resize: vertical;
+  scroll-margin-bottom: 180px;
+}
+.answerCard textarea::placeholder { color: var(--text-tertiary); }
 
-.statusBar { display: flex; align-items: center; justify-content: space-between; margin-top: -4px; font-size: 12px; color: var(--text-tertiary); }
+.statusBar { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-tertiary); }
 .saveBadge { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-sage); font-weight: var(--label-weight); }
 .saveBadge.error { color: var(--color-danger); }
 .saveBadge .dotMark { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .charCount { color: var(--text-tertiary); }
 
-.writeActions { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 35; width: min(840px, calc(100% - 32px)); transform: translateX(-50%); display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 20px; background: rgba(14, 20, 32, 0.9); box-shadow: var(--shadow-lifted); backdrop-filter: blur(16px); }
-.primary, .secondary { min-height: 44px; border-radius: var(--radius-pill); font-weight: var(--heading-weight); letter-spacing: 0; padding: 12px 15px; }
-.primary { border: 0; background: var(--accent-espresso); color: var(--color-primary-contrast); box-shadow: 0 12px 26px rgba(2, 5, 11, 0.45); }
-.secondary { border: 1px solid var(--border-strong); background: transparent; color: var(--text-secondary); }
-.secondary:hover:not(:disabled), .secondary:focus-visible { border-color: var(--accent-sage); color: var(--text-primary); }
-.emptyState { display: grid; place-items: center; align-content: center; gap: 16px; text-align: center; }
-.emptyState p { max-width: 360px; color: var(--text-secondary); line-height: 1.6; }
+.writeActions {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(64px + env(safe-area-inset-bottom));
+  z-index: 35;
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 10px;
+  padding: 12px var(--space-page-x);
+  border-top: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+}
+.primary, .secondary {
+  min-height: 52px;
+  border-radius: var(--radius-pill);
+  font-size: 15px;
+  font-weight: var(--heading-weight);
+  letter-spacing: 0;
+  padding: 13px 15px;
+  transition: transform var(--motion-quick) var(--ease-spring), background-color var(--motion-quick) var(--ease-soft);
+}
+.primary { border: 0; background: var(--accent-espresso); color: var(--color-primary-contrast); }
+.primary:hover { background: #5B4BF0; }
+.primary:active { transform: scale(0.97); }
+.secondary { border: 0; background: var(--surface-parchment); color: var(--text-secondary); }
+.secondary:hover:not(:disabled) { background: #E8EBEE; color: var(--text-primary); }
+.secondary:disabled { opacity: 0.4; }
 
-@media (max-width: 760px) {
-  .writePage { padding: 16px 16px 208px; }
-  .writeHeader { grid-template-columns: 1fr; }
-  .leaveLink { justify-self: start; }
-  .stepDots .dot { flex: 1; width: auto; max-width: 40px; }
-  .questionShell { grid-template-columns: 1fr; }
-  .writingPhotoPanel { display: none; }
-  .writeActions { bottom: calc(94px + env(safe-area-inset-bottom)); grid-template-columns: 0.85fr 1.4fr; }
+.emptyState { display: grid; place-items: center; align-content: center; gap: 16px; text-align: center; }
+.emptyCaption { color: var(--text-tertiary); font-size: 13px; font-weight: var(--label-weight); }
+.emptyState h1 { margin: 0; font-size: 20px; font-weight: var(--display-weight); letter-spacing: var(--tracking-display); }
+.emptyState p { max-width: 360px; margin: 0; color: var(--text-secondary); line-height: 1.6; font-size: 14px; }
+
+@media (min-width: 900px) {
+  .writeActions {
+    left: 50%;
+    right: auto;
+    bottom: 24px;
+    width: min(640px, calc(100% - 40px));
+    transform: translateX(-50%);
+    border: 0;
+    border-radius: var(--radius-panel);
+    box-shadow: var(--shadow-lifted);
+  }
+}
+
+@media (max-width: 899px) {
   .writePage:focus-within { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
-  .writePage:focus-within .writeActions { position: sticky; left: auto; bottom: calc(90px + env(safe-area-inset-bottom)); width: 100%; transform: none; }
-  .questionCard h2 { font-size: 25px; }
+  .writePage:focus-within .writeActions { position: sticky; left: auto; right: auto; bottom: calc(60px + env(safe-area-inset-bottom)); width: 100%; margin: 0 auto; }
 }
 </style>
