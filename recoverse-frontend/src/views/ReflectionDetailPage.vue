@@ -8,8 +8,8 @@
           {{ updatedDate }} · 답변 {{ answeredCount }}개
           <template v-if="!reflection.isCompleted"> · 진행률 {{ reflection.completionRate }}%</template>
         </p>
-        <figure v-if="detailPhoto" class="coverPhoto editorialPhotoFrame">
-          <img :src="detailPhoto.src" :alt="detailPhoto.alt" />
+        <figure class="coverPhoto editorialPhotoFrame">
+          <PostmarkStamp :label="reflection.period.label" />
         </figure>
       </section>
 
@@ -96,6 +96,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue";
+import PostmarkStamp from "../components/scenes/PostmarkStamp.vue";
 import type { Question, Reflection } from "../types/reflection";
 import { getPreviewSentence } from "../lib/reflectionPreview";
 import { confirmDialog } from "../composables/useAppDialog";
@@ -122,17 +123,6 @@ const questions = computed<Question[]>(() =>
 const answerMap = computed(() => new Map(props.reflection?.answers.map((answer) => [answer.questionId, answer]) ?? []));
 const answeredCount = computed(() =>
   props.reflection?.answers.filter((answer) => answer.value.trim().length > 0).length ?? 0
-);
-const detailPhoto = computed(() =>
-  props.reflection?.isCompleted
-    ? {
-        src: "/design/album-flower-landscape.jpg",
-        alt: "말린 꽃과 여행 사진이 놓인 열린 앨범",
-      }
-    : {
-        src: "/design/blank-journal.jpg",
-        alt: "햇빛 아래 펼쳐진 빈 저널과 안개꽃",
-      }
 );
 const representativeScene = computed(() => {
   if (!props.reflection) return "";
@@ -232,12 +222,12 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
 .quoteText { font-family: var(--font-display); font-size: clamp(18px, 3.6vw, 22px); line-height: 1.5; color: var(--text-primary); word-break: keep-all; }
 .quoteEmotion { color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
 
-.actionPanel { padding: 10px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; border: 1px solid var(--border-subtle); border-radius: 14px; background: rgba(255, 253, 248, 0.86); }
+.actionPanel { padding: 10px; display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--surface-paper); }
 .primaryAction, .secondaryAction, .tertiaryAction, .shareButton { border-radius: var(--radius-pill); font-weight: var(--heading-weight); letter-spacing: 0; padding: 11px 14px; }
-.primaryAction { border: 0; background: var(--accent-espresso); color: var(--surface-paper); box-shadow: 0 12px 26px rgba(58, 49, 43, 0.22); }
+.primaryAction { border: 0; background: var(--accent-espresso); color: var(--color-primary-contrast); box-shadow: 0 12px 26px rgba(2, 5, 11, 0.4); }
 .secondaryAction, .shareButton { border: 1px solid var(--border-strong); background: transparent; color: var(--text-primary); }
-.secondaryAction:hover:not(:disabled), .secondaryAction:focus-visible, .shareButton:hover:not(:disabled), .shareButton:focus-visible { border-color: var(--accent-sage); background: rgba(111, 127, 107, 0.08); }
-.secondaryAction.active { border-color: var(--accent-sage); background: var(--surface-sage); }
+.secondaryAction:hover:not(:disabled), .secondaryAction:focus-visible, .shareButton:hover:not(:disabled), .shareButton:focus-visible { border-color: var(--accent-espresso); background: rgba(232, 166, 76, 0.08); }
+.secondaryAction.active { border-color: var(--accent-espresso); background: var(--surface-parchment); }
 .tertiaryAction { border: 0; background: transparent; color: var(--text-secondary); padding: 9px 12px; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
 .tertiaryAction:hover:not(:disabled), .tertiaryAction:focus-visible { color: var(--text-primary); }
 .secondaryAction:disabled, .tertiaryAction:disabled { opacity: 0.45; }
@@ -246,10 +236,10 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
 .deleteAction { border: 0; background: transparent; color: var(--color-danger); opacity: 0.72; padding: 8px 12px; font-size: 13px; font-weight: var(--label-weight); text-decoration: underline; text-underline-offset: 4px; }
 .deleteAction:hover, .deleteAction:focus-visible { opacity: 1; }
 
-.sharePanel { padding: 16px; border: 1px solid var(--border-subtle); border-radius: 14px; background: rgba(255, 253, 248, 0.86); }
+.sharePanel { padding: 16px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--surface-paper); }
 .sharePanel p { margin: 0; color: var(--text-secondary); line-height: var(--leading-body); font-size: 13px; }
 .shareList { display: grid; gap: 8px; margin: 12px 0; }
-.shareOption { border: 1px solid var(--border-subtle); border-radius: 10px; background: rgba(251, 244, 236, 0.56); padding: 10px; display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; }
+.shareOption { border: 1px solid var(--border-subtle); border-radius: 10px; background: var(--surface-ink-wash); padding: 10px; display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; }
 
 .answerList { display: grid; gap: 0; padding: 8px 4px; }
 .answerRow { padding: 20px 4px; border-top: 1px solid var(--border-subtle); display: grid; gap: 7px; }

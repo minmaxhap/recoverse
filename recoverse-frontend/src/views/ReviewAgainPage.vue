@@ -47,7 +47,7 @@
 
       <div v-else class="emptyState">
         <figure class="emptyStatePhoto editorialPhotoFrame">
-          <img src="/design/blank-journal.jpg" alt="햇빛 아래 펼쳐진 빈 저널과 안개꽃" />
+          <EnvelopeScene variant="stack" />
         </figure>
         <span class="eyebrow">빈 앨범</span>
         <h2>아직 다시 발견할 기억이 없어요.</h2>
@@ -59,6 +59,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import EnvelopeScene from "../components/scenes/EnvelopeScene.vue";
 import type { Reflection } from "../types/reflection";
 import { getPreviewSentence } from "../lib/reflectionPreview";
 import { describeWindow, pickRediscovery } from "../lib/rediscovery";
@@ -155,17 +156,17 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 34%, #a75f47, var(--accent-wax) 62%, #6f3a29);
-  box-shadow: 0 4px 10px rgba(142, 78, 56, 0.3);
+  background: radial-gradient(circle at 38% 34%, var(--accent-espresso), var(--accent-wax) 70%);
+  box-shadow: 0 0 14px rgba(232, 166, 76, 0.35);
   flex-shrink: 0;
 }
 .capsuleEyebrow { color: var(--accent-wax); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 .capsuleBanner p { margin: 6px 0 0; font-family: var(--font-display); font-size: 17px; line-height: 1.42; font-weight: var(--display-weight); color: var(--accent-espresso); word-break: keep-all; }
 
 .filterBar { display: flex; flex-wrap: wrap; gap: 8px; }
-.filterChip { padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border-strong); background: rgba(255, 253, 248, 0.72); color: var(--text-secondary); font-size: 13px; font-weight: var(--label-weight); }
+.filterChip { padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border-strong); background: rgba(23, 31, 46, 0.72); color: var(--text-secondary); font-size: 13px; font-weight: var(--label-weight); }
 .filterChip:hover { color: var(--text-primary); border-color: var(--accent-sage); }
-.filterChip.active { background: var(--accent-espresso); color: var(--surface-paper); border-color: var(--accent-espresso); }
+.filterChip.active { background: var(--accent-espresso); color: var(--color-primary-contrast); border-color: var(--accent-espresso); }
 
 .albumGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
 .albumCard {
@@ -180,11 +181,11 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
   flex-direction: column;
   justify-content: space-between;
   gap: 8px;
-  box-shadow: 0 8px 18px rgba(58, 49, 43, 0.05);
-  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 8px 18px rgba(2, 5, 11, 0.3);
+  transition: transform var(--motion-quick) var(--ease-soft), border-color var(--motion-quick) var(--ease-soft), box-shadow var(--motion-quick) var(--ease-soft);
   overflow: hidden;
 }
-.albumCard:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: 0 14px 28px rgba(58, 49, 43, 0.09); }
+.albumCard:hover { transform: translateY(-3px); border-color: rgba(232, 166, 76, 0.4); box-shadow: var(--shadow-lifted); }
 .albumCard.tone-parch { background: var(--surface-parchment); }
 .albumCard.tone-blue { background: var(--surface-blue); }
 .albumCard.tone-sage { background: var(--surface-sage); }
@@ -194,7 +195,7 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
 
 .emptyFilter { padding: 32px; text-align: center; color: var(--text-secondary); border: 1px dashed var(--border-strong); border-radius: 12px; }
 
-.emptyState { display: grid; place-items: center; align-content: center; gap: 12px; padding: 28px; text-align: center; border: 1px solid var(--border-subtle); border-radius: 12px; background: rgba(255, 253, 248, 0.86); }
+.emptyState { display: grid; place-items: center; align-content: center; gap: 12px; padding: 28px; text-align: center; border: 1px solid var(--border-subtle); border-radius: 12px; background: var(--surface-paper); }
 .emptyStatePhoto { width: min(260px, 100%); height: 160px; margin: 0; border-radius: 8px; overflow: hidden; }
 .emptyState p { color: var(--text-secondary); line-height: 1.55; }
 

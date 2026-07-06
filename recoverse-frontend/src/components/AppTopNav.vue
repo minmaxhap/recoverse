@@ -36,8 +36,8 @@ defineEmits<{
   align-items: center;
   justify-content: space-between;
   padding: 0 max(18px, env(safe-area-inset-right)) 0 max(18px, env(safe-area-inset-left));
-  border-bottom: 1px solid rgba(229, 217, 200, 0.78);
-  background: rgba(251, 244, 236, 0.9);
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(14, 20, 32, 0.86);
   backdrop-filter: blur(18px);
 }
 
@@ -65,7 +65,7 @@ defineEmits<{
   background: var(--surface-paper);
   color: var(--accent-sage);
   font-size: 13px;
-  box-shadow: 0 6px 16px rgba(58, 49, 43, 0.08);
+  box-shadow: 0 6px 16px rgba(2, 5, 11, 0.4);
 }
 
 .settingsButton {
@@ -73,12 +73,12 @@ defineEmits<{
   height: 36px;
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
-  background: rgba(255, 253, 248, 0.84);
+  background: rgba(23, 31, 46, 0.84);
   color: var(--text-primary);
   display: grid;
   place-items: center;
   padding: 8px;
-  box-shadow: 0 8px 20px rgba(58, 49, 43, 0.08);
+  box-shadow: 0 8px 20px rgba(2, 5, 11, 0.4);
 }
 
 .settingsButton svg {

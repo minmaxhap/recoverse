@@ -53,10 +53,10 @@ const navigationItems = computed<Array<{
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 5px;
   padding: 7px;
-  border: 1px solid rgba(229, 217, 200, 0.86);
+  border: 1px solid var(--border-subtle);
   border-radius: 24px;
-  background: rgba(255, 253, 248, 0.91);
-  box-shadow: 0 18px 42px rgba(58, 49, 43, 0.13);
+  background: rgba(14, 20, 32, 0.88);
+  box-shadow: 0 18px 42px rgba(2, 5, 11, 0.5);
   backdrop-filter: blur(18px);
 }
 
@@ -86,9 +86,9 @@ const navigationItems = computed<Array<{
 }
 
 .navItem.active {
-  border-color: rgba(111, 127, 107, 0.28);
-  background: var(--surface-sage);
-  color: var(--text-primary);
+  border-color: rgba(232, 166, 76, 0.35);
+  background: var(--surface-parchment);
+  color: var(--accent-espresso);
 }
 
 @media (min-width: 900px) {
@@ -99,7 +99,7 @@ const navigationItems = computed<Array<{
     width: min(340px, calc(100% - 220px));
     padding: 4px;
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(58, 49, 43, 0.10);
+    box-shadow: 0 10px 28px rgba(2, 5, 11, 0.42);
   }
 
   .navItem {

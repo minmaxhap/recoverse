@@ -21,7 +21,7 @@
           </div>
 
           <figure class="photoHeroCard editorialPhotoFrame">
-            <img :src="heroPhoto.src" :alt="heroPhoto.alt" />
+            <NightSkyScene variant="hero" />
             <figcaption>
               <span>{{ brandLabel }}</span>
               <strong>{{ title }}</strong>
@@ -76,7 +76,7 @@
 
           <div v-else class="emptyAlbum paperPanel">
             <figure class="emptyAlbumPhoto editorialPhotoFrame">
-              <img src="/design/album-flower-landscape.jpg" alt="말린 꽃과 여행 사진이 놓인 열린 앨범" />
+              <NightSkyScene variant="empty" />
             </figure>
             <div>
               <span class="screenEyebrow">첫 페이지</span>
@@ -96,6 +96,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import DeliveryLoopPanel from "../components/DeliveryLoopPanel.vue";
+import NightSkyScene from "../components/scenes/NightSkyScene.vue";
 import HomeView from "./HomeView.vue";
 import type { Reflection } from "../types/reflection";
 import { getPreviewSentence } from "../lib/reflectionPreview";
@@ -115,11 +116,6 @@ const emit = defineEmits<{
   "load-sample": [];
   "view-all": [];
 }>();
-
-const heroPhoto = {
-  src: "/design/blank-journal.jpg",
-  alt: "햇빛 아래 펼쳐진 빈 저널과 안개꽃",
-};
 
 const cardTones = ["paper", "sage", "blush", "blue", "parch"] as const;
 
@@ -182,8 +178,8 @@ function openCompletedMemory(reflectionId: string) {
 .heroActions { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 180px); gap: 10px; align-items: center; }
 
 .photoHeroCard { position: relative; margin: 0; min-height: 420px; border-radius: 20px; overflow: hidden; }
-.photoHeroCard img { min-height: 420px; }
-.photoHeroCard figcaption { position: absolute; left: 18px; right: 18px; bottom: 18px; z-index: 1; width: fit-content; max-width: calc(100% - 36px); border: 1px solid rgba(229, 217, 200, 0.76); border-radius: 8px; background: rgba(255, 253, 248, 0.9); padding: 10px 12px; color: var(--text-primary); box-shadow: 0 12px 28px rgba(58, 49, 43, 0.12); backdrop-filter: blur(12px); }
+.photoHeroCard svg { position: absolute; inset: 0; }
+.photoHeroCard figcaption { position: absolute; left: 18px; right: 18px; bottom: 18px; z-index: 1; width: fit-content; max-width: calc(100% - 36px); border: 1px solid var(--border-subtle); border-radius: 8px; background: rgba(14, 20, 32, 0.82); padding: 10px 12px; color: var(--text-primary); box-shadow: 0 12px 28px rgba(2, 5, 11, 0.42); backdrop-filter: blur(12px); }
 .photoHeroCard figcaption span { font-size: 12px; font-weight: var(--label-weight); color: var(--text-secondary); }
 .photoHeroCard figcaption strong { font-family: var(--font-display); font-size: 20px; font-weight: var(--display-weight); color: var(--accent-espresso); }
 
@@ -212,18 +208,17 @@ function openCompletedMemory(reflectionId: string) {
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
   overflow: visible;
 }
-.memoryCard:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: var(--shadow-paper); }
+.memoryCard:hover { transform: translateY(-3px); border-color: rgba(232, 166, 76, 0.4); box-shadow: var(--shadow-lifted), inset 0 0 0 1px rgba(232, 166, 76, 0.25); }
 .memoryCard.tone-paper { background: var(--surface-paper); }
 .memoryCard.tone-sage { background: var(--surface-sage); }
 .memoryCard.tone-blush { background: var(--surface-blush); }
 .memoryCard.tone-blue { background: var(--surface-blue); }
 .memoryCard.tone-parch { background: var(--surface-parchment); }
-.memoryCard.draft { background: linear-gradient(145deg, var(--surface-sage), rgba(255, 253, 248, 0.9)); }
+.memoryCard.draft { background: linear-gradient(145deg, var(--surface-sage), var(--surface-paper)); }
 
 .memoryCard strong { font-family: var(--font-display); font-size: 22px; line-height: var(--leading-tight); font-weight: var(--display-weight); word-break: keep-all; }
 .memoryCard p { margin: 0; color: var(--text-secondary); line-height: var(--leading-body); font-size: 14px; overflow-wrap: anywhere; word-break: keep-all; }
-.memoryCard em { align-self: end; width: fit-content; margin-top: 4px; color: var(--accent-sage); font-size: 13px; font-style: normal; font-weight: var(--label-weight); }
-.memoryCard.tone-blush em, .memoryCard.tone-parch em { color: var(--accent-espresso); }
+.memoryCard em { align-self: end; width: fit-content; margin-top: 4px; color: var(--accent-espresso); font-size: 13px; font-style: normal; font-weight: var(--label-weight); }
 
 .emptyAlbum { display: grid; grid-template-columns: 210px 1fr; gap: 18px; align-items: center; padding: 16px; border-radius: 12px; }
 .emptyAlbumPhoto { width: 100%; height: 180px; margin: 0; border-radius: 8px; overflow: hidden; }
@@ -236,8 +231,7 @@ function openCompletedMemory(reflectionId: string) {
   .heroSection, .emptyAlbum { grid-template-columns: 1fr; }
   .heroSection { min-height: auto; gap: 20px; }
   .heroCopy { order: 0; }
-  .photoHeroCard { order: 1; min-height: 200px; }
-  .photoHeroCard, .photoHeroCard img { height: 200px; min-height: 200px; }
+  .photoHeroCard { order: 1; height: 200px; min-height: 200px; }
   .photoHeroCard figcaption { display: none; }
   .heroCopy h1 { font-size: clamp(44px, 12vw, 52px); }
   .heroActions { grid-template-columns: 1fr; }

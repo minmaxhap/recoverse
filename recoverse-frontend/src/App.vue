@@ -161,9 +161,9 @@ const themeOptions: Array<{
   label: string;
   description: string;
 }> = [
-  { id: "book", label: "책장", description: "린넨 책과 크림 종이" },
-  { id: "letter", label: "편지", description: "봉투와 왁스 실링" },
-  { id: "journey", label: "여행", description: "앨범과 창가의 빛" },
+  { id: "book", label: "자정", description: "깊은 잉크빛 밤과 호박색 램프" },
+  { id: "letter", label: "황혼", description: "보랏빛 어스름과 왁스 실링" },
+  { id: "journey", label: "새벽", description: "푸르스름한 새벽과 달빛" },
 ];
 
 const reflections = ref<Reflection[]>(loadReflections());
@@ -513,27 +513,29 @@ onBeforeUnmount(() => {
 }
 
 .app[data-theme="letter"] {
-  --surface-base: #FBF1E8;
-  --surface-paper: #FFFDF8;
-  --surface-parchment: #EEDDCB;
-  --surface-sage: #DCE4D4;
-  --text-primary: #332720;
-  --text-secondary: #7A675A;
-  --accent-espresso: #3A2D26;
-  --accent-sage: #728069;
-  --accent-wax: #9A5540;
+  /* 황혼 — warm violet ink */
+  --surface-base: #161125;
+  --surface-paper: #201A31;
+  --surface-parchment: #292140;
+  --surface-blue: #1A1B33;
+  --surface-blush: #2B1C29;
+  --border-subtle: #332B4A;
+  --border-strong: #4B4168;
+  --accent-espresso: #EFA457;
+  --accent-wax: #CE5A3E;
 }
 
 .app[data-theme="journey"] {
-  --surface-base: #F8F2E7;
-  --surface-paper: #FFFDF8;
-  --surface-parchment: #E8DDC8;
-  --surface-sage: #D8E3DA;
-  --text-primary: #2E2A22;
-  --text-secondary: #706B5E;
-  --accent-espresso: #342E25;
-  --accent-sage: #687C68;
-  --accent-wax: #8C6044;
+  /* 새벽 — cool slate and moonlight */
+  --surface-base: #111B28;
+  --surface-paper: #1B2737;
+  --surface-parchment: #223143;
+  --surface-blue: #16283A;
+  --border-subtle: #2B3A4D;
+  --border-strong: #40556C;
+  --accent-espresso: #E2AC62;
+  --accent-sage: #B3A87E;
+  --accent-sky: #A5C6DA;
 }
 
 .main { padding: 54px 0 0; }

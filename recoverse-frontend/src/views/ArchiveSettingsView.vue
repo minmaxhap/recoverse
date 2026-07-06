@@ -7,7 +7,7 @@
         <p>표시 방식, 임시 저장 상태, 내 기억 데이터를 관리합니다.</p>
       </div>
       <figure class="settingsPhoto editorialPhotoFrame">
-        <img src="/design/paper-flower-texture.jpg" alt="질감 있는 종이 위에 놓인 안개꽃" />
+        <NightSkyScene variant="constellation" />
       </figure>
     </header>
 
@@ -87,6 +87,7 @@
 
 <script setup lang="ts">
 import ArchiveSettingsTools from "../components/ArchiveSettingsTools.vue";
+import NightSkyScene from "../components/scenes/NightSkyScene.vue";
 import type {
   RecoverseTheme,
   SettingsSection,
@@ -119,16 +120,16 @@ defineEmits<{
 .settingsHead h2 { margin: 0; font-family: var(--font-display); font-size: clamp(30px, 5.4vw, 44px); line-height: var(--leading-tight); font-weight: var(--display-weight); letter-spacing: 0; }
 .settingsHead p, .samplePanel p, .usageHint { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
 .settingsPanel { display: grid; }
-.usagePanel, .privacyPanel, .samplePanel { display: grid; gap: 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(255, 253, 248, 0.86); padding: 18px 20px; box-shadow: 0 12px 28px rgba(58, 49, 43, 0.07); width: min(760px, 100%); margin-inline: auto; }
-.privacyPanel { background: linear-gradient(145deg, rgba(255,253,248,0.92), rgba(221,229,216,0.46)); }
+.usagePanel, .privacyPanel, .samplePanel { display: grid; gap: 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: var(--surface-paper); padding: 18px 20px; box-shadow: 0 12px 28px rgba(2, 5, 11, 0.35); width: min(760px, 100%); margin-inline: auto; }
+.privacyPanel { background: linear-gradient(145deg, var(--surface-paper), rgba(199, 161, 94, 0.10)); }
 .usagePanel header, .samplePanel header { display: grid; gap: 4px; }
 .usagePanel h3, .samplePanel h3, .privacyPanel h3 { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: var(--display-weight); letter-spacing: 0; }
 .usageGrid { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.usageGrid div { border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(251, 244, 236, 0.54); padding: 11px 14px; display: grid; gap: 4px; }
+.usageGrid div { border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: var(--surface-ink-wash); padding: 11px 14px; display: grid; gap: 4px; }
 .usageGrid dt { color: var(--text-secondary); font-size: 12px; font-weight: var(--label-weight); }
 .usageGrid dd { margin: 0; font-family: var(--font-display); font-size: 23px; font-weight: var(--display-weight); }
 .privacyPanel ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
-.sampleCta { justify-self: start; border: 1px solid var(--border-strong); border-radius: var(--radius-pill); background: var(--accent-espresso); color: var(--surface-paper); padding: 10px 16px; font-weight: var(--heading-weight); letter-spacing: 0; }
+.sampleCta { justify-self: start; border: 1px solid transparent; border-radius: var(--radius-pill); background: var(--accent-espresso); color: var(--color-primary-contrast); padding: 10px 16px; font-weight: var(--heading-weight); letter-spacing: 0; }
 .sampleCta:hover, .sampleCta:focus-visible { border-color: var(--accent-sage); }
 @media (max-width: 720px) { .settingsScreen { padding: 16px 14px calc(104px + env(safe-area-inset-bottom)); } .settingsHead { grid-template-columns: 1fr; } .settingsPhoto { height: 154px; } .usageGrid { grid-template-columns: 1fr; } }
 </style>

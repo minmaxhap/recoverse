@@ -21,7 +21,9 @@
 
     <main class="questionShell">
       <aside class="writingPhotoPanel editorialPhotoFrame" aria-label="작성 무드">
-        <img src="/design/blank-journal.jpg" alt="햇빛 아래 펼쳐진 빈 저널과 안개꽃" />
+        <div class="sceneFrame">
+          <NightSkyScene variant="window" />
+        </div>
         <p>완벽한 문장보다 나중에 다시 열어볼 수 있는 단서 하나를 남겨보세요.</p>
       </aside>
 
@@ -71,6 +73,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from "vue";
+import NightSkyScene from "../components/scenes/NightSkyScene.vue";
 import { useReflectionDraftAutosave } from "../composables/useReflectionDraftAutosave";
 import type { Reflection } from "../types/reflection";
 
@@ -191,7 +194,7 @@ function saveLater() {
 .writeHeader, .questionShell, .stepDots { width: min(960px, 100%); margin: 0 auto; }
 .writeHeader { display: grid; grid-template-columns: 1fr auto; align-items: end; column-gap: 16px; row-gap: 12px; }
 .titleBlock { min-width: 0; }
-.leaveLink { align-self: start; border: 1px solid var(--border-subtle); border-radius: var(--radius-pill); background: rgba(255, 253, 248, 0.72); color: var(--text-secondary); padding: 9px 13px; font-size: 13px; font-weight: var(--label-weight); letter-spacing: 0; }
+.leaveLink { align-self: start; border: 1px solid var(--border-subtle); border-radius: var(--radius-pill); background: rgba(23, 31, 46, 0.72); color: var(--text-secondary); padding: 9px 13px; font-size: 13px; font-weight: var(--label-weight); letter-spacing: 0; }
 .leaveLink:hover, .leaveLink:focus-visible { color: var(--text-primary); border-color: var(--border-strong); }
 .eyebrow { color: var(--accent-wax); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 .writeHeader h1 { margin: 4px 0 0; font-family: var(--font-display); font-size: clamp(24px, 5vw, 34px); line-height: var(--leading-tight); font-weight: var(--display-weight); letter-spacing: 0; word-break: keep-all; }
@@ -203,7 +206,7 @@ function saveLater() {
 
 .questionShell { display: grid; grid-template-columns: minmax(220px, 0.42fr) minmax(0, 1fr); gap: 20px; align-items: start; }
 .writingPhotoPanel { position: sticky; top: 74px; margin: 0; border-radius: 12px; overflow: hidden; }
-.writingPhotoPanel img { height: 300px; padding: 8px; }
+.writingPhotoPanel .sceneFrame { height: 300px; padding: 8px; }
 .writingPhotoPanel p { margin: 0; padding: 14px; color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
 
 .questionCard { color: var(--text-primary); padding: 0; display: grid; gap: 16px; }
@@ -213,7 +216,7 @@ function saveLater() {
 .questionCard :deep(.letterPaper) { min-height: 280px; }
 .questionCard :deep(.letterPaper textarea) { min-height: 262px; scroll-margin-bottom: 180px; }
 .questionCard :deep(.letterPaper textarea:focus) { outline: none; }
-.questionCard :deep(.letterPaper:focus-within) { border-color: var(--accent-sage); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 0 0 4px rgba(111, 127, 107, 0.12), 0 10px 22px rgba(47, 38, 31, 0.06); }
+.questionCard :deep(.letterPaper:focus-within) { border-color: var(--accent-espresso); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 0 0 4px rgba(232, 166, 76, 0.14), var(--shadow-letter); }
 
 .statusBar { display: flex; align-items: center; justify-content: space-between; margin-top: -4px; font-size: 12px; color: var(--text-tertiary); }
 .saveBadge { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-sage); font-weight: var(--label-weight); }
@@ -221,9 +224,9 @@ function saveLater() {
 .saveBadge .dotMark { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .charCount { color: var(--text-tertiary); }
 
-.writeActions { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 35; width: min(840px, calc(100% - 32px)); transform: translateX(-50%); display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 20px; background: rgba(255, 253, 248, 0.92); box-shadow: var(--shadow-lifted); backdrop-filter: blur(16px); }
+.writeActions { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: 35; width: min(840px, calc(100% - 32px)); transform: translateX(-50%); display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 20px; background: rgba(14, 20, 32, 0.9); box-shadow: var(--shadow-lifted); backdrop-filter: blur(16px); }
 .primary, .secondary { min-height: 44px; border-radius: var(--radius-pill); font-weight: var(--heading-weight); letter-spacing: 0; padding: 12px 15px; }
-.primary { border: 0; background: var(--accent-espresso); color: var(--surface-paper); box-shadow: 0 12px 26px rgba(58, 49, 43, 0.24); }
+.primary { border: 0; background: var(--accent-espresso); color: var(--color-primary-contrast); box-shadow: 0 12px 26px rgba(2, 5, 11, 0.45); }
 .secondary { border: 1px solid var(--border-strong); background: transparent; color: var(--text-secondary); }
 .secondary:hover:not(:disabled), .secondary:focus-visible { border-color: var(--accent-sage); color: var(--text-primary); }
 .emptyState { display: grid; place-items: center; align-content: center; gap: 16px; text-align: center; }

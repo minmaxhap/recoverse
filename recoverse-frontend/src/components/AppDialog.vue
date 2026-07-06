@@ -118,7 +118,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(47, 38, 31, 0.42);
+  background: rgba(3, 6, 12, 0.62);
   backdrop-filter: blur(2px);
 }
 
@@ -142,7 +142,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
   height: 28px;
   background: var(--accent-wax);
   border-radius: 0 0 4px 4px;
-  box-shadow: 0 2px 4px rgba(142, 78, 56, 0.28);
+  box-shadow: 0 2px 4px rgba(2, 5, 11, 0.45);
 }
 
 .dialogPanel h2 {
@@ -174,7 +174,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
   min-width: 0;
   border: 1px solid var(--border-strong);
   border-radius: 10px;
-  background: rgba(251, 244, 236, 0.56);
+  background: rgba(14, 20, 32, 0.6);
   color: var(--text-primary);
   padding: 10px 12px;
   font-size: 13px;
@@ -189,7 +189,7 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
   flex-shrink: 0;
   border: 1px solid var(--border-strong);
   border-radius: 10px;
-  background: rgba(255, 253, 248, 0.8);
+  background: rgba(23, 31, 46, 0.8);
   color: var(--text-primary);
   padding: 0 14px;
   font-size: 13px;
@@ -229,12 +229,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", onKeydown));
 .dialogAccept {
   border: 0;
   background: var(--accent-espresso);
-  color: var(--surface-paper);
-  box-shadow: 0 12px 26px rgba(58, 49, 43, 0.22);
+  color: var(--color-primary-contrast);
+  box-shadow: 0 12px 26px rgba(2, 5, 11, 0.45);
 }
 
 .dialogAccept.danger {
   background: var(--color-danger);
+  color: #1C0B07;
 }
 
 .dialogFade-enter-active, .dialogFade-leave-active {

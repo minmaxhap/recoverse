@@ -10,7 +10,7 @@
 
       <section class="entryCard" aria-labelledby="entry-title">
         <figure class="entryPhoto editorialPhotoFrame">
-          <img src="/design/sealed-envelope-stack.jpg" alt="초록색 왁스 실링이 붙은 종이 봉투 더미" />
+          <EnvelopeScene variant="stack" />
           <figcaption>필요하면 템플릿을 고르고, 아니면 바로 첫 질문으로 들어갑니다.</figcaption>
         </figure>
 
@@ -118,6 +118,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import EnvelopeScene from "../components/scenes/EnvelopeScene.vue";
 import {
   buildQuestionGroupsForMode,
   getReflectionTemplate,
@@ -295,8 +296,8 @@ function start() {
 .entryHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .entryCard { border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-paper); padding: clamp(14px, 3vw, 22px); display: grid; grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1fr); gap: clamp(18px, 4vw, 34px); box-shadow: var(--shadow-paper); }
 .entryPhoto { position: relative; margin: 0; min-height: 520px; overflow: hidden; border-radius: 14px; }
-.entryPhoto img { min-height: 520px; }
-.entryPhoto figcaption { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 1; border: 1px solid rgba(229, 217, 200, 0.72); border-radius: 8px; background: rgba(255, 253, 248, 0.88); color: var(--text-primary); padding: 10px 12px; font-size: 13px; line-height: 1.5; box-shadow: 0 12px 28px rgba(58, 49, 43, 0.12); backdrop-filter: blur(12px); }
+.entryPhoto svg { position: absolute; inset: 0; }
+.entryPhoto figcaption { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 1; border: 1px solid var(--border-subtle); border-radius: 8px; background: rgba(14, 20, 32, 0.82); color: var(--text-primary); padding: 10px 12px; font-size: 13px; line-height: 1.5; box-shadow: 0 12px 28px rgba(2, 5, 11, 0.42); backdrop-filter: blur(12px); }
 .entryForm { display: grid; align-content: center; gap: clamp(18px, 3vh, 26px); padding: clamp(8px, 2vw, 18px); }
 .entryCopy { display: grid; gap: 10px; }
 .eyebrow { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
@@ -305,15 +306,15 @@ h1 { max-width: 640px; margin: 0; font-family: var(--font-display); font-size: c
 .topicField span, .templateChip span { color: var(--text-secondary); font-size: 12px; font-weight: var(--label-weight); }
 .topicField input { width: 100%; border: 0; border-bottom: 1px solid var(--border-strong); border-radius: 0; background: transparent; color: var(--text-primary); padding: 12px 2px; font-family: var(--font-display); font-size: clamp(24px, 5.4vw, 38px); font-weight: var(--display-weight); letter-spacing: 0; outline: none; }
 .quickChips, .templateRail, .duplicateActions { display: flex; flex-wrap: wrap; gap: 9px; }
-.quickChips button, .templateChip, .ghostButton { border: 1px solid var(--border-subtle); background: rgba(255, 253, 248, 0.74); color: var(--text-primary); border-radius: var(--radius-pill); padding: 10px 14px; font-weight: var(--label-weight); }
+.quickChips button, .templateChip, .ghostButton { border: 1px solid var(--border-subtle); background: rgba(23, 31, 46, 0.72); color: var(--text-primary); border-radius: var(--radius-pill); padding: 10px 14px; font-weight: var(--label-weight); }
 .templateChip { width: min(146px, 100%); min-height: 116px; border-radius: var(--radius-card); padding: 12px; display: grid; gap: 7px; text-align: left; align-content: start; }
 .templateStamp { width: 38px; height: 38px; border: 1px solid var(--border-strong); border-radius: 50%; display: grid; place-items: center; color: var(--accent-sage); font-family: var(--font-display); font-size: 14px; font-weight: var(--display-weight); }
 .templateChip strong { font-weight: var(--heading-weight); }
-.templateChip.selected { border-color: rgba(111, 127, 107, 0.46); background: var(--surface-sage); }
+.templateChip.selected { border-color: rgba(232, 166, 76, 0.5); background: var(--surface-parchment); box-shadow: var(--glow-lamp); }
 .customChip .templateStamp { color: var(--accent-wax); font-size: 20px; }
-.customChip.selected { border-color: rgba(142, 78, 56, 0.4); background: var(--surface-blush); }
+.customChip.selected { border-color: rgba(206, 90, 62, 0.5); background: var(--surface-blush); }
 
-.customQuestionEditor { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(251, 244, 236, 0.44); }
+.customQuestionEditor { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: var(--surface-ink-wash); }
 .customQuestionRow { display: grid; gap: 5px; }
 .customQuestionRow span { color: var(--text-secondary); font-size: 12px; font-weight: var(--label-weight); }
 .customQuestionInput { display: flex; gap: 8px; align-items: center; }
@@ -325,16 +326,17 @@ h1 { max-width: 640px; margin: 0; font-family: var(--font-display); font-size: c
 .addQuestionButton { justify-self: start; border: 1px dashed var(--border-strong); border-radius: var(--radius-pill); background: transparent; color: var(--text-secondary); padding: 9px 14px; font-size: 13px; font-weight: var(--label-weight); }
 .addQuestionButton:hover, .addQuestionButton:focus-visible { color: var(--text-primary); border-color: var(--accent-sage); }
 
-.primaryCta { width: min(270px, 100%); min-height: 52px; border: 0; border-radius: var(--radius-pill); background: var(--accent-espresso); color: var(--surface-paper); padding: 13px 18px; font-weight: var(--heading-weight); }
+.primaryCta { width: min(270px, 100%); min-height: 52px; border: 0; border-radius: var(--radius-pill); background: var(--accent-espresso); color: var(--color-primary-contrast); padding: 13px 18px; font-weight: var(--heading-weight); transition: transform var(--motion-quick) var(--ease-soft), box-shadow var(--motion-quick) var(--ease-soft); }
+.primaryCta:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--glow-lamp); }
 .primaryCta:disabled { opacity: 0.45; }
-.duplicateNotice { display: grid; gap: 12px; border: 1px solid rgba(142, 78, 56, 0.22); border-radius: var(--radius-card); background: rgba(234, 215, 207, 0.42); padding: 14px 16px; }
+.duplicateNotice { display: grid; gap: 12px; border: 1px solid rgba(206, 90, 62, 0.35); border-radius: var(--radius-card); background: rgba(194, 94, 68, 0.10); padding: 14px 16px; }
 .duplicateNotice p { margin: 0; color: var(--text-primary); font-size: 14px; line-height: 1.5; }
 .duplicateNotice strong { color: var(--accent-wax); }
 .duplicateActions .primaryCta, .duplicateActions .ghostButton { width: auto; min-height: 44px; padding: 10px 16px; }
 @media (max-width: 760px) {
   .reflectionPage { padding: 14px 14px calc(96px + env(safe-area-inset-bottom)); }
   .entryCard { grid-template-columns: 1fr; border-radius: 16px; }
-  .entryPhoto, .entryPhoto img { height: 280px; min-height: 280px; }
+  .entryPhoto { height: 280px; min-height: 280px; }
   .templateChip, .primaryCta { width: 100%; }
 }
 </style>

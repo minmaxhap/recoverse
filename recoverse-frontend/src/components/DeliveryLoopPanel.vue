@@ -62,15 +62,15 @@ defineEmits<{
 .deliverySection { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.72fr); gap: 14px; align-items: stretch; }
 .deliverySection.arrivalOnly { grid-template-columns: 1fr; }
 .deliveryCard, .arrivalCard { padding: clamp(18px, 3vw, 24px); border-radius: 14px; }
-.deliveryCard { display: grid; gap: 18px; background: linear-gradient(135deg, var(--surface-paper), rgba(221, 229, 216, 0.58)); }
+.deliveryCard { display: grid; gap: 18px; background: linear-gradient(135deg, var(--surface-paper), var(--surface-blue)); }
 .deliveryCard h2, .arrivalCard h2 { margin: 0; font-family: var(--font-display); font-weight: var(--display-weight); line-height: var(--leading-tight); color: var(--text-primary); word-break: keep-all; }
 .deliveryCard h2 { max-width: 560px; font-size: clamp(24px, 4vw, 34px); }
 .deliverySteps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
-.deliverySteps li { min-height: 136px; display: grid; align-content: start; gap: 7px; padding: 14px; border: 1px solid rgba(202, 188, 168, 0.58); border-radius: var(--radius-card); background: rgba(255, 253, 248, 0.64); }
+.deliverySteps li { min-height: 136px; display: grid; align-content: start; gap: 7px; padding: 14px; border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: var(--surface-ink-wash); }
 .deliverySteps span { color: var(--accent-wax); font-family: var(--font-display); font-size: 14px; font-weight: var(--display-weight); }
 .deliverySteps strong { color: var(--text-primary); font-size: 15px; font-weight: var(--heading-weight); }
 .deliverySteps p, .arrivalCard p { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); word-break: keep-all; }
-.arrivalCard { display: grid; gap: 12px; align-content: start; background: var(--surface-parchment); }
+.arrivalCard { display: grid; gap: 12px; align-content: start; background: var(--surface-parchment); border-color: rgba(232, 166, 76, 0.28); animation: rc-lamp-pulse 4.5s ease-in-out infinite; }
 .arrivalCard h2 { font-size: clamp(20px, 3vw, 25px); }
 .arrivalCard .paperButton { width: fit-content; min-width: 150px; }
 
