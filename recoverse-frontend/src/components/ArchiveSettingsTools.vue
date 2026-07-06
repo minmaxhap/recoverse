@@ -3,20 +3,10 @@
     <section class="settingsSection" aria-labelledby="app-settings-title">
       <header class="sectionHead">
         <span class="sectionKicker">앱 설정</span>
-        <h3 id="app-settings-title">화면과 언어</h3>
+        <h3 id="app-settings-title">화면</h3>
       </header>
 
       <div class="settingStack">
-        <section id="settings-language" class="toolGroup" :class="{ active: activeSection === 'language' }">
-          <span class="groupLabel">{{ languageLabel }}</span>
-          <LanguageSelector
-            :model-value="language"
-            :label="languageLabel"
-            @update:model-value="$emit('update:language', $event)"
-            @change="$emit('change-language')"
-          />
-        </section>
-
         <section id="settings-theme" class="toolGroup" :class="{ active: activeSection === 'theme' }">
           <span class="groupLabel">{{ themeLabel }}</span>
           <div class="themeGrid">
@@ -73,17 +63,12 @@
 </template>
 
 <script setup lang="ts">
-import type { AppLanguage } from "../types/recoverse";
-import LanguageSelector from "./LanguageSelector.vue";
-
 export type RecoverseTheme = "book" | "letter" | "journey";
-export type SettingsSection = "settings" | "language" | "theme" | "import" | "backup";
+export type SettingsSection = "settings" | "theme" | "import" | "backup";
 
 defineProps<{
-  language: AppLanguage;
   theme: RecoverseTheme;
   activeSection: SettingsSection;
-  languageLabel: string;
   themeLabel: string;
   themeOptions: Array<{
     id: RecoverseTheme;
@@ -102,9 +87,7 @@ defineProps<{
 }>();
 
 defineEmits<{
-  "update:language": [language: AppLanguage];
   "update:theme": [theme: RecoverseTheme];
-  "change-language": [];
   "reflection-export": [];
   "reflection-import-file": [event: Event];
   "clear-all": [];
@@ -112,7 +95,7 @@ defineEmits<{
 </script>
 
 <style scoped>
-.tools { display: grid; gap: 12px; justify-items: stretch; width: min(760px, 100%); }
+.tools { display: grid; gap: 12px; justify-items: stretch; width: min(760px, 100%); margin-inline: auto; }
 .settingsSection,
 .toolGroup { border: 1px solid var(--border-subtle); background: rgba(255, 253, 248, 0.86); border-radius: var(--radius-card); box-shadow: 0 12px 28px rgba(58, 49, 43, 0.07); }
 .settingsSection { display: grid; gap: 14px; padding: 16px; }

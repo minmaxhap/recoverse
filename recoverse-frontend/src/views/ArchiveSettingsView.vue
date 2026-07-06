@@ -63,10 +63,8 @@
 
     <section class="settingsPanel">
       <ArchiveSettingsTools
-        :language="language"
         :theme="theme"
         :active-section="activeSection"
-        language-label="언어"
         theme-label="테마"
         :theme-options="themeOptions"
         reflection-group-label="회고 데이터"
@@ -78,9 +76,7 @@
         danger-group-label="데이터 초기화"
         clear-label="전체 회고 삭제"
         :clear-disabled="reflectionCount === 0"
-        @update:language="$emit('update:language', $event)"
         @update:theme="$emit('update:theme', $event)"
-        @change-language="$emit('change-language')"
         @reflection-export="$emit('reflection-export')"
         @reflection-import-file="$emit('reflection-import-file', $event)"
         @clear-all="$emit('clear-all')"
@@ -95,11 +91,9 @@ import type {
   RecoverseTheme,
   SettingsSection,
 } from "../components/ArchiveSettingsTools.vue";
-import type { AppLanguage } from "../types/recoverse";
 import type { TelemetryState } from "../lib/localTelemetry";
 
 defineProps<{
-  language: AppLanguage;
   theme: RecoverseTheme;
   activeSection: SettingsSection;
   themeOptions: Array<{ id: RecoverseTheme; label: string; description: string }>;
@@ -109,9 +103,7 @@ defineProps<{
 }>();
 
 defineEmits<{
-  "update:language": [language: AppLanguage];
   "update:theme": [theme: RecoverseTheme];
-  "change-language": [];
   "reflection-export": [];
   "reflection-import-file": [event: Event];
   "clear-all": [];
@@ -121,14 +113,13 @@ defineEmits<{
 
 <style scoped>
 .settingsScreen { display: grid; gap: 16px; padding: 24px var(--space-page-x) calc(108px + env(safe-area-inset-bottom)); color: var(--text-primary); }
-.settingsHead { display: grid; grid-template-columns: minmax(0, 1fr) 190px; align-items: end; gap: 16px; width: min(760px, 100%); }
+.settingsHead { display: grid; grid-template-columns: minmax(0, 1fr) 190px; align-items: end; gap: 16px; width: min(760px, 100%); margin-inline: auto; }
 .settingsPhoto { width: 100%; height: 132px; margin: 0; border-radius: 8px; overflow: hidden; }
-.settingsPhoto img { padding: 7px; }
 .settingsHead .eyebrow, .usageEyebrow, .privacyEyebrow, .sampleEyebrow { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 .settingsHead h2 { margin: 0; font-family: var(--font-display); font-size: clamp(30px, 5.4vw, 44px); line-height: var(--leading-tight); font-weight: var(--display-weight); letter-spacing: 0; }
 .settingsHead p, .samplePanel p, .usageHint { margin: 0; color: var(--text-secondary); font-size: 13px; line-height: var(--leading-body); }
 .settingsPanel { display: grid; }
-.usagePanel, .privacyPanel, .samplePanel { display: grid; gap: 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(255, 253, 248, 0.86); padding: 18px 20px; box-shadow: 0 12px 28px rgba(58, 49, 43, 0.07); width: min(760px, 100%); }
+.usagePanel, .privacyPanel, .samplePanel { display: grid; gap: 12px; border: 1px solid var(--border-subtle); border-radius: var(--radius-card); background: rgba(255, 253, 248, 0.86); padding: 18px 20px; box-shadow: 0 12px 28px rgba(58, 49, 43, 0.07); width: min(760px, 100%); margin-inline: auto; }
 .privacyPanel { background: linear-gradient(145deg, rgba(255,253,248,0.92), rgba(221,229,216,0.46)); }
 .usagePanel header, .samplePanel header { display: grid; gap: 4px; }
 .usagePanel h3, .samplePanel h3, .privacyPanel h3 { margin: 0; font-family: var(--font-display); font-size: 20px; font-weight: var(--display-weight); letter-spacing: 0; }

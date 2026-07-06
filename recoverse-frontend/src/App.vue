@@ -64,16 +64,13 @@
 
       <ArchiveSettingsView
         v-else-if="mode === 'archive-settings'"
-        :language="language"
         :theme="appTheme"
         :active-section="activeSettingsSection"
         :theme-options="themeOptions"
         :reflection-count="reflections.length"
         :telemetry="telemetry"
         :telemetry-summary="telemetrySummary"
-        @update:language="language = $event"
         @update:theme="setAppTheme"
-        @change-language="saveLanguage"
         @reflection-export="onExportReflections"
         @reflection-import-file="onImportReflectionFile"
         @clear-all="clearAll"
@@ -106,9 +103,7 @@ import SharedReflectionPage from "./views/SharedReflectionPage.vue";
 import WriteReflectionPage from "./views/WriteReflectionPage.vue";
 import { downloadBlob } from "./lib/downloadBlob";
 import {
-  loadPreferredLanguage,
   loadPreferredTheme,
-  savePreferredLanguage,
   savePreferredTheme,
 } from "./lib/localPreferenceStore";
 import {
@@ -119,7 +114,6 @@ import {
   isTabActive,
   shouldShowBottomNav,
 } from "./lib/appNavigation";
-import type { AppLanguage } from "./types/recoverse";
 import {
   createCustomReflectionDraft,
   createReflectionDraft,
@@ -148,7 +142,7 @@ import {
   urlWithoutHash,
 } from "./lib/appHistory";
 import { createQuickReflection } from "./lib/quickReflection";
-import { SAMPLE_REFLECTION_ID, createSampleReflection } from "./lib/sampleReflection";
+import { createSampleReflection } from "./lib/sampleReflection";
 import {
   describeTelemetry,
   loadTelemetry,
@@ -160,7 +154,6 @@ import {
 import { alertDialog, confirmDialog, promptDialog } from "./composables/useAppDialog";
 import type { Reflection, ReflectionPeriod, ReflectionQuestionSetMode } from "./types/reflection";
 
-const language = ref<AppLanguage>(loadPreferredLanguage());
 const appTheme = ref<RecoverseTheme>(loadPreferredTheme());
 const activeSettingsSection = ref<SettingsSection>("settings");
 const themeOptions: Array<{
@@ -185,14 +178,12 @@ const isHandlingBrowserBack = ref(false);
 const showBottomNav = computed(() => shouldShowBottomNav(mode.value));
 const activeBottomTab = computed<BottomTabId | null>(() => getActiveBottomTab(mode.value));
 const telemetrySummary = computed(() => describeTelemetry(telemetry.value));
+const previewSample = ref<Reflection | null>(null);
 const activeReflection = computed(() => {
   if (!activeReflectionId.value) return null;
+  if (previewSample.value?.id === activeReflectionId.value) return previewSample.value;
   return reflections.value.find((reflection) => reflection.id === activeReflectionId.value) ?? null;
 });
-
-function saveLanguage() {
-  savePreferredLanguage(language.value);
-}
 
 function setAppTheme(theme: RecoverseTheme) {
   appTheme.value = theme;
@@ -206,13 +197,11 @@ async function openSettingsSection(section: SettingsSection) {
 
   nextTick(() => {
     const targetId =
-      section === "language"
-        ? "settings-language"
-        : section === "theme"
-          ? "settings-theme"
-          : section === "import" || section === "backup"
-            ? "settings-backup"
-            : "";
+      section === "theme"
+        ? "settings-theme"
+        : section === "import" || section === "backup"
+          ? "settings-backup"
+          : "";
     if (!targetId) return;
     document.getElementById(targetId)?.scrollIntoView({ block: "center", behavior: "smooth" });
   });
@@ -331,7 +320,11 @@ function deleteActiveReflection() {
   const reflection = activeReflection.value;
   if (!reflection) return;
 
-  reflections.value = deleteReflection(reflection.id);
+  if (previewSample.value?.id === reflection.id) {
+    previewSample.value = null;
+  } else {
+    reflections.value = deleteReflection(reflection.id);
+  }
   activeReflectionId.value = reflections.value[0]?.id ?? null;
   setMode("home-book");
 }
@@ -421,10 +414,8 @@ function startQuickReflection() {
 }
 
 function loadSampleReflection() {
-  const sample =
-    reflections.value.find((reflection) => reflection.id === SAMPLE_REFLECTION_ID) ??
-    createSampleReflection();
-  reflections.value = saveReflection(sample);
+  const sample = createSampleReflection();
+  previewSample.value = sample;
   activeReflectionId.value = sample.id;
   setMode("reflection-detail");
 }
@@ -516,8 +507,8 @@ onBeforeUnmount(() => {
 <style scoped>
 .app {
   min-height: 100vh;
-  background: var(--color-page);
-  color: var(--color-ink);
+  background: var(--surface-base);
+  color: var(--text-primary);
   font-family: var(--font-body);
 }
 

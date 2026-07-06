@@ -281,9 +281,7 @@ test("falls back when preference storage is blocked", () => {
 
   try {
     globalThis.localStorage = failingStorage;
-    assert.equal(localPreferenceStore.loadPreferredLanguage(), "ko");
     assert.equal(localPreferenceStore.loadPreferredTheme(), "book");
-    assert.equal(localPreferenceStore.savePreferredLanguage("en"), false);
     assert.equal(localPreferenceStore.savePreferredTheme("letter"), false);
   } finally {
     globalThis.localStorage = originalStorage;

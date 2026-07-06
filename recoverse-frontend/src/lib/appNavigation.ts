@@ -10,7 +10,7 @@ export type AppMode =
 export type BottomTabId = "write" | "home" | "review";
 
 export const bottomNavLabels: Record<BottomTabId, string> = {
-  home: "나의 책",
+  home: "홈",
   write: "작성하기",
   review: "다시보기",
 };

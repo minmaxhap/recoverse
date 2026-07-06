@@ -36,7 +36,6 @@
           type="button"
           @click="$emit('open-reflection', reflection.id)"
         >
-          <span class="periodLabel">{{ reflection.period.label }}</span>
           <h3>{{ reflection.title }}</h3>
           <span class="cardMeta">{{ shortDate(reflection.updatedAt) }} · 답변 {{ countAnswers(reflection) }}</span>
         </button>
@@ -190,9 +189,6 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
 .albumCard.tone-blue { background: var(--surface-blue); }
 .albumCard.tone-sage { background: var(--surface-sage); }
 .albumCard.tone-paper { background: var(--surface-paper); }
-.albumCard .periodLabel { color: var(--text-tertiary); font-size: 10px; font-weight: var(--label-weight); letter-spacing: 0.06em; }
-.albumCard.tone-blue .periodLabel { color: var(--accent-sky); font-weight: var(--eyebrow-weight); }
-.albumCard.tone-sage .periodLabel { color: var(--accent-sage); font-weight: var(--eyebrow-weight); }
 .albumCard h3 { font-family: var(--font-display); font-size: 18px; line-height: 1.32; font-weight: var(--display-weight); color: var(--text-primary); word-break: keep-all; }
 .albumCard .cardMeta { color: var(--text-tertiary); font-size: 11px; }
 
@@ -200,7 +196,6 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
 
 .emptyState { display: grid; place-items: center; align-content: center; gap: 12px; padding: 28px; text-align: center; border: 1px solid var(--border-subtle); border-radius: 12px; background: rgba(255, 253, 248, 0.86); }
 .emptyStatePhoto { width: min(260px, 100%); height: 160px; margin: 0; border-radius: 8px; overflow: hidden; }
-.emptyStatePhoto img { padding: 7px; }
 .emptyState p { color: var(--text-secondary); line-height: 1.55; }
 
 @media (max-width: 720px) {

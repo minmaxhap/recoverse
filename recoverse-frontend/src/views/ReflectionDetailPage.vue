@@ -3,7 +3,6 @@
     <main class="detailShell">
       <section class="coverPanel paperPanel">
         <span class="ribbonBookmark" aria-hidden="true"></span>
-        <span class="periodLabel">{{ reflection.period.label }}</span>
         <h1>{{ reflection.title }}</h1>
         <p class="coverMeta">
           {{ updatedDate }} · 답변 {{ answeredCount }}개
@@ -35,8 +34,9 @@
         <button
           class="secondaryAction"
           type="button"
+          :class="{ active: shareOpen }"
           :disabled="shareableItems.length === 0"
-          @click="openShareOptions"
+          @click="toggleShareOptions"
         >
           공유하기
         </button>
@@ -51,25 +51,22 @@
         </button>
       </section>
 
-      <section v-if="shareableItems.length > 0" class="sharePanel">
-        <details ref="shareDetailsRef">
-          <summary>공유할 답변 고르기</summary>
-          <p>친구에게 보여줘도 괜찮은 질문만 고르면 수정할 수 없는 읽기 전용 화면이 만들어집니다.</p>
-          <div class="shareList">
-            <label v-for="item in shareableItems" :key="item.question.id" class="shareOption">
-              <input v-model="shareSelection" type="checkbox" :value="item.question.id" />
-              <span>{{ item.question.text }}</span>
-            </label>
-          </div>
-          <button
-            class="shareButton"
-            type="button"
-            :disabled="shareSelection.length === 0"
-            @click="$emit('share', shareSelection)"
-          >
-            읽기 전용 링크 만들기
-          </button>
-        </details>
+      <section v-if="shareOpen && shareableItems.length > 0" ref="sharePanelRef" class="sharePanel">
+        <p>친구에게 보여줘도 괜찮은 질문만 고르면 수정할 수 없는 읽기 전용 화면이 만들어집니다.</p>
+        <div class="shareList">
+          <label v-for="item in shareableItems" :key="item.question.id" class="shareOption">
+            <input v-model="shareSelection" type="checkbox" :value="item.question.id" />
+            <span>{{ item.question.text }}</span>
+          </label>
+        </div>
+        <button
+          class="shareButton"
+          type="button"
+          :disabled="shareSelection.length === 0"
+          @click="$emit('share', shareSelection)"
+        >
+          읽기 전용 링크 만들기
+        </button>
       </section>
 
       <section class="answerList" aria-label="질문과 답변">
@@ -98,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import type { Question, Reflection } from "../types/reflection";
 import { getPreviewSentence } from "../lib/reflectionPreview";
 import { confirmDialog } from "../composables/useAppDialog";
@@ -116,7 +113,8 @@ const emit = defineEmits<{
 }>();
 
 const shareSelection = ref<string[]>([]);
-const shareDetailsRef = ref<HTMLDetailsElement | null>(null);
+const shareOpen = ref(false);
+const sharePanelRef = ref<HTMLElement | null>(null);
 
 const questions = computed<Question[]>(() =>
   props.reflection?.questionGroups.flatMap((group) => group.questions) ?? []
@@ -179,14 +177,18 @@ watch(
   () => props.reflection?.id,
   () => {
     shareSelection.value = shareableItems.value.map((item) => item.question.id);
+    shareOpen.value = false;
   },
   { immediate: true }
 );
 
-function openShareOptions() {
-  if (!shareDetailsRef.value) return;
-  shareDetailsRef.value.open = true;
-  shareDetailsRef.value.scrollIntoView({ block: "center", behavior: "smooth" });
+function toggleShareOptions() {
+  shareOpen.value = !shareOpen.value;
+  if (!shareOpen.value) return;
+
+  nextTick(() => {
+    sharePanelRef.value?.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
 }
 
 async function confirmDelete() {
@@ -221,11 +223,9 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
   opacity: 0.75;
   pointer-events: none;
 }
-.periodLabel { color: var(--accent-wax); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 .coverPanel h1 { font-family: var(--font-display); font-size: clamp(28px, 6vw, 40px); line-height: 1.24; font-weight: var(--display-weight); color: var(--accent-espresso); word-break: keep-all; }
 .coverMeta { color: var(--text-tertiary); font-size: 13px; }
 .coverPhoto { margin: 12px 0 0; width: 100%; height: 220px; border-radius: 10px; overflow: hidden; }
-.coverPhoto img { padding: 8px; }
 
 .quotePanel { padding: 22px 20px; border-radius: 14px; background: var(--surface-sage); border: 1px solid var(--border-subtle); display: grid; gap: 10px; }
 .quoteEyebrow { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
@@ -237,6 +237,7 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
 .primaryAction { border: 0; background: var(--accent-espresso); color: var(--surface-paper); box-shadow: 0 12px 26px rgba(58, 49, 43, 0.22); }
 .secondaryAction, .shareButton { border: 1px solid var(--border-strong); background: transparent; color: var(--text-primary); }
 .secondaryAction:hover:not(:disabled), .secondaryAction:focus-visible, .shareButton:hover:not(:disabled), .shareButton:focus-visible { border-color: var(--accent-sage); background: rgba(111, 127, 107, 0.08); }
+.secondaryAction.active { border-color: var(--accent-sage); background: var(--surface-sage); }
 .tertiaryAction { border: 0; background: transparent; color: var(--text-secondary); padding: 9px 12px; font-size: 12px; text-decoration: underline; text-underline-offset: 4px; }
 .tertiaryAction:hover:not(:disabled), .tertiaryAction:focus-visible { color: var(--text-primary); }
 .secondaryAction:disabled, .tertiaryAction:disabled { opacity: 0.45; }
@@ -246,8 +247,7 @@ h1, h2, h3, p { margin: 0; letter-spacing: 0; }
 .deleteAction:hover, .deleteAction:focus-visible { opacity: 1; }
 
 .sharePanel { padding: 16px; border: 1px solid var(--border-subtle); border-radius: 14px; background: rgba(255, 253, 248, 0.86); }
-.sharePanel summary { cursor: pointer; font-weight: var(--heading-weight); }
-.sharePanel p { margin-top: 8px; color: var(--text-secondary); line-height: var(--leading-body); font-size: 13px; }
+.sharePanel p { margin: 0; color: var(--text-secondary); line-height: var(--leading-body); font-size: 13px; }
 .shareList { display: grid; gap: 8px; margin: 12px 0; }
 .shareOption { border: 1px solid var(--border-subtle); border-radius: 10px; background: rgba(251, 244, 236, 0.56); padding: 10px; display: grid; grid-template-columns: auto 1fr; gap: 8px; align-items: start; }
 

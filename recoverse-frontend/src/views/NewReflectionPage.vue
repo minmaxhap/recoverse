@@ -295,7 +295,7 @@ function start() {
 .entryHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .entryCard { border: 1px solid var(--border-subtle); border-radius: var(--radius-panel); background: var(--surface-paper); padding: clamp(14px, 3vw, 22px); display: grid; grid-template-columns: minmax(220px, 0.75fr) minmax(0, 1fr); gap: clamp(18px, 4vw, 34px); box-shadow: var(--shadow-paper); }
 .entryPhoto { position: relative; margin: 0; min-height: 520px; overflow: hidden; border-radius: 14px; }
-.entryPhoto img { min-height: 520px; padding: 10px; }
+.entryPhoto img { min-height: 520px; }
 .entryPhoto figcaption { position: absolute; left: 16px; right: 16px; bottom: 16px; z-index: 1; border: 1px solid rgba(229, 217, 200, 0.72); border-radius: 8px; background: rgba(255, 253, 248, 0.88); color: var(--text-primary); padding: 10px 12px; font-size: 13px; line-height: 1.5; box-shadow: 0 12px 28px rgba(58, 49, 43, 0.12); backdrop-filter: blur(12px); }
 .entryForm { display: grid; align-content: center; gap: clamp(18px, 3vh, 26px); padding: clamp(8px, 2vw, 18px); }
 .entryCopy { display: grid; gap: 10px; }

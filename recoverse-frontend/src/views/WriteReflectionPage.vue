@@ -26,7 +26,6 @@
       </aside>
 
       <article class="questionCard">
-        <span class="questionMeta">질문 {{ currentStep }}</span>
         <h2>{{ currentQuestion?.text }}</h2>
         <p class="questionHint">{{ currentQuestion?.hint ?? "지금 떠오른 문장으로 시작해도 괜찮아요. 길게 쓰지 않아도 그대로 이어갈 수 있어요." }}</p>
 
@@ -194,7 +193,7 @@ function saveLater() {
 .titleBlock { min-width: 0; }
 .leaveLink { align-self: start; border: 1px solid var(--border-subtle); border-radius: var(--radius-pill); background: rgba(255, 253, 248, 0.72); color: var(--text-secondary); padding: 9px 13px; font-size: 13px; font-weight: var(--label-weight); letter-spacing: 0; }
 .leaveLink:hover, .leaveLink:focus-visible { color: var(--text-primary); border-color: var(--border-strong); }
-.eyebrow, .questionMeta { color: var(--accent-wax); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
+.eyebrow { color: var(--accent-wax); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
 .writeHeader h1 { margin: 4px 0 0; font-family: var(--font-display); font-size: clamp(24px, 5vw, 34px); line-height: var(--leading-tight); font-weight: var(--display-weight); letter-spacing: 0; word-break: keep-all; }
 
 .stepDots { display: flex; align-items: center; gap: 6px; margin: 18px auto 26px; }

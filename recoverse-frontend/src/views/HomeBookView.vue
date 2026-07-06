@@ -23,8 +23,8 @@
           <figure class="photoHeroCard editorialPhotoFrame">
             <img :src="heroPhoto.src" :alt="heroPhoto.alt" />
             <figcaption>
-              <span>{{ title }}</span>
-              <strong>이야기책 × 타임캡슐</strong>
+              <span>{{ brandLabel }}</span>
+              <strong>{{ title }}</strong>
             </figcaption>
           </figure>
         </section>
@@ -68,7 +68,6 @@
               @click="openMemory(card.reflection.id, card.reflection.isCompleted)"
             >
               <span class="ribbonBookmark" aria-hidden="true"></span>
-              <span class="periodLabel">{{ card.reflection.period.label }}</span>
               <strong>{{ card.reflection.title }}</strong>
               <p>{{ card.preview }}</p>
               <em>{{ card.reflection.isCompleted ? '다시 열기 →' : '이어쓰기 →' }}</em>
@@ -183,7 +182,7 @@ function openCompletedMemory(reflectionId: string) {
 .heroActions { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 180px); gap: 10px; align-items: center; }
 
 .photoHeroCard { position: relative; margin: 0; min-height: 420px; border-radius: 20px; overflow: hidden; }
-.photoHeroCard img { min-height: 420px; padding: 12px; }
+.photoHeroCard img { min-height: 420px; }
 .photoHeroCard figcaption { position: absolute; left: 18px; right: 18px; bottom: 18px; z-index: 1; width: fit-content; max-width: calc(100% - 36px); border: 1px solid rgba(229, 217, 200, 0.76); border-radius: 8px; background: rgba(255, 253, 248, 0.9); padding: 10px 12px; color: var(--text-primary); box-shadow: 0 12px 28px rgba(58, 49, 43, 0.12); backdrop-filter: blur(12px); }
 .photoHeroCard figcaption span { font-size: 12px; font-weight: var(--label-weight); color: var(--text-secondary); }
 .photoHeroCard figcaption strong { font-family: var(--font-display); font-size: 20px; font-weight: var(--display-weight); color: var(--accent-espresso); }
@@ -221,7 +220,6 @@ function openCompletedMemory(reflectionId: string) {
 .memoryCard.tone-parch { background: var(--surface-parchment); }
 .memoryCard.draft { background: linear-gradient(145deg, var(--surface-sage), rgba(255, 253, 248, 0.9)); }
 
-.memoryCard .periodLabel { color: var(--text-tertiary); font-size: 11px; font-weight: var(--label-weight); letter-spacing: 0.06em; }
 .memoryCard strong { font-family: var(--font-display); font-size: 22px; line-height: var(--leading-tight); font-weight: var(--display-weight); word-break: keep-all; }
 .memoryCard p { margin: 0; color: var(--text-secondary); line-height: var(--leading-body); font-size: 14px; overflow-wrap: anywhere; word-break: keep-all; }
 .memoryCard em { align-self: end; width: fit-content; margin-top: 4px; color: var(--accent-sage); font-size: 13px; font-style: normal; font-weight: var(--label-weight); }
@@ -229,7 +227,6 @@ function openCompletedMemory(reflectionId: string) {
 
 .emptyAlbum { display: grid; grid-template-columns: 210px 1fr; gap: 18px; align-items: center; padding: 16px; border-radius: 12px; }
 .emptyAlbumPhoto { width: 100%; height: 180px; margin: 0; border-radius: 8px; overflow: hidden; }
-.emptyAlbumPhoto img { padding: 8px; }
 .emptyAlbum div { display: grid; gap: 12px; justify-items: start; }
 
 .emptyAlbum p { margin: 0; }

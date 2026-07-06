@@ -101,7 +101,6 @@ function answerSame() {
 .sharedHeader, .sharedShell { width: min(920px, 100%); margin: 0 auto; }
 .sharedHeader { display: grid; grid-template-columns: 1fr 170px; align-items: end; gap: 16px; margin-bottom: 22px; }
 .sharedPhoto { width: 100%; height: 124px; margin: 0; border-radius: 8px; overflow: hidden; }
-.sharedPhoto img { padding: 7px; }
 .sharedHeader h1, .sameQuestionCta h2, .answerCard h2 { margin: 0; letter-spacing: 0; }
 .sharedHeader h1 { font-family: var(--font-display); font-size: clamp(28px, 6vw, 42px); line-height: var(--leading-tight); font-weight: var(--display-weight); word-break: keep-all; }
 .eyebrow, .answerCard span { color: var(--accent-sage); font-size: 11px; font-weight: var(--eyebrow-weight); letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; }
