@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "recoverse-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-06",
+  "kv_namespaces": [
+    {
+      "binding": "SESSIONS",
+      // 로컬 dev는 시뮬레이터를 쓰므로 placeholder. 배포 전 `wrangler kv namespace create SESSIONS` 후 교체.
+      "id": "00000000000000000000000000000000"
+    }
+  ],
+  // 프로덕션: 빌드된 프론트를 같은 오리진에서 서빙 (API는 /api/*, 나머지는 SPA)
+  "assets": {
+    "directory": "../recoverse-frontend/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  }
+}

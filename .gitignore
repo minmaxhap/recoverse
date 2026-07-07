@@ -1,1 +1,9 @@
 /.claude
+
+node_modules
+dist
+*.log
+.DS_Store
+
+# wrangler 로컬 상태 (dev용 KV 시뮬레이터)
+.wrangler

@@ -1,0 +1,11 @@
+packages:
+  - recoverse-frontend
+  - recoverse-worker
+  - recoverse-shared
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+  - sharp
+  - '@cloudflare/workerd-linux-64'
+overrides:
+  postcss: 8.5.10
