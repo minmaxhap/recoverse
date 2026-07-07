@@ -1,67 +1,48 @@
 # Recoverse
 
-> **"30초면 충분해요. 질문에 답하다 보면 오늘 하루도, 여행도, 연말도 하나의 추억이 됩니다."**
+Recoverse는 회고를 길게 쓰는 앱이 아니라, 짧은 질문으로 기록을 시작하고 시간이 지난 뒤 예전의 나를 다시 발견하게 하는 모바일 우선 회고 서비스입니다.
 
-Recoverse는 짧은 회고를 책처럼 보관하고, 시간이 지난 뒤 다시 열어보는 모바일 우선 회고 앱이다. 새 제품 방향은 **Story Book x Time Capsule**이다. 사용자는 30초 안에 한 문장을 남기고, 나중에 그 문장을 앨범과 편지처럼 다시 만난다.
+현재 구현은 Vue 3, TypeScript, Vite 기반 프론트엔드 MVP입니다. 데이터는 서버 없이 브라우저 `localStorage`에 저장되며, 백업/가져오기와 URL hash 기반 읽기 전용 공유를 지원합니다.
 
-현재 구현은 Vue 3 + TypeScript + Vite 기반 프론트엔드 MVP이며, 데이터는 브라우저 `localStorage`에 저장된다. 이번 문서 업데이트는 앱 코드를 바꾸기 전, 제품/UX/디자인 기준을 새 디자인 bible로 고정하는 단계다.
+## 현재 상태
 
-## 핵심 사용자
-
-- 짧은 회고를 꾸준히 남기고 싶지만 긴 일기 앱은 부담스러운 사용자
-- 시간이 지난 뒤 과거의 나와 다시 만나는 경험을 원하는 사용자
-- 여행, 연말, 친구와 같은 질문처럼 특정 맥락의 회고를 감성적으로 보관하고 싶은 사용자
-- 클라우드 저장보다 로컬/백업 중심의 프라이버시를 선호하는 사용자
-
-## 제품 컨셉
-
-```text
-Story Book x Time Capsule
-
-책처럼 쌓이고,
-편지처럼 봉인되고,
-시간이 지난 뒤 다시 열리는 회고.
-```
-
-## 핵심 화면
-
-구현 목표는 다음 12개 모바일 화면이다.
-
-1. Splash
-2. Home
-3. 회고 시작
-4. 질문 작성
-5. 작성 완료
-6. 회고 앨범
-7. 회고 상세
-8. 연말 회고
-9. 여행 회고
-10. 친구 비교
-11. 설정
-12. 디자인 시스템
-
-## 기술 상태
-
-- 프론트엔드: Vue 3, TypeScript, Vite
+- 핵심 화면: 홈, 회고 시작, 질문 작성, 회고 상세, 다시 보기, 공유 화면, 설정
 - 저장소: `localStorage["recoverse_reflections_v1"]`
-- 백업/가져오기: JSON 기반
-- 공유: URL 해시 기반 읽기 전용 스냅샷
-- 계정 저장: 아직 실제 OAuth/서버 저장 미구현
+- 백업: `recoverse_reflections_v1` JSON schema
+- 공유: `#share=` URL hash에 선택한 공개 답변 snapshot을 base64url로 담는 방식
+- 보안 보강: 백업 import 크기/개수 제한, 공유 hash 크기 제한, malformed timestamp overwrite 방어, `postcss` 취약 버전 override
 
 ## 주요 문서
 
 - [제품 계획](./PRODUCT_PLAN.md)
+- [제품 스펙](./PRODUCT_SPEC.ko.md)
 - [디자인 시스템](./DESIGN.md)
 - [한국어 디자인 시스템](./DESIGN_SYSTEM.ko.md)
 - [사용자 흐름](./USER_FLOW.md)
 - [아키텍처](./ARCHITECTURE.ko.md)
-- [계정 저장 설계](./ACCOUNT_STORAGE_PLAN.ko.md)
-- [작업 목록](./TODO.md)
+- [보안 메모](./SECURITY.md)
+- [남은 작업](./TODO.md)
 - [프론트엔드 실행 방법](./recoverse-frontend/README.md)
 
-## 현재 전환 원칙
+## 실행
 
-- 기존 회고 데이터 구조와 저장 키는 유지한다.
-- 우주/갤럭시 시각 언어는 새 `book-capsule` 디자인으로 교체한다.
-- 코드 변경 전 문서의 제품, 화면, 토큰 기준을 먼저 맞춘다.
-- 디자인 구현 후에는 실제 브라우저에서 375 / 768 / 1280px 기준으로 시각 QA를 한다.
+```bash
+cd recoverse-frontend
+pnpm install
+pnpm run dev
+```
+
+## 검증
+
+```bash
+cd recoverse-frontend
+pnpm test
+pnpm run build
+pnpm audit --prod
+```
+
+## 현재 제품 리스크
+
+- 회고 데이터는 localStorage에 평문 저장됩니다. XSS, 악성 확장 프로그램, 같은 브라우저 프로필 접근에는 안전하지 않습니다.
+- 공유 링크는 서버로 전송되지 않는 hash를 쓰지만, 링크를 받은 사람은 선택된 답변을 읽을 수 있습니다.
+- 계정/OAuth/서버 저장/공유 만료/접근 권한은 아직 구현하지 않았습니다.

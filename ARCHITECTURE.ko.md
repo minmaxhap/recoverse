@@ -1,135 +1,68 @@
 # Recoverse 아키텍처
 
-## 현재 방향
+## 개요
 
-Recoverse는 Vue 3 + TypeScript + Vite 기반의 localStorage 우선 MVP다. 이번 전환은 데이터 구조를 바꾸는 작업이 아니라, 기존 `Reflection` 중심 기능 위에 **Story Book x Time Capsule** 모바일 디자인을 입히는 작업이다.
+Recoverse는 현재 서버 없는 프론트엔드 MVP입니다.
 
-## 현재 구현과 목표 화면 매핑
+- Framework: Vue 3
+- Language: TypeScript
+- Build: Vite
+- Package manager: pnpm
+- Persistence: browser `localStorage`
+- Backup: JSON file export/import
+- Share: URL hash 기반 read-only snapshot
 
-| 현재 모드/컴포넌트 | 현재 역할 | 새 목표 화면 |
-| --- | --- | --- |
-| `home-universe` / `HomeUniverseView` | 홈/빈 상태/샘플 회고 | Home, 회고 앨범 일부 |
-| `reflection-new` / `NewReflectionPage` | 새 회고 시작 | 회고 시작 |
-| `reflection-write` / `WriteReflectionPage` | 질문별 작성 | 질문 작성 |
-| `reflection-detail` / `ReflectionDetailPage` | 회고 상세/공유 진입 | 회고 상세, 작성 완료 후 진입 |
-| `review-again` / `ReviewAgainPage` | 다시 보기/비교 | 회고 앨범, 친구 비교, 연말 회고 |
-| `shared-reflections` / `SharedReflectionPage` | URL 해시 공유 | 공유된 회고 상세 |
-| `archive-settings` / `ArchiveSettingsTools` | 설정/백업/초기화 | 설정 |
-| 신규 필요 | 없음 | Splash, 여행 회고, 디자인 시스템 |
+## 핵심 데이터 경계
 
-## 데이터 단위
+### 회고 저장
 
-핵심 데이터 계약은 유지한다.
+`recoverse-frontend/src/lib/reflectionStore.ts`
 
-```ts
-type Reflection = {
-  id: string;
-  title: string;
-  type: ReflectionType;
-  mode: ReflectionMode;
-  period: ReflectionPeriod;
-  templateId: string;
-  questionSetMode: ReflectionQuestionSetMode;
-  questionGroups: QuestionGroup[];
-  answers: Answer[];
-  representativeSentence?: string;
-  visibility: "private" | "shared";
-  shareSettings?: ShareSetting;
-  isCompleted: boolean;
-  completionRate: number;
-  createdAt: string;
-  updatedAt: string;
-};
-```
+- `loadReflections`
+- `saveReflections`
+- `normalizeReflection`
+- `createReflectionDraft`
+- `saveReflectionAnswer`
 
-자세한 타입 정의는 [`recoverse-frontend/src/types/reflection.ts`](recoverse-frontend/src/types/reflection.ts)에 있다.
+모든 회고 데이터는 `localStorage["recoverse_reflections_v1"]`에 저장됩니다.
 
-## 저장소
+### 백업
 
-브라우저 `localStorage`가 현재 단일 진실 공급원이다.
+`recoverse-frontend/src/lib/reflectionBackup.ts`
 
-| 키 | 역할 |
-| --- | --- |
-| `recoverse_reflections_v1` | 모든 회고 데이터 |
-| `recoverse_language` | 화면 언어 (`ko` / `en`) |
-| `recoverse_theme` | 현재 구현 테마 (`universe` / `letter` / `journey`) |
+- schema: `recoverse_reflections_v1`
+- export: 현재 Reflection 배열을 JSON Blob으로 생성
+- import: JSON parse 후 Reflection 정규화
+- 방어 로직: 전체 텍스트 길이, reflection 수, question/answer 수, 긴 텍스트 필드 제한
+- 병합 판단: `updatedAt` 문자열 비교가 아니라 `Date.parse` 기반 timestamp 비교
 
-새 디자인의 기본 테마 이름은 `book-capsule`을 목표로 한다. 기존 테마 키를 즉시 깨지 말고 마이그레이션 계층을 둔다.
+### 공유
 
-## 모듈 구성
+`recoverse-frontend/src/lib/reflectionShare.ts`
 
-```text
-recoverse-frontend/src/
-├─ App.vue
-├─ main.ts
-├─ style.css
-├─ views/
-│  ├─ HomeUniverseView.vue
-│  ├─ HomeView.vue
-│  ├─ NewReflectionPage.vue
-│  ├─ WriteReflectionPage.vue
-│  ├─ ReflectionDetailPage.vue
-│  ├─ ReviewAgainPage.vue
-│  ├─ SharedReflectionPage.vue
-│  └─ ArchiveSettingsView.vue
-├─ components/
-│  ├─ AppTopNav.vue
-│  ├─ AppBottomNav.vue
-│  ├─ NavIcon.vue
-│  ├─ ArchiveSettingsTools.vue
-│  └─ LanguageSelector.vue
-├─ lib/
-│  ├─ reflectionStore.ts
-│  ├─ reflectionBackup.ts
-│  ├─ reflectionShare.ts
-│  ├─ reflectionSync.ts
-│  ├─ sampleReflection.ts
-│  ├─ questionTimeline.ts
-│  └─ quickReflection.ts
-└─ data/
-   └─ reflectionTemplates.ts
-```
+- schema: `recoverse_shared_reflection_v1`
+- URL hash prefix: `#share=`
+- 공개 질문 중 사용자가 선택한 답변만 snapshot으로 encode
+- 방어 로직: encoded hash 길이, decoded JSON byte 수, item 수, 개별 텍스트 길이 제한
 
-## 디자인 토큰 적용 위치
+공유 snapshot은 암호화가 아닙니다. 링크를 가진 사람은 선택된 내용을 읽을 수 있습니다.
 
-우선순위:
+## 보안 모델
 
-1. `src/style.css`에 [DESIGN.md](./DESIGN.md)의 토큰을 CSS 변수로 선언한다.
-2. 기존 우주 테마 변수와 충돌하는 변수는 `book-capsule` 기준 이름으로 교체한다.
-3. 컴포넌트 내부 raw color와 임의 px는 토큰으로 치환한다.
-4. 아이콘은 SVG 선형 아이콘으로 유지하고 이모지는 쓰지 않는다.
+현재 Recoverse는 로컬 우선 MVP입니다.
 
-## 새 화면 구현 후보
+- 서버가 없으므로 서버 DB 유출 위험은 없습니다.
+- localStorage 평문 저장이므로 XSS, 악성 확장 프로그램, 공유 브라우저 프로필에는 취약합니다.
+- URL hash는 HTTP request에 포함되지 않지만, 사용자가 링크를 복사/공유하면 선택된 답변이 링크 안에 포함됩니다.
+- 백업 JSON은 사용자 파일 입력이므로 크기와 구조 제한을 둡니다.
 
-기존 단일 `mode` 전환 방식을 유지한다면 다음 모드가 추가될 수 있다.
-
-| 신규 모드 | 화면 |
-| --- | --- |
-| `splash` | Splash |
-| `reflection-complete` | 작성 완료 |
-| `album` | 회고 앨범 |
-| `year-review` | 연말 회고 |
-| `travel-review` | 여행 회고 |
-| `friend-compare` | 친구 비교 |
-| `design-system` | 디자인 시스템 |
-
-라우터를 도입하지 않는 한 `App.vue`의 mode union과 `appNavigation` 헬퍼를 함께 갱신한다.
+자세한 내용은 [SECURITY.md](./SECURITY.md)를 봅니다.
 
 ## 검증 명령
 
-```powershell
+```bash
 cd recoverse-frontend
-node tests\recoverseStore.test.mjs
-node node_modules\vue-tsc\bin\vue-tsc.js -b
-node node_modules\vite\bin\vite.js build
+pnpm test
+pnpm run build
+pnpm audit --prod
 ```
-
-디자인 구현 후에는 실제 브라우저에서 375 / 768 / 1280px 시각 QA를 추가한다.
-
-## 제외 범위
-
-- 기존 `recoverse_reflections_v1` 스키마 변경
-- OAuth/서버 저장의 즉시 구현
-- PDF 내보내기
-- 실시간 그룹 협업
-- Three.js/WebGL 기반 3D 화면

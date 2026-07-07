@@ -35,7 +35,10 @@ function safeParse<T>(raw: string | null): T | null {
 }
 
 function uuid(): string {
-  return (crypto as any)?.randomUUID?.() ?? `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+  const randomUUID = globalThis.crypto?.randomUUID;
+  return typeof randomUUID === "function"
+    ? randomUUID.call(globalThis.crypto)
+    : `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
 function normalizeText(value: unknown): string {

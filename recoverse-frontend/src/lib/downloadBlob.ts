@@ -1,8 +1,11 @@
+type LegacyBlobNavigator = Navigator & {
+  msSaveOrOpenBlob?: (blob: Blob, defaultName?: string) => boolean;
+};
+
 export function downloadBlob(blob: Blob, filename: string) {
-  // @ts-ignore legacy IE branch
-  if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-    // @ts-ignore legacy IE branch
-    window.navigator.msSaveOrOpenBlob(blob, filename);
+  const legacyNavigator = window.navigator as LegacyBlobNavigator;
+  if (typeof legacyNavigator.msSaveOrOpenBlob === "function") {
+    legacyNavigator.msSaveOrOpenBlob(blob, filename);
     return;
   }
 

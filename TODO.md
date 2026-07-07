@@ -1,65 +1,40 @@
 # Recoverse TODO
 
-이 문서는 다음에 할 일과 보류한 결정만 추적한다. 끝낸 작업은 `git log`를 참고한다.
+완료된 구현은 `git log`를 기준으로 추적하고, 이 문서는 아직 남은 제품/기술 작업만 둡니다.
 
-## 작업 규칙
+## 바로 해야 할 작업
 
-- 코드 변경 전에 현재 UX 흐름과 데이터 경계를 먼저 확인한다.
-- 기존 `recoverse_reflections_v1` 백업과 가져오기 호환성을 깨지 않는다.
-- 디자인 구현은 [DESIGN.md](./DESIGN.md)와 [DESIGN_SYSTEM.ko.md](./DESIGN_SYSTEM.ko.md)의 토큰을 따른다.
-- 한 번에 하나의 화면군만 바꾸고 테스트 가능한 상태로 마감한다.
-- 구현 후 브라우저 시각 QA를 한다.
+- [ ] localStorage 평문 저장 리스크를 제품 UX에 명확히 노출하기
+- [ ] 공유 링크 생성 시 "링크를 가진 사람은 읽을 수 있음" 경고 추가
+- [ ] 공유 hash가 너무 커서 생성 실패할 때 사용자 친화적인 에러 메시지 표시
+- [ ] 백업 import 실패 코드별 안내 문구 정리
+- [ ] 깨진 한국어 카피가 남아 있는 화면/문서 전체 점검
+- [ ] `reflectionStore.ts`를 저장소, 정규화, draft 생성 책임으로 분리
 
-## 완료된 문서 기반
+## 다음 제품 작업
 
-- [x] Recoverse Mobile Design Bible 작성
-- [x] 루트 `DESIGN.md` 추가
-- [x] 제품 계획을 Story Book x Time Capsule 방향으로 갱신
-- [x] 사용자 흐름을 12개 핵심 화면 기준으로 갱신
-- [x] 아키텍처 문서에 현재 Vue 모드와 목표 화면 매핑 추가
-
-## 다음 구현 작업
-
-- [ ] `src/style.css`에 `book-capsule` 디자인 토큰 적용
-- [ ] `HomeUniverseView`를 Home 화면 디자인으로 교체
-- [ ] `NewReflectionPage`를 회고 시작 화면으로 단순화
-- [ ] `WriteReflectionPage`를 질문 작성/편지지 입력 디자인으로 교체
-- [ ] 작성 완료 전용 화면 또는 모드 추가
-- [ ] `ReviewAgainPage`를 회고 앨범 중심으로 재구성
-- [ ] 회고 상세를 편지형 레이아웃으로 정리
-- [ ] 연말 회고 화면 추가 또는 기존 데이터 기반 섹션 추가
-- [ ] 여행 회고 화면 추가 또는 기존 travel 타입 상세를 확장
-- [ ] 친구 비교 화면 추가
-- [ ] 설정 화면을 새 디자인으로 정리
-- [ ] 디자인 시스템 화면 추가
+- [ ] 작성 완료 화면 강화
+- [ ] 회고 앨범/연말 회고/여행 회고/친구 비교를 실제 데이터 흐름에 맞게 분리
+- [ ] 설정 화면에 보안/백업/공유 설명 추가
+- [ ] 디자인 시스템 화면 추가 또는 문서 링크로 대체할지 결정
+- [ ] 빈 상태, 오류 상태, 가져오기 성공/실패 상태 UX 정리
 
 ## 보류 작업
 
-- [ ] 로그인 (Google / Kakao). 자세한 계약은 [ACCOUNT_STORAGE_PLAN.ko.md](./ACCOUNT_STORAGE_PLAN.ko.md).
-- [ ] 계정 기반 클라우드 저장과 멀티 디바이스 동기화
-- [ ] 서버 저장 기반 공유 링크 발행
-- [ ] 접근 권한/비밀번호가 있는 공유 링크
+- [ ] Google/Kakao 로그인
+- [ ] 서버 저장과 멀티 디바이스 동기화
+- [ ] 서버 기반 공유 링크, 만료, 접근 권한
 - [ ] PDF 내보내기
-- [ ] 실시간 그룹 협업
-- [ ] 이미지/첨부파일 업로드
-- [ ] Three.js/WebGL 화면
+- [ ] 이미지/첨부 파일 업로드
+- [ ] 실시간 그룹 회고
 
-## 기본 검증 명령
+## 기본 검증
 
-프론트엔드 변경 후 기본적으로 아래를 실행한다.
-
-```powershell
+```bash
 cd recoverse-frontend
-node tests\recoverseStore.test.mjs
-node node_modules\vue-tsc\bin\vue-tsc.js -b
-node node_modules\vite\bin\vite.js build
+pnpm test
+pnpm run build
+pnpm audit --prod
 ```
 
-디자인 구현 후 추가로 확인한다.
-
-```text
-375px 모바일 / 768px 태블릿 / 1280px 데스크톱 스크린샷
-텍스트 overflow 없음
-phone frame clipping 없음
-주요 버튼 focus/active 상태 확인
-```
+UI를 바꾸는 경우에는 최소 375px 모바일과 데스크톱에서 실제 화면을 확인합니다.

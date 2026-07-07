@@ -341,6 +341,43 @@ test("merges reflection backups without overwriting newer local data", () => {
   assert.ok(result.reflections.some((item) => item.title === "busan-trip memory"));
 });
 
+test("rejects oversized reflection backup imports before normalization", () => {
+  const backup = JSON.stringify({
+    schema: "recoverse_reflections_v1",
+    exportedAt: "2026-01-01T00:00:00.000Z",
+    reflections: Array.from({ length: 501 }, (_, index) => ({
+      ...createYearDraft(2020 + index),
+      id: `reflection_${index}`,
+    })),
+  });
+
+  assert.throws(
+    () => reflectionBackup.parseReflectionBackup(backup),
+    /RECOVERSE_REFLECTION_IMPORT_TOO_LARGE/
+  );
+});
+
+test("does not let malformed import timestamps overwrite current reflections", () => {
+  const local = createYearDraft();
+  const malformedDuplicate = {
+    ...local,
+    title: "Malformed future title",
+    updatedAt: "not-a-date",
+  };
+
+  const backup = JSON.stringify({
+    schema: "recoverse_reflections_v1",
+    exportedAt: "2026-01-01T00:00:00.000Z",
+    reflections: [malformedDuplicate],
+  });
+  const result = reflectionBackup.mergeReflectionBackup([local], backup);
+
+  assert.equal(result.added, 0);
+  assert.equal(result.updated, 0);
+  assert.equal(result.skipped, 1);
+  assert.equal(result.reflections[0].title, local.title);
+});
+
 test("builds account sync payloads from canonical reflections", () => {
   const reflection = createTravelDraft();
   const payload = reflectionSync.buildReflectionSyncPayload([reflection], "google");
@@ -371,6 +408,11 @@ test("encodes and restores read only reflection share snapshots", () => {
   assert.equal(restored.items.length, 1);
   assert.equal(restored.items[0].questionText, firstQuestion.text);
   assert.equal(restored.items[0].answerText, "sea ramen");
+});
+
+test("rejects oversized share hashes before decoding", () => {
+  const hash = `#share=${"a".repeat(reflectionShare.REFLECTION_SHARE_MAX_ENCODED_LENGTH + 1)}`;
+  assert.equal(reflectionShare.readShareHash(hash), null);
 });
 
 test("creates a complete sample reflection users can preview", () => {

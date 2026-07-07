@@ -16,11 +16,90 @@ export type ReflectionImportResult = {
   skipped: number;
 };
 
+const MAX_BACKUP_TEXT_LENGTH = 4 * 1024 * 1024;
+const MAX_BACKUP_REFLECTIONS = 500;
+const MAX_BACKUP_QUESTION_GROUPS = 80;
+const MAX_BACKUP_QUESTIONS = 1200;
+const MAX_BACKUP_ANSWERS = 1200;
+const MAX_BACKUP_TEXT_FIELD_LENGTH = 20000;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === "object");
+}
+
 function safeParse(raw: string): unknown {
+  if (raw.length > MAX_BACKUP_TEXT_LENGTH) {
+    throw new Error("RECOVERSE_REFLECTION_IMPORT_TOO_LARGE");
+  }
+
   try {
     return JSON.parse(raw);
   } catch {
     throw new Error("RECOVERSE_REFLECTION_IMPORT_INVALID_JSON");
+  }
+}
+
+function hasOversizedText(value: unknown): boolean {
+  return typeof value === "string" && value.length > MAX_BACKUP_TEXT_FIELD_LENGTH;
+}
+
+function assertReflectionWithinImportLimits(raw: unknown): void {
+  if (!isRecord(raw)) return;
+
+  if (hasOversizedText(raw.id) || hasOversizedText(raw.title) || hasOversizedText(raw.representativeSentence)) {
+    throw new Error("RECOVERSE_REFLECTION_IMPORT_TOO_LARGE");
+  }
+
+  if (isRecord(raw.period)) {
+    for (const value of Object.values(raw.period)) {
+      if (hasOversizedText(value)) throw new Error("RECOVERSE_REFLECTION_IMPORT_TOO_LARGE");
+    }
+  }
+
+  const questionGroups = Array.isArray(raw.questionGroups) ? raw.questionGroups : [];
+  const answers = Array.isArray(raw.answers) ? raw.answers : [];
+  if (
+    questionGroups.length > MAX_BACKUP_QUESTION_GROUPS ||
+    answers.length > MAX_BACKUP_ANSWERS
+  ) {
+    throw new Error("RECOVERSE_REFLECTION_IMPORT_TOO_LARGE");
+  }
+
+  let questionCount = 0;
+  for (const group of questionGroups) {
+    if (!isRecord(group)) continue;
+    if (hasOversizedText(group.id) || hasOversizedText(group.label)) {
+      throw new Error("RECOVERSE_REFLECTION_IMPORT_TOO_LARGE");
+    }
+
+    const questions = Array.isArray(group.questions) ? group.questions : [];
+    questionCount += questions.length;
+    if (questionCount > MAX_BACKUP_QUESTIONS) {
+      throw new Error("RECOVERSE_REFLECTION_IMPORT_TOO_LARGE");
+    }
+
+    for (const question of questions) {
+      if (!isRecord(question)) continue;
+      if (
+        hasOversizedText(question.id) ||
+        hasOversizedText(question.groupId) ||
+        hasOversizedText(question.text) ||
+        hasOversizedText(question.hint)
+      ) {
+        throw new Error("RECOVERSE_REFLECTION_IMPORT_TOO_LARGE");
+      }
+    }
+  }
+
+  for (const answer of answers) {
+    if (!isRecord(answer)) continue;
+    if (
+      hasOversizedText(answer.questionId) ||
+      hasOversizedText(answer.value) ||
+      hasOversizedText(answer.updatedAt)
+    ) {
+      throw new Error("RECOVERSE_REFLECTION_IMPORT_TOO_LARGE");
+    }
   }
 }
 
@@ -34,9 +113,20 @@ function normalizeBackupPayload(raw: unknown): Reflection[] {
     throw new Error("RECOVERSE_REFLECTION_IMPORT_UNSUPPORTED_VERSION");
   }
 
+  if (payload.reflections.length > MAX_BACKUP_REFLECTIONS) {
+    throw new Error("RECOVERSE_REFLECTION_IMPORT_TOO_LARGE");
+  }
+
+  payload.reflections.forEach(assertReflectionWithinImportLimits);
+
   return payload.reflections
     .map((reflection) => normalizeReflection(reflection))
     .filter(Boolean) as Reflection[];
+}
+
+function timestampMs(value: string): number {
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
 export function exportReflectionBackup(reflections: Reflection[]): Blob {
@@ -83,7 +173,7 @@ export function mergeReflectionBackup(
       continue;
     }
 
-    if (reflection.updatedAt > existing.updatedAt) {
+    if (timestampMs(reflection.updatedAt) > timestampMs(existing.updatedAt)) {
       byId.set(reflection.id, reflection);
       updated += 1;
       continue;
@@ -92,8 +182,8 @@ export function mergeReflectionBackup(
     skipped += 1;
   }
 
-  const reflections = Array.from(byId.values()).sort((a, b) =>
-    a.updatedAt < b.updatedAt ? 1 : -1
+  const reflections = Array.from(byId.values()).sort(
+    (a, b) => timestampMs(b.updatedAt) - timestampMs(a.updatedAt)
   );
 
   return { reflections, added, updated, skipped };
