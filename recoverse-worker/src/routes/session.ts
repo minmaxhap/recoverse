@@ -256,6 +256,12 @@ async function submitAnswer(env: Env, code: string, body: Record<string, unknown
   if (!players.includes(name)) {
     throw new ApiError(403, 'not_a_player', '이 호에 합류한 사람만 답할 수 있어요.');
   }
+  // 답변은 1회 불변 — 이미 제출했으면 변경 불가.
+  // (특히 2인 세션에서 전원 제출 후에도 phase가 answer라, 상대 답을 본 뒤
+  //  자기 답을 바꿔 치는 것을 막는다)
+  if ((await env.SESSIONS.get(keys.answer(code, meta.roundIdx, name))) !== null) {
+    throw new ApiError(409, 'already_answered', '이미 답을 제출했어요.');
+  }
   const answer: Answer = { text };
   await kvPutJson(env.SESSIONS, keys.answer(code, meta.roundIdx, name), answer);
 
@@ -280,6 +286,16 @@ async function submitGuess(env: Env, code: string, body: Record<string, unknown>
   const players = await listPlayers(env.SESSIONS, code);
   if (!players.includes(name)) {
     throw new ApiError(403, 'not_a_player', '이 호에 합류한 사람만 추측할 수 있어요.');
+  }
+
+  // 추측은 1회 불변 — 이미 제출했으면 변경 불가.
+  // (공개된 정답을 본 뒤 재제출해 점수를 조작하는 것을 막는다)
+  if ((await env.SESSIONS.get(keys.guess(code, meta.roundIdx, name))) !== null) {
+    throw new ApiError(409, 'already_guessed', '이미 추측을 제출했어요. 추측은 한 번만 할 수 있어요.');
+  }
+  // 공개(강제 공개 포함) 이후에는 새 추측을 받지 않는다.
+  if ((await env.SESSIONS.get(keys.revealed(code, meta.roundIdx))) !== null) {
+    throw new ApiError(409, 'already_revealed', '이미 공개된 라운드예요.');
   }
 
   const raw = body.guesses;
