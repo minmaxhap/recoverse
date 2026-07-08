@@ -89,7 +89,9 @@ describe('3인 풀 시나리오', () => {
     const [p0, p1, p2] = players;
     const notAsker = players.find((p) => p !== state.meta.asker)!;
     expect((await act(code, 'question', notAsker, { question: '올해 최고의 선택은?' })).status).toBe(403);
-    expect((await act(code, 'question', state.meta.asker!, { question: '올해 최고의 선택은?' })).status).toBe(200);
+    expect((await act(code, 'question', state.meta.asker!, { question: '올해 최고의 선택은?', format: 'three-scenes' })).status).toBe(200);
+    state = await getState(code);
+    expect(state.meta.format).toBe('three-scenes');
 
     // 답변: 전원 제출 전 answers는 null (서버 은닉)
     await act(code, 'answer', p0, { text: '답A' });
@@ -135,6 +137,7 @@ describe('3인 풀 시나리오', () => {
     expect(state.meta.asker).toBe(players[1]);
     expect(state.meta.history).toHaveLength(1);
     expect(state.meta.history[0].question).toBe('올해 최고의 선택은?');
+    expect(state.meta.history[0].format).toBe('three-scenes');
     expect(state.meta.history[0].answers[p0].text).toBe('답A');
     expect(state.pastGuesses[0][p2][p0]).toBe(p1);
 

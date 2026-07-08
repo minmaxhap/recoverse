@@ -102,12 +102,13 @@ defineEmits<{ navigate: [string]; open: [string] }>();
   font-weight: 700;
 }
 .masthead .deck {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  gap: 4px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   padding-bottom: 10px;
+  line-height: 1.5;
 }
 .coverline {
   font-family: var(--font-display);
@@ -218,6 +219,11 @@ defineEmits<{ navigate: [string]; open: [string] }>();
 }
 
 @media (min-width: 1024px) {
+  .masthead .deck {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
   .coverSplit {
     display: grid;
     grid-template-columns: 1fr 1fr;

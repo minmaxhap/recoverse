@@ -19,6 +19,7 @@ const MAX_BODY_BYTES = 16 * 1024;
 
 type Guesses = Record<string, string>;
 type PastGuesses = Record<number, Record<string, Guesses>>;
+const FORMAT_IDS = new Set(['year-keyword', 'three-scenes', 'letter-future']);
 
 function createPlayerToken(): string {
   const bytes = new Uint8Array(16);
@@ -50,6 +51,15 @@ function requireName(body: Record<string, unknown>): string {
     throw new ApiError(400, 'bad_name', '이름은 1~12자로 입력해주세요.');
   }
   return name;
+}
+
+function optionalFormat(body: Record<string, unknown>): string | null {
+  if (typeof body.format !== 'string' || body.format.trim().length === 0) return null;
+  const format = body.format.trim();
+  if (!FORMAT_IDS.has(format)) {
+    throw new ApiError(400, 'bad_format', '지원하지 않는 회고 포맷이에요.');
+  }
+  return format;
 }
 
 async function requirePlayer(env: Env, code: string, body: Record<string, unknown>): Promise<string> {
@@ -216,6 +226,7 @@ async function createSession(env: Env, body: Record<string, unknown>): Promise<R
     roundIdx: -1,
     asker: null,
     question: null,
+    format: null,
     history: [],
   };
   await kvPutJson(env.SESSIONS, keys.meta(code), meta);
@@ -254,7 +265,7 @@ async function startSession(env: Env, code: string, body: Record<string, unknown
   if (players.length < 2) {
     throw new ApiError(409, 'not_enough_players', '2명 이상 모이면 시작할 수 있어요.');
   }
-  const next: SessionMeta = { ...meta, phase: 'question', roundIdx: 0, asker: players[0], question: null };
+  const next: SessionMeta = { ...meta, phase: 'question', roundIdx: 0, asker: players[0], question: null, format: null };
   await kvPutJson(env.SESSIONS, keys.meta(code), next);
   return stateResponse(env, code, next);
 }
@@ -272,7 +283,7 @@ async function submitQuestion(env: Env, code: string, body: Record<string, unkno
   if (name !== meta.asker) {
     throw new ApiError(403, 'asker_only', '이번 라운드의 질문자만 헤드라인을 정할 수 있어요.');
   }
-  const next: SessionMeta = { ...meta, phase: 'answer', question };
+  const next: SessionMeta = { ...meta, phase: 'answer', question, format: optionalFormat(body) };
   await kvPutJson(env.SESSIONS, keys.meta(code), next);
   return stateResponse(env, code, next);
 }
@@ -373,6 +384,7 @@ async function forceReveal(env: Env, code: string, body: Record<string, unknown>
 async function foldCurrentRound(env: Env, code: string, meta: SessionMeta, state: SessionStateResponse): Promise<Round[]> {
   if (!meta.question || !state.answers) return meta.history;
   const round: Round = { asker: meta.asker ?? meta.host, question: meta.question, answers: state.answers };
+  if (meta.format) round.format = meta.format;
   if (state.players.length >= 3) {
     const currentGuesses =
       state.guesses ?? (await collectGuesses(env, code, meta.roundIdx, state.guessed));
@@ -404,6 +416,7 @@ async function nextRound(env: Env, code: string, body: Record<string, unknown>):
     roundIdx: nextIdx,
     asker: state.players[nextIdx % state.players.length],
     question: null,
+    format: null,
     history,
   };
   await kvPutJson(env.SESSIONS, keys.meta(code), next);

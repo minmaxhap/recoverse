@@ -8,19 +8,33 @@
         </p>
       </template>
       <template #right>
-        <figure
-          v-for="(owner, i) in answerOrder"
-          :key="owner"
-          class="quote"
-          :style="{ animationDelay: `${0.15 + i * 0.25}s` }"
-        >
-          <blockquote>{{ state.answers?.[owner]?.text }}</blockquote>
-          <figcaption class="stampRow" :style="{ animationDelay: `${0.35 + i * 0.25}s` }">
-            <ParticipantDot :color="colorFor(owner, state.players)" small />
-            <span class="byName">{{ owner }}</span>
-            <span v-if="hasGuesses" class="hit">· {{ ownerHits(owner) }}명 적중</span>
-          </figcaption>
-        </figure>
+        <template v-if="!formatKind">
+          <figure
+            v-for="(owner, i) in answerOrder"
+            :key="owner"
+            class="quote"
+            :style="{ animationDelay: `${0.15 + i * 0.25}s` }"
+          >
+            <blockquote>{{ state.answers?.[owner]?.text }}</blockquote>
+            <figcaption class="stampRow" :style="{ animationDelay: `${0.35 + i * 0.25}s` }">
+              <ParticipantDot :color="colorFor(owner, state.players)" small />
+              <span class="byName">{{ owner }}</span>
+              <span v-if="hasGuesses" class="hit">· {{ ownerHits(owner) }}명 적중</span>
+            </figcaption>
+          </figure>
+        </template>
+        <template v-else>
+          <FormatAnswer
+            v-for="(owner, i) in answerOrder"
+            :key="owner"
+            :text="state.answers?.[owner]?.text ?? ''"
+            :name="owner"
+            :color="colorFor(owner, state.players)"
+            :kind="formatKind"
+            :index="i"
+            :caption-suffix="hasGuesses ? `${ownerHits(owner)}명 적중` : ''"
+          />
+        </template>
       </template>
     </SpreadLayout>
 
@@ -38,10 +52,12 @@
 import { computed, ref } from 'vue';
 import type { SessionStateResponse } from '@recoverse/shared';
 import Headline from '../../components/Headline.vue';
+import FormatAnswer from '../../components/FormatAnswer.vue';
 import ParticipantDot from '../../components/ParticipantDot.vue';
 import SpreadLayout from '../../components/SpreadLayout.vue';
 import { colorFor } from '../../lib/palette';
 import { api } from '../../lib/api';
+import { getFormat } from '../../data/formats';
 
 const props = defineProps<{ state: SessionStateResponse; me: string; isHost: boolean; playerToken: string }>();
 const emit = defineEmits<{ applied: [SessionStateResponse] }>();
@@ -50,6 +66,7 @@ const busy = ref(false);
 const roundNo = computed(() => props.state.meta.roundIdx + 1);
 // 발표는 합류 순으로 (셔플하지 않음 — 익명이 아니므로)
 const answerOrder = computed(() => props.state.players.filter((n) => props.state.answers?.[n]));
+const formatKind = computed(() => getFormat(props.state.meta.format ?? '')?.kind);
 const hasGuesses = computed(() => !!props.state.guesses && Object.keys(props.state.guesses).length > 0);
 const otherCount = computed(() => props.state.players.length - 1);
 

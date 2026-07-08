@@ -1,6 +1,6 @@
 <template>
   <AppShell variant="read">
-    <BackHeader label="책장으로" @back="$emit('back')" />
+    <BackHeader class="noPrint" label="책장으로" @back="$emit('back')" />
 
     <header class="issueHead">
       <span class="eyebrow red">{{ issue.date.slice(0, 4) }} ISSUE</span>
@@ -8,6 +8,11 @@
       <div class="rule" />
       <p class="fineprint">{{ issue.participants.join(' · ') }}</p>
     </header>
+
+    <div class="exportActions noPrint" aria-label="내보내기">
+      <button class="ghost" type="button" @click="printIssue">PDF로 저장 / 인쇄</button>
+      <p class="fineprint">브라우저 인쇄 창에서 대상 장치를 “PDF로 저장”으로 고르면 파일로 보관할 수 있어요.</p>
+    </div>
 
     <article v-for="(round, i) in issue.rounds" :key="i" class="archiveRound">
       <SpreadLayout :two-col="round.answers && Object.keys(round.answers).length >= 4">
@@ -27,8 +32,8 @@
 
     <p v-if="issue.rounds.length === 0" class="empty">아직 옮겨 적은 질문이 없는 호예요.</p>
 
-    <div class="gap big" />
-    <div class="shareBox">
+    <div class="gap big noPrint" />
+    <div class="shareBox noPrint">
       <button class="ghost" :disabled="sharing" @click="onShare">
         {{ sharing ? '링크 만드는 중…' : shareUrl ? '공유 링크 다시 복사' : '읽기 전용 공유 링크 만들기' }}
       </button>
@@ -37,8 +42,8 @@
       <p class="fineprint">링크를 아는 사람은 이 호를 읽을 수 있어요.</p>
     </div>
 
-    <div class="gap" />
-    <button class="endLink" @click="onRemove">이 호를 책장에서 빼기</button>
+    <div class="gap noPrint" />
+    <button class="endLink noPrint" @click="onRemove">이 호를 책장에서 빼기</button>
   </AppShell>
 </template>
 
@@ -65,6 +70,10 @@ const shareError = ref('');
 
 function shareLink(id: string): string {
   return `${window.location.origin}${window.location.pathname}?share=${id}`;
+}
+
+function printIssue(): void {
+  window.print();
 }
 
 async function onShare() {
@@ -108,6 +117,11 @@ function onRemove() {
 }
 .archiveRound {
   margin-bottom: 34px;
+}
+.exportActions {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 26px;
 }
 .empty {
   font-size: 14px;

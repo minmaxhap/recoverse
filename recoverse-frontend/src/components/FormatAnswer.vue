@@ -14,7 +14,7 @@
     <blockquote v-else>{{ text }}</blockquote>
 
     <figcaption>
-      <ParticipantDot :color="color" small /> {{ name }}
+      <ParticipantDot :color="color" small /> {{ name }}<span v-if="captionSuffix"> · {{ captionSuffix }}</span>
     </figcaption>
   </figure>
 </template>
@@ -32,6 +32,7 @@ const props = withDefaults(
     kind: FormatKind;
     still?: boolean;
     index?: number;
+    captionSuffix?: string;
   }>(),
   { still: false, index: 0 },
 );

@@ -18,7 +18,7 @@
     </template>
 
     <template v-else>
-      <textarea v-model="draft" class="field area" placeholder="지금 떠오르는 그대로, 짧아도 좋아요" />
+      <textarea v-model="draft" class="field area" :placeholder="answerPlaceholder" />
       <div class="reflectionPrompts">
         <p class="fineprint">막히면 하나만 눌러서 이어 써보세요.</p>
         <div class="promptChips">
@@ -46,6 +46,7 @@ import Headline from '../../components/Headline.vue';
 import ParticipantDot from '../../components/ParticipantDot.vue';
 import { colorFor } from '../../lib/palette';
 import { api } from '../../lib/api';
+import { getFormat } from '../../data/formats';
 
 const props = defineProps<{ state: SessionStateResponse; me: string; playerToken: string }>();
 const emit = defineEmits<{ applied: [SessionStateResponse] }>();
@@ -62,6 +63,7 @@ const sent = ref(false);
 
 const roundNo = computed(() => props.state.meta.roundIdx + 1);
 const iAnswered = computed(() => sent.value || props.state.answered.includes(props.me));
+const answerPlaceholder = computed(() => getFormat(props.state.meta.format ?? '')?.hint ?? '지금 떠오르는 그대로, 짧아도 좋아요');
 const waitingHint = computed(() =>
   props.state.players.length >= 3 ? '모두 제출하면 누가 썼게가 시작돼요' : '모두 제출하면 스프레드가 열려요',
 );

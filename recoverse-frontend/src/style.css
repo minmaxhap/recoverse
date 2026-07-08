@@ -250,3 +250,66 @@ select {
     transition: none !important;
   }
 }
+
+@media print {
+  @page {
+    margin: 16mm 14mm;
+  }
+
+  :root {
+    --paper: #ffffff;
+    --paper-card: #ffffff;
+  }
+
+  html,
+  body,
+  #app {
+    min-height: auto;
+    background: #ffffff !important;
+  }
+
+  body {
+    color: var(--ink);
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  button,
+  .noPrint {
+    display: none !important;
+  }
+
+  .page {
+    min-height: auto !important;
+    background: #ffffff !important;
+  }
+
+  .col {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .pageTitle {
+    font-size: 24pt;
+    line-height: 1.35;
+    margin: 4mm 0;
+  }
+
+  .eyebrow,
+  .fineprint {
+    color: var(--ink) !important;
+  }
+
+  .archiveRound {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 10mm !important;
+  }
+
+  .spread,
+  .qaBox,
+  .shareUrl {
+    box-shadow: none !important;
+  }
+}

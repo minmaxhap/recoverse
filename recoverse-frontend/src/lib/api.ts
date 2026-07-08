@@ -81,8 +81,8 @@ export const api = {
     request<SessionStateResponse>(`/api/session/${code}/state`),
   start: (code: string, name: string, playerToken: string) =>
     post<SessionStateResponse>(`/api/session/${code}/start`, { name, playerToken }),
-  question: (code: string, name: string, playerToken: string, question: string) =>
-    post<SessionStateResponse>(`/api/session/${code}/question`, { name, playerToken, question }),
+  question: (code: string, name: string, playerToken: string, question: string, format?: string) =>
+    post<SessionStateResponse>(`/api/session/${code}/question`, { name, playerToken, question, format }),
   answer: (code: string, name: string, playerToken: string, text: string) =>
     post<SessionStateResponse>(`/api/session/${code}/answer`, { name, playerToken, text }),
   guess: (code: string, name: string, playerToken: string, guesses: Record<string, string>) =>

@@ -12,6 +12,7 @@ export interface SessionMeta {
   roundIdx: number;        // -1 = lobby
   asker: string | null;
   question: string | null;
+  format?: string | null;
   history: Round[];
 }
 
