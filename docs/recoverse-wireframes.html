@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recoverse v1 — 화면 와이어프레임</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap');
+  :root{
+    --paper:#FAF7F0; --ink:#191511; --red:#D8451F; --gold:#B98A2A;
+    --hair:#DED8CB; --dim:#7A736A; --card:#FFFEFA;
+    --sans:'Pretendard Variable','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+    --serif:'Gowun Batang','Noto Serif KR',Georgia,serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#EFEBE2;font-family:var(--sans);color:var(--ink);padding:40px 24px 80px}
+  .docHead{max-width:1400px;margin:0 auto 36px}
+  .docHead h1{font-family:var(--serif);font-size:30px;margin:8px 0 4px}
+  .docHead p{color:var(--dim);font-size:14px;margin:0;line-height:1.6}
+  .ey{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--ink)}
+  .ey.red{color:var(--red)} .ey.gold{color:var(--gold)}
+  .grid{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:34px 26px}
+  .frameWrap{display:flex;flex-direction:column;gap:10px}
+  .frameLabel{display:flex;gap:8px;align-items:baseline}
+  .frameLabel b{font-size:14px}
+  .frameLabel .no{font-family:var(--serif);color:var(--red);font-weight:700}
+  .note{font-size:12px;color:var(--dim);line-height:1.6;margin:0}
+  .phone{background:var(--paper);border:2px solid var(--ink);height:600px;padding:18px 16px;display:flex;flex-direction:column;gap:12px;overflow:hidden;position:relative}
+  .rule{border-top:1px solid var(--ink)} .rule.thick{border-top:3px solid var(--ink)} .rule.soft{border-top:1px solid var(--hair)}
+  .brand{font-family:var(--serif);font-size:26px;font-weight:700;letter-spacing:.04em;margin:4px 0 2px}
+  .deck{display:flex;justify-content:space-between;font-size:9px;font-weight:800;letter-spacing:.1em}
+  .cover{font-family:var(--serif);font-size:19px;line-height:1.5;margin:6px 0;word-break:keep-all}
+  .cover em{font-style:normal;color:var(--red);border-bottom:2px solid var(--red)}
+  .entry{border-top:1px solid var(--ink)}
+  .erow{padding:9px 2px;border-bottom:1px solid var(--ink);display:grid;gap:1px}
+  .erow.pri{background:var(--ink);color:var(--paper);padding:10px}
+  .erow.pri .ey{color:#E7B355}
+  .erow b{font-size:13px} .erow small{font-size:10px;color:var(--dim)}
+  .erow.pri small{color:#B9B2A6}
+  .secHead{display:flex;justify-content:space-between;align-items:baseline}
+  .secHead b{font-size:12px} .secHead span{font-size:10px;color:var(--dim)}
+  .row{display:flex;align-items:center;gap:9px;padding:8px 2px;border-bottom:1px solid var(--hair);font-size:12px}
+  .yr{font-family:var(--serif);font-size:15px;font-weight:700}
+  .row .grow{flex:1;display:grid;gap:1px} .row small{font-size:10px;color:var(--dim)}
+  .input{border:1px solid var(--ink);background:var(--card);padding:11px 12px;font-size:12px;color:#A8A093}
+  .input.big{font-size:18px;letter-spacing:.35em;text-align:center;font-weight:800;color:var(--ink)}
+  .input.area{min-height:84px}
+  .cta{background:var(--red);color:#FFF6F0;text-align:center;padding:12px;font-weight:800;font-size:13px}
+  .cta.dis{opacity:.35}
+  .ghost{border:1px solid var(--ink);text-align:center;padding:10px;font-weight:700;font-size:12px}
+  .fine{font-size:10px;color:var(--dim);line-height:1.5}
+  .back{display:flex;gap:6px;align-items:center;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--dim)}
+  .back i{font-style:normal;font-size:15px;color:var(--ink)}
+  .h1{font-family:var(--serif);font-size:19px;line-height:1.45;font-weight:700;word-break:keep-all;margin:2px 0}
+  .h1.c{text-align:center}
+  .dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+  .dot.lg{width:40px;height:40px;margin:0 auto}
+  .dot.o{background:transparent!important;border:2px solid;opacity:.4}
+  .codebox{border:1px solid var(--ink);background:var(--card);text-align:center;padding:16px;display:grid;gap:4px;justify-items:center}
+  .bigcode{font-size:30px;font-weight:900;letter-spacing:.25em;margin-left:.25em}
+  .host{margin-left:auto;font-size:9px;font-weight:800;color:var(--red);letter-spacing:.06em}
+  .wait{text-align:center;font-size:11px;color:var(--dim)}
+  .bar{display:flex;justify-content:space-between}
+  .hl{font-family:var(--serif);font-size:17px;line-height:1.5;font-weight:700;word-break:keep-all;margin:4px 0 2px}
+  .quote{padding:9px 2px;border-bottom:1px solid var(--hair)}
+  .quote p{font-family:var(--serif);font-size:12px;line-height:1.65;margin:0 0 5px;word-break:keep-all}
+  .by{display:flex;gap:6px;align-items:center;font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--dim)}
+  .center{display:grid;gap:12px;justify-items:center;padding-top:60px;text-align:center}
+  .stamp{font-family:var(--serif);font-size:26px;color:var(--red);border:2px solid var(--red);border-radius:50%;width:58px;height:58px;display:grid;place-items:center}
+  .dots{display:flex;gap:8px;justify-content:center}
+  .endlink{text-align:center;font-size:10px;color:var(--dim);text-decoration:underline;margin-top:auto}
+  .qa{border:1px solid var(--ink);background:var(--card);padding:10px;display:grid;gap:8px}
+  .past{font-size:10px;color:var(--dim);display:grid;gap:3px;line-height:1.5}
+  .chip{display:inline-block;border:1px solid var(--ink);padding:1px 6px;font-size:9px;font-weight:800;letter-spacing:.05em;margin-right:5px}
+  .chips b{font-size:9px;color:var(--red);letter-spacing:.06em}
+  .redisq{font-family:var(--serif);font-size:13px;font-weight:700;line-height:1.5;word-break:keep-all}
+  .ymark{display:flex;align-items:baseline;gap:8px}
+  .ymark span{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--red)}
+  .ymark small{font-size:9px;color:var(--dim)}
+  .spacer{flex:1}
+  .anno{position:absolute;right:8px;background:#FFE9A8;border:1px solid #C9A227;font-size:9px;padding:3px 6px;line-height:1.4;max-width:130px}
+  /* 데스크톱 프레임 */
+  .deskGrid{max-width:1400px;margin:56px auto 0;display:grid;gap:40px}
+  .desk{background:var(--paper);border:2px solid var(--ink);padding:26px 34px;min-height:420px;position:relative;display:flex;flex-direction:column;gap:14px}
+  .spread2{display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1}
+  .pageL{padding-right:30px;border-right:1px solid var(--hair)}
+  .pageR{padding-left:30px}
+  .contents{display:grid;gap:0;border-top:1px solid var(--ink)}
+  .spines{display:flex;gap:8px;align-items:flex-end}
+  .spine{writing-mode:vertical-rl;background:var(--card);border:1px solid var(--ink);padding:10px 6px;font-size:11px;font-weight:700;height:110px;display:flex;align-items:center;gap:6px}
+  .spine .yr2{font-family:var(--serif);font-weight:700}
+  .spine.pop{transform:translateY(-8px);border-color:var(--red)}
+  .col2{columns:2;column-gap:28px}
+  .narrow{max-width:380px;margin:0 auto;width:100%;display:grid;gap:10px}
+  .tl{display:grid;grid-template-columns:120px 1fr;gap:0}
+  .tl .yside{border-right:1px solid var(--hair);padding-right:18px;text-align:right}
+  .tl .aside{padding-left:18px}
+</style>
+</head>
+<body>
+
+<header class="docHead">
+  <span class="ey red">RECOVERSE V1 · WIREFRAMES</span>
+  <h1>전체 화면 와이어프레임</h1>
+  <p>번호는 스펙 문서(recoverse-v1-spec.md) 5장 화면 목록과 일치. 노란 주석은 구현 규칙.</p>
+</header>
+
+<div class="grid">
+
+  <!-- 1. 표지 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">01</span><b>표지 (홈)</b></div>
+    <div class="phone">
+      <div>
+        <div class="rule thick"></div>
+        <div class="brand">RECOVERSE</div>
+        <div class="deck"><span>질문과 답으로 만드는 연말호</span><span>EST. 2016</span></div>
+        <div class="rule" style="margin-top:6px"></div>
+      </div>
+      <p class="cover">한 해에 한 번,<br>우리는 서로에게<br><em>질문</em>이 된다.</p>
+      <div class="entry">
+        <div class="erow pri"><span class="ey">NEW ISSUE</span><b>새 호 발행하기</b><small>코드를 만들어 친구들을 초대해요</small></div>
+        <div class="erow"><span class="ey red">JOIN</span><b>코드로 참여하기</b><small>각자 자기 폰으로 합류해요</small></div>
+        <div class="erow"><span class="ey red">SOLO</span><b>혼자 쓰기</b><small>여행이든 한 달이든, 지금 나에게 질문을 던져요</small></div>
+        <div class="erow"><span class="ey red">BACK ISSUE</span><b>종이 회고 옮기기</b><small>예전 기록을 지난 호로 복간해요</small></div>
+        <div class="erow"><span class="ey red">REDISCOVER</span><b>다시 발견</b><small>같은 질문에 답한, 다른 해의 나를 만나요</small></div>
+      </div>
+      <div class="secHead"><b>지난 호</b><span>3권</span></div>
+      <div class="row"><span class="yr">2022</span><span class="grow"><b style="font-size:12px">2022 연말호</b><small>민희 · 지원 — 질문 2개</small></span><span>→</span></div>
+      <div class="row"><span class="yr">2019</span><span class="grow"><b style="font-size:12px">2019 연말호 (복간)</b><small>민희 · 지원 — 질문 2개</small></span><span>→</span></div>
+    </div>
+    <p class="note">입구 4개는 하나의 목차처럼 헤어라인이 아닌 잉크 보더로 구분. 지난 호는 최신순.</p>
+  </div>
+
+  <!-- 2a. 발행 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">02a</span><b>새 호 발행</b></div>
+    <div class="phone">
+      <div class="back"><i>←</i> 새 호 발행</div>
+      <p class="h1">이번 호의 발행인은?</p>
+      <div class="input">내 이름</div>
+      <div class="cta">발행 준비</div>
+      <p class="fine">세션 내용은 공유 저장소에 올라가요 — 코드를 아는 사람은 볼 수 있어요.</p>
+      <div class="anno" style="top:170px">이름 미입력 시 CTA 비활성</div>
+    </div>
+    <p class="note">발행인 = 호스트. 발행 즉시 4자리 코드 생성 후 대기실로.</p>
+  </div>
+
+  <!-- 2b. 참여 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">02b</span><b>코드로 참여</b></div>
+    <div class="phone">
+      <div class="back"><i>←</i> 코드로 참여</div>
+      <p class="h1">어느 호에 합류해요?</p>
+      <div class="input big">Q7MX</div>
+      <div class="input">내 이름</div>
+      <p class="fine" style="color:var(--red)">코드에 해당하는 호를 찾지 못했어요. 코드를 확인해주세요.</p>
+      <div class="cta">합류하기</div>
+      <div class="anno" style="top:118px">코드 4자, 자동 대문자.<br>lobby가 아니면 합류 거부</div>
+    </div>
+    <p class="note">에러는 원인 + 해결을 함께. 이미 시작된 호는 합류 불가 안내.</p>
+  </div>
+
+  <!-- 3. 대기실 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">03</span><b>대기실</b></div>
+    <div class="phone">
+      <div class="back"><i>←</i> 대기실</div>
+      <div class="codebox"><span class="ey">INVITE CODE</span><span class="bigcode">Q7MX</span><span class="fine">친구들에게 이 코드를 알려주세요</span></div>
+      <div class="secHead"><b>합류한 사람</b><span>3명</span></div>
+      <div class="row"><span class="dot" style="background:#D8451F"></span>민희<span class="host">발행인</span></div>
+      <div class="row"><span class="dot" style="background:#B98A2A"></span>지원</div>
+      <div class="row"><span class="dot" style="background:#3D7A5C"></span>하늘</div>
+      <div class="spacer"></div>
+      <div class="cta">이번 호 시작하기</div>
+      <div class="anno" style="top:290px">2.5초 폴링으로 합류자 갱신.<br>색은 합류 순서로 배정</div>
+    </div>
+    <p class="note">호스트만 시작 버튼. 게스트는 "발행인이 시작하길 기다리는 중…" 문구.</p>
+  </div>
+
+  <!-- 4a. 질문 (내 차례) -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">04a</span><b>질문 — 내 차례</b></div>
+    <div class="phone">
+      <div class="bar"><span class="ey">2026 ISSUE · Q7MX</span><span class="ey red">ROUND 02</span></div>
+      <div class="rule"></div>
+      <p class="h1">2번째 헤드라인,<br>내 차례</p>
+      <p class="fine">모두에게 던질 질문을 적어주세요.</p>
+      <div class="input area">예) 올해의 나를 건물 하나로 표현한다면?</div>
+      <div class="past"><span class="ey">지금까지의 헤드라인</span><span>1. 올해 가장 잘한 선택은?</span></div>
+      <div class="spacer"></div>
+      <div class="cta">헤드라인 확정</div>
+      <p class="endlink">세션 종료하기</p>
+      <div class="anno" style="top:250px">이전 질문 노출 =<br>중복 방지 장치</div>
+    </div>
+    <p class="note">질문자 = players[roundIdx % n]. "세션 종료하기"는 호스트에게만, 모든 라이브 화면 하단 고정.</p>
+  </div>
+
+  <!-- 4b. 질문 대기 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">04b</span><b>질문 — 대기</b></div>
+    <div class="phone">
+      <div class="bar"><span class="ey">2026 ISSUE · Q7MX</span><span class="ey red">ROUND 02</span></div>
+      <div class="rule"></div>
+      <div class="center">
+        <span class="dot lg" style="background:#B98A2A"></span>
+        <p class="h1 c">지원이(가)<br>질문을 쓰는 중</p>
+        <div class="past" style="justify-items:center"><span class="ey">지금까지의 헤드라인</span><span>1. 올해 가장 잘한 선택은?</span></div>
+      </div>
+      <div class="anno" style="top:150px">질문자 색 점에<br>pulse 애니메이션</div>
+    </div>
+    <p class="note">폴링으로 phase가 answer로 바뀌면 즉시 5a로 전환.</p>
+  </div>
+
+  <!-- 5a. 답변 작성 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">05a</span><b>답변 작성</b></div>
+    <div class="phone">
+      <div class="bar"><span class="ey">2026 ISSUE · Q7MX</span><span class="ey red">ROUND 02</span></div>
+      <div class="rule"></div>
+      <span class="ey red">QUESTION 02 <span style="color:var(--dim);letter-spacing:.03em">by 지원</span></span>
+      <p class="hl">올해의 나를 건물 하나로 표현한다면?</p>
+      <div class="rule"></div>
+      <div class="input area">지금 떠오르는 그대로, 짧아도 좋아요</div>
+      <div class="spacer"></div>
+      <div class="cta">내 답 싣기</div>
+      <div class="anno" style="top:120px">질문자 본인도 답변함</div>
+    </div>
+    <p class="note">답은 개별 키로 저장 — 동시 제출 안전. 제출 전 남의 답은 절대 노출 금지.</p>
+  </div>
+
+  <!-- 5b. 제출 후 대기 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">05b</span><b>답변 — 제출 후 대기</b></div>
+    <div class="phone">
+      <div class="bar"><span class="ey">2026 ISSUE · Q7MX</span><span class="ey red">ROUND 02</span></div>
+      <div class="rule"></div>
+      <span class="ey red">QUESTION 02 <span style="color:var(--dim);letter-spacing:.03em">by 지원</span></span>
+      <p class="hl">올해의 나를 건물 하나로 표현한다면?</p>
+      <div class="rule"></div>
+      <p class="wait">제출 완료 — 2/3명 답했어요</p>
+      <div class="dots">
+        <span class="dot" style="background:#D8451F"></span>
+        <span class="dot" style="background:#B98A2A"></span>
+        <span class="dot o" style="border-color:#3D7A5C"></span>
+      </div>
+      <p class="wait" style="font-size:10px">모두 제출하면 스프레드가 열려요</p>
+      <div class="anno" style="top:250px">미제출자 = 빈 점.<br>마지막 답 도착 순간<br>전원 화면에서 동시 공개</div>
+    </div>
+    <p class="note">공개는 별도 phase가 아님: answer phase에서 답 수 == 참여자 수로 판정.</p>
+  </div>
+
+  <!-- 6. 스프레드 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">06</span><b>스프레드 (공개)</b></div>
+    <div class="phone">
+      <div class="bar"><span class="ey">2026 ISSUE · Q7MX</span><span class="ey red">ROUND 02</span></div>
+      <div class="rule"></div>
+      <span class="ey red">QUESTION 02 <span style="color:var(--dim);letter-spacing:.03em">by 지원</span></span>
+      <p class="hl">올해의 나를 건물 하나로 표현한다면?</p>
+      <div class="rule"></div>
+      <div class="quote"><p>공사 중인 도서관. 아직 어수선한데 뼈대는 마음에 들어.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#D8451F"></span> 민희</div></div>
+      <div class="quote"><p>옥상 있는 낡은 주택. 올해는 자주 올라가서 멀리 봤다.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#B98A2A"></span> 지원</div></div>
+      <div class="quote"><p>등대. 흔들렸지만 자리는 안 옮겼음.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#3D7A5C"></span> 하늘</div></div>
+      <div class="cta">다음 헤드라인으로 (하늘 차례)</div>
+      <div class="ghost">이번 호 마감하기</div>
+      <div class="anno" style="top:170px">답변 순차 rise<br>(0.2s stagger)</div>
+    </div>
+    <p class="note">하단 버튼 2개는 호스트 전용. 게스트는 "발행인이 다음 페이지를 넘기길 기다리는 중…".</p>
+  </div>
+
+  <!-- 6a. 누가 썼게 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">06a</span><b>스프레드 — 누가 썼게 (추측)</b></div>
+    <div class="phone">
+      <div class="bar"><span class="ey">2026 ISSUE · Q7MX</span><span class="ey red">ROUND 02</span></div>
+      <div class="rule"></div>
+      <span class="ey red">QUESTION 02 <span style="color:var(--dim);letter-spacing:.03em">by 지원</span></span>
+      <p class="hl" style="font-size:15px">올해의 나를 건물 하나로 표현한다면?</p>
+      <div class="rule"></div>
+      <div class="quote"><p><b style="font-family:var(--sans);font-size:10px;color:var(--red)">가.</b> 공사 중인 도서관. 아직 어수선한데 뼈대는 마음에 들어.</p><div class="by"><span class="chip">지원</span><span class="chip" style="background:var(--ink);color:var(--paper)">하늘</span></div></div>
+      <div class="quote"><p><b style="font-family:var(--sans);font-size:10px;color:var(--red)">나.</b> 옥상 있는 낡은 주택. 올해는 자주 올라가서 멀리 봤다.</p><div class="by"><span class="ey gold" style="font-size:9px">내 답</span></div></div>
+      <div class="quote"><p><b style="font-family:var(--sans);font-size:10px;color:var(--red)">다.</b> 등대. 흔들렸지만 자리는 안 옮겼음.</p><div class="by"><span class="chip">지원</span><span class="chip">하늘</span></div></div>
+      <div class="cta">추측 확정</div>
+      <p class="wait" style="font-size:10px">1/3명 추측 완료</p>
+      <div class="anno" style="top:150px">셔플 순서는 전 기기 동일<br>(결정적 해시). 자기 답 잠금,<br>한 이름당 한 번 배정.<br>2인 세션은 이 화면 스킵</div>
+    </div>
+    <p class="note">전원 추측 완료 → 06 공개 화면에서 바이라인 도장이 순차로 찍히고 "이번 라운드 2/3 적중" 표시. 누적 1위는 발행 완료(07)에서 "올해의 독심술사"로 발표.</p>
+  </div>
+
+  <!-- 7. 발행 완료 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">07</span><b>발행 완료</b></div>
+    <div class="phone">
+      <div class="bar"><span class="ey">2026 ISSUE · Q7MX</span><span class="ey red">CLOSED</span></div>
+      <div class="rule"></div>
+      <div class="center">
+        <span class="stamp">閉</span>
+        <p class="h1 c">2026 연말호,<br>발행 완료</p>
+        <p class="wait">질문 4개 · 민희 · 지원 · 하늘</p>
+        <div class="cta" style="width:100%">내 책장에 이번 호 꽂기</div>
+      </div>
+      <div class="anno" style="top:130px">저장은 각자 자기 폰에서.<br>개인 책장(localStorage)</div>
+    </div>
+    <p class="note">마감 시 진행 중이던 라운드가 공개까지 갔다면 history에 포함.</p>
+  </div>
+
+  <!-- 8. 복간 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">08</span><b>복간 (종이 회고 옮기기)</b></div>
+    <div class="phone">
+      <div class="back"><i>←</i> 복간 — 종이 회고 옮기기</div>
+      <p class="fine">보이는 그대로 옮겨 적으면, 지난 호로 책장에 꽂혀요.</p>
+      <div class="input">연도 (예: 2019)</div>
+      <div class="input">참여자 (쉼표 구분 — 예: 민희, 지원)</div>
+      <div class="past"><span>✓ 1. 올해 가장 고마웠던 사람은?</span></div>
+      <div class="qa">
+        <span class="ey red">질문 2</span>
+        <div class="input">질문</div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span class="dot" style="background:#D8451F;margin-top:10px"></span><div class="input" style="flex:1">민희의 답</div></div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span class="dot" style="background:#B98A2A;margin-top:10px"></span><div class="input" style="flex:1">지원의 답</div></div>
+        <div class="ghost">이 질문 추가</div>
+      </div>
+      <div class="cta">지난 호로 꽂기 (1개 질문)</div>
+    </div>
+    <p class="note">질문+답 세트를 반복 추가하는 옮겨적기 전용 플로우. 사진 첨부는 v2.</p>
+  </div>
+
+  <!-- 9. 지난 호 열람 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">09</span><b>지난 호 열람</b></div>
+    <div class="phone">
+      <div class="back"><i>←</i> 책장으로</div>
+      <span class="ey red">2019 ISSUE</span>
+      <p class="h1">2019 연말호 (복간)</p>
+      <div class="rule"></div>
+      <p class="fine">민희 · 지원</p>
+      <span class="ey red" style="margin-top:6px">QUESTION 01 <span style="color:var(--dim);letter-spacing:.03em">by 지원</span></span>
+      <p class="hl" style="font-size:15px">올해 가장 잘한 선택은?</p>
+      <div class="quote"><p>이직. 무서웠지만 배우는 게 훨씬 많았다.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#D8451F"></span> 민희</div></div>
+      <div class="quote"><p>혼자 떠난 첫 여행.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#B98A2A"></span> 지원</div></div>
+    </div>
+    <p class="note">잡지 지면 레이아웃 = 스프레드(06)와 동일한 문법, 애니메이션만 없음.</p>
+  </div>
+
+  <!-- 10a. 다시 발견 목록 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">10a</span><b>다시 발견 — 목록</b></div>
+    <div class="phone">
+      <div class="back"><i>←</i> 다시 발견</div>
+      <p class="h1">같은 질문,<br>다른 해의 나</p>
+      <p class="fine">여러 해에 걸쳐 반복된 질문일수록 위에 올라와요.</p>
+      <div class="rule soft"></div>
+      <div style="display:grid;gap:6px;padding:8px 0;border-bottom:1px solid var(--hair)">
+        <span class="redisq">올해 가장 잘한 선택은?</span>
+        <span class="chips"><span class="chip">2016</span><span class="chip">2019</span><span class="chip">2022</span><b>3개의 해</b></span>
+      </div>
+      <div style="display:grid;gap:6px;padding:8px 0;border-bottom:1px solid var(--hair)">
+        <span class="redisq">내년의 나에게 한 문장을 남긴다면?</span>
+        <span class="chips"><span class="chip">2016</span><span class="chip">2022</span><b>2개의 해</b></span>
+      </div>
+      <div style="display:grid;gap:6px;padding:8px 0;border-bottom:1px solid var(--hair)">
+        <span class="redisq">올해의 나를 건물 하나로 표현한다면?</span>
+        <span class="chips"><span class="chip">2026</span></span>
+      </div>
+      <div class="anno" style="top:210px">공백·문장부호 제거 후<br>정규화 매칭으로 그룹핑.<br>다년 질문 우선 정렬</div>
+    </div>
+    <p class="note">책장이 비어 있으면 빈 상태 + 안내. AI 유사 질문 매칭은 v2.</p>
+  </div>
+
+  <!-- 10b. 다시 발견 타임라인 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">10b</span><b>다시 발견 — 타임라인</b></div>
+    <div class="phone">
+      <div class="back"><i>←</i> 다시 발견</div>
+      <span class="ey red">ACROSS 2016–2022</span>
+      <p class="h1">올해 가장 잘한 선택은?</p>
+      <div class="rule"></div>
+      <div class="ymark"><span>2016</span><small>2016 연말호</small></div>
+      <div class="quote"><p>고민만 하던 스터디를 결국 시작한 것.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#D8451F"></span> 민희</div></div>
+      <div class="ymark" style="margin-top:8px"><span>2019</span><small>2019 연말호 (복간)</small></div>
+      <div class="quote"><p>이직. 무서웠지만 배우는 게 훨씬 많았다.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#D8451F"></span> 민희</div></div>
+      <div class="ymark" style="margin-top:8px"><span>2022</span><small>2022 연말호</small></div>
+      <div class="quote"><p>사이드 프로젝트를 끝까지 배포한 것.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#D8451F"></span> 민희</div></div>
+      <div class="anno" style="top:130px">연도 오름차순.<br>연도 블록 순차 rise</div>
+    </div>
+    <p class="note">이 화면이 제품의 존재 이유 — "시간의 거리감"을 직접 보여주는 지면.</p>
+  </div>
+
+  <!-- 11. 혼자 쓰기 -->  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">11</span><b>혼자 쓰기 (솔로 발행)</b></div>
+    <div class="phone">
+      <div class="back"><i>←</i> 혼자 쓰기</div>
+      <p class="fine">스스로에게 질문을 던지고 답해보세요. 발행하면 책장에 꽂혀요.</p>
+      <div class="input">제목 (예: 제주 여행 회고, 6월의 회고)</div>
+      <div class="input">내 이름</div>
+      <div class="past"><span>✓ 1. 이번 여행에서 가장 오래 남을 장면은?</span></div>
+      <div class="qa">
+        <span class="ey red">질문 2</span>
+        <div class="input">질문</div>
+        <div style="display:flex;gap:8px;align-items:flex-start"><span class="dot" style="background:#D8451F;margin-top:10px"></span><div class="input" style="flex:1">민희의 답</div></div>
+        <div class="ghost">이 질문 추가</div>
+      </div>
+      <div class="cta">발행하기 (1개 질문)</div>
+      <div class="anno" style="top:118px">복간(08)과 같은 에디터 재사용.<br>연도 = 자동으로 올해,<br>참여자 1명인 호로 저장</div>
+    </div>
+    <p class="note">솔로 호도 다시 발견(10) 그룹핑에 그대로 포함 — 혼자 쓴 질문과 그룹 세션 질문이 같으면 타임라인에서 만남.</p>
+  </div>
+
+</div>
+
+<header class="docHead" style="margin-top:64px">
+  <span class="ey red">DESKTOP · ≥1024px</span>
+  <h1>데스크톱 레이아웃</h1>
+  <p>원칙: 화면이 넓어지는 게 아니라 <b>잡지가 펼쳐진다</b>. 읽는 화면 = 펼침면(2페이지), 쓰는 화면 = 좁은 원고지 컬럼 유지. 기능·카피·상태 머신은 모바일과 동일.</p>
+</header>
+
+<div class="deskGrid">
+
+  <!-- D1 표지 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">D1</span><b>표지 (홈)</b></div>
+    <div class="desk">
+      <div>
+        <div class="rule thick"></div>
+        <div class="brand" style="font-size:38px">RECOVERSE</div>
+        <div class="deck"><span>질문과 답으로 만드는 연말호</span><span>EST. 2016</span></div>
+        <div class="rule" style="margin-top:8px"></div>
+      </div>
+      <div class="spread2">
+        <div class="pageL">
+          <p class="cover" style="font-size:30px;margin-top:16px">한 해에 한 번,<br>우리는 서로에게<br><em>질문</em>이 된다.</p>
+        </div>
+        <div class="pageR">
+          <span class="ey" style="display:block;margin-bottom:6px">CONTENTS</span>
+          <div class="contents">
+            <div class="erow pri"><span class="ey">NEW ISSUE</span><b>새 호 발행하기</b></div>
+            <div class="erow"><span class="ey red">JOIN</span><b>코드로 참여하기</b></div>
+            <div class="erow"><span class="ey red">SOLO</span><b>혼자 쓰기</b></div>
+            <div class="erow"><span class="ey red">BACK ISSUE</span><b>종이 회고 옮기기</b></div>
+            <div class="erow"><span class="ey red">REDISCOVER</span><b>다시 발견</b></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="secHead"><b>지난 호</b><span>5권</span></div>
+        <div class="spines" style="margin-top:8px">
+          <div class="spine pop"><span class="yr2">2026</span> 연말호</div>
+          <div class="spine"><span class="yr2">2025</span> 제주 여행 특집호</div>
+          <div class="spine"><span class="yr2">2022</span> 연말호</div>
+          <div class="spine"><span class="yr2">2019</span> 연말호 (복간)</div>
+          <div class="spine"><span class="yr2">2016</span> 연말호 (복간)</div>
+        </div>
+      </div>
+      <div class="anno" style="top:120px;max-width:170px">좌 = 커버라인 / 우 = 입구 목차.<br>책등은 세로 텍스트, 호버 시 살짝 뽑히는 연출</div>
+    </div>
+    <p class="note">최대 폭 1120px 중앙 정렬. 지난 호는 리스트가 아니라 실제 책장의 책등(spine) 가로 나열.</p>
+  </div>
+
+  <!-- D2 스프레드 공개 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">D2</span><b>스프레드 공개 (06) · 지난 호 열람(09) 공통</b></div>
+    <div class="desk">
+      <div class="bar"><span class="ey">2026 ISSUE · Q7MX</span><span class="ey red">ROUND 02</span></div>
+      <div class="rule"></div>
+      <div class="spread2">
+        <div class="pageL">
+          <span class="ey red">QUESTION 02 <span style="color:var(--dim);letter-spacing:.03em">by 지원</span></span>
+          <p class="hl" style="font-size:26px;line-height:1.5;margin-top:10px">올해의 나를<br>건물 하나로<br>표현한다면?</p>
+        </div>
+        <div class="pageR">
+          <div class="quote"><p style="font-size:13px">공사 중인 도서관. 아직 어수선한데 뼈대는 마음에 들어.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#D8451F"></span> 민희 · 2명 적중</div></div>
+          <div class="quote"><p style="font-size:13px">옥상 있는 낡은 주택. 올해는 자주 올라가서 멀리 봤다.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#B98A2A"></span> 지원 · 1명 적중</div></div>
+          <div class="quote"><p style="font-size:13px">등대. 흔들렸지만 자리는 안 옮겼음.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#3D7A5C"></span> 하늘 · 2명 적중</div></div>
+          <div style="display:flex;gap:10px;margin-top:12px"><div class="cta" style="flex:1">다음 헤드라인으로</div><div class="ghost" style="flex:1">이번 호 마감하기</div></div>
+        </div>
+      </div>
+      <div class="anno" style="top:110px;max-width:150px">왼쪽 페이지 = 질문,<br>오른쪽 페이지 = 답변.<br>가운데 헤어라인이 접힌 선.<br>답 4개 이상이면 오른쪽 2단</div>
+    </div>
+    <p class="note">잡지를 펼친 면 그대로. 열람(09)도 같은 레이아웃, 애니메이션만 없음.</p>
+  </div>
+
+  <!-- D3 쓰는 화면 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">D3</span><b>쓰는 화면 (02·04·05·08·11 공통 규칙)</b></div>
+    <div class="desk">
+      <div class="bar"><span class="ey">2026 ISSUE · Q7MX</span><span class="ey red">ROUND 02</span></div>
+      <div class="rule"></div>
+      <div class="narrow" style="margin-top:24px">
+        <p class="h1" style="font-size:22px">2번째 헤드라인,<br>내 차례</p>
+        <p class="fine">모두에게 던질 질문을 적어주세요.</p>
+        <div class="input area">예) 올해의 나를 건물 하나로 표현한다면?</div>
+        <div class="past"><span class="ey">지금까지의 헤드라인</span><span>1. 올해 가장 잘한 선택은?</span></div>
+        <div class="cta">헤드라인 확정</div>
+      </div>
+      <div class="anno" style="top:100px;max-width:160px">쓰는 화면은 데스크톱에서도<br>최대 560px 중앙 컬럼.<br>넓게 펴지 말 것 —<br>입력은 종이 한 장의 집중감</div>
+    </div>
+    <p class="note">발행/참여·질문·답변·복간·혼자 쓰기 전부 동일: 원고지 컬럼. 좌우는 종이 여백.</p>
+  </div>
+
+  <!-- D4 다시 발견 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">D4</span><b>다시 발견 — 타임라인 (10b)</b></div>
+    <div class="desk">
+      <div class="back"><i>←</i> 다시 발견</div>
+      <span class="ey red">ACROSS 2016–2022</span>
+      <p class="h1" style="font-size:24px;margin:2px 0 10px">올해 가장 잘한 선택은?</p>
+      <div class="rule"></div>
+      <div class="tl" style="margin-top:14px">
+        <div class="yside"><div class="ymark" style="justify-content:flex-end"><span>2016</span></div><small class="fine">2016 연말호</small></div>
+        <div class="aside"><div class="quote"><p style="font-size:13px">고민만 하던 스터디를 결국 시작한 것.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#D8451F"></span> 민희</div></div></div>
+      </div>
+      <div class="tl">
+        <div class="yside"><div class="ymark" style="justify-content:flex-end"><span>2019</span></div><small class="fine">2019 연말호 (복간)</small></div>
+        <div class="aside"><div class="quote"><p style="font-size:13px">이직. 무서웠지만 배우는 게 훨씬 많았다.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#D8451F"></span> 민희</div></div></div>
+      </div>
+      <div class="tl">
+        <div class="yside"><div class="ymark" style="justify-content:flex-end"><span>2022</span></div><small class="fine">2022 연말호</small></div>
+        <div class="aside"><div class="quote"><p style="font-size:13px">사이드 프로젝트를 끝까지 배포한 것.</p><div class="by"><span class="dot" style="width:9px;height:9px;background:#D8451F"></span> 민희</div></div></div>
+      </div>
+      <div class="anno" style="top:110px;max-width:150px">왼쪽 여백 컬럼(120px)에<br>연도 마커 — 잡지의<br>마지널리아처럼</div>
+    </div>
+    <p class="note">연도가 왼쪽 여백에 정렬돼 세로로 흐름. 목록(10a)은 D3과 같은 중앙 640px.</p>
+  </div>
+
+  <!-- D5 대기실/추측 -->
+  <div class="frameWrap">
+    <div class="frameLabel"><span class="no">D5</span><b>대기실(03) · 추측(06a)</b></div>
+    <div class="desk">
+      <div class="narrow" style="max-width:420px;margin-top:10px">
+        <div class="codebox"><span class="ey">INVITE CODE</span><span class="bigcode">Q7MX</span><span class="fine">친구들에게 이 코드를 알려주세요</span></div>
+        <div class="secHead"><b>합류한 사람</b><span>3명</span></div>
+        <div class="row"><span class="dot" style="background:#D8451F"></span>민희<span class="host">발행인</span></div>
+        <div class="row"><span class="dot" style="background:#B98A2A"></span>지원</div>
+        <div class="row"><span class="dot" style="background:#3D7A5C"></span>하늘</div>
+        <div class="cta">이번 호 시작하기</div>
+      </div>
+      <div class="anno" style="top:80px;max-width:160px">중앙 640px 이하.<br>추측(06a)도 동일 규칙 —<br>모바일 구조 그대로 중앙 배치</div>
+    </div>
+    <p class="note">데스크톱 전용 기능 없음 — 레이아웃만 다르고 상태 머신·카피는 모바일과 완전히 동일.</p>
+  </div>
+
+</div>
+</body>
+</html>
