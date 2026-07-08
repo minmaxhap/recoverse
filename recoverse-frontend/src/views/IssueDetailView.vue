@@ -15,13 +15,10 @@
           <Headline :no="i + 1" :question="round.question" :asker="round.asker" />
         </template>
         <template #right>
-          <AnswerQuote
-            v-for="(name, j) in issue.participants"
-            v-show="round.answers?.[name]"
-            :key="name"
-            :text="round.answers?.[name]?.text ?? ''"
-            :name="name"
-            :color="colorAt(j)"
+          <RoundAnswers
+            :participants="issue.participants"
+            :answers="round.answers"
+            :format="round.format"
             still
           />
         </template>
@@ -51,9 +48,8 @@ import type { Issue } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
 import Headline from '../components/Headline.vue';
-import AnswerQuote from '../components/AnswerQuote.vue';
+import RoundAnswers from '../components/RoundAnswers.vue';
 import SpreadLayout from '../components/SpreadLayout.vue';
-import { colorAt } from '../lib/palette';
 import { useShelf } from '../composables/useShelf';
 import { api, ApiError } from '../lib/api';
 

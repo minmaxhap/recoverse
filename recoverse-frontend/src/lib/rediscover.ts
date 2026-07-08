@@ -6,6 +6,7 @@ export interface RediscoverEntry {
   year: string;
   issueTitle: string;
   question: string; // 이 호에서의 원본 표기
+  format?: string; // 이 라운드의 포맷 ID (있으면)
   participants: string[];
   answers: Record<string, Answer>;
 }
@@ -35,6 +36,7 @@ export function groupByQuestion(issues: Issue[]): QuestionGroup[] {
         year,
         issueTitle: issue.title,
         question: round.question,
+        format: round.format,
         participants: issue.participants,
         answers: round.answers,
       });

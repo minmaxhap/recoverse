@@ -6,19 +6,46 @@
 
     <div class="qaBox">
       <span class="eyebrow red">질문 {{ rounds.length + 1 }}</span>
+
+      <div class="formatChips" role="radiogroup" aria-label="회고 포맷">
+        <button
+          type="button"
+          role="radio"
+          :aria-checked="formatId === ''"
+          class="fchip"
+          :class="{ active: formatId === '' }"
+          @click="selectFormat('')"
+        >
+          자유 질문
+        </button>
+        <button
+          v-for="f in FORMATS"
+          :key="f.id"
+          type="button"
+          role="radio"
+          :aria-checked="formatId === f.id"
+          class="fchip"
+          :class="{ active: formatId === f.id }"
+          @click="selectFormat(f.id)"
+        >
+          {{ f.label }}
+        </button>
+      </div>
+
       <input
         class="field"
         :value="q"
+        :readonly="!!formatId"
         placeholder="질문"
         @input="q = ($event.target as HTMLInputElement).value"
       />
-      <QuestionSuggest :kind="kind" :exclude="pastQuestions" @pick="q = $event" />
+      <QuestionSuggest v-if="!formatId" :kind="kind" :exclude="pastQuestions" @pick="q = $event" />
       <div v-for="(name, i) in participants" :key="name" class="answerLine">
         <ParticipantDot :color="colorAt(i)" />
         <textarea
           class="field area short"
           :value="answers[name] ?? ''"
-          :placeholder="`${name}의 답`"
+          :placeholder="answerHint(name)"
           @input="setAnswer(name, ($event.target as HTMLTextAreaElement).value)"
         />
       </div>
@@ -33,6 +60,7 @@ import type { Kind, Round } from '@recoverse/shared';
 import ParticipantDot from './ParticipantDot.vue';
 import QuestionSuggest from './QuestionSuggest.vue';
 import { colorAt } from '../lib/palette';
+import { FORMATS, getFormat } from '../data/formats';
 
 const props = withDefaults(
   defineProps<{ participants: string[]; rounds: Round[]; kind?: Kind }>(),
@@ -41,8 +69,21 @@ const props = withDefaults(
 const emit = defineEmits<{ 'update:rounds': [Round[]] }>();
 
 const q = ref('');
+const formatId = ref('');
 const answers = ref<Record<string, string>>({});
 const pastQuestions = computed(() => props.rounds.map((r) => r.question));
+
+function selectFormat(id: string) {
+  formatId.value = id;
+  const format = getFormat(id);
+  // 포맷을 고르면 질문은 그 포맷의 고정 프롬프트로 (자유 질문이면 그대로 둠)
+  if (format) q.value = format.prompt;
+}
+
+function answerHint(name: string): string {
+  const format = getFormat(formatId.value);
+  return format ? format.hint : `${name}의 답`;
+}
 
 const qaReady = computed(
   () =>
@@ -62,8 +103,11 @@ function addRound() {
     roundAnswers[name] = { text: (answers.value[name] ?? '').trim() };
   }
   const asker = props.participants[props.rounds.length % props.participants.length];
-  emit('update:rounds', [...props.rounds, { asker, question: q.value.trim(), answers: roundAnswers }]);
+  const round: Round = { asker, question: q.value.trim(), answers: roundAnswers };
+  if (formatId.value) round.format = formatId.value;
+  emit('update:rounds', [...props.rounds, round]);
   q.value = '';
+  formatId.value = '';
   answers.value = {};
 }
 </script>
@@ -84,6 +128,24 @@ function addRound() {
   gap: 10px;
   margin-top: 16px;
   background: var(--paper-card);
+}
+.formatChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.fchip {
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+}
+.fchip.active {
+  background: var(--ink);
+  color: var(--paper);
 }
 .answerLine {
   display: flex;

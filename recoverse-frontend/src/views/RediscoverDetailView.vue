@@ -19,13 +19,10 @@
           <small class="fineprint">{{ entry.issueTitle }}</small>
         </div>
         <div class="aside">
-          <AnswerQuote
-            v-for="(name, j) in entry.participants"
-            v-show="entry.answers?.[name]"
-            :key="name"
-            :text="entry.answers?.[name]?.text ?? ''"
-            :name="name"
-            :color="colorAt(j)"
+          <RoundAnswers
+            :participants="entry.participants"
+            :answers="entry.answers"
+            :format="entry.format"
             still
           />
         </div>
@@ -39,8 +36,7 @@ import { computed } from 'vue';
 import type { QuestionGroup } from '../lib/rediscover';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
-import AnswerQuote from '../components/AnswerQuote.vue';
-import { colorAt } from '../lib/palette';
+import RoundAnswers from '../components/RoundAnswers.vue';
 
 const props = defineProps<{ group: QuestionGroup }>();
 defineEmits<{ back: [] }>();
