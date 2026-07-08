@@ -37,6 +37,7 @@
     v-else-if="mode === 'rediscover'"
     :groups="groups"
     :has-samples="hasSamples"
+    :moment="moment"
     @back="toCover"
     @open="openGroup"
     @add-samples="addSamples"
@@ -74,7 +75,7 @@ import SharedIssueView from './views/SharedIssueView.vue';
 import AppShell from './components/AppShell.vue';
 import { useShelf } from './composables/useShelf';
 import { useIdentity } from './composables/useIdentity';
-import { groupByQuestion } from './lib/rediscover';
+import { groupByQuestion, pickRediscoveryMoment } from './lib/rediscover';
 import { sampleIssues, isSample } from './lib/samples';
 
 type Mode =
@@ -120,6 +121,7 @@ const activeIssue = computed(() =>
   activeIssueId.value ? shelf.get(activeIssueId.value) : undefined,
 );
 const groups = computed(() => groupByQuestion(shelf.issues.value));
+const moment = computed(() => pickRediscoveryMoment(shelf.issues.value));
 const activeGroup = computed(() =>
   activeGroupKey.value ? groups.value.find((g) => g.key === activeGroupKey.value) : undefined,
 );
