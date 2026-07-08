@@ -33,7 +33,7 @@ import ParticipantDot from '../../components/ParticipantDot.vue';
 import { colorFor } from '../../lib/palette';
 import { api } from '../../lib/api';
 
-const props = defineProps<{ state: SessionStateResponse; isHost: boolean; me: string }>();
+const props = defineProps<{ state: SessionStateResponse; isHost: boolean; me: string; playerToken: string }>();
 const emit = defineEmits<{ applied: [SessionStateResponse] }>();
 
 const busy = ref(false);
@@ -42,7 +42,7 @@ async function onStart() {
   if (busy.value) return;
   busy.value = true;
   try {
-    const next = await api.start(props.state.meta.code, props.me);
+    const next = await api.start(props.state.meta.code, props.me, props.playerToken);
     emit('applied', next);
   } catch {
     /* 폴링이 곧 상태를 복구 */

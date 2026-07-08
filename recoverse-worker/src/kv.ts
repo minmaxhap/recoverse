@@ -13,6 +13,7 @@ export const keys = {
   participantPrefix: (code: string) => `session:${code}:p:`,
   participant: (code: string, joinedAt: string, name: string) =>
     `session:${code}:p:${joinedAt}~${name}`,
+  playerToken: (code: string, name: string) => `session:${code}:token:${name}`,
   answerPrefix: (code: string, roundIdx: number) => `session:${code}:r:${roundIdx}:a:`,
   answer: (code: string, roundIdx: number, name: string) =>
     `session:${code}:r:${roundIdx}:a:${name}`,
@@ -36,6 +37,10 @@ export async function kvGetJson<T>(kv: KVNamespace, key: string): Promise<T | nu
 
 export async function kvPutJson(kv: KVNamespace, key: string, value: unknown): Promise<void> {
   await kv.put(key, JSON.stringify(value), { expirationTtl: SESSION_TTL_SECONDS });
+}
+
+export async function kvPutString(kv: KVNamespace, key: string, value: string): Promise<void> {
+  await kv.put(key, value, { expirationTtl: SESSION_TTL_SECONDS });
 }
 
 /** prefix 아래 모든 키 나열 (세션 규모가 작아 단일 페이지로 충분하지만 커서 루프로 안전하게) */

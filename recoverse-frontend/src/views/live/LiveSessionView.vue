@@ -8,15 +8,48 @@
       <div class="rule" />
       <div class="gap" />
 
-      <LobbyPhase v-if="state.meta.phase === 'lobby'" :state="state" :is-host="isHost" :me="me" @applied="apply" />
+      <LobbyPhase
+        v-if="state.meta.phase === 'lobby'"
+        :state="state"
+        :is-host="isHost"
+        :me="me"
+        :player-token="playerToken"
+        @applied="apply"
+      />
 
-      <QuestionPhase v-else-if="state.meta.phase === 'question'" :state="state" :me="me" @applied="apply" />
+      <QuestionPhase
+        v-else-if="state.meta.phase === 'question'"
+        :state="state"
+        :me="me"
+        :player-token="playerToken"
+        @applied="apply"
+      />
 
-      <RevealSpread v-else-if="showReveal" :state="state" :me="me" :is-host="isHost" @applied="apply" />
+      <RevealSpread
+        v-else-if="showReveal"
+        :state="state"
+        :me="me"
+        :is-host="isHost"
+        :player-token="playerToken"
+        @applied="apply"
+      />
 
-      <AnswerPhase v-else-if="state.meta.phase === 'answer'" :state="state" :me="me" @applied="apply" />
+      <AnswerPhase
+        v-else-if="state.meta.phase === 'answer'"
+        :state="state"
+        :me="me"
+        :player-token="playerToken"
+        @applied="apply"
+      />
 
-      <GuessPhase v-else-if="state.meta.phase === 'guess'" :state="state" :me="me" :is-host="isHost" @applied="apply" />
+      <GuessPhase
+        v-else-if="state.meta.phase === 'guess'"
+        :state="state"
+        :me="me"
+        :is-host="isHost"
+        :player-token="playerToken"
+        @applied="apply"
+      />
 
       <EndedView v-else-if="state.meta.phase === 'ended'" :state="state" @done="$emit('exit')" />
 
@@ -43,12 +76,13 @@ import EndedView from './EndedView.vue';
 import { useSession } from '../../composables/useSession';
 import { api } from '../../lib/api';
 
-const props = defineProps<{ code: string; me: string; isHost: boolean }>();
+const props = defineProps<{ code: string; me: string; isHost: boolean; playerToken: string }>();
 defineEmits<{ exit: [] }>();
 
 const { state, error, apply } = useSession(props.code);
 const me = computed(() => props.me);
 const isHost = computed(() => props.isHost);
+const playerToken = computed(() => props.playerToken);
 const ending = ref(false);
 
 const roundLabel = computed(() => {
@@ -77,7 +111,7 @@ async function onEnd() {
   if (!window.confirm('세션을 종료할까요? 진행 중이던 라운드는 공개된 경우에만 저장돼요.')) return;
   ending.value = true;
   try {
-    apply(await api.end(s.meta.code, props.me));
+    apply(await api.end(s.meta.code, props.me, props.playerToken));
   } catch {
     /* 폴링 복구 */
   } finally {

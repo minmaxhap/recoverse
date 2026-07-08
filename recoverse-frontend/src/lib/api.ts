@@ -1,10 +1,11 @@
-import type { Kind, SessionStateResponse, ApiErrorBody } from '@recoverse/shared';
+import type { ApiErrorBody, Kind, SessionEntryResponse, SessionStateResponse } from '@recoverse/shared';
 
 const BASE = (import.meta.env.VITE_API_BASE ?? '') as string;
+const REQUEST_TIMEOUT_MS = 10_000;
 
 export class ApiError extends Error {
-  status: number;
-  code: string;
+  readonly status: number;
+  readonly code: string;
   constructor(status: number, code: string, message: string) {
     super(message);
     this.status = status;
@@ -12,21 +13,57 @@ export class ApiError extends Error {
   }
 }
 
+function isApiErrorBody(value: unknown): value is ApiErrorBody {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'error' in value &&
+    typeof value.error === 'object' &&
+    value.error !== null &&
+    'code' in value.error &&
+    'message' in value.error &&
+    typeof value.error.code === 'string' &&
+    typeof value.error.message === 'string'
+  );
+}
+
+function parseJson(text: string): unknown {
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new ApiError(0, 'bad_response', '서버 응답을 읽지 못했어요. 잠시 후 다시 시도해주세요.');
+    }
+    throw error;
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let res: Response;
   try {
     res = await fetch(`${BASE}${path}`, {
       ...init,
+      signal: controller.signal,
       headers: { 'content-type': 'application/json', ...(init?.headers ?? {}) },
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new ApiError(0, 'timeout', '응답이 늦어요. 네트워크를 확인하고 다시 시도해주세요.');
+    }
     throw new ApiError(0, 'network', '연결에 실패했어요. 네트워크를 확인해주세요.');
+  } finally {
+    window.clearTimeout(timeoutId);
   }
   const text = await res.text();
-  const data = text ? JSON.parse(text) : {};
+  const data = parseJson(text);
   if (!res.ok) {
-    const body = data as ApiErrorBody;
-    throw new ApiError(res.status, body.error?.code ?? 'unknown', body.error?.message ?? '문제가 발생했어요.');
+    if (isApiErrorBody(data)) {
+      throw new ApiError(res.status, data.error.code, data.error.message);
+    }
+    throw new ApiError(res.status, 'unknown', '문제가 발생했어요.');
   }
   return data as T;
 }
@@ -37,23 +74,23 @@ function post<T>(path: string, body: unknown): Promise<T> {
 
 export const api = {
   createSession: (host: string, kind: Kind) =>
-    post<SessionStateResponse>('/api/session', { host, kind }),
+    post<SessionEntryResponse>('/api/session', { host, kind }),
   join: (code: string, name: string) =>
-    post<SessionStateResponse>(`/api/session/${code}/join`, { name }),
+    post<SessionEntryResponse>(`/api/session/${code}/join`, { name }),
   state: (code: string) =>
     request<SessionStateResponse>(`/api/session/${code}/state`),
-  start: (code: string, name: string) =>
-    post<SessionStateResponse>(`/api/session/${code}/start`, { name }),
-  question: (code: string, name: string, question: string) =>
-    post<SessionStateResponse>(`/api/session/${code}/question`, { name, question }),
-  answer: (code: string, name: string, text: string) =>
-    post<SessionStateResponse>(`/api/session/${code}/answer`, { name, text }),
-  guess: (code: string, name: string, guesses: Record<string, string>) =>
-    post<SessionStateResponse>(`/api/session/${code}/guess`, { name, guesses }),
-  reveal: (code: string, name: string) =>
-    post<SessionStateResponse>(`/api/session/${code}/reveal`, { name }),
-  next: (code: string, name: string) =>
-    post<SessionStateResponse>(`/api/session/${code}/next`, { name }),
-  end: (code: string, name: string) =>
-    post<SessionStateResponse>(`/api/session/${code}/end`, { name }),
+  start: (code: string, name: string, playerToken: string) =>
+    post<SessionStateResponse>(`/api/session/${code}/start`, { name, playerToken }),
+  question: (code: string, name: string, playerToken: string, question: string) =>
+    post<SessionStateResponse>(`/api/session/${code}/question`, { name, playerToken, question }),
+  answer: (code: string, name: string, playerToken: string, text: string) =>
+    post<SessionStateResponse>(`/api/session/${code}/answer`, { name, playerToken, text }),
+  guess: (code: string, name: string, playerToken: string, guesses: Record<string, string>) =>
+    post<SessionStateResponse>(`/api/session/${code}/guess`, { name, playerToken, guesses }),
+  reveal: (code: string, name: string, playerToken: string) =>
+    post<SessionStateResponse>(`/api/session/${code}/reveal`, { name, playerToken }),
+  next: (code: string, name: string, playerToken: string) =>
+    post<SessionStateResponse>(`/api/session/${code}/next`, { name, playerToken }),
+  end: (code: string, name: string, playerToken: string) =>
+    post<SessionStateResponse>(`/api/session/${code}/end`, { name, playerToken }),
 };

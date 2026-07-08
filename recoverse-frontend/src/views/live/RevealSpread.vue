@@ -43,7 +43,7 @@ import SpreadLayout from '../../components/SpreadLayout.vue';
 import { colorFor } from '../../lib/palette';
 import { api } from '../../lib/api';
 
-const props = defineProps<{ state: SessionStateResponse; me: string; isHost: boolean }>();
+const props = defineProps<{ state: SessionStateResponse; me: string; isHost: boolean; playerToken: string }>();
 const emit = defineEmits<{ applied: [SessionStateResponse] }>();
 
 const busy = ref(false);
@@ -78,7 +78,7 @@ async function onNext() {
   if (busy.value) return;
   busy.value = true;
   try {
-    emit('applied', await api.next(props.state.meta.code, props.me));
+    emit('applied', await api.next(props.state.meta.code, props.me, props.playerToken));
   } catch {
     /* 폴링 복구 */
   } finally {
@@ -90,7 +90,7 @@ async function onEnd() {
   if (busy.value) return;
   busy.value = true;
   try {
-    emit('applied', await api.end(props.state.meta.code, props.me));
+    emit('applied', await api.end(props.state.meta.code, props.me, props.playerToken));
   } catch {
     /* 폴링 복구 */
   } finally {

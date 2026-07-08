@@ -7,6 +7,7 @@
       <h1 class="pageTitle">{{ issue.title }}</h1>
       <div class="rule" />
       <p class="fineprint">{{ issue.participants.join(' · ') }}</p>
+      <p v-if="issue.originNote" class="originNote">{{ issue.originNote }}</p>
     </header>
 
     <article v-for="(round, i) in issue.rounds" :key="i" class="archiveRound">
@@ -69,5 +70,14 @@ function onRemove() {
 .empty {
   font-size: 14px;
   color: var(--dim);
+}
+.originNote {
+  margin: 4px 0 0;
+  padding: 12px;
+  border-left: 3px solid var(--vermilion);
+  background: var(--paper-card);
+  color: var(--dim-strong);
+  font-size: 13px;
+  line-height: 1.65;
 }
 </style>

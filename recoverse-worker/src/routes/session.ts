@@ -8,16 +8,23 @@ import {
   type Answer,
   type Kind,
   type Round,
+  type SessionEntryResponse,
   type SessionMeta,
   type SessionStateResponse,
 } from '@recoverse/shared';
 import { ApiError, jsonResponse } from '../errors';
-import { keys, kvGetJson, kvListKeys, kvPutJson, listPlayers, type Env } from '../kv';
+import { keys, kvGetJson, kvListKeys, kvPutJson, kvPutString, listPlayers, type Env } from '../kv';
 
 const MAX_BODY_BYTES = 16 * 1024;
 
 type Guesses = Record<string, string>;
 type PastGuesses = Record<number, Record<string, Guesses>>;
+
+function createPlayerToken(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
 
 /* ── 요청 파싱 ── */
 
@@ -41,6 +48,17 @@ function requireName(body: Record<string, unknown>): string {
   const name = typeof body.name === 'string' ? body.name.trim() : '';
   if (!isValidName(name)) {
     throw new ApiError(400, 'bad_name', '이름은 1~12자로 입력해주세요.');
+  }
+  return name;
+}
+
+async function requirePlayer(env: Env, code: string, body: Record<string, unknown>): Promise<string> {
+  const name = requireName(body);
+  const playerToken = typeof body.playerToken === 'string' ? body.playerToken : '';
+  // 토큰은 kvPutString(원시 문자열)로 저장되므로 raw get으로 읽어 그대로 비교한다.
+  const expectedToken = await env.SESSIONS.get(keys.playerToken(code, name));
+  if (!expectedToken || playerToken !== expectedToken) {
+    throw new ApiError(403, 'bad_player_token', '참가자 인증이 만료됐어요. 다시 합류해주세요.');
   }
   return name;
 }
@@ -144,6 +162,19 @@ async function stateResponse(env: Env, code: string, meta?: SessionMeta): Promis
   return jsonResponse(await buildState(env, code, m));
 }
 
+async function entryResponse(
+  env: Env,
+  code: string,
+  meta: SessionMeta,
+  playerToken: string,
+): Promise<Response> {
+  const body: SessionEntryResponse = {
+    ...(await buildState(env, code, meta)),
+    playerToken,
+  };
+  return jsonResponse(body);
+}
+
 /** 공개 조건: (2인 && 전원 답) || 전원 추측 || 호스트 강제 공개 */
 function revealCondition(state: SessionStateResponse): boolean {
   return (
@@ -188,8 +219,10 @@ async function createSession(env: Env, body: Record<string, unknown>): Promise<R
     history: [],
   };
   await kvPutJson(env.SESSIONS, keys.meta(code), meta);
+  const playerToken = createPlayerToken();
   await kvPutJson(env.SESSIONS, keys.participant(code, String(Date.now()).padStart(14, '0'), host), 1);
-  return stateResponse(env, code, meta);
+  await kvPutString(env.SESSIONS, keys.playerToken(code, host), playerToken);
+  return entryResponse(env, code, meta, playerToken);
 }
 
 async function joinSession(env: Env, code: string, body: Record<string, unknown>): Promise<Response> {
@@ -202,12 +235,14 @@ async function joinSession(env: Env, code: string, body: Record<string, unknown>
   if (players.includes(name)) {
     throw new ApiError(409, 'name_taken', '같은 이름이 이미 합류해 있어요. 다른 이름으로 참여해주세요.');
   }
+  const playerToken = createPlayerToken();
   await kvPutJson(env.SESSIONS, keys.participant(code, String(Date.now()).padStart(14, '0'), name), 1);
-  return stateResponse(env, code, meta);
+  await kvPutString(env.SESSIONS, keys.playerToken(code, name), playerToken);
+  return entryResponse(env, code, meta, playerToken);
 }
 
 async function startSession(env: Env, code: string, body: Record<string, unknown>): Promise<Response> {
-  const name = requireName(body);
+  const name = await requirePlayer(env, code, body);
   const meta = await requireMeta(env, code);
   if (name !== meta.host) {
     throw new ApiError(403, 'host_only', '발행인만 시작할 수 있어요.');
@@ -225,7 +260,7 @@ async function startSession(env: Env, code: string, body: Record<string, unknown
 }
 
 async function submitQuestion(env: Env, code: string, body: Record<string, unknown>): Promise<Response> {
-  const name = requireName(body);
+  const name = await requirePlayer(env, code, body);
   const question = typeof body.question === 'string' ? body.question.trim() : '';
   if (!isValidQuestion(question)) {
     throw new ApiError(400, 'bad_question', `질문은 1~200자로 입력해주세요.`);
@@ -243,7 +278,7 @@ async function submitQuestion(env: Env, code: string, body: Record<string, unkno
 }
 
 async function submitAnswer(env: Env, code: string, body: Record<string, unknown>): Promise<Response> {
-  const name = requireName(body);
+  const name = await requirePlayer(env, code, body);
   const text = typeof body.text === 'string' ? body.text.trim() : '';
   if (!isValidAnswerText(text)) {
     throw new ApiError(400, 'bad_answer', `답변은 1~2000자로 입력해주세요.`);
@@ -278,7 +313,7 @@ async function submitAnswer(env: Env, code: string, body: Record<string, unknown
 }
 
 async function submitGuess(env: Env, code: string, body: Record<string, unknown>): Promise<Response> {
-  const name = requireName(body);
+  const name = await requirePlayer(env, code, body);
   const meta = await requireMeta(env, code);
   if (meta.phase !== 'guess') {
     throw new ApiError(409, 'bad_phase', '지금은 추측 단계가 아니에요.');
@@ -322,7 +357,7 @@ async function submitGuess(env: Env, code: string, body: Record<string, unknown>
 }
 
 async function forceReveal(env: Env, code: string, body: Record<string, unknown>): Promise<Response> {
-  const name = requireName(body);
+  const name = await requirePlayer(env, code, body);
   const meta = await requireMeta(env, code);
   if (name !== meta.host) {
     throw new ApiError(403, 'host_only', '발행인만 공개할 수 있어요.');
@@ -349,7 +384,7 @@ async function foldCurrentRound(env: Env, code: string, meta: SessionMeta, state
 }
 
 async function nextRound(env: Env, code: string, body: Record<string, unknown>): Promise<Response> {
-  const name = requireName(body);
+  const name = await requirePlayer(env, code, body);
   const meta = await requireMeta(env, code);
   if (name !== meta.host) {
     throw new ApiError(403, 'host_only', '발행인만 다음 페이지를 넘길 수 있어요.');
@@ -376,7 +411,7 @@ async function nextRound(env: Env, code: string, body: Record<string, unknown>):
 }
 
 async function endSession(env: Env, code: string, body: Record<string, unknown>): Promise<Response> {
-  const name = requireName(body);
+  const name = await requirePlayer(env, code, body);
   const meta = await requireMeta(env, code);
   if (name !== meta.host) {
     throw new ApiError(403, 'host_only', '발행인만 마감할 수 있어요.');

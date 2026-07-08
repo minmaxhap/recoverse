@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import type { Issue } from '@recoverse/shared';
 import { readLocalStorageValue, writeLocalStorageValue } from '../lib/safeLocalStorage';
+import { parseIssues } from '../lib/issueParsing';
 
 const KEY = 'recoverse_issues_v1';
 
@@ -16,9 +17,7 @@ function load(): void {
   if (r.ok && r.value) {
     try {
       const parsed = JSON.parse(r.value);
-      if (Array.isArray(parsed)) {
-        issues.value = sortByDateDesc(parsed as Issue[]);
-      }
+      issues.value = sortByDateDesc(parseIssues(parsed));
     } catch {
       issues.value = [];
     }

@@ -5,7 +5,7 @@
     <p class="waiting">질문 {{ state.meta.history.length }}개 · {{ state.players.join(' · ') }}</p>
 
     <div v-if="readers.names.length > 0" class="mindReader">
-      <span class="eyebrow gold">올해의 독심술사 🏅</span>
+      <span class="eyebrow gold">올해의 독심술사</span>
       <p class="readerName">{{ readers.names.join(' · ') }}</p>
       <p class="fineprint">{{ readers.score }}번 적중</p>
     </div>

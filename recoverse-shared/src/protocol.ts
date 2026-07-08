@@ -14,6 +14,10 @@ export interface SessionStateResponse {
   revealed: boolean;                        // 호스트 강제 공개 플래그
 }
 
+export interface SessionEntryResponse extends SessionStateResponse {
+  playerToken: string;
+}
+
 export interface ApiErrorBody {
   error: { code: string; message: string };
 }

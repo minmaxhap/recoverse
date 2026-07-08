@@ -59,12 +59,12 @@ async function submit() {
     const name = nameDraft.value.trim();
     if (creating.value) {
       const state = await api.createSession(name, kind.value);
-      identity.set(state.meta.code, name, true);
+      identity.set(state.meta.code, name, true, state.playerToken);
       emit('entered', state.meta.code);
     } else {
       const code = codeDraft.value.trim().toUpperCase();
-      await api.join(code, name);
-      identity.set(code, name, false);
+      const state = await api.join(code, name);
+      identity.set(code, name, false, state.playerToken);
       emit('entered', code);
     }
   } catch (e) {

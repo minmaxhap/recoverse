@@ -54,7 +54,7 @@ import Headline from '../../components/Headline.vue';
 import { shuffledAnswerOrder } from '../../lib/guessing';
 import { api } from '../../lib/api';
 
-const props = defineProps<{ state: SessionStateResponse; me: string; isHost: boolean }>();
+const props = defineProps<{ state: SessionStateResponse; me: string; isHost: boolean; playerToken: string }>();
 const emit = defineEmits<{ applied: [SessionStateResponse] }>();
 
 const busy = ref(false);
@@ -98,7 +98,7 @@ async function onConfirm() {
   if (!allAssigned.value || busy.value) return;
   busy.value = true;
   try {
-    const next = await api.guess(props.state.meta.code, props.me, assignment.value);
+    const next = await api.guess(props.state.meta.code, props.me, props.playerToken, assignment.value);
     emit('applied', next);
   } catch {
     /* 폴링 복구 */
@@ -111,7 +111,7 @@ async function onReveal() {
   if (busy.value) return;
   busy.value = true;
   try {
-    const next = await api.reveal(props.state.meta.code, props.me);
+    const next = await api.reveal(props.state.meta.code, props.me, props.playerToken);
     emit('applied', next);
   } catch {
     /* 폴링 복구 */

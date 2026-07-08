@@ -29,7 +29,7 @@ import PastQuestions from '../../components/PastQuestions.vue';
 import { colorFor } from '../../lib/palette';
 import { api } from '../../lib/api';
 
-const props = defineProps<{ state: SessionStateResponse; me: string }>();
+const props = defineProps<{ state: SessionStateResponse; me: string; playerToken: string }>();
 const emit = defineEmits<{ applied: [SessionStateResponse] }>();
 
 const draft = ref('');
@@ -41,7 +41,7 @@ async function onSubmit() {
   if (!draft.value.trim() || busy.value) return;
   busy.value = true;
   try {
-    const next = await api.question(props.state.meta.code, props.me, draft.value.trim());
+    const next = await api.question(props.state.meta.code, props.me, props.playerToken, draft.value.trim());
     draft.value = '';
     emit('applied', next);
   } catch {

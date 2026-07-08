@@ -18,6 +18,7 @@
     :code="identity.identity.code"
     :me="identity.identity.name"
     :is-host="identity.identity.isHost"
+    :player-token="identity.identity.playerToken"
     @exit="leaveSession"
   />
 
