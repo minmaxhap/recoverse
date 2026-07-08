@@ -12,6 +12,7 @@
         placeholder="질문"
         @input="q = ($event.target as HTMLInputElement).value"
       />
+      <QuestionSuggest :kind="kind" :exclude="pastQuestions" @pick="q = $event" />
       <div v-for="(name, i) in participants" :key="name" class="answerLine">
         <ParticipantDot :color="colorAt(i)" />
         <textarea
@@ -28,15 +29,20 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { Round } from '@recoverse/shared';
+import type { Kind, Round } from '@recoverse/shared';
 import ParticipantDot from './ParticipantDot.vue';
+import QuestionSuggest from './QuestionSuggest.vue';
 import { colorAt } from '../lib/palette';
 
-const props = defineProps<{ participants: string[]; rounds: Round[] }>();
+const props = withDefaults(
+  defineProps<{ participants: string[]; rounds: Round[]; kind?: Kind }>(),
+  { kind: 'free' },
+);
 const emit = defineEmits<{ 'update:rounds': [Round[]] }>();
 
 const q = ref('');
 const answers = ref<Record<string, string>>({});
+const pastQuestions = computed(() => props.rounds.map((r) => r.question));
 
 const qaReady = computed(
   () =>

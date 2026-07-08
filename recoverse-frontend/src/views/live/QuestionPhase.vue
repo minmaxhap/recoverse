@@ -8,6 +8,7 @@
         class="field area"
         placeholder="예) 올해의 나를 건물 하나로 표현한다면?"
       />
+      <QuestionSuggest :kind="state.meta.kind" :exclude="pastQuestions" @pick="onPick" />
       <PastQuestions :history="state.meta.history" />
       <div class="gap" />
       <button class="cta" :disabled="!draft.trim() || busy" @click="onSubmit">헤드라인 확정</button>
@@ -26,6 +27,7 @@ import { computed, ref } from 'vue';
 import type { SessionStateResponse } from '@recoverse/shared';
 import ParticipantDot from '../../components/ParticipantDot.vue';
 import PastQuestions from '../../components/PastQuestions.vue';
+import QuestionSuggest from '../../components/QuestionSuggest.vue';
 import { colorFor } from '../../lib/palette';
 import { api } from '../../lib/api';
 
@@ -36,6 +38,11 @@ const draft = ref('');
 const busy = ref(false);
 const roundNo = computed(() => props.state.meta.roundIdx + 1);
 const myTurn = computed(() => props.state.meta.asker === props.me);
+const pastQuestions = computed(() => props.state.meta.history.map((r) => r.question));
+
+function onPick(question: string) {
+  draft.value = question;
+}
 
 async function onSubmit() {
   if (!draft.value.trim() || busy.value) return;

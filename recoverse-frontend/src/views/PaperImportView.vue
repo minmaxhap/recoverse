@@ -8,7 +8,7 @@
       <input v-model="namesInput" class="field" placeholder="참여자 (쉼표 구분 — 예: 민희, 지원)" />
     </div>
 
-    <RoundEditor :participants="participants" :rounds="rounds" @update:rounds="rounds = $event" />
+    <RoundEditor :participants="participants" :rounds="rounds" kind="yearend" @update:rounds="rounds = $event" />
 
     <div class="gap" />
     <button class="cta" :disabled="!canPublish" @click="publish">

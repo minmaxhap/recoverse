@@ -9,7 +9,7 @@
       <input v-model="name" class="field" placeholder="내 이름" />
     </div>
 
-    <RoundEditor :participants="participants" :rounds="rounds" @update:rounds="rounds = $event" />
+    <RoundEditor :participants="participants" :rounds="rounds" :kind="kind" @update:rounds="rounds = $event" />
 
     <div class="gap" />
     <button class="cta" :disabled="!canPublish" @click="publish">
