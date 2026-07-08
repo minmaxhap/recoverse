@@ -49,6 +49,12 @@
     @back="() => setMode('rediscover')"
   />
 
+  <SharedIssueView
+    v-else-if="mode === 'shared' && sharedId"
+    :share-id="sharedId"
+    @start="leaveShared"
+  />
+
   <AppShell v-else>
     <p class="waiting">불러오는 중…</p>
   </AppShell>
@@ -64,6 +70,7 @@ import PaperImportView from './views/PaperImportView.vue';
 import IssueDetailView from './views/IssueDetailView.vue';
 import RediscoverView from './views/RediscoverView.vue';
 import RediscoverDetailView from './views/RediscoverDetailView.vue';
+import SharedIssueView from './views/SharedIssueView.vue';
 import AppShell from './components/AppShell.vue';
 import { useShelf } from './composables/useShelf';
 import { useIdentity } from './composables/useIdentity';
@@ -79,7 +86,8 @@ type Mode =
   | 'paper'
   | 'issue-detail'
   | 'rediscover'
-  | 'rediscover-detail';
+  | 'rediscover-detail'
+  | 'shared';
 
 const shelf = useShelf();
 const identity = useIdentity();
@@ -87,10 +95,25 @@ const identity = useIdentity();
 const mode = ref<Mode>('cover');
 const activeIssueId = ref<string | null>(null);
 const activeGroupKey = ref<string | null>(null);
+const sharedId = ref<string | null>(null);
 
-// 새로고침해도 세션 신원이 남아 있으면 라이브로 복귀
-if (identity.identity.code && identity.identity.name) {
+// 공유 링크(?share=<id>)로 열면 읽기 전용 공유 뷰가 최우선
+const shareParam = new URLSearchParams(window.location.search).get('share');
+if (shareParam) {
+  sharedId.value = shareParam;
+  mode.value = 'shared';
+} else if (identity.identity.code && identity.identity.name) {
+  // 새로고침해도 세션 신원이 남아 있으면 라이브로 복귀
   mode.value = 'live';
+}
+
+/** 공유 뷰에서 나갈 때 — URL의 share 파라미터를 지우고 표지로 */
+function leaveShared() {
+  sharedId.value = null;
+  const url = new URL(window.location.href);
+  url.searchParams.delete('share');
+  window.history.replaceState(null, '', url.pathname + url.search);
+  setMode('cover');
 }
 
 const activeIssue = computed(() =>

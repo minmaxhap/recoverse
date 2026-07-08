@@ -250,6 +250,44 @@ describe('검증', () => {
   });
 });
 
+describe('공유 링크', () => {
+  const sampleIssue = {
+    id: 'local-1',
+    kind: 'yearend',
+    date: '2026-12-31',
+    title: '2026 연말호',
+    participants: ['민희', '지원'],
+    rounds: [{ asker: '민희', question: 'Q1', answers: { 민희: { text: 'A' }, 지원: { text: 'B' } } }],
+    source: 'live',
+  };
+
+  it('공유 생성 → shareId 발급 → 조회로 스냅샷 반환', async () => {
+    const created = await post('/api/share', { issue: sampleIssue });
+    expect(created.status).toBe(200);
+    const shareId = created.json.shareId as string;
+    expect(shareId).toMatch(/^[a-f0-9]{24}$/);
+
+    const res = await SELF.fetch(`${BASE}/api/share/${shareId}`);
+    expect(res.status).toBe(200);
+    const body: any = await res.json();
+    expect(body.issue.title).toBe('2026 연말호');
+    expect(body.issue.rounds[0].answers['민희'].text).toBe('A');
+    expect(body.issue.shareId).toBe(shareId);
+  });
+
+  it('없는/잘못된 공유 ID는 404/400', async () => {
+    const missing = await SELF.fetch(`${BASE}/api/share/${'0'.repeat(24)}`);
+    expect(missing.status).toBe(404);
+    const bad = await SELF.fetch(`${BASE}/api/share/not-a-valid-id`);
+    expect(bad.status).toBe(400);
+  });
+
+  it('형식이 틀린 호는 400', async () => {
+    expect((await post('/api/share', { issue: { title: '제목만' } })).status).toBe(400);
+    expect((await post('/api/share', {})).status).toBe(400);
+  });
+});
+
 describe('shared 유닛', () => {
   it('결정적 셔플: 동일 입력 = 동일 순서, 동일 텍스트는 이름 타이브레이크', () => {
     const answers = {

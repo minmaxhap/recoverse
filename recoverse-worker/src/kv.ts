@@ -1,6 +1,8 @@
-/** KV 키 레이아웃 + 헬퍼. 모든 세션 키는 24시간 TTL. */
+/** KV 키 레이아웃 + 헬퍼. 세션 키는 24시간 TTL, 공유 스냅샷은 오래 유지. */
 
 export const SESSION_TTL_SECONDS = 86400;
+// 공유 링크는 keepsake라 오래 살아야 한다 — 180일
+export const SHARE_TTL_SECONDS = 180 * 86400;
 
 export interface Env {
   SESSIONS: KVNamespace;
@@ -23,6 +25,8 @@ export const keys = {
   revealed: (code: string, roundIdx: number) => `session:${code}:r:${roundIdx}:revealed`,
   // 지난 라운드 추측 누적 (호스트가 next/end 시점에만 기록 — 단일 작성자라 안전)
   pastGuesses: (code: string) => `session:${code}:pastGuesses`,
+  // 읽기 전용 공유 스냅샷
+  share: (shareId: string) => `share:${shareId}`,
 };
 
 export async function kvGetJson<T>(kv: KVNamespace, key: string): Promise<T | null> {
@@ -35,8 +39,13 @@ export async function kvGetJson<T>(kv: KVNamespace, key: string): Promise<T | nu
   }
 }
 
-export async function kvPutJson(kv: KVNamespace, key: string, value: unknown): Promise<void> {
-  await kv.put(key, JSON.stringify(value), { expirationTtl: SESSION_TTL_SECONDS });
+export async function kvPutJson(
+  kv: KVNamespace,
+  key: string,
+  value: unknown,
+  ttlSeconds: number = SESSION_TTL_SECONDS,
+): Promise<void> {
+  await kv.put(key, JSON.stringify(value), { expirationTtl: ttlSeconds });
 }
 
 export async function kvPutString(kv: KVNamespace, key: string, value: string): Promise<void> {

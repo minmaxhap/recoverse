@@ -9,8 +9,15 @@ export const QUESTION_MAX = 200;
 export const ANSWER_MAX = 2000;
 export const TITLE_MAX = 60;
 
+/* 공유 ID: 12바이트(96bit) 랜덤 hex — 링크를 아는 사람만 열람하므로 추측 불가해야 함 */
+export const SHARE_ID_RE = /^[a-f0-9]{24}$/;
+
 export function isValidCode(code: string): boolean {
   return CODE_RE.test(code);
+}
+
+export function isValidShareId(id: string): boolean {
+  return SHARE_ID_RE.test(id);
 }
 
 /** 이름: 1~12자, 키 구분자(:)와 개행 금지 */

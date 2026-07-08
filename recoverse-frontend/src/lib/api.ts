@@ -1,4 +1,4 @@
-import type { ApiErrorBody, Kind, SessionEntryResponse, SessionStateResponse } from '@recoverse/shared';
+import type { ApiErrorBody, Issue, Kind, SessionEntryResponse, SessionStateResponse } from '@recoverse/shared';
 
 const BASE = (import.meta.env.VITE_API_BASE ?? '') as string;
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -93,4 +93,8 @@ export const api = {
     post<SessionStateResponse>(`/api/session/${code}/next`, { name, playerToken }),
   end: (code: string, name: string, playerToken: string) =>
     post<SessionStateResponse>(`/api/session/${code}/end`, { name, playerToken }),
+
+  // 읽기 전용 공유
+  createShare: (issue: Issue) => post<{ shareId: string }>('/api/share', { issue }),
+  getShare: (shareId: string) => request<{ issue: Issue }>(`/api/share/${shareId}`),
 };

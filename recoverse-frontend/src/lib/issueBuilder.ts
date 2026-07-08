@@ -25,7 +25,6 @@ export interface EditorDraft {
   title: string;
   participants: string[];
   rounds: Round[];
-  originNote?: string;
 }
 
 /** 혼자 쓰기 / 복간 에디터 → 책장 Issue */
@@ -40,7 +39,5 @@ export function issueFromDraft(draft: EditorDraft, source: 'solo' | 'paper'): Is
     rounds: draft.rounds,
     source,
   };
-  const originNote = draft.originNote?.trim();
-  if (originNote) issue.originNote = originNote;
   return issue;
 }

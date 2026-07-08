@@ -47,5 +47,9 @@ export function useShelf() {
     get(id: string): Issue | undefined {
       return issues.value.find((i) => i.id === id);
     },
+    update(id: string, patch: Partial<Issue>): boolean {
+      issues.value = issues.value.map((i) => (i.id === id ? { ...i, ...patch } : i));
+      return persist();
+    },
   };
 }

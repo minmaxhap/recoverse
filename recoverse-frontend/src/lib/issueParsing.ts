@@ -88,7 +88,6 @@ function parseIssue(value: unknown): Issue | null {
   };
   const pages = parseStringArray(value.pages);
   if (pages) issue.pages = pages;
-  if (typeof value.originNote === 'string') issue.originNote = value.originNote;
   if (
     value.source === 'live' ||
     value.source === 'solo' ||

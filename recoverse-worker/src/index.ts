@@ -1,6 +1,7 @@
 import { ApiError, errorResponse, jsonResponse } from './errors';
 import type { Env } from './kv';
 import { handleSessionRoute } from './routes/session';
+import { handleShareRoute } from './routes/share';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -13,6 +14,9 @@ export default {
       }
       if (path === '/api/session' || path.startsWith('/api/session/')) {
         return await handleSessionRoute(request, env, path);
+      }
+      if (path === '/api/share' || path.startsWith('/api/share/')) {
+        return await handleShareRoute(request, env, path);
       }
       if (path.startsWith('/api/')) {
         return errorResponse(404, 'not_found', '요청한 경로를 찾지 못했어요.');

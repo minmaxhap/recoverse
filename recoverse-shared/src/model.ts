@@ -36,7 +36,6 @@ export interface Issue {
   participants: string[];
   rounds: Round[];         // 스캔 호는 전사 전까지 빈 배열일 수 있음
   pages?: string[];        // Phase 2: 스캔 원본 이미지 URL (전사 후에도 원본 유지)
-  originNote?: string;
   source?: 'live' | 'solo' | 'paper' | 'scan' | 'import'; // 어떻게 만들어진 호인지
   shareId?: string;        // Phase 2: 읽기 전용 공유
 }
