@@ -133,6 +133,15 @@ select {
   border: none;
   border-radius: 0;
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+.cta:hover:not(:disabled) {
+  background: #c13d1b;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.cta:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
 }
 .cta:disabled {
   opacity: 0.35;
@@ -148,6 +157,14 @@ select {
   border-radius: 0;
   color: var(--ink);
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+.ghost:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+}
+.ghost:active:not(:disabled) {
+  transform: translate(1px, 1px);
 }
 .ghost:disabled {
   opacity: 0.35;
@@ -162,6 +179,10 @@ select {
   color: var(--dim);
   text-decoration: underline;
   cursor: pointer;
+  transition: color 0.15s ease;
+}
+.endLink:hover {
+  color: var(--vermilion);
 }
 
 /* ── 타이포 ── */
@@ -241,6 +262,32 @@ select {
   to {
     opacity: 1;
     transform: rotate(0) scale(1);
+  }
+}
+
+/* ── 화면 전환: 페이지를 넘기는 느낌 (App.vue <Transition name="page">) ── */
+.page-enter-active {
+  animation: pageIn 0.3s ease both;
+}
+.page-leave-active {
+  animation: pageOut 0.16s ease both;
+}
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pageOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 

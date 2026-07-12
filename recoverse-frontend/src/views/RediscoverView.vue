@@ -71,6 +71,12 @@ const momentTeaser = computed(() => {
   margin-bottom: 22px;
   cursor: pointer;
   color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.momentCard:hover {
+  border-color: var(--vermilion);
+  box-shadow: 3px 3px 0 var(--vermilion);
+  transform: translate(-1px, -1px);
 }
 .momentQ {
   font-family: var(--font-display);
@@ -105,12 +111,20 @@ const momentTeaser = computed(() => {
   padding: 16px 2px;
   cursor: pointer;
   color: inherit;
+  transition: background 0.15s ease;
+}
+.redisRow:hover {
+  background: var(--paper-card);
+}
+.redisRow:hover .redisQ {
+  color: var(--vermilion);
 }
 .redisQ {
   font-family: var(--font-display);
   font-size: 18px;
   line-height: 1.55;
   font-weight: 700;
+  transition: color 0.15s ease;
 }
 .yearChips {
   display: flex;

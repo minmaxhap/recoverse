@@ -37,6 +37,11 @@ defineEmits<{ 'update:modelValue': [Kind] }>();
   border: 1px solid var(--ink);
   border-radius: 0;
   cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.chip:hover {
+  background: var(--ink);
+  color: var(--paper);
 }
 .chip.active {
   background: var(--ink);

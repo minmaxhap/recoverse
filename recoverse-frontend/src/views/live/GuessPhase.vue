@@ -158,6 +158,14 @@ async function onReveal() {
   letter-spacing: 0.04em;
   cursor: pointer;
   color: var(--ink);
+  transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
+}
+.nameChip:not(:disabled):hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.nameChip:not(:disabled):active {
+  transform: scale(0.95);
 }
 .nameChip.picked {
   background: var(--ink);

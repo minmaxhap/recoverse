@@ -17,32 +17,24 @@
         <em>질문</em>이 된다.
       </p>
 
-      <div class="entry">
-        <button class="entryBtn primary" @click="$emit('navigate', 'create')">
-          <span class="eyebrow">NEW ISSUE</span>
-          <span class="entryTitle">새 호 발행하기</span>
-          <span class="entrySub">코드를 만들어 친구들을 초대해요</span>
-        </button>
-        <button class="entryBtn" @click="$emit('navigate', 'join')">
-          <span class="eyebrow red">JOIN</span>
-          <span class="entryTitle">코드로 참여하기</span>
-          <span class="entrySub">각자 자기 폰으로 합류해요</span>
-        </button>
-        <button class="entryBtn" @click="$emit('navigate', 'solo')">
-          <span class="eyebrow red">SOLO</span>
-          <span class="entryTitle">혼자 쓰기</span>
-          <span class="entrySub">여행이든 한 달이든, 지금 나에게 질문을 던져요</span>
-        </button>
-        <button class="entryBtn" @click="$emit('navigate', 'paper')">
-          <span class="eyebrow red">BACK ISSUE</span>
-          <span class="entryTitle">종이 회고 옮기기</span>
-          <span class="entrySub">예전 기록을 지난 호로 복간해요</span>
-        </button>
-        <button class="entryBtn" @click="$emit('navigate', 'rediscover')">
-          <span class="eyebrow red">REDISCOVER</span>
-          <span class="entryTitle">다시 발견</span>
-          <span class="entrySub">같은 질문에 답한, 다른 해의 나를 만나요</span>
-        </button>
+      <div class="entryWrap">
+        <span class="eyebrow contentsLabel">CONTENTS</span>
+        <div class="entry">
+          <button
+            v-for="(item, i) in ENTRIES"
+            :key="item.target"
+            class="entryBtn"
+            :class="{ primary: item.primary }"
+            @click="$emit('navigate', item.target)"
+          >
+            <span class="entryMain">
+              <span class="eyebrow" :class="{ red: !item.primary }">{{ item.eyebrow }}</span>
+              <span class="entryTitle">{{ item.title }}</span>
+              <span class="entrySub">{{ item.sub }}</span>
+            </span>
+            <span class="pageNo">{{ String(i + 1).padStart(2, '0') }}</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -104,6 +96,15 @@ import { parseReflectionBackup, BackupImportError } from '../lib/backupImport';
 defineProps<{ issues: Issue[] }>();
 defineEmits<{ navigate: [string]; open: [string] }>();
 
+/** 표지 목차 — 잡지 Contents처럼 번호를 매긴 입구 5개 */
+const ENTRIES = [
+  { target: 'create', eyebrow: 'NEW ISSUE', title: '새 호 발행하기', sub: '코드를 만들어 친구들을 초대해요', primary: true },
+  { target: 'join', eyebrow: 'JOIN', title: '코드로 참여하기', sub: '각자 자기 폰으로 합류해요', primary: false },
+  { target: 'solo', eyebrow: 'SOLO', title: '혼자 쓰기', sub: '여행이든 한 달이든, 지금 나에게 질문을 던져요', primary: false },
+  { target: 'paper', eyebrow: 'BACK ISSUE', title: '종이 회고 옮기기', sub: '예전 기록을 지난 호로 복간해요', primary: false },
+  { target: 'rediscover', eyebrow: 'REDISCOVER', title: '다시 발견', sub: '같은 질문에 답한, 다른 해의 나를 만나요', primary: false },
+] as const;
+
 const shelf = useShelf();
 const importMsg = ref('');
 const importErr = ref('');
@@ -151,18 +152,34 @@ async function onImport(event: Event) {
 .coverline em {
   font-style: normal;
   color: var(--vermilion);
-  border-bottom: 3px solid var(--vermilion);
+  /* 로드 시 밑줄이 그어지는 연출 */
+  background: linear-gradient(var(--vermilion), var(--vermilion)) left bottom / 0% 3px no-repeat;
+  animation: drawUnderline 0.7s ease 0.5s both;
+  padding-bottom: 2px;
+}
+@keyframes drawUnderline {
+  to {
+    background-size: 100% 3px;
+  }
 }
 
+.entryWrap {
+  margin-bottom: 44px;
+}
+.contentsLabel {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--dim);
+}
 .entry {
   display: grid;
   gap: 0;
   border-top: 1px solid var(--ink);
-  margin-bottom: 44px;
 }
 .entryBtn {
-  display: grid;
-  gap: 3px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   text-align: left;
   padding: 18px 2px;
   background: none;
@@ -170,13 +187,42 @@ async function onImport(event: Event) {
   border-bottom: 1px solid var(--ink);
   cursor: pointer;
   color: inherit;
+  transition: background 0.15s ease;
+}
+.entryBtn:not(.primary):hover {
+  background: var(--paper-card);
+}
+.entryMain {
+  flex: 1;
+  display: grid;
+  gap: 3px;
+}
+.pageNo {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--hairline);
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+.entryBtn:hover .pageNo {
+  color: var(--vermilion);
+  transform: translateX(-3px);
 }
 .entryBtn.primary {
   background: var(--ink);
   color: var(--paper);
   padding: 20px 16px;
 }
+.entryBtn.primary:hover {
+  background: #2a251f;
+}
 .entryBtn.primary .eyebrow {
+  color: var(--gold);
+}
+.entryBtn.primary .pageNo {
+  color: var(--dim);
+}
+.entryBtn.primary:hover .pageNo {
   color: var(--gold);
 }
 .entryTitle {
@@ -223,6 +269,14 @@ async function onImport(event: Event) {
   padding: 14px 2px;
   cursor: pointer;
   color: inherit;
+  transition: background 0.15s ease;
+}
+.issueRow:hover {
+  background: var(--paper-card);
+}
+.issueRow:hover .arrow {
+  color: var(--vermilion);
+  transform: translateX(4px);
 }
 .issueYear {
   font-family: var(--font-display);
@@ -243,6 +297,7 @@ async function onImport(event: Event) {
 }
 .arrow {
   color: var(--dim);
+  transition: color 0.15s ease, transform 0.15s ease;
 }
 .importRow {
   margin-top: 14px;
@@ -255,6 +310,10 @@ async function onImport(event: Event) {
   color: var(--dim);
   text-decoration: underline;
   cursor: pointer;
+  transition: color 0.15s ease;
+}
+.importLink:hover {
+  color: var(--vermilion);
 }
 
 /* 책등은 데스크톱에서만 */
@@ -279,9 +338,8 @@ async function onImport(event: Event) {
     border-right: 1px solid var(--hairline);
     font-size: 34px;
   }
-  .coverSplit .entry {
+  .coverSplit .entryWrap {
     padding-left: 40px;
-    border-top: 1px solid var(--ink);
   }
   .issueList {
     display: none;

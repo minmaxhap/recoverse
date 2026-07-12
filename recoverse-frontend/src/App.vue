@@ -1,64 +1,76 @@
 <template>
-  <CoverView
-    v-if="mode === 'cover'"
-    :issues="shelf.issues.value"
-    @navigate="onCoverNavigate"
-    @open="openIssue"
-  />
+  <!-- 페이지를 넘기는 느낌의 화면 전환 (스펙 §7). mode를 key로 써서 전환마다 재생.
+       :duration 명시 = animationend 이벤트 대신 타이머로 종료 —
+       prefers-reduced-motion(전역 animation:none)이나 백그라운드 탭에서도 전환이 멈추지 않는다 -->
+  <Transition name="page" mode="out-in" :duration="{ enter: 300, leave: 160 }">
+    <CoverView
+      v-if="mode === 'cover'"
+      :key="mode"
+      :issues="shelf.issues.value"
+      @navigate="onCoverNavigate"
+      @open="openIssue"
+    />
 
-  <LiveEntryView
-    v-else-if="mode === 'create' || mode === 'join'"
-    :intent="mode"
-    @back="toCover"
-    @entered="enterSession"
-  />
+    <LiveEntryView
+      v-else-if="mode === 'create' || mode === 'join'"
+      :key="mode"
+      :intent="mode"
+      @back="toCover"
+      @entered="enterSession"
+    />
 
-  <LiveSessionView
-    v-else-if="mode === 'live'"
-    :code="identity.identity.code"
-    :me="identity.identity.name"
-    :is-host="identity.identity.isHost"
-    :player-token="identity.identity.playerToken"
-    @exit="leaveSession"
-  />
+    <LiveSessionView
+      v-else-if="mode === 'live'"
+      :key="mode"
+      :code="identity.identity.code"
+      :me="identity.identity.name"
+      :is-host="identity.identity.isHost"
+      :player-token="identity.identity.playerToken"
+      @exit="leaveSession"
+    />
 
-  <SoloWriteView v-else-if="mode === 'solo'" @back="toCover" @published="toCover" />
+    <SoloWriteView v-else-if="mode === 'solo'" :key="mode" @back="toCover" @published="toCover" />
 
-  <PaperImportView v-else-if="mode === 'paper'" @back="toCover" @published="toCover" />
+    <PaperImportView v-else-if="mode === 'paper'" :key="mode" @back="toCover" @published="toCover" />
 
-  <IssueDetailView
-    v-else-if="mode === 'issue-detail' && activeIssue"
-    :issue="activeIssue"
-    @back="toCover"
-    @removed="toCover"
-  />
+    <IssueDetailView
+      v-else-if="mode === 'issue-detail' && activeIssue"
+      :key="`detail-${activeIssue.id}`"
+      :issue="activeIssue"
+      @back="toCover"
+      @removed="toCover"
+    />
 
-  <RediscoverView
-    v-else-if="mode === 'rediscover'"
-    :groups="groups"
-    :has-samples="hasSamples"
-    :moment="moment"
-    @back="toCover"
-    @open="openGroup"
-    @add-samples="addSamples"
-    @remove-samples="removeSamples"
-  />
+    <RediscoverView
+      v-else-if="mode === 'rediscover'"
+      :key="mode"
+      :groups="groups"
+      :has-samples="hasSamples"
+      :moment="moment"
+      @back="toCover"
+      @open="openGroup"
+      @add-samples="addSamples"
+      @remove-samples="removeSamples"
+    />
 
-  <RediscoverDetailView
-    v-else-if="mode === 'rediscover-detail' && activeGroup"
-    :group="activeGroup"
-    @back="() => setMode('rediscover')"
-  />
+    <RediscoverDetailView
+      v-else-if="mode === 'rediscover-detail' && activeGroup"
+      :key="`redis-${activeGroup.key}`"
+      :group="activeGroup"
+      @back="() => setMode('rediscover')"
+    />
 
-  <SharedIssueView
-    v-else-if="mode === 'shared' && sharedId"
-    :share-id="sharedId"
-    @start="leaveShared"
-  />
+    <SharedIssueView
+      v-else-if="mode === 'shared' && sharedId"
+      :key="`shared-${sharedId}`"
+      :share-id="sharedId"
+      @start="leaveShared"
+    />
 
-  <AppShell v-else>
-    <p class="waiting">불러오는 중…</p>
-  </AppShell>
+    <AppShell v-else key="loading">
+      <p class="waiting">불러오는 중…</p>
+    </AppShell>
+  </Transition>
 </template>
 
 <script setup lang="ts">
