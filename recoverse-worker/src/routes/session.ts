@@ -5,6 +5,7 @@ import {
   isValidCode,
   isValidName,
   isValidQuestion,
+  kstTodayISO,
   type Answer,
   type Kind,
   type Round,
@@ -13,6 +14,7 @@ import {
   type SessionStateResponse,
 } from '@recoverse/shared';
 import { ApiError, jsonResponse } from '../errors';
+import { enforceRateLimit } from '../rateLimit';
 import { keys, kvGetJson, kvListKeys, kvPutJson, kvPutString, listPlayers, type Env } from '../kv';
 
 const MAX_BODY_BYTES = 16 * 1024;
@@ -220,7 +222,7 @@ async function createSession(env: Env, body: Record<string, unknown>): Promise<R
   const meta: SessionMeta = {
     code,
     kind,
-    date: new Date().toISOString().slice(0, 10),
+    date: kstTodayISO(),
     host,
     phase: 'lobby',
     roundIdx: -1,
@@ -453,6 +455,8 @@ export async function handleSessionRoute(request: Request, env: Env, path: strin
     if (request.method !== 'POST') {
       throw new ApiError(405, 'method_not_allowed', '허용되지 않은 메서드예요.');
     }
+    // 공개 URL — 세션 무한 생성 스팸 방어 (IP당 분당 20개)
+    await enforceRateLimit(env, request, 'create', 20);
     return createSession(env, await readBody(request));
   }
 

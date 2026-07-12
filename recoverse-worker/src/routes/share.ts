@@ -1,6 +1,7 @@
 import { isValidShareId, type Issue } from '@recoverse/shared';
 import { ApiError, jsonResponse } from '../errors';
 import { keys, kvGetJson, kvPutJson, SHARE_TTL_SECONDS, type Env } from '../kv';
+import { enforceRateLimit } from '../rateLimit';
 
 // 공유 스냅샷은 라운드/답변이 많을 수 있어 세션 본문보다 넉넉하게
 const MAX_SHARE_BYTES = 256 * 1024;
@@ -30,6 +31,8 @@ function validateIssue(v: unknown): Issue {
 }
 
 async function createShare(request: Request, env: Env): Promise<Response> {
+  // 공유 스냅샷 무한 생성 스팸 방어 (IP당 분당 20개)
+  await enforceRateLimit(env, request, 'share', 20);
   const raw = await request.text();
   if (raw.length > MAX_SHARE_BYTES) {
     throw new ApiError(400, 'share_too_large', '공유할 내용이 너무 커요.');

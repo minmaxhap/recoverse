@@ -23,6 +23,7 @@ import { computed, ref } from 'vue';
 import type { Kind, Round } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
+import { kstTodayISO } from '@recoverse/shared';
 import KindChips from '../components/KindChips.vue';
 import RoundEditor from '../components/RoundEditor.vue';
 import { issueFromDraft } from '../lib/issueBuilder';
@@ -41,7 +42,7 @@ const canPublish = computed(() => participants.value.length > 0 && rounds.value.
 
 function publish() {
   if (!canPublish.value) return;
-  const date = new Date().toISOString().slice(0, 10);
+  const date = kstTodayISO();
   const issue = issueFromDraft(
     { kind: kind.value, date, title: title.value, participants: participants.value, rounds: rounds.value },
     'solo',
