@@ -1,7 +1,7 @@
 <template>
   <div class="center completing">
     <span class="eyebrow gold pressEyebrow">이번 호 발행</span>
-    <div class="stampEnd">閉</div>
+    <SealStamp char="閉" :size="104" :delay="0.25" />
     <div class="pressLine" />
     <h1 class="pageTitle centered d1">{{ state.meta.date.slice(0, 4) }} {{ kindLabel }},<br />발행 완료</h1>
     <p class="waiting d2">질문 {{ state.meta.history.length }}개 · {{ state.players.join(' · ') }}</p>
@@ -22,6 +22,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { KIND_LABELS, type SessionStateResponse } from '@recoverse/shared';
+import SealStamp from '../../components/SealStamp.vue';
 import { totalScores, mindReaders } from '../../lib/guessing';
 import { issueFromSession } from '../../lib/issueBuilder';
 import { useShelf } from '../../composables/useShelf';
@@ -55,19 +56,6 @@ function onSave() {
 .pressEyebrow {
   opacity: 0;
   animation: fadeUp 0.5s ease 0.05s both;
-}
-.stampEnd {
-  font-family: var(--font-display);
-  font-size: 44px;
-  color: var(--vermilion);
-  border: 2px solid var(--vermilion);
-  border-radius: 50%;
-  width: 84px;
-  height: 84px;
-  display: grid;
-  place-items: center;
-  /* 도장이 눌리는 연출 */
-  animation: stampIn 0.55s cubic-bezier(0.34, 1.3, 0.5, 1) 0.25s both;
 }
 .pressLine {
   width: 120px;

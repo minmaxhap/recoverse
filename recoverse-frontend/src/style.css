@@ -8,7 +8,10 @@
   --paper: #FAF7F0;
   --paper-card: #FFFEFA;
   --ink: #191511;
+  --ink-hover: #2a251f; /* 잉크 블록(primary)의 hover */
+  --on-ink-dim: #b9b2a6; /* 잉크 블록 위의 보조 텍스트 */
   --vermilion: #D8451F;
+  --vermilion-hover: #c13d1b;
   --vermilion-ink: #FFF6F0;
   --gold: #E7B355;
   --hairline: #DED8CB;
@@ -31,6 +34,25 @@
   --col-write: 560px;
   --col-desktop: 1120px;
   --year-margin: 120px;
+}
+
+/* ── 밤의 편집실 (다크모드) — 시스템 설정을 따름.
+     같은 잡지 문법(직각·1px 보더·세리프)에 종이만 어두운 크라프트지로 바뀐다 ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #17120e;
+    --paper-card: #201a14;
+    --ink: #e9e1d3;
+    --ink-hover: #f6efe1;
+    --on-ink-dim: #6b6355;
+    --vermilion: #e05a33;
+    --vermilion-hover: #ea6b45;
+    --vermilion-ink: #fff3ec;
+    --gold: #d9a94f;
+    --hairline: #383026;
+    --dim: #99907f;
+    --dim-strong: #b3a996;
+  }
 }
 
 * {
@@ -136,7 +158,7 @@ select {
   transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
 }
 .cta:hover:not(:disabled) {
-  background: #c13d1b;
+  background: var(--vermilion-hover);
   box-shadow: 3px 3px 0 var(--ink);
 }
 .cta:active:not(:disabled) {
@@ -254,12 +276,20 @@ select {
     opacity: 0.6;
   }
 }
+/* 도장 쾅 — 내려찍히며 오버슈트로 튕기는 바이라인 도장 */
 @keyframes stampIn {
-  from {
+  0% {
     opacity: 0;
-    transform: rotate(-8deg) scale(1.4);
+    transform: rotate(-12deg) scale(1.8);
   }
-  to {
+  55% {
+    opacity: 1;
+    transform: rotate(3deg) scale(0.92);
+  }
+  78% {
+    transform: rotate(-2deg) scale(1.06);
+  }
+  100% {
     opacity: 1;
     transform: rotate(0) scale(1);
   }

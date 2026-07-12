@@ -137,7 +137,7 @@ async function onEnd() {
   font-weight: 800;
   letter-spacing: 0.06em;
   color: var(--dim);
-  animation: stampIn 0.4s ease both;
+  animation: stampIn 0.5s ease both;
 }
 .byName {
   color: var(--ink);
