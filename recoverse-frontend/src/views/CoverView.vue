@@ -81,16 +81,48 @@
           <span class="arrow">→</span>
         </button>
       </div>
+
+      <div class="importRow">
+        <label class="importLink">
+          이전 Recoverse 백업 가져오기
+          <input type="file" accept=".json,application/json" hidden @change="onImport" />
+        </label>
+        <p v-if="importMsg" class="fineprint">{{ importMsg }}</p>
+        <p v-if="importErr" class="error">{{ importErr }}</p>
+      </div>
     </section>
   </AppShell>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import type { Issue } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
+import { useShelf } from '../composables/useShelf';
+import { parseReflectionBackup, BackupImportError } from '../lib/backupImport';
 
 defineProps<{ issues: Issue[] }>();
 defineEmits<{ navigate: [string]; open: [string] }>();
+
+const shelf = useShelf();
+const importMsg = ref('');
+const importErr = ref('');
+
+async function onImport(event: Event) {
+  importMsg.value = '';
+  importErr.value = '';
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+  try {
+    const imported = parseReflectionBackup(await file.text());
+    for (const issue of imported) shelf.add(issue);
+    importMsg.value = `${imported.length}권을 책장에 가져왔어요.`;
+  } catch (err) {
+    importErr.value = err instanceof BackupImportError ? err.message : '가져오기에 실패했어요.';
+  }
+}
 </script>
 
 <style scoped>
@@ -211,6 +243,18 @@ defineEmits<{ navigate: [string]; open: [string] }>();
 }
 .arrow {
   color: var(--dim);
+}
+.importRow {
+  margin-top: 14px;
+  display: grid;
+  gap: 6px;
+}
+.importLink {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dim);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* 책등은 데스크톱에서만 */
