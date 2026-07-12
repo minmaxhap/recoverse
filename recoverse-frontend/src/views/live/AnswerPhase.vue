@@ -3,7 +3,7 @@
     <Headline :no="roundNo" :question="state.meta.question ?? ''" :asker="state.meta.asker ?? ''" />
 
     <template v-if="iAnswered">
-      <div class="center small">
+      <div class="center small" role="status">
         <p class="waiting">제출 완료 — {{ state.answered.length }}/{{ state.players.length }}명 답했어요</p>
         <div class="dotRow">
           <ParticipantDot
@@ -18,7 +18,18 @@
     </template>
 
     <template v-else>
-      <textarea v-model="draft" class="field area" :placeholder="answerPlaceholder" />
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="answerDraft">내 답</label>
+        <textarea
+          id="answerDraft"
+          v-model="draft"
+          class="field area"
+          :placeholder="answerPlaceholder"
+          :aria-invalid="Boolean(error)"
+          aria-describedby="answerHelp answerError"
+        />
+        <span id="answerHelp" class="helper">짧은 메모여도 괜찮아요. 나중에 그대로 한 면이 됩니다.</span>
+      </div>
       <div class="reflectionPrompts">
         <p class="fineprint">막히면 하나만 눌러서 이어 써보세요.</p>
         <div class="promptChips">
@@ -34,7 +45,11 @@
         </div>
       </div>
       <div class="gap" />
-      <button class="cta" :disabled="!draft.trim() || busy" @click="onSubmit">내 답 싣기</button>
+      <p v-if="error" id="answerError" class="error" role="alert">{{ error }}</p>
+      <p v-else-if="busy" class="inlineNotice" role="status">답을 싣고 있어요.</p>
+      <button type="button" class="cta" :disabled="!draft.trim() || busy" :aria-busy="busy" @click="onSubmit">
+        {{ busy ? '싣는 중…' : '내 답 싣기' }}
+      </button>
     </template>
   </div>
 </template>
@@ -60,6 +75,7 @@ const expansionPrompts = [
 const draft = ref('');
 const busy = ref(false);
 const sent = ref(false);
+const error = ref('');
 
 const roundNo = computed(() => props.state.meta.roundIdx + 1);
 const iAnswered = computed(() => sent.value || props.state.answered.includes(props.me));
@@ -76,12 +92,17 @@ function appendPrompt(prompt: string) {
 async function onSubmit() {
   if (!draft.value.trim() || busy.value) return;
   busy.value = true;
+  error.value = '';
   try {
     const next = await api.answer(props.state.meta.code, props.me, props.playerToken, draft.value.trim());
     sent.value = true;
     emit('applied', next);
-  } catch {
-    /* 폴링 복구 */
+  } catch (e) {
+    if (e instanceof Error) {
+      error.value = '답을 저장하지 못했어요. 연결을 확인하고 다시 시도해주세요.';
+    } else {
+      error.value = '답을 저장하지 못했어요. 잠시 후 다시 시도해주세요.';
+    }
   } finally {
     busy.value = false;
   }
@@ -120,5 +141,9 @@ async function onSubmit() {
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
+}
+.promptChip:focus-visible {
+  outline: 2px solid var(--vermilion);
+  outline-offset: 2px;
 }
 </style>

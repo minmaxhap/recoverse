@@ -27,19 +27,30 @@
           {{ format.label }}
         </button>
       </div>
-      <textarea
-        v-model="draft"
-        class="field area"
-        :readonly="!!formatId"
-        placeholder="예) 올해의 나를 건물 하나로 표현한다면?"
-      />
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="questionDraft">이번 라운드 질문</label>
+        <textarea
+          id="questionDraft"
+          v-model="draft"
+          class="field area"
+          :readonly="!!formatId"
+          placeholder="예) 올해의 나를 건물 하나로 표현한다면?"
+          :aria-invalid="Boolean(error)"
+          aria-describedby="questionHelp questionError"
+        />
+        <span id="questionHelp" class="helper">모두가 한 번에 답할 수 있는 하나의 질문으로 적어주세요.</span>
+      </div>
       <QuestionSuggest v-if="!formatId" :kind="state.meta.kind" :exclude="pastQuestions" @pick="onPick" />
       <PastQuestions :history="state.meta.history" />
       <div class="gap" />
-      <button class="cta" :disabled="!draft.trim() || busy" @click="onSubmit">헤드라인 확정</button>
+      <p v-if="error" id="questionError" class="error" role="alert">{{ error }}</p>
+      <p v-else-if="busy" class="inlineNotice" role="status">질문을 싣고 있어요.</p>
+      <button type="button" class="cta" :disabled="!draft.trim() || busy" :aria-busy="busy" @click="onSubmit">
+        {{ busy ? '확정 중…' : '헤드라인 확정' }}
+      </button>
     </template>
 
-    <div v-else class="center">
+    <div v-else class="center" role="status">
       <ParticipantDot :color="colorFor(state.meta.asker ?? '', state.players)" :size="56" pulse />
       <h1 class="pageTitle centered">{{ state.meta.asker }}이(가)<br />질문을 쓰는 중</h1>
       <PastQuestions :history="state.meta.history" centered />
@@ -63,6 +74,7 @@ const emit = defineEmits<{ applied: [SessionStateResponse] }>();
 const draft = ref('');
 const formatId = ref('');
 const busy = ref(false);
+const error = ref('');
 const roundNo = computed(() => props.state.meta.roundIdx + 1);
 const myTurn = computed(() => props.state.meta.asker === props.me);
 const pastQuestions = computed(() => props.state.meta.history.map((r) => r.question));
@@ -81,6 +93,7 @@ function selectFormat(id: string) {
 async function onSubmit() {
   if (!draft.value.trim() || busy.value) return;
   busy.value = true;
+  error.value = '';
   try {
     const next = await api.question(
       props.state.meta.code,
@@ -92,8 +105,12 @@ async function onSubmit() {
     draft.value = '';
     formatId.value = '';
     emit('applied', next);
-  } catch {
-    /* 폴링 복구 */
+  } catch (e) {
+    if (e instanceof Error) {
+      error.value = '질문을 저장하지 못했어요. 연결을 확인하고 다시 시도해주세요.';
+    } else {
+      error.value = '질문을 저장하지 못했어요. 잠시 후 다시 시도해주세요.';
+    }
   } finally {
     busy.value = false;
   }
@@ -126,5 +143,9 @@ async function onSubmit() {
 .fchip.active {
   background: var(--ink);
   color: var(--paper);
+}
+.fchip:focus-visible {
+  outline: 2px solid var(--vermilion);
+  outline-offset: 2px;
 }
 </style>

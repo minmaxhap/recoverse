@@ -8,6 +8,11 @@
       <div class="rule" />
       <div class="gap" />
 
+      <div v-if="syncMessage" class="statusBanner" :class="{ danger: Boolean(error) }" role="status">
+        <span>{{ syncMessage }}</span>
+        <button v-if="error" type="button" class="statusRetry" @click="refreshNow">다시 확인</button>
+      </div>
+
       <LobbyPhase
         v-if="state.meta.phase === 'lobby'"
         :state="state"
@@ -55,11 +60,15 @@
 
       <template v-if="isHost && state.meta.phase !== 'ended'">
         <div class="gap big" />
+        <p v-if="endError" class="error" role="alert">{{ endError }}</p>
         <button class="endLink" :disabled="ending" @click="onEnd">세션 종료하기</button>
       </template>
     </template>
 
-    <p v-else class="waiting">{{ error || '불러오는 중…' }}</p>
+    <div v-else class="centerStatus" role="status">
+      <p class="waiting">{{ error || '불러오는 중…' }}</p>
+      <button v-if="error" type="button" class="ghost retryBtn" @click="refreshNow">다시 확인</button>
+    </div>
   </AppShell>
 </template>
 
@@ -79,11 +88,18 @@ import { api } from '../../lib/api';
 const props = defineProps<{ code: string; me: string; isHost: boolean; playerToken: string }>();
 defineEmits<{ exit: [] }>();
 
-const { state, error, apply } = useSession(props.code);
+const { state, error, loading, apply, refreshNow } = useSession(props.code);
 const me = computed(() => props.me);
 const isHost = computed(() => props.isHost);
 const playerToken = computed(() => props.playerToken);
 const ending = ref(false);
+const endError = ref('');
+
+const syncMessage = computed(() => {
+  if (error.value) return error.value;
+  if (loading.value && state.value) return '최신 세션 상태를 확인하고 있어요.';
+  return '';
+});
 
 const roundLabel = computed(() => {
   const s = state.value;
@@ -110,10 +126,15 @@ async function onEnd() {
   if (!s || ending.value) return;
   if (!window.confirm('세션을 종료할까요? 진행 중이던 라운드는 공개된 경우에만 저장돼요.')) return;
   ending.value = true;
+  endError.value = '';
   try {
     apply(await api.end(s.meta.code, props.me, props.playerToken));
-  } catch {
-    /* 폴링 복구 */
+  } catch (e) {
+    if (e instanceof Error) {
+      endError.value = '세션을 종료하지 못했어요. 연결을 확인하고 다시 시도해주세요.';
+    } else {
+      endError.value = '세션을 종료하지 못했어요. 잠시 후 다시 시도해주세요.';
+    }
   } finally {
     ending.value = false;
   }
@@ -125,5 +146,13 @@ async function onEnd() {
   display: flex;
   justify-content: space-between;
   padding-bottom: 8px;
+}
+.centerStatus {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+.retryBtn {
+  max-width: 180px;
 }
 </style>

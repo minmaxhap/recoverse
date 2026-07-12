@@ -89,12 +89,27 @@
       </div>
 
       <div class="importRow">
-        <label class="importLink">
+        <button
+          type="button"
+          class="importLink"
+          aria-describedby="importStatus"
+          @click="openImport"
+        >
           이전 Recoverse 백업 가져오기
-          <input type="file" accept=".json,application/json" hidden @change="onImport" />
-        </label>
-        <p v-if="importMsg" class="fineprint">{{ importMsg }}</p>
-        <p v-if="importErr" class="error">{{ importErr }}</p>
+        </button>
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".json,application/json"
+          class="srOnly"
+          tabindex="-1"
+          aria-hidden="true"
+          @change="onImport"
+        />
+        <div id="importStatus" aria-live="polite">
+          <p v-if="importMsg" class="fineprint">{{ importMsg }}</p>
+          <p v-if="importErr" class="error" role="alert">{{ importErr }}</p>
+        </div>
       </div>
     </section>
   </AppShell>
@@ -109,9 +124,6 @@ import { kindColor } from '../lib/palette';
 import { parseReflectionBackup, BackupImportError } from '../lib/backupImport';
 
 defineProps<{ issues: Issue[] }>();
-defineEmits<{ navigate: [string]; open: [string] }>();
-
-/** 표지 목차 — 잡지 Contents처럼 번호를 매긴 입구 5개 */
 const ENTRIES = [
   { target: 'create', eyebrow: 'NEW ISSUE', title: '새 호 발행하기', sub: '코드를 만들어 친구들을 초대해요', primary: true },
   { target: 'join', eyebrow: 'JOIN', title: '코드로 참여하기', sub: '각자 자기 폰으로 합류해요', primary: false },
@@ -119,15 +131,29 @@ const ENTRIES = [
   { target: 'paper', eyebrow: 'BACK ISSUE', title: '종이 회고 옮기기', sub: '예전 기록을 지난 호로 복간해요', primary: false },
   { target: 'rediscover', eyebrow: 'REDISCOVER', title: '다시 발견', sub: '같은 질문에 답한, 다른 해의 나를 만나요', primary: false },
 ] as const;
+type CoverTarget = (typeof ENTRIES)[number]['target'];
+defineEmits<{ navigate: [CoverTarget]; open: [string] }>();
 
 const shelf = useShelf();
 const importMsg = ref('');
 const importErr = ref('');
+const fileInput = ref<HTMLInputElement | null>(null);
+
+/** 표지 목차 — 잡지 Contents처럼 번호를 매긴 입구 5개 */
+
+function openImport() {
+  fileInput.value?.click();
+}
+
+function isFileInput(target: EventTarget | null): target is HTMLInputElement {
+  return target instanceof HTMLInputElement && target.type === 'file';
+}
 
 async function onImport(event: Event) {
   importMsg.value = '';
   importErr.value = '';
-  const input = event.target as HTMLInputElement;
+  if (!isFileInput(event.target)) return;
+  const input = event.target;
   const file = input.files?.[0];
   input.value = '';
   if (!file) return;
@@ -144,8 +170,8 @@ async function onImport(event: Event) {
 <style scoped>
 .masthead .brand {
   font-family: var(--font-display);
-  font-size: 40px;
-  letter-spacing: 0.04em;
+  font-size: clamp(30px, 9vw, 40px);
+  letter-spacing: 0.02em;
   margin: 10px 0 6px;
   font-weight: 700;
 }
@@ -209,6 +235,7 @@ async function onImport(event: Event) {
 }
 .entryMain {
   flex: 1;
+  min-width: 0;
   display: grid;
   gap: 3px;
 }
@@ -246,6 +273,7 @@ async function onImport(event: Event) {
 }
 .entrySub {
   font-size: 13px;
+  line-height: 1.55;
   color: var(--dim);
 }
 .entryBtn.primary .entrySub {
@@ -388,8 +416,13 @@ async function onImport(event: Event) {
   gap: 6px;
 }
 .importLink {
+  width: fit-content;
+  padding: 0;
+  background: none;
+  border: none;
   font-size: 13px;
   font-weight: 700;
+  font-family: inherit;
   color: var(--dim);
   text-decoration: underline;
   cursor: pointer;

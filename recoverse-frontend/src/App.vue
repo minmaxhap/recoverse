@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import CoverView from './views/CoverView.vue';
 import LiveEntryView from './views/live/LiveEntryView.vue';
 import LiveSessionView from './views/live/LiveSessionView.vue';
@@ -102,6 +102,30 @@ type Mode =
   | 'rediscover-detail'
   | 'shared';
 
+type CoverTarget = 'create' | 'join' | 'solo' | 'paper' | 'rediscover';
+
+type AppHistoryState = {
+  readonly recoverse: true;
+  readonly mode: Mode;
+  readonly activeIssueId: string | null;
+  readonly activeGroupKey: string | null;
+  readonly sharedId: string | null;
+};
+
+const MODES = [
+  'cover',
+  'create',
+  'join',
+  'live',
+  'solo',
+  'paper',
+  'issue-detail',
+  'rediscover',
+  'rediscover-detail',
+  'shared',
+] as const satisfies readonly Mode[];
+const MODE_SET: ReadonlySet<string> = new Set(MODES);
+
 const shelf = useShelf();
 const identity = useIdentity();
 
@@ -123,10 +147,10 @@ if (shareParam) {
 /** 공유 뷰에서 나갈 때 — URL의 share 파라미터를 지우고 표지로 */
 function leaveShared() {
   sharedId.value = null;
+  mode.value = 'cover';
   const url = new URL(window.location.href);
   url.searchParams.delete('share');
-  window.history.replaceState(null, '', url.pathname + url.search);
-  setMode('cover');
+  window.history.replaceState(currentHistoryState(), '', url.pathname + url.search);
 }
 
 const activeIssue = computed(() =>
@@ -139,15 +163,78 @@ const activeGroup = computed(() =>
 );
 const hasSamples = computed(() => shelf.issues.value.some(isSample));
 
-function setMode(next: Mode) {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isMode(value: unknown): value is Mode {
+  return typeof value === 'string' && MODE_SET.has(value);
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === 'string';
+}
+
+function isAppHistoryState(value: unknown): value is AppHistoryState {
+  return (
+    isRecord(value) &&
+    value.recoverse === true &&
+    isMode(value.mode) &&
+    isNullableString(value.activeIssueId) &&
+    isNullableString(value.activeGroupKey) &&
+    isNullableString(value.sharedId)
+  );
+}
+
+function currentHistoryState(): AppHistoryState {
+  return {
+    recoverse: true,
+    mode: mode.value,
+    activeIssueId: activeIssueId.value,
+    activeGroupKey: activeGroupKey.value,
+    sharedId: sharedId.value,
+  };
+}
+
+function commitHistory(replace: boolean) {
+  const next = currentHistoryState();
+  if (replace) {
+    window.history.replaceState(next, '');
+  } else {
+    window.history.pushState(next, '');
+  }
+}
+
+function restoreHistoryState(next: AppHistoryState) {
+  mode.value = next.mode;
+  activeIssueId.value = next.activeIssueId;
+  activeGroupKey.value = next.activeGroupKey;
+  sharedId.value = next.sharedId;
+}
+
+function onPopState(event: PopStateEvent) {
+  if (isAppHistoryState(event.state)) {
+    restoreHistoryState(event.state);
+    return;
+  }
+  mode.value = 'cover';
+  activeIssueId.value = null;
+  activeGroupKey.value = null;
+  sharedId.value = null;
+}
+
+function setMode(next: Mode, options: { readonly replace?: boolean } = {}) {
   mode.value = next;
+  commitHistory(options.replace === true);
 }
 function toCover() {
+  activeIssueId.value = null;
+  activeGroupKey.value = null;
   setMode('cover');
 }
 
-function onCoverNavigate(target: string) {
-  setMode(target as Mode);
+function onCoverNavigate(target: CoverTarget) {
+  setMode(target);
 }
 
 function openIssue(id: string) {
@@ -175,4 +262,12 @@ function addSamples() {
 function removeSamples() {
   for (const issue of shelf.issues.value.filter(isSample)) shelf.remove(issue.id);
 }
+
+onMounted(() => {
+  window.addEventListener('popstate', onPopState);
+  commitHistory(true);
+});
+onUnmounted(() => {
+  window.removeEventListener('popstate', onPopState);
+});
 </script>

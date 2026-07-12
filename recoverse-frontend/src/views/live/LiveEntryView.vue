@@ -5,18 +5,44 @@
 
     <div class="stack">
       <KindChips v-if="creating" v-model="kind" />
-      <input
-        v-if="!creating"
-        v-model="codeDraft"
-        class="field code"
-        placeholder="세션 코드 4자리"
-        maxlength="4"
-        autocapitalize="characters"
-        @input="codeDraft = codeDraft.toUpperCase()"
-      />
-      <input v-model="nameDraft" class="field" placeholder="내 이름" maxlength="12" />
-      <p v-if="error" class="error">{{ error }}</p>
-      <button class="cta" :disabled="busy || !canSubmit" @click="submit">
+
+      <div v-if="!creating" class="fieldGroup">
+        <label class="fieldLabel" for="sessionCode">세션 코드</label>
+        <input
+          id="sessionCode"
+          v-model="codeDraft"
+          class="field code"
+          placeholder="ABCD"
+          maxlength="4"
+          inputmode="text"
+          autocapitalize="characters"
+          autocomplete="one-time-code"
+          spellcheck="false"
+          :aria-invalid="Boolean(error)"
+          aria-describedby="sessionCodeHelp entryError"
+          @input="codeDraft = codeDraft.toUpperCase()"
+        />
+        <span id="sessionCodeHelp" class="helper">초대받은 4자리 코드를 입력해요.</span>
+      </div>
+
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="playerName">{{ creating ? '발행인 이름' : '내 이름' }}</label>
+        <input
+          id="playerName"
+          v-model="nameDraft"
+          class="field"
+          placeholder="이름"
+          maxlength="12"
+          autocomplete="name"
+          :aria-invalid="Boolean(error)"
+          aria-describedby="playerNameHelp entryError"
+        />
+        <span id="playerNameHelp" class="helper">이번 호에 표시될 이름이에요.</span>
+      </div>
+
+      <p v-if="error" id="entryError" class="error" role="alert">{{ error }}</p>
+      <p v-else-if="busy" class="inlineNotice" role="status">세션과 연결하고 있어요.</p>
+      <button type="button" class="cta" :disabled="busy || !canSubmit" :aria-busy="busy" @click="submit">
         {{ busy ? '연결 중…' : creating ? '발행 준비' : '합류하기' }}
       </button>
       <p v-if="creating" class="fineprint">

@@ -3,11 +3,19 @@
     <Headline :no="roundNo" :question="state.meta.question ?? ''" :asker="state.meta.asker ?? ''" />
 
     <template v-if="iGuessed">
-      <div class="center small">
+      <div class="center small" role="status">
         <p class="waiting">추측 완료 — {{ state.guessed.length }}/{{ state.players.length }}명</p>
         <p class="fineprint">모두 추측하면 작성자가 공개돼요</p>
-        <button v-if="isHost" class="ghost forceBtn" :disabled="busy" @click="onReveal">
-          그냥 공개하기
+        <p v-if="error" class="error" role="alert">{{ error }}</p>
+        <button
+          v-if="isHost"
+          type="button"
+          class="ghost forceBtn"
+          :disabled="busy"
+          :aria-busy="busy"
+          @click="onReveal"
+        >
+          {{ busy ? '공개 중…' : '그냥 공개하기' }}
         </button>
       </div>
     </template>
@@ -32,6 +40,7 @@
                 picked: assignment[entry.owner] === candidate,
                 used: usedBy(candidate) && assignment[entry.owner] !== candidate,
               }"
+              :aria-pressed="assignment[entry.owner] === candidate"
               :disabled="usedBy(candidate) && assignment[entry.owner] !== candidate"
               @click="pick(entry.owner, candidate)"
             >
@@ -41,8 +50,11 @@
         </figure>
       </div>
 
-      <button class="cta" :disabled="!allAssigned || busy" @click="onConfirm">추측 확정</button>
-      <p class="waiting">{{ state.guessed.length }}/{{ state.players.length }}명 추측 완료</p>
+      <p v-if="error" class="error" role="alert">{{ error }}</p>
+      <button type="button" class="cta" :disabled="!allAssigned || busy" :aria-busy="busy" @click="onConfirm">
+        {{ busy ? '확정 중…' : '추측 확정' }}
+      </button>
+      <p class="waiting" role="status">{{ state.guessed.length }}/{{ state.players.length }}명 추측 완료</p>
     </template>
   </div>
 </template>
@@ -58,6 +70,7 @@ const props = defineProps<{ state: SessionStateResponse; me: string; isHost: boo
 const emit = defineEmits<{ applied: [SessionStateResponse] }>();
 
 const busy = ref(false);
+const error = ref('');
 const assignment = ref<Record<string, string>>({}); // owner → guessedName
 
 const roundNo = computed(() => props.state.meta.roundIdx + 1);
@@ -97,11 +110,16 @@ const allAssigned = computed(() => {
 async function onConfirm() {
   if (!allAssigned.value || busy.value) return;
   busy.value = true;
+  error.value = '';
   try {
     const next = await api.guess(props.state.meta.code, props.me, props.playerToken, assignment.value);
     emit('applied', next);
-  } catch {
-    /* 폴링 복구 */
+  } catch (e) {
+    if (e instanceof Error) {
+      error.value = '추측을 저장하지 못했어요. 연결을 확인하고 다시 시도해주세요.';
+    } else {
+      error.value = '추측을 저장하지 못했어요. 잠시 후 다시 시도해주세요.';
+    }
   } finally {
     busy.value = false;
   }
@@ -110,11 +128,16 @@ async function onConfirm() {
 async function onReveal() {
   if (busy.value) return;
   busy.value = true;
+  error.value = '';
   try {
     const next = await api.reveal(props.state.meta.code, props.me, props.playerToken);
     emit('applied', next);
-  } catch {
-    /* 폴링 복구 */
+  } catch (e) {
+    if (e instanceof Error) {
+      error.value = '공개하지 못했어요. 연결을 확인하고 다시 시도해주세요.';
+    } else {
+      error.value = '공개하지 못했어요. 잠시 후 다시 시도해주세요.';
+    }
   } finally {
     busy.value = false;
   }
@@ -166,6 +189,10 @@ async function onReveal() {
 }
 .nameChip:not(:disabled):active {
   transform: scale(0.95);
+}
+.nameChip:focus-visible {
+  outline: 2px solid var(--vermilion);
+  outline-offset: 2px;
 }
 .nameChip.picked {
   background: var(--ink);

@@ -86,8 +86,12 @@ export function useSession(code: string) {
     /** 액션 직후 서버가 돌려준 상태를 즉시 반영 (다음 폴링을 기다리지 않게) */
     apply(next: SessionStateResponse) {
       state.value = next;
+      error.value = '';
+      loading.value = false;
     },
     refreshNow() {
+      error.value = '';
+      loading.value = state.value === null;
       schedule(0);
     },
   };
