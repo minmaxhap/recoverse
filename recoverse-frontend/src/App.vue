@@ -67,6 +67,8 @@
       @start="leaveShared"
     />
 
+    <VocAdminView v-else-if="mode === 'voc-admin'" :key="mode" @back="toCover" />
+
     <AppShell v-else key="loading">
       <p class="waiting">불러오는 중…</p>
     </AppShell>
@@ -84,6 +86,7 @@ import IssueDetailView from './views/IssueDetailView.vue';
 import RediscoverView from './views/RediscoverView.vue';
 import RediscoverDetailView from './views/RediscoverDetailView.vue';
 import SharedIssueView from './views/SharedIssueView.vue';
+import VocAdminView from './views/VocAdminView.vue';
 import AppShell from './components/AppShell.vue';
 import { useShelf } from './composables/useShelf';
 import { useIdentity } from './composables/useIdentity';
@@ -100,7 +103,8 @@ type Mode =
   | 'issue-detail'
   | 'rediscover'
   | 'rediscover-detail'
-  | 'shared';
+  | 'shared'
+  | 'voc-admin';
 
 type CoverTarget = 'create' | 'join' | 'solo' | 'paper' | 'rediscover';
 
@@ -123,6 +127,7 @@ const MODES = [
   'rediscover',
   'rediscover-detail',
   'shared',
+  'voc-admin',
 ] as const satisfies readonly Mode[];
 const MODE_SET: ReadonlySet<string> = new Set(MODES);
 
@@ -142,6 +147,11 @@ if (shareParam) {
 } else if (identity.identity.code && identity.identity.name) {
   // 새로고침해도 세션 신원이 남아 있으면 라이브로 복귀
   mode.value = 'live';
+}
+
+const adminParam = new URLSearchParams(window.location.search).get('admin');
+if (adminParam === 'voc') {
+  mode.value = 'voc-admin';
 }
 
 /** 공유 뷰에서 나갈 때 — URL의 share 파라미터를 지우고 표지로 */
@@ -231,6 +241,11 @@ function toCover() {
   activeIssueId.value = null;
   activeGroupKey.value = null;
   setMode('cover');
+  const url = new URL(window.location.href);
+  if (url.searchParams.has('admin')) {
+    url.searchParams.delete('admin');
+    window.history.replaceState(currentHistoryState(), '', url.pathname + url.search);
+  }
 }
 
 function onCoverNavigate(target: CoverTarget) {

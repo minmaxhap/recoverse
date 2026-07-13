@@ -1,4 +1,14 @@
-import type { ApiErrorBody, Issue, Kind, SessionEntryResponse, SessionStateResponse } from '@recoverse/shared';
+import type {
+  ApiErrorBody,
+  Issue,
+  Kind,
+  SessionEntryResponse,
+  SessionStateResponse,
+  VocCreateRequest,
+  VocEntry,
+  VocListResponse,
+  VocStatus,
+} from '@recoverse/shared';
 
 const BASE = (import.meta.env.VITE_API_BASE ?? '') as string;
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -97,4 +107,12 @@ export const api = {
   // 읽기 전용 공유
   createShare: (issue: Issue) => post<{ shareId: string }>('/api/share', { issue }),
   getShare: (shareId: string) => request<{ issue: Issue }>(`/api/share/${shareId}`),
+  submitVoc: (body: VocCreateRequest) => post<{ entry: VocEntry }>('/api/voc', body),
+  listVoc: (token: string) => request<VocListResponse>('/api/admin/voc', { headers: { authorization: `Bearer ${token}` } }),
+  updateVocStatus: (token: string, id: string, status: VocStatus) =>
+    request<{ ok: true }>(`/api/admin/voc/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+      headers: { authorization: `Bearer ${token}` },
+    }),
 };

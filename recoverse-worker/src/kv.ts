@@ -1,12 +1,10 @@
-/** KV 키 레이아웃 + 헬퍼. 세션 키는 24시간 TTL, 공유 스냅샷은 오래 유지. */
-
 export const SESSION_TTL_SECONDS = 86400;
-// 공유 링크는 keepsake라 오래 살아야 한다 — 180일
 export const SHARE_TTL_SECONDS = 180 * 86400;
 
 export interface Env {
   SESSIONS: KVNamespace;
-  // 프로덕션에서만 바인딩됨 (dev/test에서는 undefined일 수 있음)
+  DB: D1Database;
+  ADMIN_TOKEN?: string;
   ASSETS?: Fetcher;
 }
 
@@ -23,9 +21,7 @@ export const keys = {
   guess: (code: string, roundIdx: number, name: string) =>
     `session:${code}:r:${roundIdx}:g:${name}`,
   revealed: (code: string, roundIdx: number) => `session:${code}:r:${roundIdx}:revealed`,
-  // 지난 라운드 추측 누적 (호스트가 next/end 시점에만 기록 — 단일 작성자라 안전)
   pastGuesses: (code: string) => `session:${code}:pastGuesses`,
-  // 읽기 전용 공유 스냅샷
   share: (shareId: string) => `share:${shareId}`,
 };
 
@@ -52,7 +48,6 @@ export async function kvPutString(kv: KVNamespace, key: string, value: string): 
   await kv.put(key, value, { expirationTtl: SESSION_TTL_SECONDS });
 }
 
-/** prefix 아래 모든 키 나열 (세션 규모가 작아 단일 페이지로 충분하지만 커서 루프로 안전하게) */
 export async function kvListKeys(kv: KVNamespace, prefix: string): Promise<string[]> {
   const names: string[] = [];
   let cursor: string | undefined;
@@ -65,10 +60,6 @@ export async function kvListKeys(kv: KVNamespace, prefix: string): Promise<strin
   return names;
 }
 
-/**
- * 참여자 목록 — 합류 순.
- * 키가 `p:{joinedAt}~{name}` 이므로 키 사전순 = joinedAt 순 (joinedAt은 고정폭 타임스탬프).
- */
 export async function listPlayers(kv: KVNamespace, code: string): Promise<string[]> {
   const prefix = keys.participantPrefix(code);
   const names = await kvListKeys(kv, prefix);

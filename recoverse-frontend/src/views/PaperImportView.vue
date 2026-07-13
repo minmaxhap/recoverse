@@ -1,18 +1,18 @@
 <template>
   <AppShell variant="write">
-    <BackHeader label="복간 — 종이 회고 옮기기" @back="$emit('back')" />
-    <p class="lede">보이는 그대로 옮겨 적으면, 지난 호로 책장에 꽂혀요.</p>
+    <BackHeader label="복간: 종이 회고 옮기기" @back="$emit('back')" />
+    <p class="lede">잃어버리기 전에 종이 회고를 지난 호로 꽂아두세요.</p>
 
     <div class="stack">
       <input v-model="year" class="field" inputmode="numeric" placeholder="연도 (예: 2019)" />
-      <input v-model="title" class="field" placeholder="호 제목 (선택 — 예: 2019 연말호)" />
-      <input v-model="namesInput" class="field" placeholder="참여자 (쉼표 구분 — 예: 민희, 지원)" />
+      <input v-model="title" class="field" placeholder="호 제목 (선택: 2019 연말호)" />
+      <input v-model="namesInput" class="field" placeholder="참여자 (쉼표 구분: 민트, 지우)" />
     </div>
 
     <section class="csvBox">
       <span class="eyebrow red">CSV IMPORT</span>
       <p class="fineprint">
-        CSV 헤더 예시: year, title, question, asker, 민희, 지원. 한 줄이 한 질문으로 들어와요.
+        CSV 헤더 예시: year, title, question, asker, 민트, 지우. 한 줄이 한 질문으로 들어가요.
       </p>
       <input class="field" type="file" accept=".csv,text/csv" @change="importCsv" />
       <p v-if="csvMessage" class="fineprint">{{ csvMessage }}</p>
@@ -22,6 +22,7 @@
     <RoundEditor :participants="participants" :rounds="rounds" kind="yearend" @update:rounds="rounds = $event" />
 
     <div class="gap" />
+    <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
     <button class="cta" :disabled="!canPublish" @click="publish">
       지난 호로 꽂기 ({{ rounds.length }}개 질문)
     </button>
@@ -47,6 +48,7 @@ const namesInput = ref('');
 const rounds = ref<Round[]>([]);
 const csvMessage = ref('');
 const csvError = ref('');
+const saveError = ref('');
 
 const participants = computed(() =>
   namesInput.value
@@ -57,9 +59,9 @@ const participants = computed(() =>
 const validYear = computed(() => /^\d{4}$/.test(year.value.trim()));
 const canPublish = computed(() => validYear.value && participants.value.length > 0 && rounds.value.length > 0);
 
-function publish() {
+function publish(): void {
   if (!canPublish.value) return;
-  // 연도만 아는 복간 → date는 그 해 1월 1일로 (다시 발견 연도는 date.slice(0,4)로 파생)
+  saveError.value = '';
   const date = `${year.value.trim()}-01-01`;
   const issue = issueFromDraft(
     {
@@ -71,7 +73,10 @@ function publish() {
     },
     'paper',
   );
-  shelf.add(issue);
+  if (!shelf.add(issue)) {
+    saveError.value = '브라우저 저장 공간에 저장하지 못했어요. 용량을 비우고 다시 시도해주세요.';
+    return;
+  }
   emit('published');
 }
 

@@ -2,6 +2,7 @@ import { ApiError, errorResponse, jsonResponse } from './errors';
 import type { Env } from './kv';
 import { handleSessionRoute } from './routes/session';
 import { handleShareRoute } from './routes/share';
+import { handleVocRoute } from './routes/voc';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -18,10 +19,12 @@ export default {
       if (path === '/api/share' || path.startsWith('/api/share/')) {
         return await handleShareRoute(request, env, path);
       }
+      if (path === '/api/voc' || path.startsWith('/api/admin/voc')) {
+        return await handleVocRoute(request, env, path);
+      }
       if (path.startsWith('/api/')) {
         return errorResponse(404, 'not_found', '요청한 경로를 찾지 못했어요.');
       }
-      // 비 API 경로는 정적 자산(빌드된 SPA)으로 위임. dev에서는 ASSETS 미바인딩.
       if (env.ASSETS) {
         return env.ASSETS.fetch(request);
       }

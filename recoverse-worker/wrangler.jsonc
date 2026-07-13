@@ -2,17 +2,28 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "recoverse-api",
   "main": "src/index.ts",
-  "compatibility_date": "2025-09-06",
+  "compatibility_date": "2026-07-13",
   "kv_namespaces": [
     {
       "binding": "SESSIONS",
-      "id": "815a411838d34921b97a391fa7d78632"
+      "id": "REPLACE_WITH_SESSIONS_KV_NAMESPACE_ID"
     }
   ],
-  // 프로덕션: 빌드된 프론트를 같은 오리진에서 서빙 (API는 /api/*, 나머지는 SPA)
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "recoverse-data",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
   "assets": {
     "directory": "../recoverse-frontend/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
   }
 }
