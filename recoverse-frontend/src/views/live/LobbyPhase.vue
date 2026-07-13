@@ -6,6 +6,10 @@
       <span class="fineprint">{{ copied ? '복사됐어요 ✓ 친구들에게 붙여넣으세요' : '탭해서 복사 — 친구들에게 이 코드를 알려주세요' }}</span>
     </button>
 
+    <button type="button" class="ghost shareBtn" @click="shareInvite">
+      {{ shareCopied ? '초대 링크를 복사했어요 ✓' : '친구에게 공유하기' }}
+    </button>
+
     <div class="sectionHead">
       <h2>합류한 사람</h2>
       <span class="count">{{ state.players.length }}명</span>
@@ -38,7 +42,9 @@ const emit = defineEmits<{ applied: [SessionStateResponse] }>();
 
 const busy = ref(false);
 const copied = ref(false);
+const shareCopied = ref(false);
 let copyResetTimer: ReturnType<typeof setTimeout> | null = null;
+let shareCopyResetTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function copyCode() {
   try {
@@ -48,6 +54,35 @@ async function copyCode() {
     copyResetTimer = setTimeout(() => (copied.value = false), 2500);
   } catch {
     /* 클립보드 미지원 환경 — 코드는 화면에 크게 보이므로 그대로 둠 */
+  }
+}
+
+function joinLink(): string {
+  return `${window.location.origin}${window.location.pathname}?join=${props.state.meta.code}`;
+}
+
+async function shareInvite() {
+  const url = joinLink();
+  const code = props.state.meta.code;
+  try {
+    if ('share' in navigator) {
+      await navigator.share({
+        title: 'Recoverse 초대',
+        text: `${code} 코드로 우리 회고에 합류해요`,
+        url,
+      });
+      return;
+    }
+  } catch {
+    /* 사용자가 공유 시트를 취소했거나 실패 — 클립보드로 폴백 */
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    shareCopied.value = true;
+    if (shareCopyResetTimer) clearTimeout(shareCopyResetTimer);
+    shareCopyResetTimer = setTimeout(() => (shareCopied.value = false), 2500);
+  } catch {
+    /* 클립보드도 미지원 — 코드박스로 대체 안내 */
   }
 }
 
@@ -101,6 +136,9 @@ async function onStart() {
   font-weight: 900;
   letter-spacing: 0.3em;
   margin-left: 0.3em;
+}
+.shareBtn {
+  margin-bottom: 26px;
 }
 .sectionHead {
   display: flex;
