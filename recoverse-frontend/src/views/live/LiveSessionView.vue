@@ -59,14 +59,18 @@
       </template>
     </template>
 
-    <p v-else class="waiting">{{ error || '불러오는 중…' }}</p>
+    <template v-else>
+      <p v-if="error" class="waiting">{{ error }}</p>
+      <MagazineSkeleton v-else />
+    </template>
   </AppShell>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { SessionStateResponse } from '@recoverse/shared';
 import AppShell from '../../components/AppShell.vue';
+import MagazineSkeleton from '../../components/MagazineSkeleton.vue';
 import LobbyPhase from './LobbyPhase.vue';
 import QuestionPhase from './QuestionPhase.vue';
 import AnswerPhase from './AnswerPhase.vue';
@@ -84,6 +88,37 @@ const me = computed(() => props.me);
 const isHost = computed(() => props.isHost);
 const playerToken = computed(() => props.playerToken);
 const ending = ref(false);
+
+// 탭 타이틀로 "내 차례" 신호
+let originalTitle = '';
+
+const isMyTurn = computed(() => {
+  const s = state.value;
+  if (!s) return false;
+  const phase = s.meta.phase;
+  if (phase === 'question') return s.meta.asker === me.value;
+  if (phase === 'answer') return !s.answered.includes(me.value);
+  if (phase === 'guess') return !s.guessed.includes(me.value);
+  return false;
+});
+
+function syncTitle() {
+  document.title = isMyTurn.value ? '● 내 차례 — Recoverse' : originalTitle;
+}
+
+onMounted(() => {
+  originalTitle = document.title;
+  syncTitle();
+});
+
+watch(
+  () => [state.value?.meta.phase, state.value?.meta.asker, state.value?.answered, state.value?.guessed],
+  () => syncTitle(),
+);
+
+onUnmounted(() => {
+  document.title = originalTitle;
+});
 
 const roundLabel = computed(() => {
   const s = state.value;
