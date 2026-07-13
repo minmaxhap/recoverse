@@ -1,7 +1,7 @@
 <template>
   <AppShell variant="read">
     <div class="coverTools noPrint">
-      <VocButton />
+      <SettingsPanel :issues="issues" />
     </div>
 
     <header class="masthead">
@@ -41,7 +41,7 @@ import type { Issue } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import CoverBackIssues from '../components/CoverBackIssues.vue';
 import CoverEntryList from '../components/CoverEntryList.vue';
-import VocButton from '../components/VocButton.vue';
+import SettingsPanel from '../components/SettingsPanel.vue';
 import type { RediscoveryMoment } from '../lib/rediscover';
 
 const props = defineProps<{ readonly issues: readonly Issue[]; readonly moment?: RediscoveryMoment | null }>();
@@ -61,8 +61,8 @@ const momentLabel = computed(() => {
 const momentTeaser = computed(() => {
   const m = props.moment;
   if (!m) return '';
-  const first = m.participants.map((n) => m.answers[n]?.text).find((t) => t && t.trim());
-  return first ?? '';
+  const first = Object.values(m.answers).find((answer) => answer.text.trim());
+  return first?.text ?? '';
 });
 </script>
 
@@ -70,6 +70,7 @@ const momentTeaser = computed(() => {
 .coverTools {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   margin-bottom: 12px;
 }
 .masthead .brand {

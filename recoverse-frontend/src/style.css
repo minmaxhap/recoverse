@@ -39,7 +39,7 @@
 /* ── 밤의 편집실 (다크모드) — 시스템 설정을 따름.
      같은 잡지 문법(직각·1px 보더·세리프)에 종이만 어두운 크라프트지로 바뀐다 ── */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --paper: #17120e;
     --paper-card: #201a14;
     --ink: #e9e1d3;
@@ -53,6 +53,21 @@
     --dim: #99907f;
     --dim-strong: #b3a996;
   }
+}
+
+:root[data-theme='dark'] {
+  --paper: #17120e;
+  --paper-card: #201a14;
+  --ink: #e9e1d3;
+  --ink-hover: #f6efe1;
+  --on-ink-dim: #6b6355;
+  --vermilion: #e05a33;
+  --vermilion-hover: #ea6b45;
+  --vermilion-ink: #fff3ec;
+  --gold: #d9a94f;
+  --hairline: #383026;
+  --dim: #99907f;
+  --dim-strong: #b3a996;
 }
 
 * {

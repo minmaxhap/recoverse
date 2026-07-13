@@ -68,8 +68,8 @@ const momentLabel = computed(() => {
 const momentTeaser = computed(() => {
   const m = props.moment;
   if (!m) return '';
-  const first = m.participants.map((n) => m.answers[n]?.text).find((t) => t && t.trim());
-  return first ?? '';
+  const first = Object.values(m.answers).find((answer) => answer.text.trim());
+  return first?.text ?? '';
 });
 </script>
 

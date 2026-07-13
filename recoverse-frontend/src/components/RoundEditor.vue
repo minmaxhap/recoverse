@@ -1,11 +1,15 @@
 <template>
   <div class="roundEditor">
-    <div v-if="rounds.length > 0" class="pastQ">
-      <div v-for="(r, i) in rounds" :key="i">✓ {{ i + 1 }}. {{ r.question }}</div>
-    </div>
+    <RoundContentsList :rounds="rounds" :participants="participants" />
 
-    <div class="qaBox">
-      <span class="eyebrow red">질문 {{ rounds.length + 1 }}</span>
+    <section class="qaBox" aria-labelledby="roundEditorTitle">
+      <div class="boxHead">
+        <div>
+          <span class="eyebrow red">QUESTION {{ rounds.length + 1 }}</span>
+          <h2 id="roundEditorTitle">다음 질문을 고르거나 직접 써요</h2>
+        </div>
+        <span class="draftState" aria-live="polite">{{ draftState }}</span>
+      </div>
 
       <div class="formatChips" role="radiogroup" aria-label="회고 포맷">
         <button
@@ -16,41 +20,51 @@
           :class="{ active: formatId === '' }"
           @click="selectFormat('')"
         >
-          자유 질문
+          직접 쓰기
         </button>
         <button
-          v-for="f in FORMATS"
-          :key="f.id"
+          v-for="format in FORMATS"
+          :key="format.id"
           type="button"
           role="radio"
-          :aria-checked="formatId === f.id"
+          :aria-checked="formatId === format.id"
           class="fchip"
-          :class="{ active: formatId === f.id }"
-          @click="selectFormat(f.id)"
+          :class="{ active: formatId === format.id }"
+          @click="selectFormat(format.id)"
         >
-          {{ f.label }}
+          {{ format.label }}
         </button>
       </div>
 
-      <input
-        class="field"
-        :value="q"
-        :readonly="!!formatId"
-        placeholder="질문"
-        @input="q = ($event.target as HTMLInputElement).value"
-      />
+      <label class="fieldGroup">
+        <span class="fieldLabel">질문</span>
+        <input
+          class="field"
+          :value="q"
+          :readonly="!!formatId"
+          placeholder="지금의 나에게 묻고 싶은 것"
+          @input="q = ($event.target as HTMLInputElement).value"
+        />
+      </label>
+
       <QuestionSuggest v-if="!formatId" :kind="kind" :exclude="pastQuestions" @pick="q = $event" />
+
       <div v-for="(name, i) in participants" :key="name" class="answerLine">
         <ParticipantDot :color="colorAt(i)" />
-        <textarea
-          class="field area short"
-          :value="answers[name] ?? ''"
-          :placeholder="answerHint(name)"
-          @input="setAnswer(name, ($event.target as HTMLTextAreaElement).value)"
-        />
+        <label class="fieldGroup answerField">
+          <span class="fieldLabel">{{ name }}의 답</span>
+          <textarea
+            class="field area short"
+            :value="answers[name] ?? ''"
+            :placeholder="answerHint(name)"
+            @input="setAnswer(name, ($event.target as HTMLTextAreaElement).value)"
+          />
+        </label>
       </div>
-      <button class="ghost" :disabled="!qaReady" @click="addRound">이 질문 추가</button>
-    </div>
+
+      <p class="helper">{{ roundHelp }}</p>
+      <button class="ghost" :disabled="!qaReady" @click="addRound">목차에 싣기</button>
+    </section>
   </div>
 </template>
 
@@ -59,9 +73,10 @@ import { computed, ref, watch } from 'vue';
 import type { Kind, Round } from '@recoverse/shared';
 import ParticipantDot from './ParticipantDot.vue';
 import QuestionSuggest from './QuestionSuggest.vue';
-import { colorAt } from '../lib/palette';
+import RoundContentsList from './RoundContentsList.vue';
 import { FORMATS, getFormat } from '../data/formats';
 import { useDraft } from '../composables/useDraft';
+import { colorAt } from '../lib/palette';
 
 const props = withDefaults(
   defineProps<{ participants: string[]; rounds: Round[]; kind?: Kind }>(),
@@ -72,21 +87,31 @@ const emit = defineEmits<{ 'update:rounds': [Round[]] }>();
 const q = ref('');
 const formatId = ref('');
 const answers = ref<Record<string, string>>({});
-const pastQuestions = computed(() => props.rounds.map((r) => r.question));
+const pastQuestions = computed(() => props.rounds.map((round) => round.question));
+const hasDraftText = computed(
+  () => q.value.trim().length > 0 || Object.values(answers.value).some((answer) => answer.trim().length > 0),
+);
+const draftState = computed(() => (hasDraftText.value ? '자동 저장됨' : '새 질문'));
 
-// 탭을 벗어났다 돌아와도 현재 작성 중인 라운드 입력이 살아있도록 저장(완벽한 세션 단위 유니크 키까지는 아님)
 const { value: draftJson, clear: clearDraft } = useDraft(
   () => `recoverse_draft_round_${props.kind}_${props.rounds.length}`,
 );
 let applyingDraft = false;
 
-function applyDraft(json: string) {
+function applyDraft(json: string): void {
   applyingDraft = true;
   try {
-    const parsed = json ? JSON.parse(json) : {};
-    q.value = typeof parsed.q === 'string' ? parsed.q : '';
-    formatId.value = typeof parsed.formatId === 'string' ? parsed.formatId : '';
-    answers.value = parsed.answers && typeof parsed.answers === 'object' ? parsed.answers : {};
+    const parsed: unknown = json ? JSON.parse(json) : {};
+    if (parsed && typeof parsed === 'object') {
+      const draft = parsed as { q?: unknown; formatId?: unknown; answers?: unknown };
+      q.value = typeof draft.q === 'string' ? draft.q : '';
+      formatId.value = typeof draft.formatId === 'string' ? draft.formatId : '';
+      answers.value = draft.answers && typeof draft.answers === 'object' ? (draft.answers as Record<string, string>) : {};
+      return;
+    }
+    q.value = '';
+    formatId.value = '';
+    answers.value = {};
   } catch {
     q.value = '';
     formatId.value = '';
@@ -107,31 +132,37 @@ watch(
   { deep: true },
 );
 
-function selectFormat(id: string) {
+const qaReady = computed(
+  () =>
+    q.value.trim().length > 0 &&
+    props.participants.length > 0 &&
+    props.participants.every((name) => (answers.value[name] ?? '').trim().length > 0),
+);
+const roundHelp = computed(() => {
+  if (props.participants.length === 0) return '이 호에 실릴 이름을 먼저 적어주세요.';
+  if (!q.value.trim()) return '질문을 고르거나 직접 쓰면 답을 실을 수 있어요.';
+  if (!qaReady.value) return '답을 적으면 이 질문을 목차에 실을 수 있어요.';
+  return '좋아요. 이 질문을 목차에 실어두고 다음 질문으로 넘어갈 수 있어요.';
+});
+
+function selectFormat(id: string): void {
   formatId.value = id;
   const format = getFormat(id);
-  // 포맷을 고르면 질문은 그 포맷의 고정 프롬프트로 (자유 질문이면 그대로 둠)
   if (format) q.value = format.prompt;
 }
 
 function answerHint(name: string): string {
   const format = getFormat(formatId.value);
-  return format ? format.hint : `${name}의 답`;
+  return format ? format.hint : `${name}의 답을 거칠게 적어도 괜찮아요`;
 }
 
-const qaReady = computed(
-  () =>
-    q.value.trim().length > 0 &&
-    props.participants.length > 0 &&
-    props.participants.every((n) => (answers.value[n] ?? '').trim().length > 0),
-);
-
-function setAnswer(name: string, value: string) {
+function setAnswer(name: string, value: string): void {
   answers.value = { ...answers.value, [name]: value };
 }
 
-function addRound() {
+function addRound(): void {
   if (!qaReady.value) return;
+
   const roundAnswers: Round['answers'] = {};
   for (const name of props.participants) {
     roundAnswers[name] = { text: (answers.value[name] ?? '').trim() };
@@ -139,6 +170,7 @@ function addRound() {
   const asker = props.participants[props.rounds.length % props.participants.length];
   const round: Round = { asker, question: q.value.trim(), answers: roundAnswers };
   if (formatId.value) round.format = formatId.value;
+
   emit('update:rounds', [...props.rounds, round]);
   clearDraft();
   applyingDraft = true;
@@ -150,27 +182,52 @@ function addRound() {
 </script>
 
 <style scoped>
-.pastQ {
-  margin-top: 16px;
+.roundEditor {
   display: grid;
-  gap: 6px;
-  font-size: 14px;
-  color: var(--dim);
-  line-height: 1.6;
+  gap: 16px;
+  margin-top: 16px;
 }
+
 .qaBox {
   border: 1px solid var(--ink);
   padding: 16px;
   display: grid;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 12px;
   background: var(--paper-card);
 }
+
+.boxHead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.boxHead > div {
+  min-width: 0;
+}
+
+.boxHead h2 {
+  margin: 3px 0 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 1.4;
+}
+
+.draftState {
+  justify-self: start;
+  padding: 4px 6px;
+  border: 1px solid var(--hairline);
+  color: var(--dim);
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .formatChips {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
+
 .fchip {
   padding: 6px 11px;
   font-size: 12px;
@@ -179,17 +236,42 @@ function addRound() {
   color: var(--ink);
   border: 1px solid var(--ink);
   cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
 }
+
+.fchip:hover,
 .fchip.active {
   background: var(--ink);
   color: var(--paper);
 }
+
+.fchip:active {
+  transform: translate(1px, 1px);
+}
+
 .answerLine {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 10px;
   align-items: flex-start;
 }
+
 .answerLine > :deep(.dot) {
-  margin-top: 14px;
+  margin-top: 34px;
+}
+
+.answerField {
+  min-width: 0;
+}
+
+@media (min-width: 520px) {
+  .boxHead {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+  }
+
+  .draftState {
+    justify-self: end;
+  }
 }
 </style>

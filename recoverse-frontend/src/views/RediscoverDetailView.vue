@@ -19,11 +19,9 @@
           <small class="fineprint">{{ entry.issueTitle }}</small>
         </div>
         <div class="aside">
-          <RoundAnswers
+          <RediscoverEntryAnswers
             :participants="entry.participants"
             :answers="entry.answers"
-            :format="entry.format"
-            still
           />
         </div>
       </section>
@@ -36,7 +34,7 @@ import { computed } from 'vue';
 import type { QuestionGroup } from '../lib/rediscover';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
-import RoundAnswers from '../components/RoundAnswers.vue';
+import RediscoverEntryAnswers from '../components/RediscoverEntryAnswers.vue';
 
 const props = defineProps<{ group: QuestionGroup }>();
 defineEmits<{ back: [] }>();
