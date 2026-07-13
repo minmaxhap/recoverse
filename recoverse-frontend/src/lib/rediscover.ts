@@ -64,6 +64,21 @@ export function groupByQuestion(issues: Issue[]): QuestionGroup[] {
   });
 }
 
+/**
+ * 다시 발견 검색 — 질문 텍스트뿐 아니라 각 그룹 entries의 답변 텍스트까지 검색 대상에 포함.
+ * 대소문자/공백 무시, 부분 일치.
+ */
+export function filterGroups(groups: QuestionGroup[], query: string): QuestionGroup[] {
+  const q = query.trim().toLowerCase().replace(/\s+/g, '');
+  if (!q) return groups;
+  return groups.filter((g) => {
+    if (g.question.toLowerCase().replace(/\s+/g, '').includes(q)) return true;
+    return g.entries.some((entry) =>
+      Object.values(entry.answers).some((a) => a.text.toLowerCase().replace(/\s+/g, '').includes(q))
+    );
+  });
+}
+
 /* ── 오늘의 재발견 (스펙 §1.7: 1년 전 오늘 / 랜덤 추억) ── */
 
 export interface RediscoveryMoment {
