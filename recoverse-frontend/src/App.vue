@@ -7,8 +7,10 @@
       v-if="mode === 'cover'"
       :key="mode"
       :issues="shelf.issues.value"
+      :moment="moment"
       @navigate="onCoverNavigate"
       @open="openIssue"
+      @open-group="openGroup"
     />
 
     <LiveEntryView

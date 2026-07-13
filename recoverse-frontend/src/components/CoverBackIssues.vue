@@ -20,6 +20,9 @@
         aria-hidden="true"
         @change="onImport"
       />
+      <button v-if="issues.length > 0" type="button" class="importLink" @click="onExport">
+        책장 전체 내보내기
+      </button>
       <div id="importStatus" aria-live="polite">
         <p v-if="importMsg" class="fineprint">{{ importMsg }}</p>
         <p v-if="importErr" class="error" role="alert">{{ importErr }}</p>
@@ -33,9 +36,10 @@ import { ref } from 'vue';
 import type { Issue } from '@recoverse/shared';
 import { useShelf } from '../composables/useShelf';
 import { BackupImportError, parseReflectionBackup } from '../lib/backupImport';
+import { exportShelfBackup } from '../lib/backupExport';
 import CoverShelf from './CoverShelf.vue';
 
-defineProps<{ readonly issues: readonly Issue[] }>();
+const props = defineProps<{ readonly issues: readonly Issue[] }>();
 defineEmits<{ navigate: ['create']; open: [string] }>();
 
 const shelf = useShelf();
@@ -45,6 +49,10 @@ const fileInput = ref<HTMLInputElement | null>(null);
 
 function openImport(): void {
   fileInput.value?.click();
+}
+
+function onExport(): void {
+  exportShelfBackup([...props.issues]);
 }
 
 function isFileInput(target: EventTarget | null): target is HTMLInputElement {
