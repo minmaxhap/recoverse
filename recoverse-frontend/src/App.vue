@@ -17,6 +17,7 @@
       v-else-if="mode === 'create' || mode === 'join'"
       :key="mode"
       :intent="mode"
+      :prefill-code="mode === 'join' ? prefillCode : undefined"
       @back="toCover"
       @entered="enterSession"
     />
@@ -140,12 +141,18 @@ const mode = ref<Mode>('cover');
 const activeIssueId = ref<string | null>(null);
 const activeGroupKey = ref<string | null>(null);
 const sharedId = ref<string | null>(null);
+const prefillCode = ref<string | undefined>(undefined);
 
 // 공유 링크(?share=<id>)로 열면 읽기 전용 공유 뷰가 최우선
 const shareParam = new URLSearchParams(window.location.search).get('share');
+// 합류 링크(?join=<code>)로 열면 참여 화면으로 바로 진입, 코드는 미리 채워둠
+const joinParam = new URLSearchParams(window.location.search).get('join');
 if (shareParam) {
   sharedId.value = shareParam;
   mode.value = 'shared';
+} else if (joinParam) {
+  prefillCode.value = joinParam.toUpperCase();
+  mode.value = 'join';
 } else if (identity.identity.code && identity.identity.name) {
   // 새로고침해도 세션 신원이 남아 있으면 라이브로 복귀
   mode.value = 'live';

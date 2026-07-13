@@ -61,7 +61,7 @@ import KindChips from '../../components/KindChips.vue';
 import { api, ApiError } from '../../lib/api';
 import { useIdentity } from '../../composables/useIdentity';
 
-const props = defineProps<{ intent: 'create' | 'join' }>();
+const props = defineProps<{ intent: 'create' | 'join'; prefillCode?: string }>();
 const emit = defineEmits<{ back: []; entered: [string] }>();
 
 const creating = computed(() => props.intent === 'create');
@@ -69,7 +69,7 @@ const identity = useIdentity();
 
 const kind = ref<Kind>('yearend');
 const nameDraft = ref('');
-const codeDraft = ref('');
+const codeDraft = ref(props.prefillCode ?? '');
 const busy = ref(false);
 const error = ref('');
 
