@@ -10,6 +10,13 @@
       <div class="rule" />
     </header>
 
+    <button v-if="moment" class="momentCard" @click="$emit('open-group', moment.groupKey)">
+      <span class="eyebrow gold">{{ momentLabel }}</span>
+      <span class="momentQ">{{ moment.question }}</span>
+      <span class="momentA">“{{ momentTeaser }}”</span>
+      <span class="momentMeta">{{ moment.year }} · {{ moment.issueTitle }} →</span>
+    </button>
+
     <div class="coverSplit">
       <p class="coverline">
         한 해에 한 번,<br />
@@ -93,6 +100,9 @@
           이전 Recoverse 백업 가져오기
           <input type="file" accept=".json,application/json" hidden @change="onImport" />
         </label>
+        <button v-if="issues.length > 0" class="importLink" type="button" @click="onExport">
+          책장 전체 내보내기
+        </button>
         <p v-if="importMsg" class="fineprint">{{ importMsg }}</p>
         <p v-if="importErr" class="error">{{ importErr }}</p>
       </div>
@@ -101,15 +111,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { KIND_LABELS, type Issue } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import { useShelf } from '../composables/useShelf';
 import { kindColor } from '../lib/palette';
 import { parseReflectionBackup, BackupImportError } from '../lib/backupImport';
+import { exportShelfBackup } from '../lib/backupExport';
+import type { RediscoveryMoment } from '../lib/rediscover';
 
-defineProps<{ issues: Issue[] }>();
-defineEmits<{ navigate: [string]; open: [string] }>();
+const props = defineProps<{ issues: Issue[]; moment?: RediscoveryMoment | null }>();
+defineEmits<{ navigate: [string]; open: [string]; 'open-group': [string] }>();
+
+const momentLabel = computed(() => {
+  const m = props.moment;
+  if (!m) return '';
+  if (m.anniversary) return m.yearsAgo <= 1 ? '1년 전 오늘 즈음' : `${m.yearsAgo}년 전 오늘 즈음`;
+  return '오늘의 재발견';
+});
+
+const momentTeaser = computed(() => {
+  const m = props.moment;
+  if (!m) return '';
+  const first = m.participants.map((n) => m.answers[n]?.text).find((t) => t && t.trim());
+  return first ?? '';
+});
 
 /** 표지 목차 — 잡지 Contents처럼 번호를 매긴 입구 5개 */
 const ENTRIES = [
@@ -139,6 +165,10 @@ async function onImport(event: Event) {
     importErr.value = err instanceof BackupImportError ? err.message : '가져오기에 실패했어요.';
   }
 }
+
+function onExport() {
+  exportShelfBackup(shelf.issues.value);
+}
 </script>
 
 <style scoped>
@@ -157,6 +187,42 @@ async function onImport(event: Event) {
   letter-spacing: 0.08em;
   padding-bottom: 10px;
   line-height: 1.5;
+}
+.momentCard {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+  text-align: left;
+  border: 1px solid var(--ink);
+  background: var(--paper-card);
+  padding: 18px 16px;
+  margin: 24px 0;
+  cursor: pointer;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.momentCard:hover {
+  border-color: var(--vermilion);
+  box-shadow: 3px 3px 0 var(--vermilion);
+  transform: translate(-1px, -1px);
+}
+.momentQ {
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+.momentA {
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--dim-strong);
+}
+.momentMeta {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--dim);
 }
 .coverline {
   font-family: var(--font-display);
