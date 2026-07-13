@@ -10,7 +10,7 @@
       <div class="rule" />
     </header>
 
-    <p v-if="loading" class="waiting">불러오는 중…</p>
+    <MagazineSkeleton v-if="loading" />
     <p v-else-if="error" class="error shareError">{{ error }}</p>
 
     <template v-else-if="issue">
@@ -48,6 +48,7 @@ import { onMounted, ref } from 'vue';
 import type { Issue } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import Headline from '../components/Headline.vue';
+import MagazineSkeleton from '../components/MagazineSkeleton.vue';
 import RoundAnswers from '../components/RoundAnswers.vue';
 import SpreadLayout from '../components/SpreadLayout.vue';
 import { api, ApiError } from '../lib/api';

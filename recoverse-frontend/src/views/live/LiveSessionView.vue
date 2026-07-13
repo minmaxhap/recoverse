@@ -65,17 +65,19 @@
       </template>
     </template>
 
-    <div v-else class="centerStatus" role="status">
-      <p class="waiting">{{ error || '불러오는 중…' }}</p>
-      <button v-if="error" type="button" class="ghost retryBtn" @click="refreshNow">다시 확인</button>
+    <div v-else-if="error" class="centerStatus" role="status">
+      <p class="waiting">{{ error }}</p>
+      <button type="button" class="ghost retryBtn" @click="refreshNow">다시 확인</button>
     </div>
+    <MagazineSkeleton v-else />
   </AppShell>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { SessionStateResponse } from '@recoverse/shared';
 import AppShell from '../../components/AppShell.vue';
+import MagazineSkeleton from '../../components/MagazineSkeleton.vue';
 import LobbyPhase from './LobbyPhase.vue';
 import QuestionPhase from './QuestionPhase.vue';
 import AnswerPhase from './AnswerPhase.vue';
@@ -99,6 +101,37 @@ const syncMessage = computed(() => {
   if (error.value) return error.value;
   if (loading.value && state.value) return '최신 세션 상태를 확인하고 있어요.';
   return '';
+});
+
+// 탭 타이틀로 "내 차례" 신호
+let originalTitle = '';
+
+const isMyTurn = computed(() => {
+  const s = state.value;
+  if (!s) return false;
+  const phase = s.meta.phase;
+  if (phase === 'question') return s.meta.asker === me.value;
+  if (phase === 'answer') return !s.answered.includes(me.value);
+  if (phase === 'guess') return !s.guessed.includes(me.value);
+  return false;
+});
+
+function syncTitle() {
+  document.title = isMyTurn.value ? '● 내 차례 — Recoverse' : originalTitle;
+}
+
+onMounted(() => {
+  originalTitle = document.title;
+  syncTitle();
+});
+
+watch(
+  () => [state.value?.meta.phase, state.value?.meta.asker, state.value?.answered, state.value?.guessed],
+  () => syncTitle(),
+);
+
+onUnmounted(() => {
+  document.title = originalTitle;
 });
 
 const roundLabel = computed(() => {
