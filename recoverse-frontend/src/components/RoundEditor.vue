@@ -55,12 +55,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { Kind, Round } from '@recoverse/shared';
 import ParticipantDot from './ParticipantDot.vue';
 import QuestionSuggest from './QuestionSuggest.vue';
 import { colorAt } from '../lib/palette';
 import { FORMATS, getFormat } from '../data/formats';
+import { useDraft } from '../composables/useDraft';
 
 const props = withDefaults(
   defineProps<{ participants: string[]; rounds: Round[]; kind?: Kind }>(),
@@ -72,6 +73,39 @@ const q = ref('');
 const formatId = ref('');
 const answers = ref<Record<string, string>>({});
 const pastQuestions = computed(() => props.rounds.map((r) => r.question));
+
+// 탭을 벗어났다 돌아와도 현재 작성 중인 라운드 입력이 살아있도록 저장(완벽한 세션 단위 유니크 키까지는 아님)
+const { value: draftJson, clear: clearDraft } = useDraft(
+  () => `recoverse_draft_round_${props.kind}_${props.rounds.length}`,
+);
+let applyingDraft = false;
+
+function applyDraft(json: string) {
+  applyingDraft = true;
+  try {
+    const parsed = json ? JSON.parse(json) : {};
+    q.value = typeof parsed.q === 'string' ? parsed.q : '';
+    formatId.value = typeof parsed.formatId === 'string' ? parsed.formatId : '';
+    answers.value = parsed.answers && typeof parsed.answers === 'object' ? parsed.answers : {};
+  } catch {
+    q.value = '';
+    formatId.value = '';
+    answers.value = {};
+  } finally {
+    applyingDraft = false;
+  }
+}
+
+watch(draftJson, (json) => applyDraft(json), { immediate: true });
+
+watch(
+  [q, formatId, answers],
+  () => {
+    if (applyingDraft) return;
+    draftJson.value = JSON.stringify({ q: q.value, formatId: formatId.value, answers: answers.value });
+  },
+  { deep: true },
+);
 
 function selectFormat(id: string) {
   formatId.value = id;
@@ -106,9 +140,12 @@ function addRound() {
   const round: Round = { asker, question: q.value.trim(), answers: roundAnswers };
   if (formatId.value) round.format = formatId.value;
   emit('update:rounds', [...props.rounds, round]);
+  clearDraft();
+  applyingDraft = true;
   q.value = '';
   formatId.value = '';
   answers.value = {};
+  applyingDraft = false;
 }
 </script>
 

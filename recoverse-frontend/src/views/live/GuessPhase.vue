@@ -5,6 +5,7 @@
     <template v-if="iGuessed">
       <div class="center small">
         <p class="waiting">추측 완료 — {{ state.guessed.length }}/{{ state.players.length }}명</p>
+        <p v-if="pendingGuessNames.length > 0" class="fineprint">{{ pendingGuessNames.join(', ') }} 님 추측 기다리는 중</p>
         <p class="fineprint">모두 추측하면 작성자가 공개돼요</p>
         <button v-if="isHost" class="ghost forceBtn" :disabled="busy" @click="onReveal">
           그냥 공개하기
@@ -70,6 +71,7 @@ const order = computed(() =>
     : [],
 );
 const otherNames = computed(() => props.state.players.filter((p) => p !== props.me));
+const pendingGuessNames = computed(() => props.state.players.filter((n) => !props.state.guessed.includes(n)));
 
 function answerText(owner: string): string {
   return props.state.answers?.[owner]?.text ?? '';

@@ -13,6 +13,7 @@
             :dim="!state.answered.includes(name)"
           />
         </div>
+        <p v-if="pendingAnswerNames.length > 0" class="fineprint">{{ pendingAnswerNames.join(', ') }} 님 답변 기다리는 중</p>
         <p class="fineprint">{{ waitingHint }}</p>
       </div>
     </template>
@@ -47,6 +48,7 @@ import ParticipantDot from '../../components/ParticipantDot.vue';
 import { colorFor } from '../../lib/palette';
 import { api } from '../../lib/api';
 import { getFormat } from '../../data/formats';
+import { useDraft } from '../../composables/useDraft';
 
 const props = defineProps<{ state: SessionStateResponse; me: string; playerToken: string }>();
 const emit = defineEmits<{ applied: [SessionStateResponse] }>();
@@ -57,7 +59,9 @@ const expansionPrompts = [
   '지금의 나는 뭐라고 답할까?',
 ] as const;
 
-const draft = ref('');
+const { value: draft, clear: clearDraft } = useDraft(
+  () => `recoverse_draft_answer_${props.state.meta.code}_${props.state.meta.roundIdx}_${props.me}`,
+);
 const busy = ref(false);
 const sent = ref(false);
 
@@ -67,6 +71,7 @@ const answerPlaceholder = computed(() => getFormat(props.state.meta.format ?? ''
 const waitingHint = computed(() =>
   props.state.players.length >= 3 ? '모두 제출하면 누가 썼게가 시작돼요' : '모두 제출하면 스프레드가 열려요',
 );
+const pendingAnswerNames = computed(() => props.state.players.filter((n) => !props.state.answered.includes(n)));
 
 function appendPrompt(prompt: string) {
   const separator = draft.value.trim().length > 0 ? '\n\n' : '';
@@ -79,6 +84,7 @@ async function onSubmit() {
   try {
     const next = await api.answer(props.state.meta.code, props.me, props.playerToken, draft.value.trim());
     sent.value = true;
+    clearDraft();
     emit('applied', next);
   } catch {
     /* 폴링 복구 */
