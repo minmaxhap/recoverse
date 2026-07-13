@@ -16,7 +16,18 @@
       <button class="ghost" @click="$emit('addSamples')">예시 지난 호 3권 꽂아보기</button>
     </div>
 
-    <button v-for="g in groups" :key="g.key" class="redisRow" @click="$emit('open', g.key)">
+    <input
+      v-else
+      v-model="searchQuery"
+      class="field searchField"
+      type="text"
+      placeholder="질문이나 답변 내용으로 검색"
+      aria-label="다시 발견 검색"
+    />
+
+    <p v-if="groups.length > 0 && filteredGroups.length === 0" class="empty">찾는 결과가 없어요.</p>
+
+    <button v-for="g in filteredGroups" :key="g.key" class="redisRow" @click="$emit('open', g.key)">
       <span class="redisQ">{{ g.question }}</span>
       <span class="yearChips">
         <em v-for="y in g.years" :key="y">{{ y }}</em>
@@ -32,8 +43,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { QuestionGroup, RediscoveryMoment } from '../lib/rediscover';
+import { computed, ref } from 'vue';
+import { filterGroups, type QuestionGroup, type RediscoveryMoment } from '../lib/rediscover';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
 
@@ -43,6 +54,9 @@ const props = defineProps<{
   moment: RediscoveryMoment | null;
 }>();
 defineEmits<{ back: []; open: [string]; addSamples: []; removeSamples: [] }>();
+
+const searchQuery = ref('');
+const filteredGroups = computed(() => filterGroups(props.groups, searchQuery.value));
 
 const momentLabel = computed(() => {
   const m = props.moment;
@@ -99,6 +113,9 @@ const momentTeaser = computed(() => {
 .empty {
   font-size: 14px;
   color: var(--dim);
+}
+.searchField {
+  margin-bottom: 18px;
 }
 .redisRow {
   width: 100%;

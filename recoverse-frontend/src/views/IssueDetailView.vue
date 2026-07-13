@@ -4,12 +4,18 @@
 
     <header class="issueHead">
       <span class="eyebrow red">{{ issue.date.slice(0, 4) }} ISSUE</span>
-      <h1 class="pageTitle">{{ issue.title }}</h1>
+      <input v-if="editing" v-model="draftTitle" class="field pageTitleInput" type="text" aria-label="호 제목" />
+      <h1 v-else class="pageTitle">{{ issue.title }}</h1>
       <div class="rule" />
       <p class="fineprint">{{ issue.participants.join(' · ') }}</p>
     </header>
 
     <div class="exportActions noPrint" aria-label="내보내기">
+      <button v-if="!editing" class="ghost" type="button" @click="startEdit">제목·답변 수정</button>
+      <template v-else>
+        <button class="ghost" type="button" @click="saveEdit">저장</button>
+        <button class="ghost" type="button" @click="cancelEdit">취소</button>
+      </template>
       <button class="ghost" type="button" @click="printIssue">PDF로 저장 / 인쇄</button>
       <p class="fineprint">브라우저 인쇄 창에서 대상 장치를 “PDF로 저장”으로 고르면 파일로 보관할 수 있어요.</p>
     </div>
@@ -20,7 +26,14 @@
           <Headline :no="i + 1" :question="round.question" :asker="round.asker" />
         </template>
         <template #right>
+          <div v-if="editing" class="editAnswers">
+            <label v-for="name in issue.participants.filter((p) => draftRounds[i]?.answers[p])" :key="name" class="editAnswer">
+              <span class="editAnswerName">{{ name }}</span>
+              <textarea v-model="draftRounds[i].answers[name].text" class="field area short" />
+            </label>
+          </div>
           <RoundAnswers
+            v-else
             :participants="issue.participants"
             :answers="round.answers"
             :format="round.format"
@@ -49,7 +62,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { Issue } from '@recoverse/shared';
+import type { Issue, Round } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
 import Headline from '../components/Headline.vue';
@@ -67,6 +80,32 @@ const sharing = ref(false);
 const shareUrl = ref('');
 const copied = ref(false);
 const shareError = ref('');
+
+const editing = ref(false);
+const draftTitle = ref('');
+const draftRounds = ref<Round[]>([]);
+
+function cloneRounds(rounds: Round[]): Round[] {
+  return rounds.map((r) => ({
+    ...r,
+    answers: Object.fromEntries(Object.entries(r.answers).map(([name, a]) => [name, { ...a }])),
+  }));
+}
+
+function startEdit() {
+  draftTitle.value = props.issue.title;
+  draftRounds.value = cloneRounds(props.issue.rounds);
+  editing.value = true;
+}
+
+function cancelEdit() {
+  editing.value = false;
+}
+
+function saveEdit() {
+  shelf.update(props.issue.id, { title: draftTitle.value, rounds: draftRounds.value });
+  editing.value = false;
+}
 
 function shareLink(id: string): string {
   return `${window.location.origin}${window.location.pathname}?share=${id}`;
@@ -125,6 +164,25 @@ function onRemove() {
 }
 .empty {
   font-size: 14px;
+  color: var(--dim);
+}
+.pageTitleInput {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+}
+.editAnswers {
+  display: grid;
+  gap: 14px;
+}
+.editAnswer {
+  display: grid;
+  gap: 6px;
+}
+.editAnswerName {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
   color: var(--dim);
 }
 .shareBox {
