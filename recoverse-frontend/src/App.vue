@@ -5,7 +5,7 @@
   <Transition name="page" mode="out-in" :duration="{ enter: 300, leave: 160 }">
     <CoverView
       v-if="mode === 'cover'"
-      :key="mode"
+      key="view-cover"
       :issues="shelf.issues.value"
       :moment="moment"
       @navigate="onCoverNavigate"
@@ -15,7 +15,7 @@
 
     <LiveEntryView
       v-else-if="mode === 'create' || mode === 'join'"
-      :key="mode"
+      :key="`view-entry-${mode}`"
       :intent="mode"
       :prefill-code="mode === 'join' ? prefillCode : undefined"
       @back="toCover"
@@ -24,7 +24,7 @@
 
     <LiveSessionView
       v-else-if="mode === 'live'"
-      :key="mode"
+      key="view-live"
       :code="identity.identity.code"
       :me="identity.identity.name"
       :is-host="identity.identity.isHost"
@@ -32,9 +32,9 @@
       @exit="leaveSession"
     />
 
-    <SoloWriteView v-else-if="mode === 'solo'" :key="mode" @back="toCover" @published="toCover" />
+    <SoloWriteView v-else-if="mode === 'solo'" key="view-solo" @back="toCover" @published="toCover" />
 
-    <PaperImportView v-else-if="mode === 'paper'" :key="mode" @back="toCover" @published="toCover" />
+    <PaperImportView v-else-if="mode === 'paper'" key="view-paper" @back="toCover" @published="toCover" />
 
     <IssueDetailView
       v-else-if="mode === 'issue-detail' && activeIssue"
@@ -46,7 +46,7 @@
 
     <RediscoverView
       v-else-if="mode === 'rediscover'"
-      :key="mode"
+      key="view-rediscover"
       :groups="groups"
       :has-samples="hasSamples"
       :moment="moment"
@@ -70,9 +70,9 @@
       @start="leaveShared"
     />
 
-    <VocAdminView v-else-if="mode === 'voc-admin'" :key="mode" @back="toCover" />
+    <VocAdminView v-else-if="mode === 'voc-admin'" key="view-voc-admin" @back="toCover" />
 
-    <AppShell v-else key="loading">
+    <AppShell v-else key="view-loading">
       <p class="waiting">불러오는 중…</p>
     </AppShell>
   </Transition>
