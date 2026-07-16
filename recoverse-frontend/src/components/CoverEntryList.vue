@@ -21,13 +21,12 @@
 </template>
 
 <script setup lang="ts">
-type CoverTarget = 'create' | 'join' | 'solo' | 'paper' | 'rediscover';
+type CoverTarget = 'create' | 'join' | 'solo' | 'rediscover';
 
 const ENTRIES = [
   { target: 'create', eyebrow: 'NEW ISSUE', title: '새 호 발행하기', sub: '코드를 만들어 친구들을 초대해요', primary: true },
   { target: 'join', eyebrow: 'JOIN', title: '코드로 참여하기', sub: '각자 자기 폰으로 합류해요', primary: false },
   { target: 'solo', eyebrow: 'SOLO', title: '혼자 엮기', sub: '여행이든 한 달이든, 지금 나에게 질문을 던져요', primary: false },
-  { target: 'paper', eyebrow: 'BACK ISSUE', title: '종이 회고 옮기기', sub: '예전 기록을 지난 호로 복간해요', primary: false },
   { target: 'rediscover', eyebrow: 'REDISCOVER', title: '다시 발견', sub: '같은 질문에 답한, 다른 해의 나를 만나요', primary: false },
 ] as const satisfies readonly {
   readonly target: CoverTarget;
@@ -134,7 +133,47 @@ defineEmits<{ navigate: [CoverTarget] }>();
 
 @media (min-width: 1024px) {
   .entryWrap {
-    padding-left: 40px;
+    min-height: 0;
+    margin-bottom: 0;
+  }
+
+  .contentsLabel {
+    margin-bottom: clamp(4px, 0.9vh, 6px);
+  }
+
+  .entryBtn {
+    padding: clamp(11px, 1.8vh, 18px) 2px;
+  }
+
+  .entryBtn.primary {
+    padding: clamp(14px, 2vh, 20px) 16px;
+  }
+
+  .entryTitle {
+    font-size: clamp(16px, 2vh, 19px);
+  }
+
+  .entrySub {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 720px) {
+  .entryBtn {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .entryBtn.primary {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .entrySub {
+    -webkit-line-clamp: 1;
   }
 }
 </style>

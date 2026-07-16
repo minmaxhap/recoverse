@@ -216,15 +216,29 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
 }
 
 @media (min-width: 1024px) {
+  .shelfBlock {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .sectionHead {
+    margin-bottom: clamp(4px, 1vh, 8px);
+  }
+
   .issueList {
     display: none;
   }
 
   .spines {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     align-items: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    max-width: 100%;
+    max-height: 158px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 2px 10px;
     margin-top: 10px;
   }
 
@@ -233,8 +247,9 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
     writing-mode: vertical-rl;
     background: var(--paper-card);
     border: 1px solid var(--ink);
-    padding: 16px 8px 12px;
-    height: 150px;
+    padding: clamp(11px, 1.8vh, 16px) 8px clamp(9px, 1.4vh, 12px);
+    height: clamp(104px, 16vh, 142px);
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -260,12 +275,45 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
   .spineYear {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 15px;
+    font-size: clamp(13px, 1.6vh, 15px);
   }
 
   .spineTitle {
-    font-size: 12px;
+    font-size: clamp(11px, 1.3vh, 12px);
     font-weight: 700;
+    max-height: 92px;
+    overflow: hidden;
+  }
+
+  .emptyInvite {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    justify-items: start;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    padding: 12px 14px;
+  }
+
+  .ghostShelf {
+    margin-bottom: 0;
+  }
+
+  .ghostShelf i {
+    width: 14px;
+    height: 44px;
+  }
+
+  .ghostShelf i.tall {
+    height: 54px;
+  }
+
+  .inviteSub {
+    display: none;
+  }
+
+  .inviteCta {
+    margin-top: 0;
+    white-space: nowrap;
   }
 }
 </style>

@@ -12,7 +12,7 @@
     </button>
 
     <div v-if="groups.length === 0" class="stack">
-      <p class="empty">아직 책장이 비어 있어요. 세션을 하거나 종이 회고를 복간하면 여기서 이어져요.</p>
+      <p class="empty">아직 책장이 비어 있어요. 세션을 열거나 혼자 엮은 호를 꽂으면 여기서 이어져요.</p>
       <button class="ghost" @click="$emit('addSamples')">예시 지난 호 3권 꽂아보기</button>
     </div>
 

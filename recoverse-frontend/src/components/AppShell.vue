@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 // variant: 'read' = 읽는 화면(넓게, 데스크톱 펼침면 가능) / 'write' = 쓰는 화면(560px 원고지)
-withDefaults(defineProps<{ variant?: 'read' | 'write' }>(), { variant: 'read' });
+withDefaults(defineProps<{ variant?: 'read' | 'write' | 'cover' }>(), { variant: 'read' });
 </script>
 
 <style scoped>
@@ -28,9 +28,25 @@ withDefaults(defineProps<{ variant?: 'read' | 'write' }>(), { variant: 'read' })
     max-width: var(--col-desktop);
     padding: 40px 32px 72px;
   }
+  .col.cover {
+    max-width: var(--col-desktop);
+    height: 100vh;
+    height: 100dvh;
+    min-height: 640px;
+    padding: clamp(18px, 3vh, 34px) 32px clamp(18px, 3vh, 30px);
+    overflow: hidden;
+  }
   .col.write {
     max-width: var(--col-write);
     padding: 40px 24px 72px;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 720px) {
+  .col.cover {
+    min-height: 0;
+    padding-top: 16px;
+    padding-bottom: 16px;
   }
 }
 </style>

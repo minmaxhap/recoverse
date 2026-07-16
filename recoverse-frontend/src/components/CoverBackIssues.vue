@@ -11,3 +11,9 @@ import CoverShelf from './CoverShelf.vue';
 defineProps<{ readonly issues: readonly Issue[] }>();
 defineEmits<{ navigate: ['create']; open: [string] }>();
 </script>
+
+<style scoped>
+.backissues {
+  min-height: 0;
+}
+</style>

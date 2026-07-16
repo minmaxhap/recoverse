@@ -34,7 +34,6 @@
 
     <SoloWriteView v-else-if="mode === 'solo'" key="view-solo" @back="toCover" @published="toCover" />
 
-    <PaperImportView v-else-if="mode === 'paper'" key="view-paper" @back="toCover" @published="toCover" />
 
     <IssueDetailView
       v-else-if="mode === 'issue-detail' && activeIssue"
@@ -84,7 +83,6 @@ import CoverView from './views/CoverView.vue';
 import LiveEntryView from './views/live/LiveEntryView.vue';
 import LiveSessionView from './views/live/LiveSessionView.vue';
 import SoloWriteView from './views/SoloWriteView.vue';
-import PaperImportView from './views/PaperImportView.vue';
 import IssueDetailView from './views/IssueDetailView.vue';
 import RediscoverView from './views/RediscoverView.vue';
 import RediscoverDetailView from './views/RediscoverDetailView.vue';
@@ -102,14 +100,13 @@ type Mode =
   | 'join'
   | 'live'
   | 'solo'
-  | 'paper'
   | 'issue-detail'
   | 'rediscover'
   | 'rediscover-detail'
   | 'shared'
   | 'voc-admin';
 
-type CoverTarget = 'create' | 'join' | 'solo' | 'paper' | 'rediscover';
+type CoverTarget = 'create' | 'join' | 'solo' | 'rediscover';
 
 type AppHistoryState = {
   readonly recoverse: true;
@@ -125,7 +122,6 @@ const MODES = [
   'join',
   'live',
   'solo',
-  'paper',
   'issue-detail',
   'rediscover',
   'rediscover-detail',

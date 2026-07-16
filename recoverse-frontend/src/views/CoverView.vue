@@ -1,37 +1,46 @@
 <template>
-  <AppShell variant="read">
-    <div class="coverTools noPrint">
-      <SettingsPanel :issues="issues" />
-    </div>
+  <AppShell variant="cover">
+    <div class="coverHome">
+      <div class="coverTop">
+        <div class="coverTools noPrint">
+          <SettingsPanel :issues="issues" />
+        </div>
 
-    <header class="masthead">
-      <div class="rule thick" />
-      <h1 class="brand">RECOVERSE</h1>
-      <div class="deck">
-        <span>질문과 답으로 만드는 연말호</span>
-        <span>EST. 2016</span>
+        <header class="masthead">
+          <div class="rule thick" />
+          <h1 class="brand">RECOVERSE</h1>
+          <div class="deck">
+            <span>질문과 답으로 만드는 연말호</span>
+            <span>EST. 2016</span>
+          </div>
+          <div class="rule" />
+        </header>
       </div>
-      <div class="rule" />
-    </header>
 
-    <button v-if="moment" class="momentCard" @click="$emit('open-group', moment.groupKey)">
-      <span class="eyebrow gold">{{ momentLabel }}</span>
-      <span class="momentQ">{{ moment.question }}</span>
-      <span class="momentA">“{{ momentTeaser }}”</span>
-      <span class="momentMeta">{{ moment.year }} · {{ moment.issueTitle }} →</span>
-    </button>
+      <div class="coverSpread">
+        <section class="coverLead" aria-label="Recoverse 소개">
+          <p class="coverline">
+            한 해에 한 번,<br />
+            우리는 서로에게<br />
+            <em>질문</em>이 된다.
+          </p>
 
-    <div class="coverSplit">
-      <p class="coverline">
-        한 해에 한 번,<br />
-        우리는 서로에게<br />
-        <em>질문</em>이 된다.
-      </p>
+          <div class="momentSlot">
+            <button v-if="moment" class="momentCard" @click="$emit('open-group', moment.groupKey)">
+              <span class="eyebrow gold">{{ momentLabel }}</span>
+              <span class="momentQ">{{ moment.question }}</span>
+              <span class="momentA">“{{ momentTeaser }}”</span>
+              <span class="momentMeta">{{ moment.year }} · {{ moment.issueTitle }} →</span>
+            </button>
+          </div>
+        </section>
 
-      <CoverEntryList @navigate="$emit('navigate', $event)" />
+        <aside class="coverDesk" aria-label="홈 목차와 지난 호">
+          <CoverEntryList @navigate="$emit('navigate', $event)" />
+          <CoverBackIssues :issues="issues" @navigate="$emit('navigate', $event)" @open="$emit('open', $event)" />
+        </aside>
+      </div>
     </div>
-
-    <CoverBackIssues :issues="issues" @navigate="$emit('navigate', $event)" @open="$emit('open', $event)" />
   </AppShell>
 </template>
 
@@ -46,7 +55,7 @@ import type { RediscoveryMoment } from '../lib/rediscover';
 
 const props = defineProps<{ readonly issues: readonly Issue[]; readonly moment?: RediscoveryMoment | null }>();
 defineEmits<{
-  navigate: ['create' | 'join' | 'solo' | 'paper' | 'rediscover'];
+  navigate: ['create' | 'join' | 'solo' | 'rediscover'];
   open: [string];
   'open-group': [string];
 }>();
@@ -67,6 +76,10 @@ const momentTeaser = computed(() => {
 </script>
 
 <style scoped>
+.coverHome {
+  min-height: 100%;
+}
+
 .coverTools {
   display: flex;
   justify-content: flex-end;
@@ -101,6 +114,10 @@ const momentTeaser = computed(() => {
   cursor: pointer;
   color: inherit;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.momentSlot:empty {
+  display: none;
 }
 .momentCard:hover {
   border-color: var(--vermilion);
@@ -145,21 +162,89 @@ const momentTeaser = computed(() => {
 }
 
 @media (min-width: 1024px) {
+  .coverHome {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: clamp(14px, 2.2vh, 24px);
+    overflow: hidden;
+  }
+  .coverTools {
+    margin-bottom: clamp(6px, 1.2vh, 12px);
+  }
+  .masthead .brand {
+    font-size: clamp(30px, 4.3vh, 40px);
+    margin: clamp(6px, 1.2vh, 10px) 0 4px;
+  }
   .masthead .deck {
     display: flex;
     justify-content: space-between;
     gap: 12px;
+    padding-bottom: clamp(6px, 1.2vh, 10px);
   }
-  .coverSplit {
+  .coverSpread {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    align-items: start;
+    grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
+    gap: 32px;
+    min-height: 0;
+    overflow: hidden;
   }
-  .coverSplit .coverline {
-    padding-right: 40px;
+  .coverLead {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    align-items: center;
+    padding-right: 32px;
     border-right: 1px solid var(--hairline);
-    font-size: 34px;
+  }
+  .coverDesk {
+    min-height: 0;
+    display: grid;
+    grid-template-rows: minmax(0, auto) auto;
+    align-content: stretch;
+    gap: clamp(12px, 2vh, 18px);
+    overflow: hidden;
+  }
+  .coverline {
+    font-size: clamp(27px, 4vh, 34px);
+    line-height: 1.38;
+    margin: 0;
+  }
+  .momentCard {
+    margin: clamp(12px, 2vh, 18px) 0 0;
+    padding: clamp(11px, 1.7vh, 16px) 14px;
+  }
+  .momentSlot:empty {
+    display: block;
+  }
+  .momentQ {
+    font-size: clamp(16px, 2vh, 19px);
+    line-height: 1.42;
+  }
+  .momentA {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 720px) {
+  .coverHome {
+    gap: 10px;
+  }
+  .coverSpread {
+    gap: 24px;
+  }
+  .coverLead {
+    padding-right: 24px;
+  }
+  .momentCard {
+    gap: 3px;
+    margin-top: 10px;
+  }
+  .momentA {
+    -webkit-line-clamp: 1;
   }
 }
 </style>
