@@ -32,7 +32,32 @@
       </label>
     </section>
 
-    <RoundEditor :participants="participants" :rounds="rounds" :kind="kind" @update:rounds="rounds = $event" />
+    <section v-if="shelf.issues.value.length" class="sourceIssue" aria-labelledby="sourceIssueTitle">
+      <div class="sectionHead">
+        <span class="eyebrow">FROM THE SHELF</span>
+        <h2 id="sourceIssueTitle">지난 호 질문 이어쓰기</h2>
+      </div>
+      <label class="fieldGroup">
+        <span class="fieldLabel">질문을 가져올 호</span>
+        <select v-model="sourceIssueId" class="field selectField">
+          <option value="">새 질문으로 시작</option>
+          <option v-for="issue in shelf.issues.value" :key="issue.id" :value="issue.id">
+            {{ issue.title }} · 질문 {{ issue.rounds.length }}개
+          </option>
+        </select>
+      </label>
+      <p v-if="sourceIssue" class="helper">
+        {{ sourceIssue.title }}의 질문을 순서대로 불러와, 지금의 답으로 새 호를 엮어요.
+      </p>
+    </section>
+
+    <RoundEditor
+      :participants="participants"
+      :rounds="rounds"
+      :kind="kind"
+      :template-rounds="templateRounds"
+      @update:rounds="rounds = $event"
+    />
 
     <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
     <p class="helper publishHelp">{{ publishHelp }}</p>
@@ -70,6 +95,7 @@ const name = ref('나');
 const rounds = ref<Round[]>([]);
 const saveError = ref('');
 const publishing = ref(false);
+const sourceIssueId = ref('');
 
 const date = computed(() => kstTodayISO());
 const defaultIssueTitle = computed(() => defaultTitle(kind.value, date.value));
@@ -77,6 +103,12 @@ const issueTitle = computed(() => title.value.trim() || defaultIssueTitle.value)
 const participants = computed(() => [name.value.trim() || '나']);
 const canPublish = computed(() => rounds.value.length > 0);
 const kindLabelText = computed(() => KIND_LABELS[kind.value]);
+const sourceIssue = computed(() => shelf.issues.value.find((issue) => issue.id === sourceIssueId.value));
+const templateRounds = computed(() =>
+  (sourceIssue.value?.rounds ?? [])
+    .filter((round) => round.question.trim())
+    .map((round) => (round.format ? { question: round.question, format: round.format } : { question: round.question })),
+);
 const publishHelp = computed(() =>
   canPublish.value ? '지금 발행하면 이 호가 내 책장에 저장돼요.' : '질문 하나와 답 하나를 목차에 실으면 발행할 수 있어요.',
 );
@@ -116,13 +148,21 @@ function finishPublish(): void {
   margin-bottom: 0;
 }
 
-.issueSetup,
-.publishPreview {
+.issueSetup {
   display: grid;
   gap: 14px;
   padding: 14px;
   border: 1px solid var(--ink);
   background: var(--paper-card);
+}
+
+.sourceIssue {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px;
+  border-top: 3px solid var(--ink);
+  border-bottom: 1px solid var(--hairline);
 }
 
 .sectionHead {
@@ -135,45 +175,6 @@ function finishPublish(): void {
   font-family: var(--font-display);
   font-size: 20px;
   line-height: 1.35;
-}
-
-.fieldPair {
-  display: grid;
-  gap: 12px;
-}
-
-.publishPreview {
-  margin-top: 16px;
-}
-
-.previewList {
-  display: grid;
-  gap: 0;
-  margin: 0;
-  border-top: 1px solid var(--hairline);
-}
-
-.previewList div {
-  display: grid;
-  grid-template-columns: 58px minmax(0, 1fr);
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--hairline);
-}
-
-.previewList dt {
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--dim);
-}
-
-.previewList dd {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink);
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 
 .publishHelp {
@@ -196,11 +197,5 @@ function finishPublish(): void {
 
 .overlayTitle {
   margin: 0;
-}
-
-@media (min-width: 720px) {
-  .fieldPair {
-    grid-template-columns: 1.2fr 0.8fr;
-  }
 }
 </style>

@@ -1,6 +1,13 @@
 <template>
   <div class="roundEditor">
-    <RoundContentsList :rounds="rounds" :participants="participants" editable @move="moveRound" @remove="removeRound" />
+    <RoundContentsList
+      :rounds="rounds"
+      :participants="participants"
+      editable
+      @edit="editRound"
+      @move="moveRound"
+      @remove="removeRound"
+    />
 
     <section class="qaBox" aria-labelledby="roundEditorTitle">
       <div class="boxHead">
@@ -10,6 +17,17 @@
         </div>
         <span class="draftState" aria-live="polite">{{ draftState }}</span>
       </div>
+
+      <label v-if="remainingTemplateRounds.length" class="fieldGroup">
+        <span class="fieldLabel">지난 호의 질문</span>
+        <select class="field selectField" :value="selectedTemplateQuestion" @change="chooseTemplateQuestion">
+          <option value="">질문을 고르세요</option>
+          <option v-for="round in remainingTemplateRounds" :key="round.question" :value="round.question">
+            {{ round.question }}
+          </option>
+        </select>
+        <span class="helper">고르면 질문과 포맷을 그대로 가져와요.</span>
+      </label>
 
       <label class="fieldGroup">
         <span class="fieldLabel">질문</span>
@@ -54,7 +72,12 @@ import { useDraft } from '../composables/useDraft';
 import { colorAt } from '../lib/palette';
 
 const props = withDefaults(
-  defineProps<{ participants: string[]; rounds: Round[]; kind?: Kind }>(),
+  defineProps<{
+    participants: string[];
+    rounds: Round[];
+    kind?: Kind;
+    templateRounds?: readonly Pick<Round, 'question' | 'format'>[];
+  }>(),
   { kind: 'free' },
 );
 const emit = defineEmits<{ 'update:rounds': [Round[]] }>();
@@ -62,7 +85,11 @@ const emit = defineEmits<{ 'update:rounds': [Round[]] }>();
 const q = ref('');
 const formatId = ref('');
 const answers = ref<Record<string, string>>({});
+const selectedTemplateQuestion = ref('');
 const pastQuestions = computed(() => props.rounds.map((round) => round.question));
+const remainingTemplateRounds = computed(() =>
+  (props.templateRounds ?? []).filter((round) => !pastQuestions.value.includes(round.question)),
+);
 const hasDraftText = computed(
   () => q.value.trim().length > 0 || Object.values(answers.value).some((answer) => answer.trim().length > 0),
 );
@@ -129,6 +156,15 @@ function selectFormat(id: string): void {
   if (format) q.value = format.prompt;
 }
 
+function chooseTemplateQuestion(event: Event): void {
+  const question = (event.target as HTMLSelectElement).value;
+  selectedTemplateQuestion.value = question;
+  const template = remainingTemplateRounds.value.find((round) => round.question === question);
+  if (!template) return;
+  q.value = template.question;
+  formatId.value = template.format ?? '';
+}
+
 function answerHint(name: string): string {
   const format = getFormat(formatId.value);
   return format ? format.hint : `${name}의 답을 거칠게 적어도 괜찮아요`;
@@ -155,6 +191,7 @@ function addRound(): void {
   q.value = '';
   formatId.value = '';
   answers.value = {};
+  selectedTemplateQuestion.value = '';
   applyingDraft = false;
 }
 
@@ -167,6 +204,13 @@ function moveRound(index: number, direction: -1 | 1): void {
   if (!current || !swapped) return;
   next[index] = swapped;
   next[target] = current;
+  emit('update:rounds', next);
+}
+
+function editRound(index: number, round: Round): void {
+  const next = [...props.rounds];
+  if (!next[index]) return;
+  next[index] = round;
   emit('update:rounds', next);
 }
 

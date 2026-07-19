@@ -5,16 +5,31 @@
       <strong id="contentsTitle">{{ rounds.length }}개 질문을 실었어요</strong>
     </div>
     <ol class="contentsList">
-      <li v-for="(round, i) in rounds" :key="`${round.question}-${i}`">
+      <li v-for="(round, i) in rounds" :key="`${round.question}-${i}`" :class="{ editing: editingIndex === i }">
         <span class="pageNo">{{ String(i + 1).padStart(2, '0') }}</span>
-        <span class="contentText">
+        <span v-if="editingIndex !== i" class="contentText">
           <b>{{ round.question }}</b>
           <small>{{ answerPreview(round) }}</small>
         </span>
-        <span v-if="editable" class="contentsActions">
+        <span v-else class="editFields">
+          <input v-model="editQuestion" class="compactField" aria-label="질문" />
+          <textarea
+            v-for="name in participants"
+            :key="name"
+            v-model="editAnswers[name]"
+            class="compactField compactArea"
+            :aria-label="`${name}의 답`"
+          />
+        </span>
+        <span v-if="editable && editingIndex !== i" class="contentsActions">
+          <button type="button" aria-label="질문과 답 수정" @click="startEdit(i, round)"><Pencil :size="14" /></button>
           <button type="button" :disabled="i === 0" aria-label="질문을 위로" @click="$emit('move', i, -1)"><ArrowUp :size="14" /></button>
           <button type="button" :disabled="i === rounds.length - 1" aria-label="질문을 아래로" @click="$emit('move', i, 1)"><ArrowDown :size="14" /></button>
           <button type="button" aria-label="질문 삭제" @click="$emit('remove', i)"><Trash2 :size="14" /></button>
+        </span>
+        <span v-else-if="editable" class="contentsActions">
+          <button type="button" :disabled="!editReady" aria-label="수정 저장" @click="saveEdit(i)"><Check :size="14" /></button>
+          <button type="button" aria-label="수정 취소" @click="cancelEdit"><X :size="14" /></button>
         </span>
       </li>
     </ol>
@@ -22,7 +37,8 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, Trash2 } from 'lucide-vue-next';
+import { ArrowDown, ArrowUp, Check, Pencil, Trash2, X } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 import type { Round } from '@recoverse/shared';
 
 const props = defineProps<{
@@ -30,13 +46,44 @@ const props = defineProps<{
   participants: string[];
   editable?: boolean;
 }>();
-defineEmits<{ move: [number, -1 | 1]; remove: [number] }>();
+const emit = defineEmits<{ move: [number, -1 | 1]; remove: [number]; edit: [number, Round] }>();
+
+const editingIndex = ref<number | null>(null);
+const editQuestion = ref('');
+const editAnswers = ref<Record<string, string>>({});
+const editReady = computed(
+  () => editQuestion.value.trim().length > 0 && props.participants.every((name) => (editAnswers.value[name] ?? '').trim().length > 0),
+);
 
 function answerPreview(round: Round): string {
   const first = props.participants[0] ?? Object.keys(round.answers)[0];
   const text = first ? round.answers[first]?.text.trim() : '';
   if (!text) return '답이 실렸어요.';
   return text.length > 42 ? `${text.slice(0, 42)}...` : text;
+}
+
+function startEdit(index: number, round: Round): void {
+  editingIndex.value = index;
+  editQuestion.value = round.question;
+  editAnswers.value = Object.fromEntries(props.participants.map((name) => [name, round.answers[name]?.text ?? '']));
+}
+
+function cancelEdit(): void {
+  editingIndex.value = null;
+  editQuestion.value = '';
+  editAnswers.value = {};
+}
+
+function saveEdit(index: number): void {
+  const current = props.rounds[index];
+  if (!current || !editReady.value) return;
+
+  const answers: Round['answers'] = { ...current.answers };
+  for (const name of props.participants) {
+    answers[name] = { ...answers[name], text: (editAnswers.value[name] ?? '').trim() };
+  }
+  emit('edit', index, { ...current, question: editQuestion.value.trim(), answers });
+  cancelEdit();
 }
 </script>
 
@@ -77,6 +124,9 @@ function answerPreview(round: Round): string {
   padding: 11px 0;
   border-bottom: 1px solid var(--hairline);
 }
+.contentsList li.editing {
+  align-items: start;
+}
 .contentsActions { display: flex; align-items: start; gap: 3px; }
 .contentsActions button { display: grid; place-items: center; width: 25px; height: 25px; padding: 0; border: 1px solid var(--hairline); background: var(--paper-card); color: var(--dim-strong); cursor: pointer; }
 .contentsActions button:hover:not(:disabled) { color: var(--vermilion); border-color: var(--vermilion); }
@@ -106,6 +156,28 @@ function answerPreview(round: Round): string {
   font-size: 12px;
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+
+.editFields {
+  display: grid;
+  gap: 7px;
+}
+
+.compactField {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--ink);
+  background: var(--paper-card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.compactArea {
+  min-height: 64px;
+  resize: vertical;
 }
 
 @media (min-width: 520px) {

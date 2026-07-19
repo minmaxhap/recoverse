@@ -10,7 +10,14 @@
       </div></div>
       <input v-if="editing" v-model="draftTitle" class="field pageTitleInput" type="text" aria-label="호 제목" />
       <h1 v-else class="pageTitle">{{ issue.title }}</h1>
-      <div class="rule" /><p class="fineprint">{{ issue.participants.join(' · ') }}</p>
+      <div class="rule" />
+      <div v-if="editing" class="participantEditor">
+        <span class="fieldLabel">이 호에 실릴 이름</span>
+        <div class="participantInputs">
+          <input v-for="(_, index) in draftParticipants" :key="issue.participants[index]" v-model="draftParticipants[index]" class="field participantInput" :aria-label="`참여자 ${index + 1} 이름`" />
+        </div>
+      </div>
+      <p v-else class="fineprint">{{ issue.participants.join(' · ') }}</p>
     </header>
 
     <p v-if="editError" class="error noPrint" role="alert">{{ editError }}</p>
@@ -31,7 +38,7 @@
         </template>
         <template #right>
           <div v-if="editing" class="editAnswers">
-            <label v-for="name in issue.participants.filter((person) => draftRounds[i]?.answers[person])" :key="name" class="editAnswer"><span class="editAnswerName">{{ name }}</span><textarea v-model="draftRounds[i].answers[name].text" class="field area short" /></label>
+            <label v-for="person in draftAnswerPeople(draftRounds[i])" :key="person.key" class="editAnswer"><span class="editAnswerName">{{ person.name }}</span><textarea v-model="draftRounds[i].answers[person.key].text" class="field area short editorAnswerArea" @input="resizeTextarea" /></label>
           </div>
           <RoundAnswers v-else :participants="issue.participants" :answers="round.answers" :format="round.format" still />
         </template>
@@ -45,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { ArrowDown, ArrowUp, Pencil, Printer, Share2, Trash2, X } from 'lucide-vue-next';
 import type { Issue, Round } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue'; import BackHeader from '../components/BackHeader.vue'; import Headline from '../components/Headline.vue'; import RoundAnswers from '../components/RoundAnswers.vue'; import SpreadLayout from '../components/SpreadLayout.vue';
@@ -53,16 +60,21 @@ import { useShelf } from '../composables/useShelf'; import { api, ApiError } fro
 
 const props = defineProps<{ issue: Issue }>();
 const emit = defineEmits<{ back: []; removed: [] }>();
-const shelf = useShelf(); const sharing = ref(false); const shareUrl = ref(''); const copied = ref(false); const shareError = ref(''); const editing = ref(false); const draftTitle = ref(''); const draftRounds = ref<Round[]>([]); const editError = ref(''); const reshareNotice = ref(false);
+const shelf = useShelf(); const sharing = ref(false); const shareUrl = ref(''); const copied = ref(false); const shareError = ref(''); const editing = ref(false); const draftTitle = ref(''); const draftParticipants = ref<string[]>([]); const draftRounds = ref<Round[]>([]); const editError = ref(''); const reshareNotice = ref(false);
 const displayedRounds = computed(() => editing.value ? draftRounds.value : props.issue.rounds);
 
 function cloneRounds(rounds: readonly Round[]): Round[] { return rounds.map((round) => ({ ...round, answers: Object.fromEntries(Object.entries(round.answers).map(([name, answer]) => [name, { ...answer }])) })); }
 function roundKey(round: Round, index: number): string { return `${round.question}-${round.asker}-${index}`; }
-function startEdit(): void { draftTitle.value = props.issue.title; draftRounds.value = cloneRounds(props.issue.rounds); editError.value = ''; editing.value = true; }
+function draftAnswerPeople(round: Round | undefined): { key: string; name: string }[] { if (!round) return []; return props.issue.participants.flatMap((key, index) => round.answers[key] ? [{ key, name: draftParticipants.value[index] ?? key }] : []); }
+function growTextarea(textarea: HTMLTextAreaElement): void { textarea.style.height = 'auto'; textarea.style.height = `${textarea.scrollHeight}px`; }
+function resizeTextarea(event: Event): void { growTextarea(event.target as HTMLTextAreaElement); }
+function resizeAnswerAreas(): void { nextTick(() => document.querySelectorAll<HTMLTextAreaElement>('.editorAnswerArea').forEach(growTextarea)); }
+function startEdit(): void { draftTitle.value = props.issue.title; draftParticipants.value = [...props.issue.participants]; draftRounds.value = cloneRounds(props.issue.rounds); editError.value = ''; editing.value = true; resizeAnswerAreas(); }
 function cancelEdit(): void { editing.value = false; editError.value = ''; }
 function moveRound(index: number, direction: -1 | 1): void { const next = index + direction; if (next < 0 || next >= draftRounds.value.length) return; const rounds = [...draftRounds.value]; const current = rounds[index]; const target = rounds[next]; if (!current || !target) return; rounds[index] = target; rounds[next] = current; draftRounds.value = rounds; }
 function removeRound(index: number): void { draftRounds.value = draftRounds.value.filter((_, itemIndex) => itemIndex !== index); }
-function saveEdit(): void { const title = draftTitle.value.trim(); if (!title) { editError.value = '호 제목을 적어 주세요.'; return; } const changed = title !== props.issue.title || JSON.stringify(draftRounds.value) !== JSON.stringify(props.issue.rounds); const patch: Partial<Issue> = { title, rounds: cloneRounds(draftRounds.value) }; if (changed && props.issue.shareId) patch.shareId = undefined; if (!shelf.update(props.issue.id, patch)) { editError.value = '변경을 저장하지 못했어요. 책장은 그대로 두었어요.'; return; } reshareNotice.value = Boolean(changed && props.issue.shareId); shareUrl.value = ''; editing.value = false; }
+function renameParticipants(rounds: readonly Round[], names: readonly string[]): Round[] { const replacements = new Map(props.issue.participants.map((name, index) => [name, names[index] ?? name])); return cloneRounds(rounds).map((round) => ({ ...round, asker: replacements.get(round.asker) ?? round.asker, answers: Object.fromEntries(Object.entries(round.answers).map(([name, answer]) => [replacements.get(name) ?? name, answer])) })); }
+function saveEdit(): void { const title = draftTitle.value.trim(); const participants = draftParticipants.value.map((name) => name.trim()); if (!title) { editError.value = '호 제목을 적어 주세요.'; return; } if (participants.some((name) => !name)) { editError.value = '모든 이름을 적어 주세요.'; return; } if (new Set(participants).size !== participants.length) { editError.value = '이름은 서로 다르게 적어 주세요.'; return; } const rounds = renameParticipants(draftRounds.value, participants); const changed = title !== props.issue.title || JSON.stringify(participants) !== JSON.stringify(props.issue.participants) || JSON.stringify(rounds) !== JSON.stringify(props.issue.rounds); const patch: Partial<Issue> = { title, participants, rounds }; if (changed && props.issue.shareId) patch.shareId = undefined; if (!shelf.update(props.issue.id, patch)) { editError.value = '변경을 저장하지 못했어요. 책장은 그대로 두었어요.'; return; } reshareNotice.value = Boolean(changed && props.issue.shareId); shareUrl.value = ''; editing.value = false; }
 function shareLink(id: string): string { return `${window.location.origin}${window.location.pathname}?share=${id}`; }
 function printIssue(): void { window.print(); }
 async function onShare(): Promise<void> { if (sharing.value) return; shareError.value = ''; try { let id = props.issue.shareId; if (!id) { sharing.value = true; const response = await api.createShare(props.issue); id = response.shareId; if (!shelf.update(props.issue.id, { shareId: id })) throw new Error('share-save-failed'); } shareUrl.value = shareLink(id); try { await navigator.clipboard.writeText(shareUrl.value); copied.value = true; } catch { copied.value = false; } } catch (error) { shareError.value = error instanceof ApiError ? error.message : '공유 링크를 만들지 못했어요.'; } finally { sharing.value = false; } }
@@ -70,5 +82,5 @@ function onRemove(): void { if (!window.confirm('이 호를 책장에서 비울�
 </script>
 
 <style scoped>
-.issueHead{display:grid;gap:8px;margin:8px 0 26px}.issueKicker{display:flex;align-items:center;justify-content:space-between;gap:12px}.issueToolbar,.roundActions,.editFooter{display:flex;gap:7px;align-items:center}.toolButton,.iconButton{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 10px;background:var(--paper-card);border:1px solid var(--ink);color:var(--ink);font:700 12px var(--font-ui);cursor:pointer}.toolButton:hover,.iconButton:hover:not(:disabled){color:var(--vermilion);border-color:var(--vermilion)}.dangerTool:hover{background:var(--vermilion);color:var(--vermilion-ink)}.iconButton{width:36px;padding:0}.iconButton.danger:hover{background:var(--vermilion);color:var(--vermilion-ink)}.archiveRound{margin-bottom:34px}.roundEditHead{display:grid;gap:10px}.roundActions{justify-content:flex-end}.editAnswers{display:grid;gap:14px}.editAnswer{display:grid;gap:6px}.editAnswerName{font-size:12px;font-weight:800;letter-spacing:.04em;color:var(--dim)}.pageTitleInput{font-family:var(--font-display);font-size:28px;font-weight:700}.editFooter{justify-content:flex-end;margin:0 0 26px}.compactAction{width:auto;min-width:100px;min-height:44px;padding:10px 14px;font-size:13px}.empty{font-size:14px;color:var(--dim)}.shareBox{display:grid;gap:8px;margin:0 0 28px}.shareUrl{margin:0;padding:12px;border:1px solid var(--hairline);background:var(--paper-card);font-size:13px;line-height:1.5;word-break:break-all}@media(max-width:540px){.issueToolbar{width:100%;justify-content:flex-end;flex-wrap:wrap}.toolButton span{display:none}.toolButton{width:40px;padding:0}.issueKicker{align-items:flex-start}.editFooter{display:grid;grid-template-columns:1fr 1fr}.compactAction{width:100%}}
+.issueHead{display:grid;gap:8px;margin:8px 0 26px}.issueKicker{display:flex;align-items:center;justify-content:space-between;gap:12px}.issueToolbar,.roundActions,.editFooter{display:flex;gap:7px;align-items:center}.toolButton,.iconButton{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 10px;background:var(--paper-card);border:1px solid var(--ink);color:var(--ink);font:700 12px var(--font-ui);cursor:pointer}.toolButton:hover,.iconButton:hover:not(:disabled){color:var(--vermilion);border-color:var(--vermilion)}.dangerTool:hover{background:var(--vermilion);color:var(--vermilion-ink)}.iconButton{width:36px;padding:0}.iconButton.danger:hover{background:var(--vermilion);color:var(--vermilion-ink)}.archiveRound{margin-bottom:34px}.roundEditHead{display:grid;gap:10px}.roundActions{justify-content:flex-end}.participantEditor,.participantInputs,.editAnswers{display:grid;gap:10px}.participantInputs{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}.participantInput{min-width:0}.editAnswers{gap:14px}.editAnswer{display:grid;gap:6px}.editAnswerName{font-size:12px;font-weight:800;letter-spacing:.04em;color:var(--dim)}.editorAnswerArea{min-height:96px;overflow-y:hidden;resize:none}.pageTitleInput{font-family:var(--font-display);font-size:28px;font-weight:700}.editFooter{justify-content:flex-end;margin:0 0 26px}.compactAction{width:auto;min-width:100px;min-height:44px;padding:10px 14px;font-size:13px}.empty{font-size:14px;color:var(--dim)}.shareBox{display:grid;gap:8px;margin:0 0 28px}.shareUrl{margin:0;padding:12px;border:1px solid var(--hairline);background:var(--paper-card);font-size:13px;line-height:1.5;word-break:break-all}@media(max-width:540px){.issueToolbar{width:100%;justify-content:flex-end;flex-wrap:wrap}.toolButton span{display:none}.toolButton{width:40px;padding:0}.issueKicker{align-items:flex-start}.editFooter{display:grid;grid-template-columns:1fr 1fr}.compactAction{width:100%}}
 </style>
