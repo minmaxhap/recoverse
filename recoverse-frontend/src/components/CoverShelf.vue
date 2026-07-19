@@ -61,7 +61,7 @@ function spineLabel(issue: Issue): string {
   const year = issue.date.slice(0, 4);
   const label = KIND_LABELS[issue.kind];
   if (title && !title.includes(year) && title !== label) return title;
-  return title.replace(new RegExp(`^${year}\\s*`), '') || label;
+  return title.replace(new RegExp(`^${year}(?:년)?\\s*`), '') || label;
 }
 </script>
 
