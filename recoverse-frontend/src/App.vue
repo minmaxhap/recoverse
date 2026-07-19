@@ -201,6 +201,14 @@ function isAppHistoryState(value: unknown): value is AppHistoryState {
   );
 }
 
+function canRestoreHistoryState(next: AppHistoryState): boolean {
+  if (next.mode === 'issue-detail') return next.activeIssueId !== null && shelf.get(next.activeIssueId) !== undefined;
+  if (next.mode === 'rediscover-detail') return next.activeGroupKey !== null && groups.value.some((group) => group.key === next.activeGroupKey);
+  if (next.mode === 'shared') return next.sharedId !== null;
+  if (next.mode === 'live') return Boolean(identity.identity.code && identity.identity.name);
+  return true;
+}
+
 function currentHistoryState(): AppHistoryState {
   return {
     recoverse: true,
@@ -226,6 +234,15 @@ function restoreHistoryState(next: AppHistoryState) {
   activeGroupKey.value = next.activeGroupKey;
   sharedId.value = next.sharedId;
 }
+
+function restoreInitialHistoryState(): void {
+  if (shareParam || joinParam || adminParam === 'voc') return;
+  const next = window.history.state;
+  if (!isAppHistoryState(next) || !canRestoreHistoryState(next)) return;
+  restoreHistoryState(next);
+}
+
+restoreInitialHistoryState();
 
 function onPopState(event: PopStateEvent) {
   if (isAppHistoryState(event.state)) {
