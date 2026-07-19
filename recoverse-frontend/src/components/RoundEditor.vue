@@ -11,31 +11,6 @@
         <span class="draftState" aria-live="polite">{{ draftState }}</span>
       </div>
 
-      <div class="formatChips" role="radiogroup" aria-label="회고 포맷">
-        <button
-          type="button"
-          role="radio"
-          :aria-checked="formatId === ''"
-          class="fchip"
-          :class="{ active: formatId === '' }"
-          @click="selectFormat('')"
-        >
-          직접 쓰기
-        </button>
-        <button
-          v-for="format in FORMATS"
-          :key="format.id"
-          type="button"
-          role="radio"
-          :aria-checked="formatId === format.id"
-          class="fchip"
-          :class="{ active: formatId === format.id }"
-          @click="selectFormat(format.id)"
-        >
-          {{ format.label }}
-        </button>
-      </div>
-
       <label class="fieldGroup">
         <span class="fieldLabel">질문</span>
         <input
@@ -74,7 +49,7 @@ import type { Kind, Round } from '@recoverse/shared';
 import ParticipantDot from './ParticipantDot.vue';
 import QuestionSuggest from './QuestionSuggest.vue';
 import RoundContentsList from './RoundContentsList.vue';
-import { FORMATS, getFormat } from '../data/formats';
+import { getFormat } from '../data/formats';
 import { useDraft } from '../composables/useDraft';
 import { colorAt } from '../lib/palette';
 

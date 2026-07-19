@@ -22,8 +22,7 @@
         @click="$emit('open', issue.id)"
       >
         <span class="spineKind" :style="{ background: kindColor(issue.kind) }" aria-hidden="true" />
-        <span class="spineYear">{{ issue.date.slice(0, 4) }}</span>
-        <span class="spineTitle">{{ issue.title }}</span>
+        <span class="spineLabel">{{ spineLabel(issue) }}</span>
       </button>
     </div>
 
@@ -56,6 +55,14 @@ import { kindColor } from '../lib/palette';
 
 defineProps<{ readonly issues: readonly Issue[] }>();
 defineEmits<{ navigate: ['create']; open: [string] }>();
+
+function spineLabel(issue: Issue): string {
+  const title = issue.title.trim();
+  const year = issue.date.slice(0, 4);
+  const label = KIND_LABELS[issue.kind];
+  if (title && !title.includes(year) && title !== label) return title;
+  return title.replace(new RegExp(`^${year}\\s*`), '') || label;
+}
 </script>
 
 <style scoped>
@@ -272,16 +279,11 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
     border-color: var(--vermilion);
   }
 
-  .spineYear {
+  .spineLabel {
     font-family: var(--font-display);
+    font-size: clamp(12px, 1.5vh, 15px);
     font-weight: 700;
-    font-size: clamp(13px, 1.6vh, 15px);
-  }
-
-  .spineTitle {
-    font-size: clamp(11px, 1.3vh, 12px);
-    font-weight: 700;
-    max-height: 92px;
+    max-height: 112px;
     overflow: hidden;
   }
 

@@ -1,28 +1,20 @@
 <template>
   <div class="archiveActions">
-    <template v-if="mode === 'idle'">
-      <button type="button" class="archiveCommand" @click="mode = 'import-format'">
-        <span><Upload :size="18" aria-hidden="true" /> 가져오기</span>
-        <small>이전 호를 책장에 미리 펼쳐 봅니다.</small>
-      </button>
-      <button v-if="issues.length" type="button" class="archiveCommand" @click="mode = 'export-format'">
-        <span><Download :size="18" aria-hidden="true" /> 내보내기</span>
-        <small>한 권 전체 또는 교환용 CSV를 준비합니다.</small>
-      </button>
-    </template>
+    <div class="archiveTabs" role="tablist" aria-label="책장 파일 관리">
+      <button type="button" role="tab" :aria-selected="mode === 'import-format'" :class="{ active: mode === 'import-format' }" @click="mode = 'import-format'"><Upload :size="15" /> 가져오기</button>
+      <button type="button" role="tab" :aria-selected="mode === 'export-format'" :class="{ active: mode === 'export-format' }" @click="mode = 'export-format'"><Download :size="15" /> 내보내기</button>
+    </div>
 
-    <section v-else-if="mode === 'import-format'" class="archiveStep">
+    <section v-if="mode === 'import-format'" class="archiveStep">
       <p class="stepTitle">가져올 형식을 고르세요</p>
       <button type="button" class="formatRow" @click="pickImport('json')"><b>Recoverse 백업</b><span>JSON · 사진과 공유 정보까지 보존</span></button>
       <button type="button" class="formatRow" @click="pickImport('csv')"><b>지난 호 CSV</b><span>CSV · 질문과 글만 옮김</span></button>
-      <button type="button" class="textButton" @click="mode = 'idle'">돌아가기</button>
     </section>
 
     <section v-else-if="mode === 'export-format'" class="archiveStep">
       <p class="stepTitle">내보낼 형식을 고르세요</p>
       <button type="button" class="formatRow" @click="exportJson"><b>Recoverse 백업</b><span>JSON · 책장 전체를 그대로 보관</span></button>
       <button type="button" class="formatRow" @click="exportCsv"><b>교환용 CSV</b><span>CSV · 질문과 답변 텍스트만 담음</span></button>
-      <button type="button" class="textButton" @click="mode = 'idle'">돌아가기</button>
     </section>
 
     <section v-else class="archiveStep" aria-live="polite">
@@ -63,7 +55,7 @@ type Mode = 'idle' | 'import-format' | 'export-format' | 'preview';
 type ImportFormat = 'json' | 'csv';
 
 const shelf = useShelf();
-const mode = ref<Mode>('idle');
+const mode = ref<Mode>('import-format');
 const importFormat = ref<ImportFormat>('json');
 const fileInput = ref<HTMLInputElement | null>(null);
 const preview = ref<ArchivePreview | null>(null);
@@ -81,7 +73,7 @@ function pickImport(format: ImportFormat): void {
 }
 
 function reset(): void {
-  mode.value = 'idle';
+  mode.value = 'import-format';
   preview.value = null;
   importErr.value = '';
 }
@@ -94,7 +86,7 @@ function dispositionLabel(disposition: ArchiveDisposition): string {
 
 function exportJson(): void {
   exportShelfBackup([...props.issues]);
-  mode.value = 'idle';
+  mode.value = 'import-format';
 }
 
 function exportCsv(): void {
@@ -111,7 +103,7 @@ function exportCsv(): void {
   anchor.download = `recoverse-text-${new Date().toISOString().slice(0, 10)}.csv`;
   anchor.click();
   URL.revokeObjectURL(url);
-  mode.value = 'idle';
+  mode.value = 'import-format';
 }
 
 async function onFile(event: Event): Promise<void> {
@@ -150,6 +142,9 @@ function confirmImport(): void {
 
 <style scoped>
 .archiveActions, .archiveStep { display: grid; gap: 8px; }
+.archiveTabs { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--hairline); }
+.archiveTabs button { display: inline-flex; justify-content: center; align-items: center; gap: 6px; padding: 9px; border: 0; border-bottom: 2px solid transparent; background: none; color: var(--dim); font: 800 12px var(--font-ui); cursor: pointer; }
+.archiveTabs button.active { border-bottom-color: var(--vermilion); color: var(--ink); }
 .archiveCommand, .formatRow { width: 100%; display: grid; gap: 3px; padding: 11px 0; background: none; border: 0; border-bottom: 1px solid var(--hairline); color: var(--ink); text-align: left; cursor: pointer; }
 .archiveCommand span { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; }
 .archiveCommand small, .formatRow span { color: var(--dim); font-size: 12px; line-height: 1.5; }

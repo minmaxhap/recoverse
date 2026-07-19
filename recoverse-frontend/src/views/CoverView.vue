@@ -10,7 +10,7 @@
           <div class="rule thick" />
           <h1 class="brand">RECOVERSE</h1>
           <div class="deck">
-            <span>질문과 답으로 만드는 연말호</span>
+            <span>질문과 장면을 엮는 나만의 호</span>
             <span>EST. 2016</span>
           </div>
           <div class="rule" />
@@ -20,9 +20,9 @@
       <div class="coverSpread">
         <section class="coverLead" aria-label="Recoverse 소개">
           <p class="coverline">
-            한 해에 한 번,<br />
-            우리는 서로에게<br />
-            <em>질문</em>이 된다.
+            오늘의 장면을,<br />
+            우리는 한 권의<br />
+            <em>호</em>로 엮는다.
           </p>
 
           <div class="momentSlot">
@@ -212,6 +212,9 @@ const momentTeaser = computed(() => {
   .momentCard {
     margin: clamp(12px, 2vh, 18px) 0 0;
     padding: clamp(11px, 1.7vh, 16px) 14px;
+  }
+  .momentSlot {
+    align-self: end;
   }
   .momentSlot:empty {
     display: block;
