@@ -199,7 +199,7 @@ const momentTeaser = computed(() => {
   .coverDesk {
     min-height: 0;
     display: grid;
-    grid-template-rows: minmax(0, auto) auto;
+    grid-template-rows: minmax(0, 1fr) auto;
     align-content: stretch;
     gap: clamp(12px, 2vh, 18px);
     overflow: hidden;
@@ -210,7 +210,7 @@ const momentTeaser = computed(() => {
     margin: 0;
   }
   .momentCard {
-    margin: clamp(12px, 2vh, 18px) 0 0;
+    margin: clamp(12px, 2vh, 18px) 0 10px;
     padding: clamp(11px, 1.7vh, 16px) 14px;
   }
   .momentSlot {
@@ -234,9 +234,13 @@ const momentTeaser = computed(() => {
 @media (min-width: 1024px) and (max-height: 720px) {
   .coverHome {
     gap: 10px;
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
   }
   .coverSpread {
     gap: 24px;
+    overflow: visible;
   }
   .coverLead {
     padding-right: 24px;

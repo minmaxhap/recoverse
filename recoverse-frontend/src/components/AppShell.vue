@@ -47,6 +47,8 @@ withDefaults(defineProps<{ variant?: 'read' | 'write' | 'cover' }>(), { variant:
     min-height: 0;
     padding-top: 16px;
     padding-bottom: 16px;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 }
 </style>

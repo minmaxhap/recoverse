@@ -22,6 +22,7 @@
         @click="$emit('open', issue.id)"
       >
         <span class="spineKind" :style="{ background: kindColor(issue.kind) }" aria-hidden="true" />
+        <span v-if="spineYear(issue)" class="spineYear">{{ spineYear(issue) }}</span>
         <span class="spineLabel">{{ spineLabel(issue) }}</span>
       </button>
     </div>
@@ -60,8 +61,17 @@ function spineLabel(issue: Issue): string {
   const title = issue.title.trim();
   const year = issue.date.slice(0, 4);
   const label = KIND_LABELS[issue.kind];
-  if (title && !title.includes(year) && title !== label) return title;
-  return title.replace(new RegExp(`^${year}(?:년)?\\s*`), '') || label;
+  if (issue.kind === 'yearend') return '연말';
+  const withoutYear = title.replace(new RegExp(`^${year}(?:년)?\\s*`), '');
+  if (withoutYear !== title) return withoutYear || label;
+  if (title && title !== label) return title;
+  return label;
+}
+
+function spineYear(issue: Issue): string {
+  const title = issue.title.trim();
+  const year = issue.date.slice(0, 4);
+  return issue.kind === 'yearend' || title.startsWith(year) ? `${year}년` : '';
 }
 </script>
 
@@ -285,6 +295,14 @@ function spineLabel(issue: Issue): string {
     font-weight: 700;
     max-height: 112px;
     overflow: hidden;
+  }
+
+  .spineYear {
+    font-family: var(--font-display);
+    font-size: clamp(11px, 1.3vh, 13px);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-orientation: upright;
   }
 
   .emptyInvite {

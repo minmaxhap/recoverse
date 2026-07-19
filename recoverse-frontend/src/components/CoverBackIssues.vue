@@ -16,4 +16,10 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
 .backissues {
   min-height: 0;
 }
+
+@media (min-width: 1024px) {
+  .backissues {
+    align-self: end;
+  }
+}
 </style>
