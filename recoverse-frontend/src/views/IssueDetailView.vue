@@ -5,6 +5,8 @@
       <div class="issueKicker"><span class="eyebrow red">{{ issue.date.slice(0, 4) }} ISSUE</span><div class="issueToolbar noPrint">
         <button class="toolButton" type="button" :aria-label="editing ? '수정 취소' : '호 편집'" @click="editing ? cancelEdit() : startEdit()"><Pencil v-if="!editing" :size="17" /><X v-else :size="17" /><span>{{ editing ? '취소' : '편집' }}</span></button>
         <button class="toolButton" type="button" aria-label="PDF로 저장하거나 인쇄" @click="printIssue"><Printer :size="17" /><span>PDF / 인쇄</span></button>
+        <button v-if="!editing" class="toolButton" type="button" :disabled="sharing" aria-label="읽기 전용 공유 링크" @click="onShare"><Share2 :size="17" /><span>{{ sharing ? '준비 중' : '공유' }}</span></button>
+        <button v-if="!editing" class="toolButton dangerTool" type="button" aria-label="이 호를 책장에서 비우기" @click="onRemove"><Trash2 :size="17" /><span>비우기</span></button>
       </div></div>
       <input v-if="editing" v-model="draftTitle" class="field pageTitleInput" type="text" aria-label="호 제목" />
       <h1 v-else class="pageTitle">{{ issue.title }}</h1>
@@ -38,15 +40,13 @@
     <p v-if="displayedRounds.length === 0" class="empty">아직 실린 질문이 없어요.</p>
     <div v-if="editing" class="editFooter noPrint"><button class="ghost compactAction" type="button" @click="cancelEdit">취소</button><button class="cta compactAction" type="button" @click="saveEdit">변경 저장</button></div>
 
-    <div class="gap big noPrint" />
-    <div class="shareBox noPrint"><button class="ghost" :disabled="sharing" @click="onShare">{{ sharing ? '링크 준비 중' : shareUrl ? '공유 링크 다시 복사' : '읽기 전용 공유 링크 만들기' }}</button><p v-if="shareUrl" class="shareUrl">{{ copied ? '링크를 복사했어요.' : shareUrl }}</p><p v-if="shareError" class="error">{{ shareError }}</p></div>
-    <div class="gap noPrint" /><button class="endLink noPrint" @click="onRemove">이 호를 책장에서 비우기</button>
+    <div v-if="shareUrl || shareError" class="shareBox noPrint"><p v-if="shareUrl" class="shareUrl">{{ copied ? '링크를 복사했어요.' : shareUrl }}</p><p v-if="shareError" class="error">{{ shareError }}</p></div>
   </AppShell>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { ArrowDown, ArrowUp, Pencil, Printer, Trash2, X } from 'lucide-vue-next';
+import { ArrowDown, ArrowUp, Pencil, Printer, Share2, Trash2, X } from 'lucide-vue-next';
 import type { Issue, Round } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue'; import BackHeader from '../components/BackHeader.vue'; import Headline from '../components/Headline.vue'; import RoundAnswers from '../components/RoundAnswers.vue'; import SpreadLayout from '../components/SpreadLayout.vue';
 import { useShelf } from '../composables/useShelf'; import { api, ApiError } from '../lib/api';
@@ -70,5 +70,5 @@ function onRemove(): void { if (!window.confirm('이 호를 책장에서 비울�
 </script>
 
 <style scoped>
-.issueHead{display:grid;gap:8px;margin:8px 0 26px}.issueKicker{display:flex;align-items:center;justify-content:space-between;gap:12px}.issueToolbar,.roundActions,.editFooter{display:flex;gap:7px;align-items:center}.toolButton,.iconButton{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 10px;background:var(--paper-card);border:1px solid var(--ink);color:var(--ink);font:700 12px var(--font-ui);cursor:pointer}.toolButton:hover,.iconButton:hover:not(:disabled){color:var(--vermilion);border-color:var(--vermilion)}.iconButton{width:36px;padding:0}.iconButton.danger:hover{background:var(--vermilion);color:var(--vermilion-ink)}.archiveRound{margin-bottom:34px}.roundEditHead{display:grid;gap:10px}.roundActions{justify-content:flex-end}.editAnswers{display:grid;gap:14px}.editAnswer{display:grid;gap:6px}.editAnswerName{font-size:12px;font-weight:800;letter-spacing:.04em;color:var(--dim)}.pageTitleInput{font-family:var(--font-display);font-size:28px;font-weight:700}.editFooter{justify-content:flex-end;margin:0 0 26px}.compactAction{width:auto;min-width:100px;min-height:44px;padding:10px 14px;font-size:13px}.empty{font-size:14px;color:var(--dim)}.shareBox{display:grid;gap:8px}.shareUrl{margin:0;padding:12px;border:1px solid var(--hairline);background:var(--paper-card);font-size:13px;line-height:1.5;word-break:break-all}@media(max-width:480px){.issueToolbar{width:100%;justify-content:flex-end}.toolButton span{display:none}.toolButton{width:40px;padding:0}.issueKicker{align-items:flex-start}.editFooter{display:grid;grid-template-columns:1fr 1fr}.compactAction{width:100%}}
+.issueHead{display:grid;gap:8px;margin:8px 0 26px}.issueKicker{display:flex;align-items:center;justify-content:space-between;gap:12px}.issueToolbar,.roundActions,.editFooter{display:flex;gap:7px;align-items:center}.toolButton,.iconButton{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 10px;background:var(--paper-card);border:1px solid var(--ink);color:var(--ink);font:700 12px var(--font-ui);cursor:pointer}.toolButton:hover,.iconButton:hover:not(:disabled){color:var(--vermilion);border-color:var(--vermilion)}.dangerTool:hover{background:var(--vermilion);color:var(--vermilion-ink)}.iconButton{width:36px;padding:0}.iconButton.danger:hover{background:var(--vermilion);color:var(--vermilion-ink)}.archiveRound{margin-bottom:34px}.roundEditHead{display:grid;gap:10px}.roundActions{justify-content:flex-end}.editAnswers{display:grid;gap:14px}.editAnswer{display:grid;gap:6px}.editAnswerName{font-size:12px;font-weight:800;letter-spacing:.04em;color:var(--dim)}.pageTitleInput{font-family:var(--font-display);font-size:28px;font-weight:700}.editFooter{justify-content:flex-end;margin:0 0 26px}.compactAction{width:auto;min-width:100px;min-height:44px;padding:10px 14px;font-size:13px}.empty{font-size:14px;color:var(--dim)}.shareBox{display:grid;gap:8px;margin:0 0 28px}.shareUrl{margin:0;padding:12px;border:1px solid var(--hairline);background:var(--paper-card);font-size:13px;line-height:1.5;word-break:break-all}@media(max-width:540px){.issueToolbar{width:100%;justify-content:flex-end;flex-wrap:wrap}.toolButton span{display:none}.toolButton{width:40px;padding:0}.issueKicker{align-items:flex-start}.editFooter{display:grid;grid-template-columns:1fr 1fr}.compactAction{width:100%}}
 </style>
