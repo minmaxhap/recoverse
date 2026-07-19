@@ -237,8 +237,8 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
     max-width: 100%;
     max-height: 158px;
     overflow-x: auto;
-    overflow-y: hidden;
-    padding: 0 2px 10px;
+    overflow-y: visible;
+    padding: 9px 2px 10px;
     margin-top: 10px;
   }
 
@@ -268,7 +268,7 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
   }
 
   .spine:hover {
-    transform: translateY(-8px);
+    transform: translateY(-4px);
     border-color: var(--vermilion);
   }
 

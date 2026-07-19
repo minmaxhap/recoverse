@@ -121,8 +121,7 @@ const momentTeaser = computed(() => {
 }
 .momentCard:hover {
   border-color: var(--vermilion);
-  box-shadow: 3px 3px 0 var(--vermilion);
-  transform: translate(-1px, -1px);
+  box-shadow: inset 0 -3px 0 var(--vermilion);
 }
 .momentQ {
   font-family: var(--font-display);
@@ -184,8 +183,8 @@ const momentTeaser = computed(() => {
   }
   .coverSpread {
     display: grid;
-    grid-template-columns: minmax(0, 0.92fr) minmax(420px, 1.08fr);
-    gap: 32px;
+    grid-template-columns: minmax(0, 1fr) minmax(420px, 1fr);
+    gap: 28px;
     min-height: 0;
     overflow: hidden;
   }
@@ -194,7 +193,7 @@ const momentTeaser = computed(() => {
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
     align-items: center;
-    padding-right: 32px;
+    padding-right: 28px;
     border-right: 1px solid var(--hairline);
   }
   .coverDesk {

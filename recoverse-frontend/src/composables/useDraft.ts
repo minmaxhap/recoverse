@@ -6,6 +6,7 @@ export interface UseDraftResult {
   value: Ref<string>;
   /** 제출/발행 완료 등으로 드래프트가 더 이상 필요 없을 때 명시적으로 지움 */
   clear: () => void;
+  status: Ref<'idle' | 'saved' | 'error'>;
 }
 
 /**
@@ -15,6 +16,7 @@ export interface UseDraftResult {
  */
 export function useDraft(key: () => string | null): UseDraftResult {
   const value = ref('');
+  const status = ref<'idle' | 'saved' | 'error'>('idle');
   let currentKey: string | null = null;
 
   function restore(nextKey: string | null) {
@@ -25,6 +27,7 @@ export function useDraft(key: () => string | null): UseDraftResult {
     }
     const result = readLocalStorageValue(nextKey);
     value.value = result.ok && result.value != null ? result.value : '';
+    status.value = result.ok ? 'idle' : 'error';
   }
 
   restore(key());
@@ -35,14 +38,14 @@ export function useDraft(key: () => string | null): UseDraftResult {
 
   watch(value, (next) => {
     if (!currentKey) return;
-    writeLocalStorageValue(currentKey, next);
+    status.value = writeLocalStorageValue(currentKey, next).ok ? 'saved' : 'error';
   });
 
   function clear() {
     if (!currentKey) return;
-    writeLocalStorageValue(currentKey, '');
+    status.value = writeLocalStorageValue(currentKey, '').ok ? 'idle' : 'error';
     value.value = '';
   }
 
-  return { value, clear };
+  return { value, clear, status };
 }

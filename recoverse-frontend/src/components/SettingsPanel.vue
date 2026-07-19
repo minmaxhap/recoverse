@@ -1,12 +1,13 @@
 <template>
   <div class="settingsRoot">
     <button
+      ref="trigger"
       type="button"
       class="settingsButton"
       aria-label="편집실 설정 열기"
       aria-haspopup="dialog"
       :aria-expanded="open"
-      @click="open = true"
+      @click="show"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M5 7h14" />
@@ -18,7 +19,7 @@
     </button>
 
     <div v-if="open" class="settingsOverlay" role="presentation" @click.self="close">
-      <section class="settingsDialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <section ref="dialog" class="settingsDialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" tabindex="-1" @keydown="trapFocus">
         <div class="settingsHead">
           <span class="eyebrow red">EDITOR'S DESK</span>
           <button type="button" class="closeBtn" aria-label="닫기" @click="close">×</button>
@@ -70,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import type { Issue } from '@recoverse/shared';
 import { useThemePreference, type ThemePreference } from '../composables/useThemePreference';
 import ShelfArchiveActions from './ShelfArchiveActions.vue';
@@ -101,13 +102,43 @@ const THEME_OPTIONS = [
 }[];
 
 const open = ref(false);
+const trigger = ref<HTMLButtonElement | null>(null);
+const dialog = ref<HTMLElement | null>(null);
 const { themePreference, appliedTheme, setThemePreference } = useThemePreference();
 
 const appliedThemeLabel = computed(() => (appliedTheme.value === 'dark' ? '먹빛' : '종이빛'));
 
+function show(): void {
+  open.value = true;
+}
+
 function close(): void {
   open.value = false;
 }
+
+function trapFocus(event: KeyboardEvent): void {
+  if (event.key === 'Escape') { close(); return; }
+  if (event.key !== 'Tab' || !dialog.value) return;
+  const targets = [...dialog.value.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [href]')];
+  const first = targets[0];
+  const last = targets[targets.length - 1];
+  if (!first || !last) return;
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+  if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+}
+
+watch(open, async (isOpen) => {
+  if (isOpen) {
+    document.body.style.overflow = 'hidden';
+    await nextTick();
+    dialog.value?.focus();
+    return;
+  }
+  document.body.style.overflow = '';
+  trigger.value?.focus();
+});
+
+onBeforeUnmount(() => { document.body.style.overflow = ''; });
 </script>
 
 <style scoped>

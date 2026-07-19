@@ -5,8 +5,8 @@
 ────────────────────────────────────────────────────────────────── */
 
 :root {
-  --paper: #FAF7F0;
-  --paper-card: #FFFEFA;
+  --paper: #F2EEE4;
+  --paper-card: #F8F5ED;
   --ink: #191511;
   --ink-hover: #2a251f; /* 잉크 블록(primary)의 hover */
   --on-ink-dim: #b9b2a6; /* 잉크 블록 위의 보조 텍스트 */
@@ -14,9 +14,9 @@
   --vermilion-hover: #c13d1b;
   --vermilion-ink: #FFF6F0;
   --gold: #E7B355;
-  --hairline: #DED8CB;
-  --dim: #7A736A;
-  --dim-strong: #5A544C;
+  --hairline: #D3CCBF;
+  --dim: #70695F;
+  --dim-strong: #514B43;
 
   /* 참여자 스탬프 팔레트 (합류 순) */
   --p1: #D8451F;
@@ -78,6 +78,7 @@ html,
 body {
   margin: 0;
   padding: 0;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -180,6 +181,14 @@ a:focus-visible,
   text-transform: uppercase;
   text-align: center;
   font-weight: 800;
+}
+.selectField {
+  appearance: none;
+  padding-right: 48px;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 21px) calc(50% - 3px), calc(100% - 15px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
 }
 
 /* ── 버튼 ── */
@@ -379,7 +388,7 @@ a:focus-visible,
 
 /* ── 화면 전환: 페이지를 넘기는 느낌 (App.vue <Transition name="page">) ── */
 .page-enter-active {
-  animation: pageIn 0.3s ease both;
+  animation: pageIn 0.22s ease both;
 }
 .page-leave-active {
   animation: pageOut 0.16s ease both;
@@ -387,7 +396,7 @@ a:focus-visible,
 @keyframes pageIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;

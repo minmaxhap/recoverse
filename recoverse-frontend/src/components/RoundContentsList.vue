@@ -11,18 +11,26 @@
           <b>{{ round.question }}</b>
           <small>{{ answerPreview(round) }}</small>
         </span>
+        <span v-if="editable" class="contentsActions">
+          <button type="button" :disabled="i === 0" aria-label="질문을 위로" @click="$emit('move', i, -1)"><ArrowUp :size="14" /></button>
+          <button type="button" :disabled="i === rounds.length - 1" aria-label="질문을 아래로" @click="$emit('move', i, 1)"><ArrowDown :size="14" /></button>
+          <button type="button" aria-label="질문 삭제" @click="$emit('remove', i)"><Trash2 :size="14" /></button>
+        </span>
       </li>
     </ol>
   </section>
 </template>
 
 <script setup lang="ts">
+import { ArrowDown, ArrowUp, Trash2 } from 'lucide-vue-next';
 import type { Round } from '@recoverse/shared';
 
 const props = defineProps<{
   rounds: Round[];
   participants: string[];
+  editable?: boolean;
 }>();
+defineEmits<{ move: [number, -1 | 1]; remove: [number] }>();
 
 function answerPreview(round: Round): string {
   const first = props.participants[0] ?? Object.keys(round.answers)[0];
@@ -64,11 +72,15 @@ function answerPreview(round: Round): string {
 
 .contentsList li {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-columns: 34px minmax(0, 1fr) auto;
   gap: 10px;
   padding: 11px 0;
   border-bottom: 1px solid var(--hairline);
 }
+.contentsActions { display: flex; align-items: start; gap: 3px; }
+.contentsActions button { display: grid; place-items: center; width: 25px; height: 25px; padding: 0; border: 1px solid var(--hairline); background: var(--paper-card); color: var(--dim-strong); cursor: pointer; }
+.contentsActions button:hover:not(:disabled) { color: var(--vermilion); border-color: var(--vermilion); }
+.contentsActions button:disabled { opacity: .35; cursor: default; }
 
 .pageNo {
   font-family: var(--font-display);

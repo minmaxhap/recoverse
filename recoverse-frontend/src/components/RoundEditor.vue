@@ -1,6 +1,6 @@
 <template>
   <div class="roundEditor">
-    <RoundContentsList :rounds="rounds" :participants="participants" />
+    <RoundContentsList :rounds="rounds" :participants="participants" editable @move="moveRound" @remove="removeRound" />
 
     <section class="qaBox" aria-labelledby="roundEditorTitle">
       <div class="boxHead">
@@ -47,7 +47,7 @@
         />
       </label>
 
-      <QuestionSuggest v-if="!formatId" :kind="kind" :exclude="pastQuestions" @pick="q = $event" />
+      <QuestionSuggest :kind="kind" :exclude="pastQuestions" @pick="q = $event" />
 
       <div v-for="(name, i) in participants" :key="name" class="answerLine">
         <ParticipantDot :color="colorAt(i)" />
@@ -91,11 +91,14 @@ const pastQuestions = computed(() => props.rounds.map((round) => round.question)
 const hasDraftText = computed(
   () => q.value.trim().length > 0 || Object.values(answers.value).some((answer) => answer.trim().length > 0),
 );
-const draftState = computed(() => (hasDraftText.value ? '자동 저장됨' : '새 질문'));
-
-const { value: draftJson, clear: clearDraft } = useDraft(
+const { value: draftJson, clear: clearDraft, status: draftSaveStatus } = useDraft(
   () => `recoverse_draft_round_${props.kind}_${props.rounds.length}`,
 );
+const draftState = computed(() => {
+  if (draftSaveStatus.value === 'error') return '저장하지 못했어요';
+  if (draftSaveStatus.value === 'saved') return '자동 저장됨';
+  return hasDraftText.value ? '저장 준비 중' : '새 질문';
+});
 let applyingDraft = false;
 
 function applyDraft(json: string): void {
@@ -178,6 +181,22 @@ function addRound(): void {
   formatId.value = '';
   answers.value = {};
   applyingDraft = false;
+}
+
+function moveRound(index: number, direction: -1 | 1): void {
+  const target = index + direction;
+  if (target < 0 || target >= props.rounds.length) return;
+  const next = [...props.rounds];
+  const current = next[index];
+  const swapped = next[target];
+  if (!current || !swapped) return;
+  next[index] = swapped;
+  next[target] = current;
+  emit('update:rounds', next);
+}
+
+function removeRound(index: number): void {
+  emit('update:rounds', props.rounds.filter((_, itemIndex) => itemIndex !== index));
 }
 </script>
 

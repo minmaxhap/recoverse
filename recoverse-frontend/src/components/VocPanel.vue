@@ -2,7 +2,7 @@
   <form class="vocForm" @submit.prevent="submit">
     <label class="fieldGroup">
       <span class="fieldLabel">종류</span>
-      <select v-model="type" class="field">
+      <select v-model="type" class="field selectField">
         <option v-for="option in VOC_OPTIONS" :key="option.type" :value="option.type">
           {{ option.label }}
         </option>
