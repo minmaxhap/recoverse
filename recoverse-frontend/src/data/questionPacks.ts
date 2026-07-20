@@ -15,6 +15,14 @@ export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
   deep: '깊게',
 };
 
+/** 난이도별 한 문항에 답하는 데 걸리는 대략 시간(분). 빈 목차 앞의 부담을 미리 가늠하게 한다. */
+const MINUTES_PER_QUESTION: Record<Difficulty, number> = { light: 1, medium: 2, deep: 3 };
+
+/** 문항 수 × 난이도로 예상 작성 시간(분)을 추정한다. 0문항이면 0. */
+export function estimateWritingMinutes(difficulty: Difficulty, questionCount: number): number {
+  return Math.max(0, questionCount) * MINUTES_PER_QUESTION[difficulty];
+}
+
 type Pack = Record<Difficulty, string[]>;
 
 /** 모든 kind에 공통으로 섞을 수 있는 회고 질문 */

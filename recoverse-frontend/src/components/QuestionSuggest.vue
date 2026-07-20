@@ -25,6 +25,8 @@
         </button>
       </div>
 
+      <p v-if="packHint" class="packHint">{{ packHint }}</p>
+
       <ul class="list">
         <li v-for="q in suggestions" :key="q">
           <button type="button" class="pick" @click="choose(q)">{{ q }}</button>
@@ -37,11 +39,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import type { Kind } from '@recoverse/shared';
 import {
   DIFFICULTIES,
   DIFFICULTY_LABELS,
+  estimateWritingMinutes,
   suggestQuestions,
   type Difficulty,
 } from '../data/questionPacks';
@@ -55,6 +58,13 @@ const emit = defineEmits<{ pick: [string] }>();
 const open = ref(false);
 const difficulty = ref<Difficulty>('medium');
 const suggestions = ref<string[]>([]);
+
+// 빈 목차 앞에서 "이 정도면 얼마나 걸릴까"를 미리 보여줘 시작 부담을 낮춘다.
+const packHint = computed(() => {
+  const count = suggestions.value.length;
+  if (count === 0) return '';
+  return `${count}문항 · 약 ${estimateWritingMinutes(difficulty.value, count)}분`;
+});
 
 function refresh() {
   suggestions.value = suggestQuestions(props.kind, difficulty.value, props.exclude, 4);
@@ -121,6 +131,13 @@ function choose(q: string) {
 .chip.active {
   background: var(--ink);
   color: var(--paper);
+}
+.packHint {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--dim);
 }
 .list {
   list-style: none;
