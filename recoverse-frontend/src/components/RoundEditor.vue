@@ -15,7 +15,7 @@
           <span class="eyebrow red">QUESTION {{ rounds.length + 1 }}</span>
           <h2 id="roundEditorTitle">다음 질문을 고르거나 직접 써요</h2>
         </div>
-        <span class="draftState" aria-live="polite">{{ draftState }}</span>
+        <span class="draftState" aria-live="polite">{{ draftStateLabel }}</span>
       </div>
 
       <label v-if="remainingTemplateRounds.length" class="fieldGroup">
@@ -33,14 +33,14 @@
         <span class="fieldLabel">질문</span>
         <input
           class="field"
-          :value="q"
-          :readonly="!!formatId"
+          :value="currentRound.question"
+          :readonly="!!currentRound.formatId"
           placeholder="지금의 나에게 묻고 싶은 것"
-          @input="q = ($event.target as HTMLInputElement).value"
+          @input="setQuestion"
         />
       </label>
 
-      <QuestionSuggest :kind="kind" :exclude="pastQuestions" @pick="q = $event" />
+      <QuestionSuggest :kind="kind" :exclude="pastQuestions" @pick="setQuestion" />
 
       <div v-for="(name, i) in participants" :key="name" class="answerLine">
         <ParticipantDot :color="colorAt(i)" />
@@ -48,130 +48,105 @@
           <span class="fieldLabel">{{ name }}의 답</span>
           <textarea
             class="field area short"
-            :value="answers[name] ?? ''"
+            :value="currentRound.answers[name] ?? ''"
             :placeholder="answerHint(name)"
-            @input="setAnswer(name, ($event.target as HTMLTextAreaElement).value)"
+            @input="setAnswer(name, $event)"
           />
         </label>
       </div>
 
       <p class="helper">{{ roundHelp }}</p>
-      <button class="ghost" :disabled="!qaReady" @click="addRound">목차에 싣기</button>
+      <button class="ghost" :disabled="!qaReady" @click="addRound">답 저장하고 다음 질문</button>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import type { Kind, Round } from '@recoverse/shared';
 import ParticipantDot from './ParticipantDot.vue';
 import QuestionSuggest from './QuestionSuggest.vue';
 import RoundContentsList from './RoundContentsList.vue';
 import { getFormat } from '../data/formats';
-import { useDraft } from '../composables/useDraft';
 import { colorAt } from '../lib/palette';
+import type { SoloIssueCurrentRoundDraft } from '../lib/soloIssueDraftTypes';
 
 const props = withDefaults(
   defineProps<{
     participants: string[];
     rounds: Round[];
+    currentRound: SoloIssueCurrentRoundDraft;
     kind?: Kind;
     templateRounds?: readonly Pick<Round, 'question' | 'format'>[];
+    draftStateLabel?: string;
   }>(),
-  { kind: 'free' },
+  { kind: 'free', draftStateLabel: '새 질문' },
 );
-const emit = defineEmits<{ 'update:rounds': [Round[]] }>();
+const emit = defineEmits<{ 'update:rounds': [Round[]]; 'update:currentRound': [SoloIssueCurrentRoundDraft] }>();
 
-const q = ref('');
-const formatId = ref('');
-const answers = ref<Record<string, string>>({});
 const selectedTemplateQuestion = ref('');
 const pastQuestions = computed(() => props.rounds.map((round) => round.question));
 const remainingTemplateRounds = computed(() =>
   (props.templateRounds ?? []).filter((round) => !pastQuestions.value.includes(round.question)),
 );
-const hasDraftText = computed(
-  () => q.value.trim().length > 0 || Object.values(answers.value).some((answer) => answer.trim().length > 0),
-);
-const { value: draftJson, clear: clearDraft, status: draftSaveStatus } = useDraft(
-  () => `recoverse_draft_round_${props.kind}_${props.rounds.length}`,
-);
-const draftState = computed(() => {
-  if (draftSaveStatus.value === 'error') return '저장하지 못했어요';
-  if (draftSaveStatus.value === 'saved') return '자동 저장됨';
-  return hasDraftText.value ? '저장 준비 중' : '새 질문';
-});
-let applyingDraft = false;
-
-function applyDraft(json: string): void {
-  applyingDraft = true;
-  try {
-    const parsed: unknown = json ? JSON.parse(json) : {};
-    if (parsed && typeof parsed === 'object') {
-      const draft = parsed as { q?: unknown; formatId?: unknown; answers?: unknown };
-      q.value = typeof draft.q === 'string' ? draft.q : '';
-      formatId.value = typeof draft.formatId === 'string' ? draft.formatId : '';
-      answers.value = draft.answers && typeof draft.answers === 'object' ? (draft.answers as Record<string, string>) : {};
-      return;
-    }
-    q.value = '';
-    formatId.value = '';
-    answers.value = {};
-  } catch {
-    q.value = '';
-    formatId.value = '';
-    answers.value = {};
-  } finally {
-    applyingDraft = false;
-  }
-}
-
-watch(draftJson, (json) => applyDraft(json), { immediate: true });
-
-watch(
-  [q, formatId, answers],
-  () => {
-    if (applyingDraft) return;
-    draftJson.value = JSON.stringify({ q: q.value, formatId: formatId.value, answers: answers.value });
-  },
-  { deep: true },
-);
 
 const qaReady = computed(
   () =>
-    q.value.trim().length > 0 &&
+    props.currentRound.question.trim().length > 0 &&
     props.participants.length > 0 &&
-    props.participants.every((name) => (answers.value[name] ?? '').trim().length > 0),
+    props.participants.every((name) => (props.currentRound.answers[name] ?? '').trim().length > 0),
 );
 const roundHelp = computed(() => {
   if (props.participants.length === 0) return '이 호에 실릴 이름을 먼저 적어주세요.';
-  if (!q.value.trim()) return '질문을 고르거나 직접 쓰면 답을 실을 수 있어요.';
+  if (!props.currentRound.question.trim()) return '질문을 고르거나 직접 쓰면 답을 실을 수 있어요.';
   if (!qaReady.value) return '답을 적으면 이 질문을 목차에 실을 수 있어요.';
   return '좋아요. 이 질문을 목차에 실어두고 다음 질문으로 넘어갈 수 있어요.';
 });
 
+function eventValue(event: Event): string {
+  return event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement
+    ? event.target.value
+    : '';
+}
+
+function updateCurrentRound(next: SoloIssueCurrentRoundDraft): void {
+  emit('update:currentRound', next);
+}
+
+function setQuestion(value: string | Event): void {
+  updateCurrentRound({
+    ...props.currentRound,
+    question: typeof value === 'string' ? value : eventValue(value),
+  });
+}
+
 function selectFormat(id: string): void {
-  formatId.value = id;
   const format = getFormat(id);
-  if (format) q.value = format.prompt;
+  updateCurrentRound({
+    ...props.currentRound,
+    formatId: id,
+    question: format ? format.prompt : props.currentRound.question,
+  });
 }
 
 function chooseTemplateQuestion(event: Event): void {
-  const question = (event.target as HTMLSelectElement).value;
+  const question = event.target instanceof HTMLSelectElement ? event.target.value : '';
   selectedTemplateQuestion.value = question;
   const template = remainingTemplateRounds.value.find((round) => round.question === question);
   if (!template) return;
-  q.value = template.question;
-  formatId.value = template.format ?? '';
+  updateCurrentRound({ ...props.currentRound, question: template.question, formatId: template.format ?? '' });
 }
 
 function answerHint(name: string): string {
-  const format = getFormat(formatId.value);
+  const format = getFormat(props.currentRound.formatId);
   return format ? format.hint : `${name}의 답을 거칠게 적어도 괜찮아요`;
 }
 
-function setAnswer(name: string, value: string): void {
-  answers.value = { ...answers.value, [name]: value };
+function setAnswer(name: string, event: Event): void {
+  updateCurrentRound({
+    ...props.currentRound,
+    answers: { ...props.currentRound.answers, [name]: eventValue(event) },
+  });
 }
 
 function addRound(): void {
@@ -179,20 +154,15 @@ function addRound(): void {
 
   const roundAnswers: Round['answers'] = {};
   for (const name of props.participants) {
-    roundAnswers[name] = { text: (answers.value[name] ?? '').trim() };
+    roundAnswers[name] = { text: (props.currentRound.answers[name] ?? '').trim() };
   }
   const asker = props.participants[props.rounds.length % props.participants.length];
-  const round: Round = { asker, question: q.value.trim(), answers: roundAnswers };
-  if (formatId.value) round.format = formatId.value;
+  const round: Round = { asker, question: props.currentRound.question.trim(), answers: roundAnswers };
+  if (props.currentRound.formatId) round.format = props.currentRound.formatId;
 
   emit('update:rounds', [...props.rounds, round]);
-  clearDraft();
-  applyingDraft = true;
-  q.value = '';
-  formatId.value = '';
-  answers.value = {};
+  updateCurrentRound({ question: '', formatId: '', answers: {} });
   selectedTemplateQuestion.value = '';
-  applyingDraft = false;
 }
 
 function moveRound(index: number, direction: -1 | 1): void {

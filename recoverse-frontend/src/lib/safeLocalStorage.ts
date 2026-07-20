@@ -23,6 +23,21 @@ export function readLocalStorageValue(key: string): StorageReadResult {
   }
 }
 
+export function listLocalStorageKeys(): readonly string[] {
+  if (!storageAvailable()) return [];
+
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (key != null) keys.push(key);
+    }
+    return keys;
+  } catch {
+    return [];
+  }
+}
+
 export function writeLocalStorageValue(key: string, value: string): StorageWriteResult {
   if (!storageAvailable()) return { ok: false, reason: "storage_unavailable" };
 

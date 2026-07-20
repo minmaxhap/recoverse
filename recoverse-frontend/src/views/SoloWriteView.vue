@@ -54,12 +54,16 @@
     <RoundEditor
       :participants="participants"
       :rounds="rounds"
+      :current-round="currentRound"
       :kind="kind"
       :template-rounds="templateRounds"
-      @update:rounds="rounds = $event"
+      :draft-state-label="draftStateLabel"
+      @update:rounds="updateRounds"
+      @update:current-round="updateCurrentRound"
     />
 
-    <p v-if="saveError" class="error" role="alert">{{ saveError }}</p>
+    <p v-if="restoreNotice" class="helper draftNotice" role="status">{{ restoreNotice }}</p>
+    <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
     <p class="helper publishHelp">{{ publishHelp }}</p>
     <button class="cta" :disabled="!canPublish || publishing" @click="publish">책장에 꽂기</button>
 
@@ -76,13 +80,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { defaultTitle, KIND_LABELS, kstTodayISO, type Kind, type Round } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
 import KindChips from '../components/KindChips.vue';
 import PublishScene from '../components/PublishScene.vue';
 import RoundEditor from '../components/RoundEditor.vue';
+import {
+  SOLO_ISSUE_DRAFT_VERSION,
+  useSoloIssueDraft,
+  type SoloIssueCurrentRoundDraft,
+  type SoloIssueDraftV2,
+} from '../composables/useSoloIssueDraft';
 import { useShelf } from '../composables/useShelf';
 import { issueFromDraft } from '../lib/issueBuilder';
 
@@ -93,9 +103,13 @@ const kind = ref<Kind>('free');
 const title = ref('');
 const name = ref('나');
 const rounds = ref<Round[]>([]);
-const saveError = ref('');
+const currentRound = ref<SoloIssueCurrentRoundDraft>({ question: '', formatId: '', answers: {} });
+const publishError = ref('');
+const restoreNotice = ref('');
 const publishing = ref(false);
 const sourceIssueId = ref('');
+const soloDraft = useSoloIssueDraft();
+const draftReady = ref(false);
 
 const date = computed(() => kstTodayISO());
 const defaultIssueTitle = computed(() => defaultTitle(kind.value, date.value));
@@ -112,17 +126,111 @@ const templateRounds = computed(() =>
 const publishHelp = computed(() =>
   canPublish.value ? '지금 발행하면 이 호가 내 책장에 저장돼요.' : '질문 하나와 답 하나를 목차에 실으면 발행할 수 있어요.',
 );
+const hasDraftContent = computed(
+  () =>
+    title.value.trim().length > 0 ||
+    name.value.trim() !== '나' ||
+    sourceIssueId.value.length > 0 ||
+    rounds.value.length > 0 ||
+    currentRound.value.question.trim().length > 0 ||
+    Object.values(currentRound.value.answers).some((answer) => answer.trim().length > 0),
+);
+const draftStatusMessage = computed(() =>
+  soloDraft.savedAt.value && soloDraft.status.value === 'saved' ? `저장됨 ${savedTimeText(soloDraft.savedAt.value)}` : '',
+);
+const draftStateLabel = computed(() => {
+  if (soloDraft.status.value === 'error') return '저장 실패';
+  if (draftStatusMessage.value) return draftStatusMessage.value;
+  return hasDraftContent.value ? '저장 준비 중' : '새 질문';
+});
+const draftError = computed(() => {
+  if (soloDraft.status.value !== 'error') return '';
+  if (soloDraft.error.value === 'not_found') return '';
+  return '임시 저장하지 못했어요. 브라우저 저장 공간을 비우고, 이 화면을 닫기 전에 다시 시도해주세요.';
+});
+const editorialError = computed(() => publishError.value || draftError.value);
+
+function savedTimeText(savedAt: string): string {
+  return new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(
+    new Date(savedAt),
+  );
+}
+
+function buildDraft(): SoloIssueDraftV2 {
+  return {
+    version: SOLO_ISSUE_DRAFT_VERSION,
+    updatedAt: new Date().toISOString(),
+    kind: kind.value,
+    title: title.value,
+    name: name.value,
+    sourceIssueId: sourceIssueId.value,
+    rounds: rounds.value,
+    currentRound: currentRound.value,
+  };
+}
+
+function applyDraft(draft: SoloIssueDraftV2): void {
+  kind.value = draft.kind;
+  title.value = draft.title;
+  name.value = draft.name || '나';
+  sourceIssueId.value = draft.sourceIssueId;
+  rounds.value = [...draft.rounds];
+  currentRound.value = draft.currentRound;
+}
+
+function persistDraft(): void {
+  const result = soloDraft.save(buildDraft());
+  if (!result.ok) restoreNotice.value = '';
+}
+
+function restoreDraft(): void {
+  const restored = soloDraft.load({ legacy: { kind: kind.value, roundCount: rounds.value.length } });
+  let clearedStaleSource = false;
+  if (restored.ok) {
+    applyDraft(restored.draft);
+    restoreNotice.value = restored.migratedFromLegacy ? '이전 질문 임시 저장을 복원했어요.' : '복원됨';
+    if (sourceIssueId.value && !sourceIssue.value) {
+      sourceIssueId.value = '';
+      clearedStaleSource = true;
+    }
+  }
+  draftReady.value = true;
+  if (clearedStaleSource) persistDraft();
+}
+
+watch(
+  [kind, title, name, sourceIssueId, rounds, currentRound],
+  () => {
+    if (draftReady.value) persistDraft();
+  },
+  { deep: true, flush: 'sync' },
+);
+
+onMounted(restoreDraft);
+
+function updateRounds(nextRounds: Round[]): void {
+  rounds.value = nextRounds;
+}
+
+function updateCurrentRound(nextRound: SoloIssueCurrentRoundDraft): void {
+  currentRound.value = nextRound;
+}
 
 function publish(): void {
   if (!canPublish.value || publishing.value) return;
-  saveError.value = '';
+  publishError.value = '';
 
   const issue = issueFromDraft(
     { kind: kind.value, date: date.value, title: issueTitle.value, participants: participants.value, rounds: rounds.value },
     'solo',
   );
   if (!shelf.add(issue)) {
-    saveError.value = '브라우저 저장 공간에 저장하지 못했어요. 용량을 비우고 다시 시도해주세요.';
+    publishError.value = '브라우저 저장 공간에 저장하지 못했어요. 용량을 비우고 다시 시도해주세요.';
+    return;
+  }
+  if (!soloDraft.clear().ok) {
+    publishError.value =
+      '책장에는 꽂았지만 임시 저장을 비우지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해주세요.';
     return;
   }
 
@@ -179,6 +287,11 @@ function finishPublish(): void {
 
 .publishHelp {
   margin-top: 16px;
+  text-align: center;
+}
+
+.draftNotice {
+  margin-top: 12px;
   text-align: center;
 }
 
