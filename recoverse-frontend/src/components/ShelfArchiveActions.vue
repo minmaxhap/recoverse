@@ -14,6 +14,7 @@
     <section v-else-if="mode === 'export-format'" class="archiveStep">
       <p class="stepTitle">내보낼 형식을 고르세요</p>
       <button type="button" class="formatRow" @click="exportJson"><b>Recoverse 백업</b><span>JSON · 책장 전체를 그대로 보관</span></button>
+      <button type="button" class="formatRow" @click="exportMarkdown"><b>읽는 문서</b><span>Markdown · 질문은 제목, 답은 인용문으로</span></button>
       <button type="button" class="formatRow" @click="exportCsv"><b>교환용 CSV</b><span>CSV · 질문과 답변 텍스트만 담음</span></button>
     </section>
 
@@ -46,6 +47,7 @@ import type { Issue } from '@recoverse/shared';
 import { useShelf } from '../composables/useShelf';
 import { BackupImportError, parseReflectionBackup } from '../lib/backupImport';
 import { exportShelfBackup } from '../lib/backupExport';
+import { exportShelfMarkdown } from '../lib/markdownExport';
 import { CsvImportError, parseReflectionCsv } from '../lib/csvImport';
 import { issueFromDraft } from '../lib/issueBuilder';
 import { previewArchiveImport, type ArchivePreview, type ArchiveDisposition } from '../lib/archivePreview';
@@ -86,6 +88,11 @@ function dispositionLabel(disposition: ArchiveDisposition): string {
 
 function exportJson(): void {
   exportShelfBackup([...props.issues]);
+  mode.value = 'import-format';
+}
+
+function exportMarkdown(): void {
+  exportShelfMarkdown(props.issues);
   mode.value = 'import-format';
 }
 
