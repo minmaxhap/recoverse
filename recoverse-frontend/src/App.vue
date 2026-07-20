@@ -1,310 +1,134 @@
 <template>
-  <!-- 페이지를 넘기는 느낌의 화면 전환 (스펙 §7). mode를 key로 써서 전환마다 재생.
-       :duration 명시 = animationend 이벤트 대신 타이머로 종료 —
-       prefers-reduced-motion(전역 animation:none)이나 백그라운드 탭에서도 전환이 멈추지 않는다 -->
-  <Transition name="page" mode="out-in" :duration="{ enter: 300, leave: 160 }">
-    <CoverView
-      v-if="mode === 'cover'"
-      key="view-cover"
-      :issues="shelf.issues.value"
-      :moment="moment"
-      @navigate="onCoverNavigate"
-      @open="openIssue"
-      @open-group="openGroup"
-    />
-
-    <LiveEntryView
-      v-else-if="mode === 'create' || mode === 'join'"
-      :key="`view-entry-${mode}`"
-      :intent="mode"
-      :prefill-code="mode === 'join' ? prefillCode : undefined"
-      @back="toCover"
-      @entered="enterSession"
-    />
-
-    <LiveSessionView
-      v-else-if="mode === 'live'"
-      key="view-live"
-      :code="identity.identity.code"
-      :me="identity.identity.name"
-      :is-host="identity.identity.isHost"
-      :player-token="identity.identity.playerToken"
-      @exit="leaveSession"
-    />
-
-    <SoloWriteView v-else-if="mode === 'solo'" key="view-solo" @back="toCover" @published="toCover" />
-
-
-    <IssueDetailView
-      v-else-if="mode === 'issue-detail' && activeIssue"
-      :key="`detail-${activeIssue.id}`"
-      :issue="activeIssue"
-      @back="toCover"
-      @removed="toCover"
-    />
-
-    <RediscoverView
-      v-else-if="mode === 'rediscover'"
-      key="view-rediscover"
-      :groups="groups"
-      :has-samples="hasSamples"
-      :moment="moment"
-      @back="toCover"
-      @open="openGroup"
-      @add-samples="addSamples"
-      @remove-samples="removeSamples"
-    />
-
-    <RediscoverDetailView
-      v-else-if="mode === 'rediscover-detail' && activeGroup"
-      :key="`redis-${activeGroup.key}`"
-      :group="activeGroup"
-      @back="() => setMode('rediscover')"
-    />
-
-    <SharedIssueView
-      v-else-if="mode === 'shared' && sharedId"
-      :key="`shared-${sharedId}`"
-      :share-id="sharedId"
-      @start="leaveShared"
-    />
-
-    <VocAdminView v-else-if="mode === 'voc-admin'" key="view-voc-admin" @back="toCover" />
-
-    <AppShell v-else key="view-loading">
-      <p class="waiting">불러오는 중…</p>
-    </AppShell>
-  </Transition>
+  <!-- 앱 셸: 라우터가 매칭한 화면(Component)을 페이지 넘김 전환으로 감싸 렌더한다.
+       라우트에서 파생한 props와 내비게이션 이벤트 배선을 여기서 주입하므로, 각 화면은
+       라우터를 몰라도 되는 프레젠테이셔널 컴포넌트로 남고 단독 테스트가 가능하다(컨테이너 패턴).
+       :duration 명시 = animationend 대신 타이머로 종료. prefers-reduced-motion(전역 animation:none)
+       이나 백그라운드 탭에서도 전환이 멈추지 않는다. -->
+  <router-view v-slot="{ Component }">
+    <Transition name="page" mode="out-in" :duration="{ enter: 300, leave: 160 }">
+      <component :is="Component" :key="viewKey" v-bind="viewProps" v-on="viewHandlers" />
+    </Transition>
+  </router-view>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import CoverView from './views/CoverView.vue';
-import LiveEntryView from './views/live/LiveEntryView.vue';
-import LiveSessionView from './views/live/LiveSessionView.vue';
-import SoloWriteView from './views/SoloWriteView.vue';
-import IssueDetailView from './views/IssueDetailView.vue';
-import RediscoverView from './views/RediscoverView.vue';
-import RediscoverDetailView from './views/RediscoverDetailView.vue';
-import SharedIssueView from './views/SharedIssueView.vue';
-import VocAdminView from './views/VocAdminView.vue';
-import AppShell from './components/AppShell.vue';
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useShelf } from './composables/useShelf';
 import { useIdentity } from './composables/useIdentity';
 import { groupByQuestion, pickRediscoveryMoment } from './lib/rediscover';
 import { sampleIssues, isSample } from './lib/samples';
 
-type Mode =
-  | 'cover'
-  | 'create'
-  | 'join'
-  | 'live'
-  | 'solo'
-  | 'issue-detail'
-  | 'rediscover'
-  | 'rediscover-detail'
-  | 'shared'
-  | 'voc-admin';
-
 type CoverTarget = 'create' | 'join' | 'solo' | 'rediscover';
 
-type AppHistoryState = {
-  readonly recoverse: true;
-  readonly mode: Mode;
-  readonly activeIssueId: string | null;
-  readonly activeGroupKey: string | null;
-  readonly sharedId: string | null;
-};
-
-const MODES = [
-  'cover',
-  'create',
-  'join',
-  'live',
-  'solo',
-  'issue-detail',
-  'rediscover',
-  'rediscover-detail',
-  'shared',
-  'voc-admin',
-] as const satisfies readonly Mode[];
-const MODE_SET: ReadonlySet<string> = new Set(MODES);
-
+const route = useRoute();
+const router = useRouter();
 const shelf = useShelf();
 const identity = useIdentity();
 
-const mode = ref<Mode>('cover');
-const activeIssueId = ref<string | null>(null);
-const activeGroupKey = ref<string | null>(null);
-const sharedId = ref<string | null>(null);
-const prefillCode = ref<string | undefined>(undefined);
-
-// 공유 링크(?share=<id>)로 열면 읽기 전용 공유 뷰가 최우선
-const shareParam = new URLSearchParams(window.location.search).get('share');
-// 합류 링크(?join=<code>)로 열면 참여 화면으로 바로 진입, 코드는 미리 채워둠
-const joinParam = new URLSearchParams(window.location.search).get('join');
-if (shareParam) {
-  sharedId.value = shareParam;
-  mode.value = 'shared';
-} else if (joinParam) {
-  prefillCode.value = joinParam.toUpperCase();
-  mode.value = 'join';
-} else if (identity.identity.code && identity.identity.name) {
-  // 새로고침해도 세션 신원이 남아 있으면 라이브로 복귀
-  mode.value = 'live';
-}
-
-const adminParam = new URLSearchParams(window.location.search).get('admin');
-if (adminParam === 'voc') {
-  mode.value = 'voc-admin';
-}
-
-/** 공유 뷰에서 나갈 때 — URL의 share 파라미터를 지우고 표지로 */
-function leaveShared() {
-  sharedId.value = null;
-  mode.value = 'cover';
-  const url = new URL(window.location.href);
-  url.searchParams.delete('share');
-  window.history.replaceState(currentHistoryState(), '', url.pathname + url.search);
-}
-
-const activeIssue = computed(() =>
-  activeIssueId.value ? shelf.get(activeIssueId.value) : undefined,
-);
 const groups = computed(() => groupByQuestion(shelf.issues.value));
 const moment = computed(() => pickRediscoveryMoment(shelf.issues.value));
-const activeGroup = computed(() =>
-  activeGroupKey.value ? groups.value.find((g) => g.key === activeGroupKey.value) : undefined,
-);
 const hasSamples = computed(() => shelf.issues.value.some(isSample));
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
-}
+// 라우트 파라미터로부터 현재 대상 엔티티를 되짚는다. 존재 보장은 라우터 가드가 하므로,
+// 여기서는 이름이 맞는 라우트일 때만 조회한다(가드가 막지 못한 찰나의 방어선 겸용).
+const activeIssue = computed(() =>
+  route.name === 'issue' ? shelf.get(String(route.params.id)) : undefined,
+);
+const activeGroup = computed(() =>
+  route.name === 'rediscover-detail'
+    ? groups.value.find((group) => group.key === String(route.params.key))
+    : undefined,
+);
 
-function isMode(value: unknown): value is Mode {
-  return typeof value === 'string' && MODE_SET.has(value);
+function goHome(): void {
+  router.push({ name: 'cover' });
 }
-
-function isNullableString(value: unknown): value is string | null {
-  return value === null || typeof value === 'string';
+function goBack(): void {
+  // 재발견 타임라인에서 뒤로가기는 목록으로, 그 외 화면은 표지로.
+  if (route.name === 'rediscover-detail') router.push({ name: 'rediscover' });
+  else goHome();
 }
-
-function isAppHistoryState(value: unknown): value is AppHistoryState {
-  return (
-    isRecord(value) &&
-    value.recoverse === true &&
-    isMode(value.mode) &&
-    isNullableString(value.activeIssueId) &&
-    isNullableString(value.activeGroupKey) &&
-    isNullableString(value.sharedId)
-  );
+function onCoverNavigate(target: CoverTarget): void {
+  router.push({ name: target });
 }
-
-function canRestoreHistoryState(next: AppHistoryState): boolean {
-  if (next.mode === 'issue-detail') return next.activeIssueId !== null && shelf.get(next.activeIssueId) !== undefined;
-  if (next.mode === 'rediscover-detail') return next.activeGroupKey !== null && groups.value.some((group) => group.key === next.activeGroupKey);
-  if (next.mode === 'shared') return next.sharedId !== null;
-  if (next.mode === 'live') return Boolean(identity.identity.code && identity.identity.name);
-  return true;
+function openIssue(id: string): void {
+  router.push({ name: 'issue', params: { id } });
 }
-
-function currentHistoryState(): AppHistoryState {
-  return {
-    recoverse: true,
-    mode: mode.value,
-    activeIssueId: activeIssueId.value,
-    activeGroupKey: activeGroupKey.value,
-    sharedId: sharedId.value,
-  };
+function openGroup(key: string): void {
+  router.push({ name: 'rediscover-detail', params: { key } });
 }
-
-function commitHistory(replace: boolean) {
-  const next = currentHistoryState();
-  if (replace) {
-    window.history.replaceState(next, '');
-  } else {
-    window.history.pushState(next, '');
-  }
+function enterSession(): void {
+  // LiveEntryView가 신원을 세팅한 뒤 emit하므로 라이브 가드를 통과한다.
+  router.push({ name: 'live' });
 }
-
-function restoreHistoryState(next: AppHistoryState) {
-  mode.value = next.mode;
-  activeIssueId.value = next.activeIssueId;
-  activeGroupKey.value = next.activeGroupKey;
-  sharedId.value = next.sharedId;
-}
-
-function restoreInitialHistoryState(): void {
-  if (shareParam || joinParam || adminParam === 'voc') return;
-  const next = window.history.state;
-  if (!isAppHistoryState(next) || !canRestoreHistoryState(next)) return;
-  restoreHistoryState(next);
-}
-
-restoreInitialHistoryState();
-
-function onPopState(event: PopStateEvent) {
-  if (isAppHistoryState(event.state)) {
-    restoreHistoryState(event.state);
-    return;
-  }
-  mode.value = 'cover';
-  activeIssueId.value = null;
-  activeGroupKey.value = null;
-  sharedId.value = null;
-}
-
-function setMode(next: Mode, options: { readonly replace?: boolean } = {}) {
-  mode.value = next;
-  commitHistory(options.replace === true);
-}
-function toCover() {
-  activeIssueId.value = null;
-  activeGroupKey.value = null;
-  setMode('cover');
-  const url = new URL(window.location.href);
-  if (url.searchParams.has('admin')) {
-    url.searchParams.delete('admin');
-    window.history.replaceState(currentHistoryState(), '', url.pathname + url.search);
-  }
-}
-
-function onCoverNavigate(target: CoverTarget) {
-  setMode(target);
-}
-
-function openIssue(id: string) {
-  activeIssueId.value = id;
-  setMode('issue-detail');
-}
-
-function enterSession() {
-  setMode('live');
-}
-function leaveSession() {
+function leaveSession(): void {
   identity.clear();
   shelf.reload();
-  toCover();
+  goHome();
 }
-
-function openGroup(key: string) {
-  activeGroupKey.value = key;
-  setMode('rediscover-detail');
-}
-
-function addSamples() {
+function addSamples(): void {
   for (const issue of sampleIssues()) shelf.add(issue);
 }
-function removeSamples() {
+function removeSamples(): void {
   for (const issue of shelf.issues.value.filter(isSample)) shelf.remove(issue.id);
 }
 
-onMounted(() => {
-  window.addEventListener('popstate', onPopState);
-  commitHistory(true);
+// 현재 라우트에 필요한 props만 골라 넘긴다 — 선언되지 않은 여분 prop이 속성으로 새지 않게 한다.
+const viewProps = computed<Record<string, unknown>>(() => {
+  switch (route.name) {
+    case 'cover':
+      return { issues: shelf.issues.value, moment: moment.value };
+    case 'create':
+    case 'join':
+      return {
+        intent: route.name,
+        prefillCode:
+          route.name === 'join' && typeof route.query.code === 'string'
+            ? route.query.code.toUpperCase()
+            : undefined,
+      };
+    case 'live':
+      return {
+        code: identity.identity.code,
+        me: identity.identity.name,
+        isHost: identity.identity.isHost,
+        playerToken: identity.identity.playerToken,
+      };
+    case 'issue':
+      return { issue: activeIssue.value };
+    case 'rediscover':
+      return { groups: groups.value, hasSamples: hasSamples.value, moment: moment.value };
+    case 'rediscover-detail':
+      return { group: activeGroup.value };
+    case 'shared':
+      return { shareId: String(route.params.id) };
+    default:
+      return {};
+  }
 });
-onUnmounted(() => {
-  window.removeEventListener('popstate', onPopState);
+
+// 각 화면의 의미론적 이벤트를 앱 셸의 내비게이션 동작으로 연결한다.
+// 화면마다 자기 이벤트만 emit하므로 상위 집합을 한 번에 배선해도 안전하다.
+const viewHandlers = {
+  navigate: onCoverNavigate,
+  open: openIssue,
+  openGroup,
+  back: goBack,
+  entered: enterSession,
+  exit: leaveSession,
+  published: goHome,
+  removed: goHome,
+  start: goHome,
+  addSamples,
+  removeSamples,
+};
+
+// 같은 화면이라도 대상 엔티티가 바뀌면 전환을 다시 재생하고 내부 상태를 초기화한다.
+const viewKey = computed(() => {
+  if (route.name === 'issue') return `issue-${route.params.id}`;
+  if (route.name === 'rediscover-detail') return `group-${route.params.key}`;
+  if (route.name === 'shared') return `shared-${route.params.id}`;
+  return String(route.name ?? 'cover');
 });
 </script>
