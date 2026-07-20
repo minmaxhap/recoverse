@@ -3,14 +3,25 @@ import { listLocalStorageKeys, readLocalStorageValue, writeLocalStorageValue } f
 import { parseJson, parseLegacyCurrentRound, parseSoloIssueDraftV2 } from './soloIssueDraftParser';
 import {
   createDefaultSoloIssueDraft,
+  draftHasContent,
   SOLO_ISSUE_DRAFT_V2_KEY,
   type SoloIssueDraftFailureReason,
   type SoloIssueDraftLoadOptions,
   type SoloIssueDraftLoadResult,
+  type SoloIssueDraftSummary,
   type SoloIssueDraftV2,
   type SoloIssueDraftWriteResult,
   type SoloIssueLegacyDraftRequest,
 } from './soloIssueDraftTypes';
+
+const EMPTY_SUMMARY: SoloIssueDraftSummary = {
+  resumable: false,
+  kind: 'free',
+  title: '',
+  updatedAt: '',
+  savedRoundCount: 0,
+  hasPendingQuestion: false,
+};
 
 const LEGACY_KEY_PATTERN = /^recoverse_draft_round_(.+)_(\d+)$/;
 
@@ -94,6 +105,29 @@ export function loadSoloIssueDraft(options: SoloIssueDraftLoadOptions = {}): Sol
   const draft = parseSoloIssueDraftV2(json.value);
   if (!draft) return failure('malformed');
   return { ok: true, draft, migratedFromLegacy: false };
+}
+
+/**
+ * 저장된 v2 드래프트를 읽기 전용으로 훑어 이어쓰기 카드용 요약을 만든다.
+ * loadSoloIssueDraft와 달리 저장소에 아무것도 쓰지 않고 레거시 마이그레이션도 하지 않는다 —
+ * 홈 화면이 부작용 없이 "이어쓸 초안이 있는지"만 알 수 있어야 하기 때문이다.
+ * 레거시(v1)만 있는 경우는 요약에 잡히지 않지만, 혼자 쓰기로 진입하면 그때 정상 마이그레이션된다.
+ */
+export function peekSoloIssueDraft(): SoloIssueDraftSummary {
+  const stored = readLocalStorageValue(SOLO_ISSUE_DRAFT_V2_KEY);
+  if (!stored.ok || stored.value == null || stored.value === '') return EMPTY_SUMMARY;
+  const json = parseJson(stored.value);
+  if (!json.ok) return EMPTY_SUMMARY;
+  const draft = parseSoloIssueDraftV2(json.value);
+  if (!draft || !draftHasContent(draft)) return EMPTY_SUMMARY;
+  return {
+    resumable: true,
+    kind: draft.kind,
+    title: draft.title.trim(),
+    updatedAt: draft.updatedAt,
+    savedRoundCount: draft.rounds.length,
+    hasPendingQuestion: draft.currentRound.question.trim().length > 0,
+  };
 }
 
 export function saveSoloIssueDraft(nextDraft: SoloIssueDraftV2): SoloIssueDraftWriteResult {

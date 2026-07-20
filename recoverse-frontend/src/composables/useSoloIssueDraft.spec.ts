@@ -5,6 +5,7 @@ import {
   clearSoloIssueDraft,
   createDefaultSoloIssueDraft,
   loadSoloIssueDraft,
+  peekSoloIssueDraft,
   saveSoloIssueDraft,
   SOLO_ISSUE_DRAFT_V2_KEY,
   useSoloIssueDraft,
@@ -363,5 +364,85 @@ describe('useSoloIssueDraft', () => {
     // Then
     expect(result.ok).toBe(true);
     expect(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY)).toBe('');
+  });
+});
+
+describe('peekSoloIssueDraft', () => {
+  beforeEach(() => {
+    vi.useRealTimers();
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: createMemoryStorage(),
+    });
+  });
+
+  it('reports no resumable draft when storage is empty', () => {
+    expect(peekSoloIssueDraft()).toMatchObject({ resumable: false, savedRoundCount: 0, hasPendingQuestion: false });
+  });
+
+  it('reports no resumable draft for a malformed value', () => {
+    // Given
+    localStorage.setItem(SOLO_ISSUE_DRAFT_V2_KEY, '{ not json');
+
+    // Then
+    expect(peekSoloIssueDraft().resumable).toBe(false);
+  });
+
+  it('treats an untouched default draft as not resumable', () => {
+    // Given — 종류만 정해진 빈 초안(기본 이름·빈 제목·라운드 없음)
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({ ...createDefaultSoloIssueDraft('2026-07-20T00:00:00.000Z'), name: '나' }),
+    );
+
+    // Then
+    expect(peekSoloIssueDraft().resumable).toBe(false);
+  });
+
+  it('summarizes a draft that already has saved rounds', () => {
+    // Given
+    localStorage.setItem(SOLO_ISSUE_DRAFT_V2_KEY, JSON.stringify(completeDraft('2026-07-19T12:00:00.000Z')));
+
+    // Then
+    expect(peekSoloIssueDraft()).toEqual({
+      resumable: true,
+      kind: 'yearend',
+      title: '2026 Year End',
+      updatedAt: '2026-07-19T12:00:00.000Z',
+      savedRoundCount: 1,
+      hasPendingQuestion: true,
+    });
+  });
+
+  it('marks a draft resumable when only the in-progress question is filled', () => {
+    // Given
+    const draft: SoloIssueDraftV2 = {
+      ...createDefaultSoloIssueDraft('2026-07-20T01:00:00.000Z'),
+      name: '나',
+      currentRound: { question: '올해 가장 큰 변화는?', formatId: '', answers: {} },
+    };
+    localStorage.setItem(SOLO_ISSUE_DRAFT_V2_KEY, JSON.stringify(draft));
+
+    // Then
+    expect(peekSoloIssueDraft()).toMatchObject({
+      resumable: true,
+      savedRoundCount: 0,
+      hasPendingQuestion: true,
+    });
+  });
+
+  it('does not write to storage or migrate a legacy-only draft', () => {
+    // Given — v2는 없고 레거시 초안만 있는 상태
+    const legacyKey = 'recoverse_draft_round_reading_3';
+    const legacyValue = JSON.stringify({ q: 'Legacy question', formatId: '', answers: { '나': 'Legacy answer' } });
+    localStorage.setItem(legacyKey, legacyValue);
+
+    // When
+    const summary = peekSoloIssueDraft();
+
+    // Then — peek는 레거시를 마이그레이션하지 않고, v2 키를 만들지도 않는다
+    expect(summary.resumable).toBe(false);
+    expect(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY)).toBeNull();
+    expect(localStorage.getItem(legacyKey)).toBe(legacyValue);
   });
 });

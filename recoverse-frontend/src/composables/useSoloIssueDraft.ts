@@ -15,10 +15,13 @@ import type {
 export {
   clearSoloIssueDraft,
   loadSoloIssueDraft,
+  peekSoloIssueDraft,
   saveSoloIssueDraft,
 } from '../lib/soloIssueDraftStorage';
 export {
   createDefaultSoloIssueDraft,
+  draftHasContent,
+  SOLO_DEFAULT_NAME,
   SOLO_ISSUE_DRAFT_V2_KEY,
   SOLO_ISSUE_DRAFT_VERSION,
 } from '../lib/soloIssueDraftTypes';
@@ -27,6 +30,7 @@ export type {
   SoloIssueDraftFailureReason,
   SoloIssueDraftLoadOptions,
   SoloIssueDraftLoadResult,
+  SoloIssueDraftSummary,
   SoloIssueDraftV2,
   SoloIssueDraftWriteResult,
   SoloIssueLegacyDraftRequest,

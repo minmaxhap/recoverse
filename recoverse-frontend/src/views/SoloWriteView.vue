@@ -88,6 +88,8 @@ import KindChips from '../components/KindChips.vue';
 import PublishScene from '../components/PublishScene.vue';
 import RoundEditor from '../components/RoundEditor.vue';
 import {
+  draftHasContent,
+  SOLO_DEFAULT_NAME,
   SOLO_ISSUE_DRAFT_VERSION,
   useSoloIssueDraft,
   type SoloIssueCurrentRoundDraft,
@@ -101,7 +103,7 @@ const emit = defineEmits<{ back: []; published: [] }>();
 const shelf = useShelf();
 const kind = ref<Kind>('free');
 const title = ref('');
-const name = ref('나');
+const name = ref(SOLO_DEFAULT_NAME);
 const rounds = ref<Round[]>([]);
 const currentRound = ref<SoloIssueCurrentRoundDraft>({ question: '', formatId: '', answers: {} });
 const publishError = ref('');
@@ -114,7 +116,7 @@ const draftReady = ref(false);
 const date = computed(() => kstTodayISO());
 const defaultIssueTitle = computed(() => defaultTitle(kind.value, date.value));
 const issueTitle = computed(() => title.value.trim() || defaultIssueTitle.value);
-const participants = computed(() => [name.value.trim() || '나']);
+const participants = computed(() => [name.value.trim() || SOLO_DEFAULT_NAME]);
 const canPublish = computed(() => rounds.value.length > 0);
 const kindLabelText = computed(() => KIND_LABELS[kind.value]);
 const sourceIssue = computed(() => shelf.issues.value.find((issue) => issue.id === sourceIssueId.value));
@@ -126,15 +128,8 @@ const templateRounds = computed(() =>
 const publishHelp = computed(() =>
   canPublish.value ? '지금 발행하면 이 호가 내 책장에 저장돼요.' : '질문 하나와 답 하나를 목차에 실으면 발행할 수 있어요.',
 );
-const hasDraftContent = computed(
-  () =>
-    title.value.trim().length > 0 ||
-    name.value.trim() !== '나' ||
-    sourceIssueId.value.length > 0 ||
-    rounds.value.length > 0 ||
-    currentRound.value.question.trim().length > 0 ||
-    Object.values(currentRound.value.answers).some((answer) => answer.trim().length > 0),
-);
+// 홈의 이어쓰기 peek와 같은 기준(draftHasContent)을 쓰도록 draft 객체로 판정한다.
+const hasDraftContent = computed(() => draftHasContent(buildDraft()));
 const draftStatusMessage = computed(() =>
   soloDraft.savedAt.value && soloDraft.status.value === 'saved' ? `저장됨 ${savedTimeText(soloDraft.savedAt.value)}` : '',
 );
@@ -172,7 +167,7 @@ function buildDraft(): SoloIssueDraftV2 {
 function applyDraft(draft: SoloIssueDraftV2): void {
   kind.value = draft.kind;
   title.value = draft.title;
-  name.value = draft.name || '나';
+  name.value = draft.name || SOLO_DEFAULT_NAME;
   sourceIssueId.value = draft.sourceIssueId;
   rounds.value = [...draft.rounds];
   currentRound.value = draft.currentRound;

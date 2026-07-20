@@ -35,7 +35,8 @@
           </div>
         </section>
 
-        <aside class="coverDesk" aria-label="홈 목차와 지난 호">
+        <aside class="coverDesk" :class="{ hasResume: resumeDraft.resumable }" aria-label="홈 목차와 지난 호">
+          <CoverResumeDraft :summary="resumeDraft" @resume="$emit('navigate', 'solo')" />
           <CoverEntryList @navigate="$emit('navigate', $event)" />
           <CoverBackIssues :issues="issues" @navigate="$emit('navigate', $event)" @open="$emit('open', $event)" />
         </aside>
@@ -50,7 +51,9 @@ import type { Issue } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import CoverBackIssues from '../components/CoverBackIssues.vue';
 import CoverEntryList from '../components/CoverEntryList.vue';
+import CoverResumeDraft from '../components/CoverResumeDraft.vue';
 import SettingsPanel from '../components/SettingsPanel.vue';
+import { peekSoloIssueDraft } from '../composables/useSoloIssueDraft';
 import type { RediscoveryMoment } from '../lib/rediscover';
 
 const props = defineProps<{ readonly issues: readonly Issue[]; readonly moment?: RediscoveryMoment | null }>();
@@ -73,6 +76,10 @@ const momentTeaser = computed(() => {
   const first = Object.values(m.answers).find((answer) => answer.text.trim());
   return first?.text ?? '';
 });
+
+// 홈에 들어올 때마다 저장소를 읽기 전용으로 훑는다. CoverView는 mode가 cover일 때마다
+// key로 재마운트되므로(App.vue), 발행으로 드래프트를 비운 뒤 돌아오면 카드가 사라진다.
+const resumeDraft = peekSoloIssueDraft();
 </script>
 
 <style scoped>
@@ -203,6 +210,10 @@ const momentTeaser = computed(() => {
     align-content: stretch;
     gap: clamp(12px, 2vh, 18px);
     overflow: hidden;
+  }
+  /* 이어쓰기 카드가 있으면 맨 위 행을 추가해도 목차는 스크롤, 지난 호는 하단 고정 유지 */
+  .coverDesk.hasResume {
+    grid-template-rows: auto minmax(0, 1fr) auto;
   }
   .coverline {
     font-size: clamp(27px, 4vh, 34px);
