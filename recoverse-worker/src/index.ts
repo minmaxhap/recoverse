@@ -1,5 +1,6 @@
 import { ApiError, errorResponse, jsonResponse } from './errors';
 import type { Env } from './kv';
+import { maybeRenderOgPage } from './routes/ogMeta';
 import { handleSessionRoute } from './routes/session';
 import { handleShareRoute } from './routes/share';
 import { handleVocRoute } from './routes/voc';
@@ -26,6 +27,9 @@ export default {
         return errorResponse(404, 'not_found', '요청한 경로를 찾지 못했어요.');
       }
       if (env.ASSETS) {
+        // 공유·합류 링크는 크롤러용 OG 메타를 주입해 서빙하고, 그 외엔 정적 자산 그대로.
+        const ogPage = await maybeRenderOgPage(request, env, path, url);
+        if (ogPage) return ogPage;
         return env.ASSETS.fetch(request);
       }
       return errorResponse(404, 'not_found', '요청한 경로를 찾지 못했어요.');
