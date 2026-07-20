@@ -107,6 +107,11 @@ export const api = {
   // 읽기 전용 공유
   createShare: (issue: Issue) => post<{ shareId: string }>('/api/share', { issue }),
   getShare: (shareId: string) => request<{ issue: Issue }>(`/api/share/${shareId}`),
+
+  // 기기 이사 — 일회용 코드로 책장 옮기기
+  createMigration: (issues: readonly Issue[]) =>
+    post<{ code: string; expiresInSeconds: number }>('/api/migrate', { issues }),
+  claimMigration: (code: string) => request<{ issues: Issue[] }>(`/api/migrate/${code}`),
   submitVoc: (body: VocCreateRequest) => post<{ entry: VocEntry }>('/api/voc', body),
   listVoc: (token: string) => request<VocListResponse>('/api/admin/voc', { headers: { authorization: `Bearer ${token}` } }),
   updateVocStatus: (token: string, id: string, status: VocStatus) =>

@@ -61,6 +61,15 @@
           <ShelfArchiveActions :issues="issues" />
         </section>
 
+        <section class="settingsSection" aria-labelledby="migrateTitle">
+          <div class="sectionHead">
+            <span id="migrateTitle" class="sectionTitle">기기 이사</span>
+            <span class="sectionMeta">일회용 코드</span>
+          </div>
+          <p class="fineprint">계정 없이 다른 기기로 책장을 옮겨요. 코드는 잠깐만 살아 있고, 한 번 받으면 사라져요.</p>
+          <MigratePanel :issues="issues" />
+        </section>
+
         <section class="settingsSection noteSection" aria-labelledby="letterTitle">
           <span id="letterTitle" class="sectionTitle">편집부에 남기기</span>
           <p class="fineprint">Recoverse를 쓰며 걸린 장면을 편집부 앞으로 남겨주세요.</p>
@@ -77,6 +86,7 @@ import type { Issue } from '@recoverse/shared';
 import { useThemePreference, type ThemePreference } from '../composables/useThemePreference';
 import { backupAgeLabel, useBackupStatus } from '../composables/useBackupStatus';
 import ShelfArchiveActions from './ShelfArchiveActions.vue';
+import MigratePanel from './MigratePanel.vue';
 import VocPanel from './VocPanel.vue';
 
 const props = defineProps<{ readonly issues: readonly Issue[] }>();

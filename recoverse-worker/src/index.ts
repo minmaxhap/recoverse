@@ -1,5 +1,6 @@
 import { ApiError, errorResponse, jsonResponse } from './errors';
 import type { Env } from './kv';
+import { handleMigrateRoute } from './routes/migrate';
 import { maybeRenderOgPage } from './routes/ogMeta';
 import { handleSessionRoute } from './routes/session';
 import { handleShareRoute } from './routes/share';
@@ -19,6 +20,9 @@ export default {
       }
       if (path === '/api/share' || path.startsWith('/api/share/')) {
         return await handleShareRoute(request, env, path);
+      }
+      if (path === '/api/migrate' || path.startsWith('/api/migrate/')) {
+        return await handleMigrateRoute(request, env, path);
       }
       if (path === '/api/voc' || path.startsWith('/api/admin/voc')) {
         return await handleVocRoute(request, env, path);

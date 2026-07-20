@@ -1,4 +1,4 @@
-import { createExecutionContext, env } from 'cloudflare:test';
+import { env } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import type { Issue, SessionMeta } from '@recoverse/shared';
 import worker from '../src/index';
@@ -164,11 +164,7 @@ describe('worker OG integration', () => {
     await env.SESSIONS.put(keys.share(SHARE_ID), JSON.stringify(sampleIssue()));
 
     // When
-    const response = await worker.fetch(
-      new Request(`${BASE}/shared/${SHARE_ID}`),
-      assetsEnv(),
-      createExecutionContext(),
-    );
+    const response = await worker.fetch(new Request(`${BASE}/shared/${SHARE_ID}`), assetsEnv());
     const text = await response.text();
 
     // Then
@@ -178,7 +174,7 @@ describe('worker OG integration', () => {
   });
 
   it('serves the untouched index.html for routes without a preview card', async () => {
-    const response = await worker.fetch(new Request(`${BASE}/solo`), assetsEnv(), createExecutionContext());
+    const response = await worker.fetch(new Request(`${BASE}/solo`), assetsEnv());
     const text = await response.text();
     expect(text).toContain('old-title');
     expect(text).not.toContain('twitter:card');

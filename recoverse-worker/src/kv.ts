@@ -1,5 +1,7 @@
 export const SESSION_TTL_SECONDS = 86400;
 export const SHARE_TTL_SECONDS = 180 * 86400;
+// 기기 이사 코드는 짧게만 살아 있다 — 새 기기가 받으면 바로 삭제되는 일회용.
+export const MIGRATE_TTL_SECONDS = 600;
 
 export interface Env {
   SESSIONS: KVNamespace;
@@ -23,6 +25,7 @@ export const keys = {
   revealed: (code: string, roundIdx: number) => `session:${code}:r:${roundIdx}:revealed`,
   pastGuesses: (code: string) => `session:${code}:pastGuesses`,
   share: (shareId: string) => `share:${shareId}`,
+  migrate: (code: string) => `migrate:${code}`,
 };
 
 export async function kvGetJson<T>(kv: KVNamespace, key: string): Promise<T | null> {
