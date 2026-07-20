@@ -33,7 +33,12 @@
         </li>
       </ul>
 
-      <button type="button" class="reshuffle" @click="refresh">다른 질문 보기</button>
+      <div class="panelActions">
+        <button type="button" class="reshuffle" @click="refresh">다른 질문 보기</button>
+        <button v-if="suggestions.length > 1" type="button" class="addAll" @click="chooseAll">
+          이 질문 {{ suggestions.length }}개 목차에 담기
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -53,7 +58,7 @@ const props = withDefaults(
   defineProps<{ kind: Kind; exclude?: string[] }>(),
   { exclude: () => [] },
 );
-const emit = defineEmits<{ pick: [string] }>();
+const emit = defineEmits<{ pick: [string]; pickAll: [string[]] }>();
 
 const open = ref(false);
 const difficulty = ref<Difficulty>('medium');
@@ -79,6 +84,11 @@ function setDifficulty(d: Difficulty) {
 }
 function choose(q: string) {
   emit('pick', q);
+  open.value = false;
+}
+function chooseAll() {
+  // 빈 문서 공포 완화 — 팩 질문을 "답 대기" 목차로 한 번에 깐다.
+  emit('pickAll', [...suggestions.value]);
   open.value = false;
 }
 </script>
@@ -165,8 +175,14 @@ function choose(q: string) {
 .pick:hover {
   color: var(--vermilion);
 }
+.panelActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
 .reshuffle {
-  justify-self: start;
   background: none;
   border: none;
   padding: 0;
@@ -175,5 +191,17 @@ function choose(q: string) {
   color: var(--dim);
   text-decoration: underline;
   cursor: pointer;
+}
+.addAll {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  cursor: pointer;
+}
+.addAll:hover {
+  background: var(--ink-hover);
 }
 </style>

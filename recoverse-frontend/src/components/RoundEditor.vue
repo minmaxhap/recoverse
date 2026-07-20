@@ -40,7 +40,7 @@
         />
       </label>
 
-      <QuestionSuggest :kind="kind" :exclude="pastQuestions" @pick="setQuestion" />
+      <QuestionSuggest :kind="kind" :exclude="pastQuestions" @pick="setQuestion" @pick-all="addQuestions" />
 
       <div v-for="(name, i) in participants" :key="name" class="answerLine">
         <ParticipantDot :color="colorAt(i)" />
@@ -147,6 +147,21 @@ function setAnswer(name: string, event: Event): void {
     ...props.currentRound,
     answers: { ...props.currentRound.answers, [name]: eventValue(event) },
   });
+}
+
+/** 팩 질문을 "답 대기" 라운드로 목차에 한 번에 담는다. 이미 실린 질문은 건너뛴다. */
+function addQuestions(questions: string[]): void {
+  if (props.participants.length === 0) return;
+  const existing = new Set(pastQuestions.value.map((question) => question.trim()));
+  const additions: Round[] = [];
+  for (const raw of questions) {
+    const question = raw.trim();
+    if (!question || existing.has(question)) continue;
+    existing.add(question);
+    const asker = props.participants[(props.rounds.length + additions.length) % props.participants.length];
+    additions.push({ asker, question, answers: {} });
+  }
+  if (additions.length > 0) emit('update:rounds', [...props.rounds, ...additions]);
 }
 
 function addRound(): void {

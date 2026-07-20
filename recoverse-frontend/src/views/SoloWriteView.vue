@@ -96,7 +96,7 @@ import {
   type SoloIssueDraftV2,
 } from '../composables/useSoloIssueDraft';
 import { useShelf } from '../composables/useShelf';
-import { issueFromDraft } from '../lib/issueBuilder';
+import { issueFromDraft, roundIsAnswered } from '../lib/issueBuilder';
 
 const emit = defineEmits<{ back: []; published: [] }>();
 
@@ -117,7 +117,9 @@ const date = computed(() => kstTodayISO());
 const defaultIssueTitle = computed(() => defaultTitle(kind.value, date.value));
 const issueTitle = computed(() => title.value.trim() || defaultIssueTitle.value);
 const participants = computed(() => [name.value.trim() || SOLO_DEFAULT_NAME]);
-const canPublish = computed(() => rounds.value.length > 0);
+const answeredRoundCount = computed(() => rounds.value.filter(roundIsAnswered).length);
+const pendingRoundCount = computed(() => rounds.value.length - answeredRoundCount.value);
+const canPublish = computed(() => answeredRoundCount.value > 0);
 const kindLabelText = computed(() => KIND_LABELS[kind.value]);
 const sourceIssue = computed(() => shelf.issues.value.find((issue) => issue.id === sourceIssueId.value));
 const templateRounds = computed(() =>
@@ -125,9 +127,13 @@ const templateRounds = computed(() =>
     .filter((round) => round.question.trim())
     .map((round) => (round.format ? { question: round.question, format: round.format } : { question: round.question })),
 );
-const publishHelp = computed(() =>
-  canPublish.value ? '지금 발행하면 이 호가 내 책장에 저장돼요.' : '질문 하나와 답 하나를 목차에 실으면 발행할 수 있어요.',
-);
+const publishHelp = computed(() => {
+  if (!canPublish.value) return '질문 하나와 답 하나를 목차에 실으면 발행할 수 있어요.';
+  if (pendingRoundCount.value > 0) {
+    return `지금 발행하면 답을 쓴 ${answeredRoundCount.value}개 질문만 실려요. 답 대기 중인 ${pendingRoundCount.value}개는 빠져요.`;
+  }
+  return '지금 발행하면 이 호가 내 책장에 저장돼요.';
+});
 // 홈의 이어쓰기 peek와 같은 기준(draftHasContent)을 쓰도록 draft 객체로 판정한다.
 const hasDraftContent = computed(() => draftHasContent(buildDraft()));
 const draftStatusMessage = computed(() =>

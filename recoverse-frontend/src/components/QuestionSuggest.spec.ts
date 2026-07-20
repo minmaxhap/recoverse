@@ -32,6 +32,19 @@ describe('QuestionSuggest', () => {
     expect(wrapper.get('.packHint').text()).toContain('약 12분');
   });
 
+  it('emits the whole shown set and closes the panel when batching', async () => {
+    const wrapper = mount(QuestionSuggest, { props: { kind: 'yearend' } });
+    await wrapper.get('.suggestOpen').trigger('click');
+
+    const shown = wrapper.findAll('.pick').map((button) => button.text());
+    await wrapper.get('.addAll').trigger('click');
+
+    const pickAll = wrapper.emitted('pickAll');
+    expect(pickAll).toHaveLength(1);
+    expect(pickAll![0][0]).toEqual(shown);
+    expect(wrapper.find('.panel').exists()).toBe(false);
+  });
+
   it('emits the chosen question and closes the panel', async () => {
     const wrapper = mount(QuestionSuggest, { props: { kind: 'yearend' } });
     await wrapper.get('.suggestOpen').trigger('click');

@@ -9,7 +9,7 @@
         <span class="pageNo">{{ String(i + 1).padStart(2, '0') }}</span>
         <span v-if="editingIndex !== i" class="contentText">
           <b>{{ round.question }}</b>
-          <small>{{ answerPreview(round) }}</small>
+          <small :class="{ pending: !isAnswered(round) }">{{ answerPreview(round) }}</small>
         </span>
         <span v-else class="editFields">
           <input v-model="editQuestion" class="compactField" aria-label="질문" />
@@ -40,6 +40,7 @@
 import { ArrowDown, ArrowUp, Check, Pencil, Trash2, X } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import type { Round } from '@recoverse/shared';
+import { roundIsAnswered } from '../lib/issueBuilder';
 
 const props = defineProps<{
   rounds: Round[];
@@ -55,10 +56,21 @@ const editReady = computed(
   () => editQuestion.value.trim().length > 0 && props.participants.every((name) => (editAnswers.value[name] ?? '').trim().length > 0),
 );
 
+function isAnswered(round: Round): boolean {
+  return roundIsAnswered(round);
+}
+
 function answerPreview(round: Round): string {
-  const first = props.participants[0] ?? Object.keys(round.answers)[0];
-  const text = first ? round.answers[first]?.text.trim() : '';
-  if (!text) return '답이 실렸어요.';
+  const fromParticipants = props.participants
+    .map((name) => round.answers[name]?.text?.trim() ?? '')
+    .find((text) => text.length > 0);
+  const text =
+    fromParticipants ??
+    Object.values(round.answers)
+      .map((answer) => answer.text.trim())
+      .find((value) => value.length > 0) ??
+    '';
+  if (!text) return '답 대기';
   return text.length > 42 ? `${text.slice(0, 42)}...` : text;
 }
 
@@ -156,6 +168,10 @@ function saveEdit(index: number): void {
   font-size: 12px;
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+.contentText small.pending {
+  color: var(--vermilion);
+  font-weight: 800;
 }
 
 .editFields {
