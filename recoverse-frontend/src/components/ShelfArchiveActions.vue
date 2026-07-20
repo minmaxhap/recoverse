@@ -48,6 +48,7 @@ import { useShelf } from '../composables/useShelf';
 import { BackupImportError, parseReflectionBackup } from '../lib/backupImport';
 import { exportShelfBackup } from '../lib/backupExport';
 import { exportShelfMarkdown } from '../lib/markdownExport';
+import { useBackupStatus } from '../composables/useBackupStatus';
 import { CsvImportError, parseReflectionCsv } from '../lib/csvImport';
 import { issueFromDraft } from '../lib/issueBuilder';
 import { previewArchiveImport, type ArchivePreview, type ArchiveDisposition } from '../lib/archivePreview';
@@ -57,6 +58,7 @@ type Mode = 'idle' | 'import-format' | 'export-format' | 'preview';
 type ImportFormat = 'json' | 'csv';
 
 const shelf = useShelf();
+const { markBackedUp } = useBackupStatus();
 const mode = ref<Mode>('import-format');
 const importFormat = ref<ImportFormat>('json');
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -88,6 +90,7 @@ function dispositionLabel(disposition: ArchiveDisposition): string {
 
 function exportJson(): void {
   exportShelfBackup([...props.issues]);
+  markBackedUp();
   mode.value = 'import-format';
 }
 

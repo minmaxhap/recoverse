@@ -57,6 +57,7 @@
             <span id="archiveTitle" class="sectionTitle">개인 책장</span>
             <span class="sectionMeta">{{ issues.length }}권 보관 중</span>
           </div>
+          <p class="backupStatus" :class="{ stale: backupIsStale }">{{ backupStatusText }}</p>
           <ShelfArchiveActions :issues="issues" />
         </section>
 
@@ -74,10 +75,19 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import type { Issue } from '@recoverse/shared';
 import { useThemePreference, type ThemePreference } from '../composables/useThemePreference';
+import { backupAgeLabel, useBackupStatus } from '../composables/useBackupStatus';
 import ShelfArchiveActions from './ShelfArchiveActions.vue';
 import VocPanel from './VocPanel.vue';
 
-defineProps<{ readonly issues: readonly Issue[] }>();
+const props = defineProps<{ readonly issues: readonly Issue[] }>();
+
+const { lastBackupAt } = useBackupStatus();
+const backupStatusText = computed(() => {
+  if (props.issues.length === 0) return '';
+  if (!lastBackupAt.value) return '아직 백업하지 않았어요 — JSON 백업으로 안전하게 보관하세요.';
+  return `마지막 백업 · ${backupAgeLabel(lastBackupAt.value)}`;
+});
+const backupIsStale = computed(() => props.issues.length > 0 && !lastBackupAt.value);
 
 const THEME_OPTIONS = [
   {
@@ -262,6 +272,22 @@ onBeforeUnmount(() => { document.body.style.overflow = ''; });
   font-size: 12px;
   font-weight: 700;
   color: var(--dim);
+}
+
+.backupStatus {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dim);
+}
+
+.backupStatus:empty {
+  display: none;
+}
+
+.backupStatus.stale {
+  color: var(--vermilion);
+  font-weight: 700;
 }
 
 .themeOptions {
