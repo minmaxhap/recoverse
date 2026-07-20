@@ -1,6 +1,15 @@
 <template>
   <AppShell :variant="readingVariant">
-    <template v-if="state">
+    <div v-if="missing" class="centerStatus" role="status">
+      <span class="eyebrow">SESSION CLOSED</span>
+      <p class="waiting">
+        이 호를 더 이상 찾을 수 없어요. 만료됐거나 종료된 세션이에요.<br />
+        함께 발행한 호는 각자의 책장에 저장돼 있어요.
+      </p>
+      <button type="button" class="cta leaveBtn" @click="$emit('exit')">서재로 가기</button>
+    </div>
+
+    <template v-else-if="state">
       <div class="liveBar">
         <span class="eyebrow">{{ state.meta.date.slice(0, 4) }} ISSUE · {{ state.meta.code }}</span>
         <span class="eyebrow red">{{ roundLabel }}</span>
@@ -90,7 +99,7 @@ import { api } from '../../lib/api';
 const props = defineProps<{ code: string; me: string; isHost: boolean; playerToken: string }>();
 defineEmits<{ exit: [] }>();
 
-const { state, error, loading, apply, refreshNow } = useSession(props.code);
+const { state, error, loading, missing, apply, refreshNow } = useSession(props.code);
 const me = computed(() => props.me);
 const isHost = computed(() => props.isHost);
 const playerToken = computed(() => props.playerToken);
@@ -187,5 +196,8 @@ async function onEnd() {
 }
 .retryBtn {
   max-width: 180px;
+}
+.leaveBtn {
+  max-width: 220px;
 }
 </style>

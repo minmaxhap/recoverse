@@ -13,10 +13,10 @@
     </div>
 
     <p v-if="saveError" class="error d4" role="alert">{{ saveError }}</p>
-    <button class="cta d4" :disabled="saved" @click="onSave">
-      {{ saved ? '책장에 꽂아뒀어요' : '내 책장에 이번 호 꽂기' }}
+    <button class="cta d4" :disabled="isSaved" @click="onSave">
+      {{ isSaved ? '책장에 꽂아뒀어요' : '내 책장에 이번 호 꽂기' }}
     </button>
-    <button v-if="saved" class="endLink" @click="$emit('done')">서재로 돌아가기</button>
+    <button v-if="isSaved" class="endLink" @click="$emit('done')">서재로 돌아가기</button>
   </div>
 </template>
 
@@ -27,6 +27,7 @@ import PublishScene from '../../components/PublishScene.vue';
 import { useShelf } from '../../composables/useShelf';
 import { totalScores, mindReaders } from '../../lib/guessing';
 import { issueFromSession } from '../../lib/issueBuilder';
+import { issueFingerprint } from '../../lib/archivePreview';
 
 const props = defineProps<{ state: SessionStateResponse }>();
 
@@ -38,15 +39,24 @@ const shelf = useShelf();
 const saved = ref(false);
 const saveError = ref('');
 
+// 이 세션에서 만들 호. id는 매번 새로 나지만 지문은 내용으로 결정되므로,
+// 마감 화면을 새로고침하거나 다시 저장해도 같은 호가 책장에 두 번 꽂히지 않는다.
+const pendingIssue = issueFromSession(props.state);
+const fingerprint = issueFingerprint(pendingIssue);
+const alreadyOnShelf = computed(() =>
+  shelf.issues.value.some((issue) => issueFingerprint(issue) === fingerprint),
+);
+const isSaved = computed(() => saved.value || alreadyOnShelf.value);
+
 const issueYear = computed(() => props.state.meta.date.slice(0, 4));
 const kindLabel = computed(() => KIND_LABELS[props.state.meta.kind]);
 const readers = computed(() => mindReaders(totalScores(props.state.pastGuesses)));
 
 function onSave(): void {
-  if (saved.value) return;
+  if (isSaved.value) return;
 
   saveError.value = '';
-  if (!shelf.add(issueFromSession(props.state))) {
+  if (!shelf.add(pendingIssue)) {
     saveError.value = '브라우저 저장 공간에 저장하지 못했어요. 용량을 비우고 다시 시도해주세요.';
     return;
   }

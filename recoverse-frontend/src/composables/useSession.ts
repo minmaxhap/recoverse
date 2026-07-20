@@ -16,6 +16,9 @@ export function useSession(code: string) {
   const state = shallowRef<SessionStateResponse | null>(null);
   const error = ref<string>('');
   const loading = ref(true);
+  // 만료·종료되어 서버에 없는 세션은 재시도해도 소용없는 종료 상태다.
+  // 불안정한 연결(재시도 가치 있음)과 구분해 화면이 명확히 안내하도록 한다.
+  const missing = ref(false);
 
   let timer: ReturnType<typeof setTimeout> | null = null;
   let inFlight = false;
@@ -44,10 +47,13 @@ export function useSession(code: string) {
       }
     } catch (e) {
       if (e instanceof ApiError && e.status === 404) {
-        error.value = '세션을 찾지 못했어요.';
-      } else {
-        error.value = '연결이 불안정해요. 다시 시도하는 중…';
+        // 종료 상태 — 폴링을 멈추고(아래 schedule에 도달하지 않음) 화면이 안내하게 한다.
+        missing.value = true;
+        error.value = '';
+        loading.value = false;
+        return;
       }
+      error.value = '연결이 불안정해요. 다시 시도하는 중…';
       backoff = Math.min(backoff * 2, MAX_BACKOFF_MS);
     } finally {
       inFlight = false;
@@ -82,6 +88,7 @@ export function useSession(code: string) {
     state,
     error,
     loading,
+    missing,
     stop,
     /** 액션 직후 서버가 돌려준 상태를 즉시 반영 (다음 폴링을 기다리지 않게) */
     apply(next: SessionStateResponse) {
@@ -91,6 +98,7 @@ export function useSession(code: string) {
     },
     refreshNow() {
       error.value = '';
+      missing.value = false;
       loading.value = state.value === null;
       schedule(0);
     },
