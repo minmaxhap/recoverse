@@ -32,24 +32,32 @@
       </label>
     </section>
 
-    <section v-if="shelf.issues.value.length" class="sourceIssue" aria-labelledby="sourceIssueTitle">
-      <div class="sectionHead">
-        <span class="eyebrow">FROM THE SHELF</span>
-        <h2 id="sourceIssueTitle">지난 호 질문 이어쓰기</h2>
+    <details
+      v-if="shelf.issues.value.length"
+      class="sourceIssue"
+      :open="sourceOpen"
+      @toggle="sourceOpen = ($event.target as HTMLDetailsElement).open"
+    >
+      <summary class="sourceSummary">
+        <span class="eyebrow red">FROM THE SHELF</span>
+        <span class="sourceSummaryText">지난 호에서 질문 가져오기</span>
+        <span class="sourceChevron" aria-hidden="true">＋</span>
+      </summary>
+      <div class="sourceBody">
+        <label class="fieldGroup">
+          <span class="fieldLabel">질문을 가져올 호</span>
+          <select v-model="sourceIssueId" class="field selectField">
+            <option value="">새 질문으로 시작</option>
+            <option v-for="issue in shelf.issues.value" :key="issue.id" :value="issue.id">
+              {{ issue.title }} · 질문 {{ issue.rounds.length }}개
+            </option>
+          </select>
+        </label>
+        <p v-if="sourceIssue" class="helper">
+          {{ sourceIssue.title }}의 질문을 순서대로 불러와, 지금의 답으로 새 호를 엮어요.
+        </p>
       </div>
-      <label class="fieldGroup">
-        <span class="fieldLabel">질문을 가져올 호</span>
-        <select v-model="sourceIssueId" class="field selectField">
-          <option value="">새 질문으로 시작</option>
-          <option v-for="issue in shelf.issues.value" :key="issue.id" :value="issue.id">
-            {{ issue.title }} · 질문 {{ issue.rounds.length }}개
-          </option>
-        </select>
-      </label>
-      <p v-if="sourceIssue" class="helper">
-        {{ sourceIssue.title }}의 질문을 순서대로 불러와, 지금의 답으로 새 호를 엮어요.
-      </p>
-    </section>
+    </details>
 
     <RoundEditor
       :participants="participants"
@@ -110,6 +118,8 @@ const publishError = ref('');
 const restoreNotice = ref('');
 const publishing = ref(false);
 const sourceIssueId = ref('');
+// 지난 호 가져오기는 소수만 쓰는 선택 기능 — 기본은 접어두고(네이티브 details), 필요할 때 펼친다.
+const sourceOpen = ref(false);
 const soloDraft = useSoloIssueDraft();
 const draftReady = ref(false);
 
@@ -194,6 +204,8 @@ function restoreDraft(): void {
       sourceIssueId.value = '';
       clearedStaleSource = true;
     }
+    // 복원된 초고가 이미 지난 호를 가져오는 중이면 펼친 채로 시작해 맥락을 잃지 않는다.
+    sourceOpen.value = sourceIssueId.value !== '';
   }
   draftReady.value = true;
   if (clearedStaleSource) persistDraft();
@@ -265,13 +277,58 @@ function finishPublish(): void {
   background: var(--paper-card);
 }
 
+/* 지난 호 가져오기: 기본은 hairline 위 슬림한 요약 줄, 펼치면 본문이 인라인으로 열린다. */
 .sourceIssue {
+  margin-top: 16px;
+  border-top: 1px solid var(--hairline);
+}
+
+.sourceSummary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 2px;
+  cursor: pointer;
+  color: var(--dim-strong);
+  list-style: none;
+  transition: color 0.15s ease;
+}
+
+.sourceSummary::-webkit-details-marker {
+  display: none;
+}
+
+.sourceSummary:hover {
+  color: var(--vermilion);
+}
+
+.sourceSummaryText {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sourceChevron {
+  flex: 0 0 auto;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dim);
+  transition: transform 0.18s ease, color 0.15s ease;
+}
+
+.sourceSummary:hover .sourceChevron {
+  color: var(--vermilion);
+}
+
+.sourceIssue[open] .sourceChevron {
+  transform: rotate(45deg);
+}
+
+.sourceBody {
   display: grid;
   gap: 12px;
-  margin-top: 16px;
-  padding: 14px;
-  border-top: 3px solid var(--ink);
-  border-bottom: 1px solid var(--hairline);
+  padding: 4px 2px 14px;
 }
 
 .sectionHead {
