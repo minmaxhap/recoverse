@@ -14,65 +14,24 @@
       <span class="inviteCta">첫 호 발행하러 가기</span>
     </button>
 
-    <div class="spines">
-      <button
-        v-for="issue in issues"
+    <div v-else class="covers">
+      <IssueCover
+        v-for="(issue, index) in issues"
         :key="issue.id"
-        class="spine"
-        @click="$emit('open', issue.id)"
-      >
-        <span class="spineKind" :style="{ background: kindColor(issue.kind) }" aria-hidden="true" />
-        <span v-if="spineYear(issue)" class="spineYear">{{ spineYear(issue) }}</span>
-        <span class="spineLabel">{{ spineLabel(issue) }}</span>
-      </button>
-    </div>
-
-    <div class="issueList">
-      <button
-        v-for="issue in issues"
-        :key="issue.id"
-        class="issueRow"
-        @click="$emit('open', issue.id)"
-      >
-        <span class="issueYear">{{ issue.date.slice(0, 4) }}</span>
-        <span class="issueInfo">
-          <span class="issueTitleLine">
-            <b>{{ issue.title }}</b>
-            <span class="kindTag" :style="{ color: kindColor(issue.kind), borderColor: kindColor(issue.kind) }">
-              {{ KIND_LABELS[issue.kind] }}
-            </span>
-          </span>
-          <small>{{ (issue.participants || []).join(' · ') }} - 질문 {{ (issue.rounds || []).length }}개</small>
-        </span>
-        <span class="arrow">→</span>
-      </button>
+        :issue="issue"
+        :no="issues.length - index"
+        @open="$emit('open', $event)"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { KIND_LABELS, type Issue } from '@recoverse/shared';
-import { kindColor } from '../lib/palette';
+import type { Issue } from '@recoverse/shared';
+import IssueCover from './IssueCover.vue';
 
 defineProps<{ readonly issues: readonly Issue[] }>();
 defineEmits<{ navigate: ['create']; open: [string] }>();
-
-function spineLabel(issue: Issue): string {
-  const title = issue.title.trim();
-  const year = issue.date.slice(0, 4);
-  const label = KIND_LABELS[issue.kind];
-  if (issue.kind === 'yearend') return '연말';
-  const withoutYear = title.replace(new RegExp(`^${year}(?:년)?\\s*`), '');
-  if (withoutYear !== title) return withoutYear || label;
-  if (title && title !== label) return title;
-  return label;
-}
-
-function spineYear(issue: Issue): string {
-  const title = issue.title.trim();
-  const year = issue.date.slice(0, 4);
-  return issue.kind === 'yearend' || title.startsWith(year) ? `${year}년` : '';
-}
 </script>
 
 <style scoped>
@@ -93,6 +52,16 @@ function spineYear(issue: Issue): string {
 .count {
   font-size: 12px;
   color: var(--dim);
+}
+
+/* 호마다 생성된 표지를 가로로 넘겨보는 서가 */
+.covers {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 10px 2px 12px;
+  margin-top: 8px;
 }
 
 .emptyInvite {
@@ -163,146 +132,18 @@ function spineYear(issue: Issue): string {
   color: var(--vermilion);
 }
 
-.issueRow {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  text-align: left;
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--hairline);
-  padding: 14px 2px;
-  cursor: pointer;
-  color: inherit;
-  transition: background 0.15s ease;
-}
-
-.issueRow:hover {
-  background: var(--paper-card);
-}
-
-.issueRow:hover .arrow {
-  color: var(--vermilion);
-  transform: translateX(4px);
-}
-
-.issueYear {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.issueInfo {
-  flex: 1;
-  display: grid;
-  gap: 2px;
-}
-
-.issueTitleLine {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.issueInfo b {
-  font-size: 15px;
-}
-
-.kindTag {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  border: 1px solid;
-  padding: 1px 6px;
-  flex-shrink: 0;
-}
-
-.issueInfo small {
-  font-size: 12px;
-  color: var(--dim);
-}
-
-.arrow {
-  color: var(--dim);
-  transition: color 0.15s ease, transform 0.15s ease;
-}
-
-.spines {
-  display: none;
-}
-
 @media (min-width: 1024px) {
   .shelfBlock {
     min-height: 0;
-    overflow: hidden;
   }
 
   .sectionHead {
     margin-bottom: clamp(4px, 1vh, 8px);
   }
 
-  .issueList {
-    display: none;
-  }
-
-  .spines {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-    flex-wrap: nowrap;
-    max-width: 100%;
-    max-height: 158px;
-    overflow-x: auto;
-    overflow-y: visible;
-    padding: 9px 2px 10px;
+  .covers {
     margin-top: 10px;
-  }
-
-  .spine {
-    position: relative;
-    writing-mode: vertical-rl;
-    background: var(--paper-card);
-    border: 1px solid var(--ink);
-    padding: clamp(11px, 1.8vh, 16px) 8px clamp(9px, 1.4vh, 12px);
-    height: clamp(104px, 16vh, 142px);
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    color: inherit;
-    transition: transform 0.16s ease, border-color 0.16s ease;
-  }
-
-  .spineKind {
-    position: absolute;
-    top: 0;
-    right: 0;
-    left: 0;
-    height: 6px;
-    writing-mode: horizontal-tb;
-  }
-
-  .spine:hover {
-    transform: translateY(-4px);
-    border-color: var(--vermilion);
-  }
-
-  .spineLabel {
-    font-family: var(--font-display);
-    font-size: clamp(12px, 1.5vh, 15px);
-    font-weight: 700;
-    max-height: 112px;
-    overflow: hidden;
-  }
-
-  .spineYear {
-    font-family: var(--font-display);
-    font-size: clamp(11px, 1.3vh, 13px);
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-orientation: upright;
+    max-width: 100%;
   }
 
   .emptyInvite {
