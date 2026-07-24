@@ -58,10 +58,13 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
 .covers {
   display: flex;
   gap: 12px;
+  min-width: 0;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   padding: 10px 2px 12px;
   margin-top: 8px;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
 }
 
 .emptyInvite {
@@ -135,6 +138,7 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
 @media (min-width: 1024px) {
   .shelfBlock {
     min-height: 0;
+    min-width: 0;
   }
 
   .sectionHead {
