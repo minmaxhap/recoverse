@@ -2,9 +2,8 @@
   <AppShell variant="read">
     <BackHeader label="다시 발견" @back="$emit('back')" />
     <h1 class="pageTitle">같은 질문,<br />다른 해의 나</h1>
-    <p class="lede">여러 해에 걸쳐 반복된 질문일수록 위에 올라와요. 하나를 골라 시간 여행을 시작하세요.</p>
 
-    <button v-if="moment" class="momentCard" @click="$emit('open', moment.groupKey)">
+    <button v-if="moment" class="momentCard" @click="$emit('open-group', moment.groupKey)">
       <span class="eyebrow gold">{{ momentLabel }}</span>
       <span class="momentQ">{{ moment.question }}</span>
       <span class="momentA">“{{ momentTeaser }}”</span>
@@ -27,7 +26,7 @@
 
     <p v-if="groups.length > 0 && filteredGroups.length === 0" class="empty">찾는 결과가 없어요.</p>
 
-    <button v-for="g in filteredGroups" :key="g.key" class="redisRow" @click="$emit('open', g.key)">
+    <button v-for="g in filteredGroups" :key="g.key" class="redisRow" @click="$emit('open-group', g.key)">
       <span class="redisQ">{{ g.question }}</span>
       <span class="yearChips">
         <em v-for="y in g.years" :key="y">{{ y }}</em>
@@ -53,7 +52,9 @@ const props = defineProps<{
   hasSamples: boolean;
   moment: RediscoveryMoment | null;
 }>();
-defineEmits<{ back: []; open: [string]; addSamples: []; removeSamples: [] }>();
+// 질문을 열면 호가 아니라 재발견 타임라인으로 간다 — 표지와 같은 'open-group'을 쓴다.
+// 'open'은 앱 셸에서 호 상세로 배선돼 있어, 질문 키를 넘기면 가드에 막혀 표지로 튕긴다.
+defineEmits<{ back: []; 'open-group': [string]; addSamples: []; removeSamples: [] }>();
 
 const searchQuery = ref('');
 const filteredGroups = computed(() => filterGroups(props.groups, searchQuery.value));
