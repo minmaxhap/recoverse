@@ -1,8 +1,8 @@
 <template>
-  <button type="button" class="issueCover" @click="$emit('open', issue.id)">
+  <button type="button" class="issueCover" :aria-label="coverLabel" :title="coverLabel" @click="$emit('open', issue.id)">
     <canvas ref="canvasEl" class="coverArt" aria-hidden="true" />
     <span class="coverScrim" aria-hidden="true" />
-    <span class="coverText">
+    <span class="coverText" aria-hidden="true">
       <span class="coverNo">No.{{ no }}</span>
       <span class="coverTitle">{{ issue.title }}</span>
       <span class="coverMeta">{{ KIND_LABELS[issue.kind] }} · {{ issue.date.slice(0, 4) }}</span>
@@ -11,13 +11,25 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { KIND_LABELS, type Issue } from '@recoverse/shared';
 import { kindColor } from '../lib/palette';
 import { drawRisoCover } from '../lib/coverArt';
 
 const props = defineProps<{ readonly issue: Issue; readonly no: number }>();
 defineEmits<{ open: [string] }>();
+
+// 표지엔 제목·종류·연도만 보이지만, 참여자·질문 수까지 접근 가능한 이름/툴팁으로 되살린다.
+const coverLabel = computed(() => {
+  const people = props.issue.participants.filter((name) => name.trim().length > 0);
+  const parts = [
+    props.issue.title,
+    `${KIND_LABELS[props.issue.kind]} · ${props.issue.date.slice(0, 4)}`,
+  ];
+  if (people.length > 0) parts.push(people.join(', '));
+  parts.push(`질문 ${props.issue.rounds.length}개`);
+  return parts.join(' · ');
+});
 
 const canvasEl = ref<HTMLCanvasElement | null>(null);
 let observer: ResizeObserver | null = null;
