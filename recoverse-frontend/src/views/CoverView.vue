@@ -10,7 +10,7 @@
           <div class="rule thick" />
           <h1 class="brand">RECOVERSE</h1>
           <div class="deck">
-            <span>질문과 장면을 엮는 나만의 호</span>
+            <span>질문으로 꺼내는 나의 기록</span>
             <span>EST. 2016</span>
           </div>
           <div class="rule" />
@@ -20,9 +20,9 @@
       <div class="coverSpread">
         <section class="coverLead" aria-label="Recoverse 소개">
           <p class="coverline">
-            오늘의 장면을,<br />
-            우리는 한 권의<br />
-            <em>호</em>로 엮는다.
+            지나온 시간을<br />
+            <em>한 권</em>으로 <br/>
+            남긴다.
           </p>
 
           <div class="momentSlot">
