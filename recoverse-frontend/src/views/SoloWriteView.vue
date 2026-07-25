@@ -5,7 +5,6 @@
     <header class="soloIntro">
       <span class="eyebrow red">SOLO ISSUE</span>
       <h1 class="pageTitle">오늘의 질문을 한 호로 엮어요</h1>
-      <p class="lede">처음부터 완성된 글을 쓰지 않아도 괜찮아요. 질문 하나와 거친 답 하나면 책장에 꽂을 수 있어요.</p>
     </header>
 
     <details
@@ -22,16 +21,15 @@
       <div class="disclosureBody">
         <label class="fieldGroup">
           <span class="fieldLabel">질문을 가져올 호</span>
-          <select v-model="sourceIssueId" class="field selectField">
+          <!-- 고르는 즉시 목차에 담긴다 — 아래에서 한 번 더 고르게 하지 않는다. -->
+          <select :value="sourceIssueId" class="field selectField" @change="chooseSourceIssue">
             <option value="">새 질문으로 시작</option>
             <option v-for="issue in shelf.issues.value" :key="issue.id" :value="issue.id">
               {{ issue.title }} · 질문 {{ issue.rounds.length }}개
             </option>
           </select>
         </label>
-        <p v-if="sourceIssue" class="helper">
-          {{ sourceIssue.title }}의 질문을 순서대로 불러와, 지금의 답으로 새 호를 엮어요.
-        </p>
+        <p v-if="importNotice" class="helper" role="status">{{ importNotice }}</p>
       </div>
     </details>
 
@@ -40,7 +38,6 @@
       :rounds="rounds"
       :current-round="currentRound"
       :kind="kind"
-      :template-rounds="templateRounds"
       :draft-state-label="draftStateLabel"
       @update:rounds="updateRounds"
       @update:current-round="updateCurrentRound"
@@ -71,7 +68,6 @@
         <label class="fieldGroup">
           <span class="fieldLabel">이 호에 실릴 이름</span>
           <input v-model="name" class="field" placeholder="나" />
-          <span class="helper">답변 옆 바이라인과 다시 발견에 이 이름이 실려요.</span>
         </label>
       </div>
     </details>
@@ -122,6 +118,7 @@ const rounds = ref<Round[]>([]);
 const currentRound = ref<SoloIssueCurrentRoundDraft>({ question: '', formatId: '', answers: {} });
 const publishError = ref('');
 const restoreNotice = ref('');
+const importNotice = ref('');
 const publishing = ref(false);
 const sourceIssueId = ref('');
 // 지난 호 가져오기는 소수만 쓰는 선택 기능 — 기본은 접어두고(네이티브 details), 필요할 때 펼친다.
@@ -140,11 +137,6 @@ const pendingRoundCount = computed(() => rounds.value.length - answeredRoundCoun
 const canPublish = computed(() => answeredRoundCount.value > 0);
 const kindLabelText = computed(() => KIND_LABELS[kind.value]);
 const sourceIssue = computed(() => shelf.issues.value.find((issue) => issue.id === sourceIssueId.value));
-const templateRounds = computed(() =>
-  (sourceIssue.value?.rounds ?? [])
-    .filter((round) => round.question.trim())
-    .map((round) => (round.format ? { question: round.question, format: round.format } : { question: round.question })),
-);
 const publishHelp = computed(() => {
   if (!canPublish.value) return '질문 하나와 답 하나를 목차에 실으면 발행할 수 있어요.';
   if (pendingRoundCount.value > 0) {
@@ -231,6 +223,40 @@ watch(
 );
 
 onMounted(restoreDraft);
+
+/**
+ * 지난 호를 고르면 그 자리에서 질문을 목차에 "답 대기"로 깐다.
+ * 아래에서 한 번 더 고르게 하면 고른 곳과 결과가 나타나는 곳이 달라 흐름이 끊긴다.
+ * 사용자가 직접 고를 때만 담는다 — 초고 복원은 이미 자기 rounds를 갖고 있다.
+ */
+function chooseSourceIssue(event: Event): void {
+  const id = event.target instanceof HTMLSelectElement ? event.target.value : '';
+  sourceIssueId.value = id;
+
+  const issue = shelf.issues.value.find((item) => item.id === id);
+  if (!issue) {
+    importNotice.value = '';
+    return;
+  }
+
+  const existing = new Set(rounds.value.map((round) => round.question.trim()));
+  const asker = participants.value[0] ?? SOLO_DEFAULT_NAME;
+  const additions: Round[] = [];
+  for (const sourceRound of issue.rounds) {
+    const question = sourceRound.question.trim();
+    if (!question || existing.has(question)) continue;
+    existing.add(question);
+    const round: Round = { asker, question, answers: {} };
+    if (sourceRound.format) round.format = sourceRound.format;
+    additions.push(round);
+  }
+
+  if (additions.length > 0) rounds.value = [...rounds.value, ...additions];
+  importNotice.value =
+    additions.length > 0
+      ? `${issue.title}의 질문 ${additions.length}개를 목차에 담았어요.`
+      : `${issue.title}의 질문은 이미 목차에 있어요.`;
+}
 
 function updateRounds(nextRounds: Round[]): void {
   rounds.value = nextRounds;
