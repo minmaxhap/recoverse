@@ -27,12 +27,10 @@
           class="field area"
           :placeholder="answerPlaceholder"
           :aria-invalid="Boolean(error)"
-          aria-describedby="answerHelp answerError"
+          aria-describedby="answerError"
         />
-        <span id="answerHelp" class="helper">짧은 메모여도 괜찮아요. 나중에 그대로 한 면이 됩니다.</span>
       </div>
       <div class="reflectionPrompts">
-        <p class="fineprint">막히면 하나만 눌러서 이어 써보세요.</p>
         <div class="promptChips">
           <button
             v-for="prompt in expansionPrompts"

@@ -2,7 +2,6 @@
   <div>
     <template v-if="myTurn">
       <h1 class="pageTitle">{{ roundNo }}번째 헤드라인,<br />내 차례</h1>
-      <p class="lede">모두에게 던질 질문을 적어주세요.</p>
       <div class="formatChips" role="radiogroup" aria-label="회고 포맷">
         <button
           type="button"
@@ -36,9 +35,8 @@
           :readonly="!!formatId"
           placeholder="예) 올해의 나를 건물 하나로 표현한다면?"
           :aria-invalid="Boolean(error)"
-          aria-describedby="questionHelp questionError"
+          aria-describedby="questionError"
         />
-        <span id="questionHelp" class="helper">모두가 한 번에 답할 수 있는 하나의 질문으로 적어주세요.</span>
       </div>
       <QuestionSuggest v-if="!formatId" :kind="state.meta.kind" :exclude="pastQuestions" @pick="onPick" />
       <PastQuestions :history="state.meta.history" />

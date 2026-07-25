@@ -72,7 +72,6 @@
 
         <section class="settingsSection noteSection" aria-labelledby="letterTitle">
           <span id="letterTitle" class="sectionTitle">편집부에 남기기</span>
-          <p class="fineprint">Recoverse를 쓰며 걸린 장면을 편집부 앞으로 남겨주세요.</p>
           <VocPanel />
         </section>
       </section>
