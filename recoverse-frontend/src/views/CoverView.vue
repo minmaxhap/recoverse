@@ -167,13 +167,15 @@ const resumeDraft = peekSoloIssueDraft();
   }
 }
 
+/* 데스크톱: 화면을 꽉 채우되(min-height:100%) 콘텐츠가 많으면 페이지가 자연스럽게 흐른다.
+   고정 높이로 눌러 담다 목차가 표지 위로 겹치던 문제를 없애고, 지난 호는 줄바꿈 그리드로
+   가로 스크롤 없이 펼쳐진다. */
 @media (min-width: 1024px) {
   .coverHome {
-    height: 100%;
+    min-height: 100%;
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
     gap: clamp(14px, 2.2vh, 24px);
-    overflow: hidden;
   }
   .coverTools {
     margin-bottom: clamp(6px, 1.2vh, 12px);
@@ -190,30 +192,22 @@ const resumeDraft = peekSoloIssueDraft();
   }
   .coverSpread {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(420px, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(400px, 1fr);
     gap: 28px;
-    min-height: 0;
-    overflow: hidden;
+    align-items: start;
   }
   .coverLead {
-    min-height: 0;
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
-    align-items: center;
+    gap: 10px;
+    align-content: start;
     padding-right: 28px;
     border-right: 1px solid var(--hairline);
   }
   .coverDesk {
-    min-height: 0;
-    display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
-    align-content: stretch;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
     gap: clamp(12px, 2vh, 18px);
-    overflow: hidden;
-  }
-  /* 이어쓰기 카드가 있으면 맨 위 행을 추가해도 목차는 스크롤, 지난 호는 하단 고정 유지 */
-  .coverDesk.hasResume {
-    grid-template-rows: auto minmax(0, 1fr) auto;
   }
   .coverline {
     font-size: clamp(27px, 4vh, 34px);
@@ -221,14 +215,8 @@ const resumeDraft = peekSoloIssueDraft();
     margin: 0;
   }
   .momentCard {
-    margin: clamp(12px, 2vh, 18px) 0 10px;
+    margin: clamp(10px, 1.6vh, 16px) 0 4px;
     padding: clamp(11px, 1.7vh, 16px) 14px;
-  }
-  .momentSlot {
-    align-self: end;
-  }
-  .momentSlot:empty {
-    display: block;
   }
   .momentQ {
     font-size: clamp(16px, 2vh, 19px);
@@ -239,31 +227,6 @@ const resumeDraft = peekSoloIssueDraft();
     overflow: hidden;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-  }
-}
-
-/* 세로가 넉넉하지 않으면 고정 스프레드 대신 페이지가 자연스럽게 흐르게 —
-   목차가 표지 영역으로 넘쳐 겹치는 것을 막는다(웬만한 노트북 높이 포함). */
-@media (min-width: 1024px) and (max-height: 900px) {
-  .coverHome {
-    gap: 10px;
-    height: auto;
-    min-height: 100%;
-    overflow: visible;
-  }
-  .coverSpread {
-    gap: 24px;
-    overflow: visible;
-  }
-  .coverLead {
-    padding-right: 24px;
-  }
-  .momentCard {
-    gap: 3px;
-    margin-top: 10px;
-  }
-  .momentA {
-    -webkit-line-clamp: 1;
   }
 }
 </style>

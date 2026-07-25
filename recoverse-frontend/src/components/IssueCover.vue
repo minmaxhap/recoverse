@@ -67,8 +67,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .issueCover {
   position: relative;
-  flex: 0 0 auto;
-  height: clamp(116px, 15.5vh, 138px);
+  width: 100%;
   aspect-ratio: 3 / 4;
   padding: 0;
   overflow: hidden;
@@ -76,7 +75,6 @@ onBeforeUnmount(() => {
   background: var(--paper-card);
   cursor: pointer;
   color: var(--cover-fg, #f4efe4);
-  scroll-snap-align: start;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 

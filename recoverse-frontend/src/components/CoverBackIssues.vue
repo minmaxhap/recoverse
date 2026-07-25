@@ -21,7 +21,8 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
 
 @media (min-width: 1024px) {
   .backissues {
-    align-self: end;
+    /* coverDesk가 플렉스 컬럼이므로 가로로 꽉 차게 — 지난 호 그리드가 좁아지지 않도록 */
+    align-self: stretch;
   }
 }
 </style>
