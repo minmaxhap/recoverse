@@ -35,9 +35,8 @@
           maxlength="12"
           autocomplete="name"
           :aria-invalid="Boolean(error)"
-          aria-describedby="playerNameHelp entryError"
+          aria-describedby="entryError"
         />
-        <span id="playerNameHelp" class="helper">이번 호에 표시될 이름이에요.</span>
       </div>
 
       <p v-if="error" id="entryError" class="error" role="alert">{{ error }}</p>

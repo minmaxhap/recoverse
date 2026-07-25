@@ -18,17 +18,6 @@
         <span class="draftState" aria-live="polite">{{ draftStateLabel }}</span>
       </div>
 
-      <label v-if="remainingTemplateRounds.length" class="fieldGroup">
-        <span class="fieldLabel">지난 호의 질문</span>
-        <select class="field selectField" :value="selectedTemplateQuestion" @change="chooseTemplateQuestion">
-          <option value="">질문을 고르세요</option>
-          <option v-for="round in remainingTemplateRounds" :key="round.question" :value="round.question">
-            {{ round.question }}
-          </option>
-        </select>
-        <span class="helper">고르면 질문과 포맷을 그대로 가져와요.</span>
-      </label>
-
       <label class="fieldGroup">
         <span class="fieldLabel">질문</span>
         <input
@@ -55,14 +44,13 @@
         </label>
       </div>
 
-      <p class="helper">{{ roundHelp }}</p>
       <button class="ghost" :disabled="!qaReady" @click="addRound">답 저장하고 다음 질문</button>
     </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import type { Kind, Round } from '@recoverse/shared';
 import ParticipantDot from './ParticipantDot.vue';
 import QuestionSuggest from './QuestionSuggest.vue';
@@ -77,18 +65,13 @@ const props = withDefaults(
     rounds: Round[];
     currentRound: SoloIssueCurrentRoundDraft;
     kind?: Kind;
-    templateRounds?: readonly Pick<Round, 'question' | 'format'>[];
     draftStateLabel?: string;
   }>(),
   { kind: 'free', draftStateLabel: '새 질문' },
 );
 const emit = defineEmits<{ 'update:rounds': [Round[]]; 'update:currentRound': [SoloIssueCurrentRoundDraft] }>();
 
-const selectedTemplateQuestion = ref('');
 const pastQuestions = computed(() => props.rounds.map((round) => round.question));
-const remainingTemplateRounds = computed(() =>
-  (props.templateRounds ?? []).filter((round) => !pastQuestions.value.includes(round.question)),
-);
 
 const qaReady = computed(
   () =>
@@ -96,13 +79,6 @@ const qaReady = computed(
     props.participants.length > 0 &&
     props.participants.every((name) => (props.currentRound.answers[name] ?? '').trim().length > 0),
 );
-const roundHelp = computed(() => {
-  if (props.participants.length === 0) return '이 호에 실릴 이름을 먼저 적어주세요.';
-  if (!props.currentRound.question.trim()) return '질문을 고르거나 직접 쓰면 답을 실을 수 있어요.';
-  if (!qaReady.value) return '답을 적으면 이 질문을 목차에 실을 수 있어요.';
-  return '좋아요. 이 질문을 목차에 실어두고 다음 질문으로 넘어갈 수 있어요.';
-});
-
 function eventValue(event: Event): string {
   return event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement
     ? event.target.value
@@ -127,14 +103,6 @@ function selectFormat(id: string): void {
     formatId: id,
     question: format ? format.prompt : props.currentRound.question,
   });
-}
-
-function chooseTemplateQuestion(event: Event): void {
-  const question = event.target instanceof HTMLSelectElement ? event.target.value : '';
-  selectedTemplateQuestion.value = question;
-  const template = remainingTemplateRounds.value.find((round) => round.question === question);
-  if (!template) return;
-  updateCurrentRound({ ...props.currentRound, question: template.question, formatId: template.format ?? '' });
 }
 
 function answerHint(name: string): string {
@@ -177,7 +145,6 @@ function addRound(): void {
 
   emit('update:rounds', [...props.rounds, round]);
   updateCurrentRound({ question: '', formatId: '', answers: {} });
-  selectedTemplateQuestion.value = '';
 }
 
 function moveRound(index: number, direction: -1 | 1): void {

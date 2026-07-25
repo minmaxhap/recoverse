@@ -10,7 +10,6 @@
         <i /><i class="tall" /><i />
       </span>
       <span class="inviteTitle">책장이 비어 있어요</span>
-      <span class="inviteSub">첫 호의 발행인이 되어보세요. 코드 하나면 친구들과 시작할 수 있어요.</span>
       <span class="inviteCta">첫 호 발행하러 가기</span>
     </button>
 
@@ -116,13 +115,6 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
   font-weight: 700;
 }
 
-.inviteSub {
-  font-size: 13px;
-  color: var(--dim);
-  line-height: 1.6;
-  max-width: 300px;
-}
-
 .inviteCta {
   margin-top: 8px;
   font-size: 13px;
@@ -166,10 +158,6 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
 
   .ghostShelf i.tall {
     height: 54px;
-  }
-
-  .inviteSub {
-    display: none;
   }
 
   .inviteCta {
