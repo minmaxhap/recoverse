@@ -50,7 +50,7 @@
     >
       <summary class="disclosureSummary">
         <span class="eyebrow red">COVER NOTE</span>
-        <span class="disclosureText">표지 정보 — 종류·제목·이름</span>
+        <span class="disclosureText">표지 정보</span>
         <span class="disclosureChevron" aria-hidden="true">＋</span>
       </summary>
       <div class="disclosureBody">
