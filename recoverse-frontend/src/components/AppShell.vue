@@ -28,13 +28,13 @@ withDefaults(defineProps<{ variant?: 'read' | 'write' | 'cover' }>(), { variant:
     max-width: var(--col-desktop);
     padding: 40px 32px 72px;
   }
+  /* 표지는 한 화면을 채우되 넘치면 흐른다. 고정 높이로 눌러 담으면 책장이 늘어난 만큼
+     아래가 잘려 나가 손댈 수 없게 된다(지난 호가 사라지는 것처럼 보인다). */
   .col.cover {
     max-width: var(--col-desktop);
-    height: 100vh;
-    height: 100dvh;
-    min-height: 640px;
+    min-height: 100vh;
+    min-height: 100dvh;
     padding: clamp(18px, 3vh, 34px) 32px clamp(18px, 3vh, 30px);
-    overflow: hidden;
   }
   .col.write {
     max-width: var(--col-write);
@@ -42,13 +42,11 @@ withDefaults(defineProps<{ variant?: 'read' | 'write' | 'cover' }>(), { variant:
   }
 }
 
+/* 낮은 화면에서는 여백부터 줄여 한 화면에 더 담아본다. 그래도 넘치면 그냥 흐른다. */
 @media (min-width: 1024px) and (max-height: 720px) {
   .col.cover {
-    min-height: 0;
     padding-top: 16px;
     padding-bottom: 16px;
-    overflow-x: hidden;
-    overflow-y: auto;
   }
 }
 </style>
