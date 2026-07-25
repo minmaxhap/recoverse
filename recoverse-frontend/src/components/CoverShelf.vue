@@ -14,24 +14,53 @@
       <span class="inviteCta">첫 호 발행하러 가기</span>
     </button>
 
-    <div v-else class="covers">
-      <IssueCover
-        v-for="(issue, index) in issues"
-        :key="issue.id"
-        :issue="issue"
-        :no="issues.length - index"
-        @open="$emit('open', $event)"
-      />
+    <div v-else class="coversViewport" :class="{ hasNext: canNext }">
+      <button v-if="canPrev" type="button" class="coverNav prev" aria-label="이전 호들" @click="scrollCovers(-1)">‹</button>
+      <div ref="coversEl" class="covers" @scroll="updateNav">
+        <IssueCover
+          v-for="(issue, index) in issues"
+          :key="issue.id"
+          :issue="issue"
+          :no="issues.length - index"
+          @open="$emit('open', $event)"
+        />
+      </div>
+      <button v-if="canNext" type="button" class="coverNav next" aria-label="다음 호들" @click="scrollCovers(1)">›</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { Issue } from '@recoverse/shared';
 import IssueCover from './IssueCover.vue';
 
 defineProps<{ readonly issues: readonly Issue[] }>();
 defineEmits<{ navigate: ['create']; open: [string] }>();
+
+// 스크롤 외에 넘기는 방법 — 호버 시 좌우 화살표, 오른쪽 끝 페이드로 "더 있음"을 알린다.
+const coversEl = ref<HTMLElement | null>(null);
+const canPrev = ref(false);
+const canNext = ref(false);
+
+function updateNav(): void {
+  const el = coversEl.value;
+  if (!el) return;
+  canPrev.value = el.scrollLeft > 4;
+  canNext.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+}
+
+function scrollCovers(direction: number): void {
+  const el = coversEl.value;
+  if (!el) return;
+  el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: 'smooth' });
+}
+
+onMounted(() => {
+  nextTick(updateNav);
+  window.addEventListener('resize', updateNav);
+});
+onBeforeUnmount(() => window.removeEventListener('resize', updateNav));
 </script>
 
 <style scoped>
@@ -55,6 +84,11 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
 }
 
 /* 호마다 생성된 표지를 가로로 넘겨보는 서가 */
+.coversViewport {
+  position: relative;
+  margin-top: 8px;
+}
+
 .covers {
   display: flex;
   gap: 12px;
@@ -62,9 +96,66 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
   overflow-x: auto;
   overflow-y: hidden;
   padding: 10px 2px 12px;
-  margin-top: 8px;
   scrollbar-width: thin;
   overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
+}
+
+/* 오른쪽 끝 페이드 — 다음 표지가 더 있다는 힌트 */
+.coversViewport.hasNext::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 26px;
+  background: linear-gradient(90deg, transparent, var(--paper));
+  pointer-events: none;
+}
+
+.coverNav {
+  position: absolute;
+  top: calc(50% - 1px);
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.coverNav.prev {
+  left: -2px;
+}
+.coverNav.next {
+  right: -2px;
+}
+
+.coversViewport:hover .coverNav,
+.coverNav:focus-visible {
+  opacity: 1;
+}
+
+.coverNav:hover {
+  border-color: var(--vermilion);
+  color: var(--vermilion);
+}
+
+/* 터치 기기는 스와이프가 자연스러워 화살표를 숨긴다 */
+@media (hover: none) {
+  .coverNav {
+    display: none;
+  }
 }
 
 .emptyInvite {
@@ -145,7 +236,7 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
     margin-bottom: clamp(4px, 1vh, 8px);
   }
 
-  .covers {
+  .coversViewport {
     margin-top: 10px;
     max-width: 100%;
   }

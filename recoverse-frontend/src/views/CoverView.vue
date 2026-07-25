@@ -242,7 +242,9 @@ const resumeDraft = peekSoloIssueDraft();
   }
 }
 
-@media (min-width: 1024px) and (max-height: 720px) {
+/* 세로가 넉넉하지 않으면 고정 스프레드 대신 페이지가 자연스럽게 흐르게 —
+   목차가 표지 영역으로 넘쳐 겹치는 것을 막는다(웬만한 노트북 높이 포함). */
+@media (min-width: 1024px) and (max-height: 900px) {
   .coverHome {
     gap: 10px;
     height: auto;

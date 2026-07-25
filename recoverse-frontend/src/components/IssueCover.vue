@@ -56,7 +56,7 @@ onBeforeUnmount(() => {
 .issueCover {
   position: relative;
   flex: 0 0 auto;
-  height: clamp(150px, 20vh, 172px);
+  height: clamp(116px, 15.5vh, 138px);
   aspect-ratio: 3 / 4;
   padding: 0;
   overflow: hidden;
@@ -64,6 +64,7 @@ onBeforeUnmount(() => {
   background: var(--paper-card);
   cursor: pointer;
   color: var(--cover-fg, #f4efe4);
+  scroll-snap-align: start;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -90,13 +91,13 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: auto 0 0 0;
   display: grid;
-  gap: 3px;
-  padding: 12px 12px 13px;
+  gap: 2px;
+  padding: 9px 10px 9px;
   text-align: left;
 }
 
 .coverNo {
-  font-size: 10px;
+  font-size: 8.5px;
   font-weight: 700;
   letter-spacing: 0.1em;
   font-variant-numeric: tabular-nums;
@@ -104,16 +105,20 @@ onBeforeUnmount(() => {
 
 .coverTitle {
   font-family: var(--font-display);
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 1.16;
+  line-height: 1.14;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow-wrap: anywhere;
 }
 
 .coverMeta {
-  font-size: 10px;
+  font-size: 8.5px;
   font-weight: 600;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.85;
 }
