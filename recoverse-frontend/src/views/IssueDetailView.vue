@@ -35,6 +35,14 @@
             </div>
           </div>
           <Headline v-else :no="i + 1" :question="round.question" :asker="round.asker" />
+          <button
+            v-if="!editing && rediscoverByRound[i]"
+            type="button"
+            class="rediscoverLink noPrint"
+            @click="$emit('openGroup', rediscoverByRound[i]!.key)"
+          >
+            다시 발견 · {{ rediscoverByRound[i]!.years }}해의 나 →
+          </button>
         </template>
         <template #right>
           <div v-if="editing" class="editAnswers">
@@ -54,12 +62,23 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
 import { ArrowDown, ArrowUp, Pencil, Printer, Share2, Trash2, X } from 'lucide-vue-next';
-import type { Issue, Round } from '@recoverse/shared';
+import { normalizeQuestion, type Issue, type Round } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue'; import BackHeader from '../components/BackHeader.vue'; import Headline from '../components/Headline.vue'; import RoundAnswers from '../components/RoundAnswers.vue'; import SpreadLayout from '../components/SpreadLayout.vue';
-import { useShelf } from '../composables/useShelf'; import { api, ApiError } from '../lib/api';
+import { useShelf } from '../composables/useShelf'; import { groupByQuestion } from '../lib/rediscover'; import { api, ApiError } from '../lib/api';
 
 const props = defineProps<{ issue: Issue }>();
-const emit = defineEmits<{ back: []; removed: [] }>();
+const emit = defineEmits<{ back: []; removed: []; openGroup: [string] }>();
+
+// 같은 질문에 다른 해의 내가 답했으면(여러 해에 걸친 질문) "다시 발견"으로 잇는다 — 이 앱의 핵심.
+const rediscoverByRound = computed(() => {
+  const groups = groupByQuestion(shelf.issues.value);
+  return props.issue.rounds.map((round) => {
+    const key = normalizeQuestion(round.question);
+    if (!key) return null;
+    const group = groups.find((candidate) => candidate.key === key);
+    return group && group.years.length >= 2 ? { key, years: group.years.length } : null;
+  });
+});
 const shelf = useShelf(); const sharing = ref(false); const shareUrl = ref(''); const copied = ref(false); const shareError = ref(''); const editing = ref(false); const draftTitle = ref(''); const draftParticipants = ref<string[]>([]); const draftRounds = ref<Round[]>([]); const editError = ref(''); const reshareNotice = ref(false);
 const displayedRounds = computed(() => editing.value ? draftRounds.value : props.issue.rounds);
 
@@ -83,4 +102,6 @@ function onRemove(): void { if (!window.confirm('이 호를 책장에서 비울�
 
 <style scoped>
 .issueHead{display:grid;gap:8px;margin:8px 0 26px}.issueKicker{display:flex;align-items:center;justify-content:space-between;gap:12px}.issueToolbar,.roundActions,.editFooter{display:flex;gap:7px;align-items:center}.toolButton,.iconButton{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:8px 10px;background:var(--paper-card);border:1px solid var(--ink);color:var(--ink);font:700 12px var(--font-ui);cursor:pointer}.toolButton:hover,.iconButton:hover:not(:disabled){color:var(--vermilion);border-color:var(--vermilion)}.dangerTool:hover{background:var(--vermilion);color:var(--vermilion-ink)}.iconButton{width:36px;padding:0}.iconButton.danger:hover{background:var(--vermilion);color:var(--vermilion-ink)}.archiveRound{margin-bottom:34px}.roundEditHead{display:grid;gap:10px}.roundActions{justify-content:flex-end}.participantEditor,.participantInputs,.editAnswers{display:grid;gap:10px}.participantInputs{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}.participantInput{min-width:0}.editAnswers{gap:14px}.editAnswer{display:grid;gap:6px}.editAnswerName{font-size:12px;font-weight:800;letter-spacing:.04em;color:var(--dim)}.editorAnswerArea{min-height:96px;overflow-y:hidden;resize:none}.pageTitleInput{font-family:var(--font-display);font-size:28px;font-weight:700}.editFooter{justify-content:flex-end;margin:0 0 26px}.compactAction{width:auto;min-width:100px;min-height:44px;padding:10px 14px;font-size:13px}.empty{font-size:14px;color:var(--dim)}.shareBox{display:grid;gap:8px;margin:0 0 28px}.shareUrl{margin:0;padding:12px;border:1px solid var(--hairline);background:var(--paper-card);font-size:13px;line-height:1.5;word-break:break-all}@media(max-width:540px){.issueToolbar{width:100%;justify-content:flex-end;flex-wrap:wrap}.toolButton span{display:none}.toolButton{width:40px;padding:0}.issueKicker{align-items:flex-start}.editFooter{display:grid;grid-template-columns:1fr 1fr}.compactAction{width:100%}}
+.rediscoverLink{display:inline-flex;align-items:center;gap:4px;margin-top:10px;padding:6px 11px;min-height:34px;border:1px solid var(--hairline);background:none;color:var(--dim-strong);font:700 12px var(--font-ui);letter-spacing:.02em;cursor:pointer;transition:color .15s ease,border-color .15s ease}
+.rediscoverLink:hover{border-color:var(--vermilion);color:var(--vermilion)}
 </style>
