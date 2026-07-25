@@ -103,7 +103,7 @@ describe('SoloWriteView', () => {
     expect(wrapper.find('.draftState').text()).toBe(`저장됨 ${savedTimeText(draft().updatedAt)}`);
     expect(wrapper.find('.draftState').text()).not.toBe('저장 준비 중');
     expect((wrapper.find('input[placeholder="나"]').element as HTMLInputElement).value).toBe('Mina');
-    expect((wrapper.find('input[placeholder]').element as HTMLInputElement).value).toBe('Recovered issue');
+    expect((wrapper.find('input[aria-label="표지 제목"]').element as HTMLInputElement).value).toBe('Recovered issue');
     expect((wrapper.find('select').element as HTMLSelectElement).value).toBe('source-1');
     const inputValues = wrapper.findAll('input.field').map((input) => (input.element as HTMLInputElement).value);
     expect(inputValues).toContain('Current question?');

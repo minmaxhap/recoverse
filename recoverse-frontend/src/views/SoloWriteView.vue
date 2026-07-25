@@ -8,42 +8,18 @@
       <p class="lede">처음부터 완성된 글을 쓰지 않아도 괜찮아요. 질문 하나와 거친 답 하나면 책장에 꽂을 수 있어요.</p>
     </header>
 
-    <section class="issueSetup" aria-labelledby="soloSetupTitle">
-      <div class="sectionHead">
-        <span class="eyebrow">COVER NOTE</span>
-        <h2 id="soloSetupTitle">표지 정보</h2>
-      </div>
-
-      <div class="fieldGroup">
-        <span class="fieldLabel">이번 호 종류</span>
-        <KindChips v-model="kind" />
-      </div>
-
-      <label class="fieldGroup">
-        <span class="fieldLabel">표지 제목 선택</span>
-        <input v-model="title" class="field" :placeholder="defaultIssueTitle" />
-        <span class="helper">비워두면 {{ defaultIssueTitle }}로 꽂혀요.</span>
-      </label>
-
-      <label class="fieldGroup">
-        <span class="fieldLabel">이 호에 실릴 이름</span>
-        <input v-model="name" class="field" placeholder="나" />
-        <span class="helper">답변 옆 바이라인과 다시 발견에 이 이름이 실려요.</span>
-      </label>
-    </section>
-
     <details
       v-if="shelf.issues.value.length"
-      class="sourceIssue"
+      class="disclosure"
       :open="sourceOpen"
       @toggle="sourceOpen = ($event.target as HTMLDetailsElement).open"
     >
-      <summary class="sourceSummary">
+      <summary class="disclosureSummary">
         <span class="eyebrow red">FROM THE SHELF</span>
-        <span class="sourceSummaryText">지난 호에서 질문 가져오기</span>
-        <span class="sourceChevron" aria-hidden="true">＋</span>
+        <span class="disclosureText">지난 호에서 질문 가져오기</span>
+        <span class="disclosureChevron" aria-hidden="true">＋</span>
       </summary>
-      <div class="sourceBody">
+      <div class="disclosureBody">
         <label class="fieldGroup">
           <span class="fieldLabel">질문을 가져올 호</span>
           <select v-model="sourceIssueId" class="field selectField">
@@ -69,6 +45,36 @@
       @update:rounds="updateRounds"
       @update:current-round="updateCurrentRound"
     />
+
+    <details
+      class="disclosure coverNote"
+      :open="coverNoteOpen"
+      @toggle="coverNoteOpen = ($event.target as HTMLDetailsElement).open"
+    >
+      <summary class="disclosureSummary">
+        <span class="eyebrow red">COVER NOTE</span>
+        <span class="disclosureText">표지 정보 — 종류·제목·이름</span>
+        <span class="disclosureChevron" aria-hidden="true">＋</span>
+      </summary>
+      <div class="disclosureBody">
+        <div class="fieldGroup">
+          <span class="fieldLabel">이번 호 종류</span>
+          <KindChips v-model="kind" />
+        </div>
+
+        <label class="fieldGroup">
+          <span class="fieldLabel">표지 제목 선택</span>
+          <input v-model="title" class="field" aria-label="표지 제목" :placeholder="defaultIssueTitle" />
+          <span class="helper">비워두면 {{ defaultIssueTitle }}로 꽂혀요.</span>
+        </label>
+
+        <label class="fieldGroup">
+          <span class="fieldLabel">이 호에 실릴 이름</span>
+          <input v-model="name" class="field" placeholder="나" />
+          <span class="helper">답변 옆 바이라인과 다시 발견에 이 이름이 실려요.</span>
+        </label>
+      </div>
+    </details>
 
     <p v-if="restoreNotice" class="helper draftNotice" role="status">{{ restoreNotice }}</p>
     <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
@@ -120,6 +126,8 @@ const publishing = ref(false);
 const sourceIssueId = ref('');
 // 지난 호 가져오기는 소수만 쓰는 선택 기능 — 기본은 접어두고(네이티브 details), 필요할 때 펼친다.
 const sourceOpen = ref(false);
+// 표지 정보(종류·제목·이름)도 기본값이 있어 접어둔다 — 바로 질문부터 쓰게. 값이 있으면 펼친다.
+const coverNoteOpen = ref(false);
 const soloDraft = useSoloIssueDraft();
 const draftReady = ref(false);
 
@@ -206,6 +214,9 @@ function restoreDraft(): void {
     }
     // 복원된 초고가 이미 지난 호를 가져오는 중이면 펼친 채로 시작해 맥락을 잃지 않는다.
     sourceOpen.value = sourceIssueId.value !== '';
+    // 복원된 초고가 표지 정보를 손봤으면(제목·이름·종류) 그 블록도 펼쳐 보이게 한다.
+    coverNoteOpen.value =
+      title.value.trim() !== '' || name.value !== SOLO_DEFAULT_NAME || kind.value !== 'free';
   }
   draftReady.value = true;
   if (clearedStaleSource) persistDraft();
@@ -269,21 +280,14 @@ function finishPublish(): void {
   margin-bottom: 0;
 }
 
-.issueSetup {
-  display: grid;
-  gap: 14px;
-  padding: 14px;
-  border: 1px solid var(--ink);
-  background: var(--paper-card);
-}
-
-/* 지난 호 가져오기: 기본은 hairline 위 슬림한 요약 줄, 펼치면 본문이 인라인으로 열린다. */
-.sourceIssue {
+/* 선택 정보 디스클로저(지난 호 가져오기·표지 정보): 기본은 hairline 위 슬림한 요약 줄,
+   펼치면 본문이 인라인으로 열린다. 표지 정보를 접어두어 바로 질문부터 쓰게 한다. */
+.disclosure {
   margin-top: 16px;
   border-top: 1px solid var(--hairline);
 }
 
-.sourceSummary {
+.disclosureSummary {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -294,22 +298,22 @@ function finishPublish(): void {
   transition: color 0.15s ease;
 }
 
-.sourceSummary::-webkit-details-marker {
+.disclosureSummary::-webkit-details-marker {
   display: none;
 }
 
-.sourceSummary:hover {
+.disclosureSummary:hover {
   color: var(--vermilion);
 }
 
-.sourceSummaryText {
+.disclosureText {
   flex: 1;
   min-width: 0;
   font-size: 14px;
   font-weight: 700;
 }
 
-.sourceChevron {
+.disclosureChevron {
   flex: 0 0 auto;
   font-size: 18px;
   font-weight: 700;
@@ -317,30 +321,18 @@ function finishPublish(): void {
   transition: transform 0.18s ease, color 0.15s ease;
 }
 
-.sourceSummary:hover .sourceChevron {
+.disclosureSummary:hover .disclosureChevron {
   color: var(--vermilion);
 }
 
-.sourceIssue[open] .sourceChevron {
+.disclosure[open] .disclosureChevron {
   transform: rotate(45deg);
 }
 
-.sourceBody {
+.disclosureBody {
   display: grid;
   gap: 12px;
   padding: 4px 2px 14px;
-}
-
-.sectionHead {
-  display: grid;
-  gap: 3px;
-}
-
-.sectionHead h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 20px;
-  line-height: 1.35;
 }
 
 .publishHelp {
