@@ -1,5 +1,11 @@
 <template>
   <div class="roundEditor">
+    <!-- 목차는 화면 아래에 있어 담긴 질문이 바로 안 보인다. 다음 할 일을 여기서 먼저 말한다. -->
+    <p v-if="waitingCount > 0" class="waitingBar" role="status">
+      <span>답을 기다리는 질문 {{ waitingCount }}개</span>
+      <button type="button" class="waitingGo" @click="openFirstWaiting">첫 질문부터 답 쓰기 →</button>
+    </p>
+
     <!-- 쓰는 칸이 먼저다. 목차를 위에 두면 질문을 저장할 때마다 목록이 자라 이 칸을 아래로 밀어낸다. -->
     <section class="qaBox" aria-labelledby="roundEditorTitle">
       <div class="boxHead">
@@ -10,9 +16,25 @@
         <span class="draftState" aria-live="polite">{{ draftStateLabel }}</span>
       </div>
 
+      <!-- 첫 질문 앞에서는 빈 칸만 두지 않는다 — 어디서 질문을 데려올지 세 갈래로 편다. -->
+      <div v-if="blankStart" class="startRoutes">
+        <span class="startLead">어디서 시작할까요?</span>
+        <button type="button" class="startRoute" @click="$emit('browse-sets')">
+          <b>질문 세트에서</b><small>저장한 세트나 지난 호 구성을 그대로 목차에</small>
+        </button>
+        <button v-if="pastIssues.length > 0" type="button" class="startRoute" @click="pastPickEl?.open()">
+          <b>지난 호 질문에서</b><small>그때 그 질문에 지금의 나로 답하기</small>
+        </button>
+        <button type="button" class="startRoute" @click="suggestEl?.open()">
+          <b>추천 질문에서</b><small>오늘 답할 만한 질문을 골라 받기</small>
+        </button>
+        <span class="startOr">또는 아래에 직접 써요</span>
+      </div>
+
       <label class="fieldGroup">
         <span class="fieldLabel">질문</span>
         <input
+          ref="questionEl"
           class="field"
           :value="currentRound.question"
           :readonly="!!currentRound.formatId"
@@ -23,8 +45,20 @@
 
       <!-- 질문을 얻는 두 갈래를 질문 칸 바로 밑에 나란히 — 고르면 곧장 이 칸이 채워진다. -->
       <div class="questionSources">
-        <QuestionSuggest :kind="kind" :exclude="pastQuestions" @pick="setQuestion" @pick-all="addQuestions" />
-        <PastQuestionPick v-if="pastIssues.length > 0" :issues="pastIssues" :exclude="takenQuestions" @pick="setQuestion" />
+        <QuestionSuggest
+          ref="suggestEl"
+          :kind="kind"
+          :exclude="pastQuestions"
+          @pick="setQuestion"
+          @pick-all="addQuestions"
+        />
+        <PastQuestionPick
+          v-if="pastIssues.length > 0"
+          ref="pastPickEl"
+          :issues="pastIssues"
+          :exclude="takenQuestions"
+          @pick="setQuestion"
+        />
       </div>
 
       <div v-for="(name, i) in participants" :key="name" class="answerLine">
@@ -44,6 +78,7 @@
     </section>
 
     <RoundContentsList
+      ref="contentsEl"
       :rounds="rounds"
       :participants="participants"
       editable
@@ -55,13 +90,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import type { Issue, Kind, Round } from '@recoverse/shared';
 import ParticipantDot from './ParticipantDot.vue';
 import PastQuestionPick from './PastQuestionPick.vue';
 import QuestionSuggest from './QuestionSuggest.vue';
 import RoundContentsList from './RoundContentsList.vue';
 import { getFormat } from '../data/formats';
+import { roundIsAnswered } from '../lib/issueBuilder';
 import { colorAt } from '../lib/palette';
 import type { SoloIssueCurrentRoundDraft } from '../lib/soloIssueDraftTypes';
 
@@ -77,10 +113,34 @@ const props = withDefaults(
   }>(),
   { kind: 'free', draftStateLabel: '새 질문', pastIssues: () => [] },
 );
-const emit = defineEmits<{ 'update:rounds': [Round[]]; 'update:currentRound': [SoloIssueCurrentRoundDraft] }>();
+const emit = defineEmits<{
+  'update:rounds': [Round[]];
+  'update:currentRound': [SoloIssueCurrentRoundDraft];
+  'browse-sets': [];
+}>();
 
 const pastQuestions = computed(() => props.rounds.map((round) => round.question));
 const takenQuestions = computed(() => [...pastQuestions.value, props.currentRound.question]);
+
+const contentsEl = ref<InstanceType<typeof RoundContentsList> | null>(null);
+const questionEl = ref<HTMLInputElement | null>(null);
+const suggestEl = ref<InstanceType<typeof QuestionSuggest> | null>(null);
+const pastPickEl = ref<InstanceType<typeof PastQuestionPick> | null>(null);
+
+/** 아직 아무것도 없는 첫 화면 — 빈 칸 하나만 두면 무엇부터 할지 알 수 없다. */
+const blankStart = computed(
+  () => props.rounds.length === 0 && props.currentRound.question.trim() === '' && !props.currentRound.formatId,
+);
+const waitingIndexes = computed(() =>
+  props.rounds.flatMap((round, index) => (roundIsAnswered(round) ? [] : [index])),
+);
+const waitingCount = computed(() => waitingIndexes.value.length);
+
+function openFirstWaiting(): void {
+  const first = waitingIndexes.value[0];
+  if (first === undefined) return;
+  contentsEl.value?.openRound(first);
+}
 
 const qaReady = computed(
   () =>
@@ -154,6 +214,8 @@ function addRound(): void {
 
   emit('update:rounds', [...props.rounds, round]);
   updateCurrentRound({ question: '', formatId: '', answers: {} });
+  // 버튼이 약속한 "다음 질문" 자리로 커서를 옮긴다 — 모바일에서 키보드가 닫혔다 다시 열리지 않게.
+  void nextTick(() => questionEl.value?.focus());
 }
 
 function moveRound(index: number, direction: -1 | 1): void {
@@ -185,6 +247,35 @@ function removeRound(index: number): void {
   display: grid;
   gap: 16px;
   margin-top: 16px;
+}
+
+/* 담긴 질문이 화면 밖에 있어도 다음 할 일은 여기서 보인다. */
+.waitingBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0;
+  padding: 11px 13px;
+  background: var(--paper-card);
+  border: 1px solid var(--vermilion);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dim-strong);
+}
+
+.waitingGo {
+  flex: 0 0 auto;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--vermilion);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .qaBox {
@@ -219,6 +310,58 @@ function removeRound(index: number): void {
   color: var(--dim);
   font-size: 11px;
   font-weight: 800;
+}
+
+.startRoutes {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.startLead,
+.startOr {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+}
+
+.startOr {
+  margin-top: 2px;
+  font-weight: 700;
+}
+
+.startRoute {
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  padding: 11px 13px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.startRoute:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.startRoute b {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.startRoute small {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dim);
+}
+
+.startRoute:hover small {
+  color: var(--on-ink-dim);
 }
 
 /* 닫혀 있을 땐 링크 두 개가 한 줄에, 펼쳐지면 그 패널이 한 줄을 다 쓴다. */

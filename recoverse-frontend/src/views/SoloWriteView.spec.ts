@@ -70,10 +70,10 @@ function savedTimeText(savedAt: string): string {
   );
 }
 
-async function mountSolo(): Promise<VueWrapper> {
+async function mountSolo(props: Record<string, unknown> = {}): Promise<VueWrapper> {
   vi.resetModules();
   const component = await import('./SoloWriteView.vue');
-  return mount(component.default);
+  return mount(component.default, { props });
 }
 
 async function flushDraftSave(): Promise<void> {
@@ -194,6 +194,116 @@ describe('SoloWriteView', () => {
     expect(wrapper.get('.writeBtn').text()).toBe('고쳐 쓰기');
   });
 
+  it('points at the waiting questions and opens the first one on request', async () => {
+    // Given: 세트를 불러와 답 대기 질문이 깔린 상태
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+    await wrapper.get('.issueRow').trigger('click');
+
+    // Then: 목차는 화면 아래에 있으므로 다음 할 일을 위에서 말한다
+    expect(wrapper.get('.waitingBar').text()).toContain('답을 기다리는 질문 1개');
+
+    // When
+    await wrapper.get('.waitingGo').trigger('click');
+
+    // Then: 그 줄이 쓰기 상태로 열린다
+    expect(wrapper.get('.contentsList li').classes()).toContain('editing');
+    expect(wrapper.find('.editPanel textarea').exists()).toBe(true);
+  });
+
+  it('opens the next waiting question after one is answered', async () => {
+    // Given: 답 대기 두 줄
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        rounds: [
+          { asker: 'Mina', question: 'Waiting A?', answers: {} },
+          { asker: 'Mina', question: 'Waiting B?', answers: {} },
+        ],
+      }),
+    );
+    const wrapper = await mountSolo();
+    await wrapper.get('.waitingGo').trigger('click');
+
+    // When: 첫 줄에 답하고 저장
+    await wrapper.get('.editPanel textarea').setValue('A의 답');
+    await wrapper.get('.editPanel').trigger('submit');
+
+    // Then: 두 번째 대기 줄이 이어서 열린다
+    const rows = wrapper.findAll('.contentsList li');
+    expect(rows[0].classes()).not.toContain('editing');
+    expect(rows[1].classes()).toContain('editing');
+    expect(wrapper.get('.waitingBar').text()).toContain('답을 기다리는 질문 1개');
+  });
+
+  it('seats a question brought from rediscover in the question field', async () => {
+    // When
+    const wrapper = await mountSolo({ presetQuestion: '올해 가장 오래 남은 장면은?' });
+
+    // Then
+    const field = wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]');
+    expect((field.element as HTMLInputElement).value).toBe('올해 가장 오래 남은 장면은?');
+    expect(wrapper.find('.contentsList').exists()).toBe(false);
+  });
+
+  it('parks a brought question in the contents when something is already being written', async () => {
+    // Given: 쓰던 질문이 있는 초고
+    localStorage.setItem(SOLO_ISSUE_DRAFT_V2_KEY, JSON.stringify(draft('')));
+
+    // When
+    const wrapper = await mountSolo({ presetQuestion: '가져온 질문?' });
+
+    // Then: 쓰던 질문은 그대로 두고 목차에 답 대기로 더한다
+    const field = wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]');
+    expect((field.element as HTMLInputElement).value).toBe('Current question?');
+    expect(wrapper.get('.contentsList').text()).toContain('가져온 질문?');
+    expect(wrapper.get('.waitingBar').text()).toContain('답을 기다리는 질문 1개');
+  });
+
+  it('offers where to start when nothing has been written yet', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+
+    // When
+    const wrapper = await mountSolo();
+
+    // Then
+    const routes = wrapper.findAll('.startRoute').map((button) => button.text());
+    expect(routes).toHaveLength(3);
+    expect(routes[0]).toContain('질문 세트에서');
+    expect(routes[1]).toContain('지난 호 질문에서');
+    expect(routes[2]).toContain('추천 질문에서');
+
+    // When: 지난 호 질문 갈래를 고르면 그 패널이 열린다
+    await wrapper.findAll('.startRoute')[1].trigger('click');
+    expect(wrapper.find('.pastPick .panel').exists()).toBe(true);
+  });
+
+  it('hides the starting routes once the writer is under way', async () => {
+    // Given
+    localStorage.setItem(SOLO_ISSUE_DRAFT_V2_KEY, JSON.stringify(draft('')));
+
+    // When
+    const wrapper = await mountSolo();
+
+    // Then
+    expect(wrapper.find('.startRoute').exists()).toBe(false);
+  });
+
+  it('folds the set list away once questions are laid into the contents', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+
+    // When
+    await wrapper.get('.issueRow').trigger('click');
+
+    // Then: 목록은 접히고 안내는 목록 밖에 남는다
+    expect((wrapper.get('details.disclosure').element as HTMLDetailsElement).open).toBe(false);
+    expect(wrapper.get('.importNotice').text()).toContain('질문 1개를 목차에 담았어요');
+  });
+
   it('sends a past question straight to the question field without touching the contents', async () => {
     // Given
     localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
@@ -220,6 +330,56 @@ describe('SoloWriteView', () => {
 
     // Then
     expect(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY)).toBe('');
+  });
+
+  it('carries questions still waiting for an answer into the next issue instead of dropping them', async () => {
+    // Given: 답을 쓴 질문 하나와 답 대기 질문 둘
+    const waiting: SoloIssueDraftV2 = {
+      ...draft(''),
+      title: '이번 호',
+      rounds: [
+        { asker: 'Mina', question: 'Answered?', answers: { Mina: { text: 'Yes' } } },
+        { asker: 'Mina', question: 'Waiting A?', answers: {} },
+        { asker: 'Mina', question: 'Waiting B?', answers: {} },
+      ],
+      currentRound: { question: '', formatId: '', answers: {} },
+    };
+    localStorage.setItem(SOLO_ISSUE_DRAFT_V2_KEY, JSON.stringify(waiting));
+    const wrapper = await mountSolo();
+
+    // When
+    await wrapper.find('button.cta').trigger('click');
+
+    // Then: 발행된 호에는 답한 질문만
+    const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
+    expect(shelved[0].rounds.map((round) => round.question)).toEqual(['Answered?']);
+
+    // 그리고 답 대기 질문은 다음 호 초고로 남는다
+    const kept = JSON.parse(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY) ?? '{}') as SoloIssueDraftV2;
+    expect(kept.rounds.map((round) => round.question)).toEqual(['Waiting A?', 'Waiting B?']);
+    expect(kept.title).toBe('');
+    expect(wrapper.get('.carried').text()).toContain('답 대기 2개');
+    expect(wrapper.get('.overlayTitle').text()).toContain('이번 호');
+  });
+
+  it('warns that waiting questions move to the next issue rather than vanish', async () => {
+    // Given
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        rounds: [
+          { asker: 'Mina', question: 'Answered?', answers: { Mina: { text: 'Yes' } } },
+          { asker: 'Mina', question: 'Waiting?', answers: {} },
+        ],
+      }),
+    );
+
+    // When
+    const wrapper = await mountSolo();
+
+    // Then
+    expect(wrapper.get('.publishHelp').text()).toContain('다음 호 초고로 남겨둬요');
   });
 
   it('preserves the full draft and shows guidance when publish cannot write to shelf', async () => {

@@ -79,6 +79,9 @@ function openPanel() {
   open.value = true;
   refresh();
 }
+
+// 빈 목차의 시작 안내에서 이 패널을 대신 열어준다.
+defineExpose({ open: openPanel });
 function setDifficulty(d: Difficulty) {
   difficulty.value = d;
   refresh();

@@ -5,7 +5,12 @@
       <strong id="contentsTitle">{{ rounds.length }}개 질문을 실었어요</strong>
     </div>
     <ol class="contentsList">
-      <li v-for="(round, i) in rounds" :key="`${round.question}-${i}`" :class="{ editing: editingIndex === i }">
+      <li
+        v-for="(round, i) in rounds"
+        :key="`${round.question}-${i}`"
+        :ref="(el) => setRowRef(el, i)"
+        :class="{ editing: editingIndex === i }"
+      >
         <span class="pageNo">{{ String(i + 1).padStart(2, '0') }}</span>
 
         <template v-if="editingIndex !== i">
@@ -66,6 +71,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ move: [number, -1 | 1]; remove: [number]; edit: [number, Round] }>();
 
+const rowEls = new Map<number, HTMLElement>();
 const editingIndex = ref<number | null>(null);
 const editQuestion = ref('');
 const editAnswers = ref<Record<string, string>>({});
@@ -98,6 +104,26 @@ function setAnswerRef(el: unknown, name: string): void {
   else answerRefs.delete(name);
 }
 
+function setRowRef(el: unknown, index: number): void {
+  if (el instanceof HTMLElement) rowEls.set(index, el);
+  else rowEls.delete(index);
+}
+
+/** 아직 답이 없는 다음 줄. 없으면 -1. */
+function nextWaitingIndex(after: number): number {
+  return props.rounds.findIndex((round, index) => index > after && !roundIsAnswered(round));
+}
+
+/** 밖에서(예: 대기 안내 줄) 이 줄부터 쓰게 열어준다. */
+function openRound(index: number): void {
+  const round = props.rounds[index];
+  if (!round) return;
+  startEdit(index, round);
+  void nextTick(() => rowEls.get(index)?.scrollIntoView({ block: 'center', behavior: 'smooth' }));
+}
+
+defineExpose({ openRound });
+
 function startEdit(index: number, round: Round): void {
   editingIndex.value = index;
   editQuestion.value = round.question;
@@ -122,7 +148,14 @@ function saveEdit(index: number): void {
     answers[name] = { ...answers[name], text: (editAnswers.value[name] ?? '').trim() };
   }
   emit('edit', index, { ...current, question: editQuestion.value.trim(), answers });
-  cancelEdit();
+
+  // 답 대기가 더 남았으면 그 줄을 바로 열어준다 — 세트로 깐 질문을 한 줄씩 이어서 채우게.
+  const next = nextWaitingIndex(index);
+  if (next === -1) {
+    cancelEdit();
+    return;
+  }
+  openRound(next);
 }
 </script>
 

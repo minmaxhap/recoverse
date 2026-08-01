@@ -33,12 +33,14 @@
           @load="importQuestions"
           @manage="$emit('navigate', 'sets')"
         />
-        <p v-if="importNotice" class="importNotice" role="status">
-          <span class="helper">{{ importNotice }}</span>
-          <button v-if="lastImported.length > 0" type="button" class="undo" @click="undoImport">되돌리기</button>
-        </p>
       </div>
     </details>
+
+    <!-- 안내는 목록 밖에 둔다 — 담은 뒤 목록이 접혀도 무엇이 담겼는지는 계속 보이게. -->
+    <p v-if="importNotice" class="importNotice" role="status">
+      <span class="helper">{{ importNotice }}</span>
+      <button v-if="lastImported.length > 0" type="button" class="undo" @click="undoImport">되돌리기</button>
+    </p>
 
     <RoundEditor
       :participants="participants"
@@ -49,6 +51,7 @@
       :past-issues="shelf.issues.value"
       @update:rounds="updateRounds"
       @update:current-round="updateCurrentRound"
+      @browse-sets="sourceOpen = true"
     />
 
     <details
@@ -89,7 +92,10 @@
       <div v-if="publishing" class="publishOverlay" role="status" @click="finishPublish">
         <span class="eyebrow gold">이번 호 발행</span>
         <PublishScene :year="date.slice(0, 4)" :kind-label="kindLabelText" />
-        <p class="pageTitle centered overlayTitle">{{ issueTitle }},<br />책장에 꽂는 중</p>
+        <p class="pageTitle centered overlayTitle">{{ publishedTitle }},<br />책장에 꽂는 중</p>
+        <p v-if="carriedCount > 0" class="fineprint carried">
+          답 대기 {{ carriedCount }}개는 다음 호 초고로 옮겼어요
+        </p>
         <p class="fineprint">탭하면 바로 책장으로 가요</p>
       </div>
     </Transition>
@@ -116,6 +122,8 @@ import {
 import { useShelf } from '../composables/useShelf';
 import { issueFromDraft, roundIsAnswered } from '../lib/issueBuilder';
 
+// presetQuestion: 재발견에서 "이 질문에 올해도 답하기"로 들어올 때 실려 오는 질문.
+const props = withDefaults(defineProps<{ readonly presetQuestion?: string }>(), { presetQuestion: '' });
 const emit = defineEmits<{ back: []; published: []; navigate: ['sets'] }>();
 
 const shelf = useShelf();
@@ -131,6 +139,10 @@ const publishing = ref(false);
 const sourceIssueId = ref('');
 // 방금 담은 질문들 — 되돌리기가 그 줄만 골라 뺀다.
 const lastImported = ref<string[]>([]);
+// 발행하며 다음 호로 넘긴 답 대기 질문 수 — 발행 연출에서 어디로 갔는지 알린다.
+const carriedCount = ref(0);
+// 발행 직후 화면 상태를 다음 호로 갈아끼우므로, 연출에 쓸 제목은 발행 시점 값을 붙잡아 둔다.
+const publishedTitle = ref('');
 // 지난 호 가져오기는 소수만 쓰는 선택 기능 — 기본은 접어두고(네이티브 details), 필요할 때 펼친다.
 const sourceOpen = ref(false);
 // 표지 정보(종류·제목·이름)도 기본값이 있어 접어둔다 — 바로 질문부터 쓰게. 값이 있으면 펼친다.
@@ -151,7 +163,7 @@ const contentsQuestions = computed(() => rounds.value.map((round) => round.quest
 const publishHelp = computed(() => {
   if (!canPublish.value) return '질문 하나와 답 하나를 목차에 실으면 발행할 수 있어요.';
   if (pendingRoundCount.value > 0) {
-    return `지금 발행하면 답을 쓴 ${answeredRoundCount.value}개 질문만 실려요. 답 대기 중인 ${pendingRoundCount.value}개는 빠져요.`;
+    return `지금 발행하면 답을 쓴 ${answeredRoundCount.value}개 질문만 실려요. 답 대기 중인 ${pendingRoundCount.value}개는 다음 호 초고로 남겨둬요.`;
   }
   return '지금 발행하면 이 호가 내 책장에 저장돼요.';
 });
@@ -210,6 +222,20 @@ function buildDraft(): SoloIssueDraftV2 {
   };
 }
 
+/** 발행 뒤 남길 초고 — 답 대기 질문만 들고 다음 호로 넘어간다(제목은 새로 짓게 비운다). */
+function carryOverDraft(carried: Round[]): SoloIssueDraftV2 {
+  return {
+    version: SOLO_ISSUE_DRAFT_VERSION,
+    updatedAt: new Date().toISOString(),
+    kind: kind.value,
+    title: '',
+    name: name.value,
+    sourceIssueId: '',
+    rounds: carried,
+    currentRound: { question: '', formatId: '', answers: {} },
+  };
+}
+
 function applyDraft(draft: SoloIssueDraftV2): void {
   kind.value = draft.kind;
   title.value = draft.title;
@@ -241,7 +267,25 @@ function restoreDraft(): void {
       title.value.trim() !== '' || name.value !== SOLO_DEFAULT_NAME || kind.value !== 'free';
   }
   draftReady.value = true;
+  applyPresetQuestion();
   if (clearedStaleSource) persistDraft();
+}
+
+/**
+ * 재발견에서 들고 온 질문을 쓰는 칸에 앉힌다.
+ * 쓰던 질문이 있으면 건드리지 않고 목차에 "답 대기"로 더한다 — 초고를 덮어쓰지 않게.
+ */
+function applyPresetQuestion(): void {
+  const question = props.presetQuestion.trim();
+  if (!question) return;
+  if (rounds.value.some((round) => round.question.trim() === question)) return;
+
+  if (currentRound.value.question.trim() === '' && !currentRound.value.formatId) {
+    currentRound.value = { ...currentRound.value, question };
+  } else {
+    rounds.value = [...rounds.value, { asker: participants.value[0] ?? SOLO_DEFAULT_NAME, question, answers: {} }];
+    importNotice.value = '재발견에서 가져온 질문을 목차에 담았어요.';
+  }
 }
 
 watch(
@@ -276,6 +320,8 @@ function importQuestions(picked: { question: string; format?: string }[]): void 
   rounds.value = [...rounds.value, ...additions];
   lastImported.value = additions.map((round) => round.question);
   importNotice.value = `질문 ${additions.length}개를 목차에 담았어요.`;
+  // 고르는 일은 끝났다 — 목록을 접어 쓰는 자리와 대기 안내를 화면 위로 끌어올린다.
+  sourceOpen.value = false;
 }
 
 /** 방금 담은 질문 중 아직 답이 없는 줄만 뺀다 — 담은 뒤 쓴 답은 지우지 않는다. */
@@ -306,11 +352,25 @@ function publish(): void {
     publishError.value = '브라우저 저장 공간에 저장하지 못했어요. 용량을 비우고 다시 시도해주세요.';
     return;
   }
-  if (!soloDraft.clear().ok) {
+
+  // 답을 기다리던 질문은 발행에서 빠질 뿐 사라지면 안 된다 — 다음 호 초고로 넘긴다.
+  const carried = rounds.value.filter((round) => !roundIsAnswered(round));
+  const kept = carried.length > 0 ? soloDraft.save(carryOverDraft(carried)) : soloDraft.clear();
+  if (!kept.ok) {
     publishError.value =
-      '책장에는 꽂았지만 임시 저장을 비우지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해주세요.';
+      carried.length > 0
+        ? '책장에는 꽂았지만 답 대기 질문을 다음 호로 남기지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해주세요.'
+        : '책장에는 꽂았지만 임시 저장을 비우지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해주세요.';
     return;
   }
+  carriedCount.value = carried.length;
+  publishedTitle.value = issue.title;
+  // 화면 상태를 다음 호로 갈아끼우는 동안 자동 저장을 멈춘다 — 방금 쓴 초고를 덮어쓰지 않게.
+  draftReady.value = false;
+  rounds.value = carried;
+  title.value = '';
+  sourceIssueId.value = '';
+  currentRound.value = { question: '', formatId: '', answers: {} };
 
   publishing.value = true;
   window.setTimeout(finishPublish, 1450);
@@ -393,7 +453,7 @@ function finishPublish(): void {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  margin: 0;
+  margin: 12px 0 0;
 }
 
 .undo {

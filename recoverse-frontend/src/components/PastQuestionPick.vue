@@ -80,6 +80,9 @@ function openPanel(): void {
   void nextTick(() => searchEl.value?.focus());
 }
 
+// 빈 목차의 시작 안내에서 이 패널을 대신 열어준다.
+defineExpose({ open: openPanel });
+
 function choose(question: string): void {
   emit('pick', question);
   open.value = false;

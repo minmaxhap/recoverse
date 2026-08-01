@@ -66,6 +66,10 @@ function openIssue(id: string): void {
 function openGroup(key: string): void {
   router.push({ name: 'rediscover-detail', params: { key } });
 }
+// 재발견에서 "올해도 답하기" — 그 질문을 들고 혼자 엮기로 넘어간다.
+function writeQuestion(question: string): void {
+  router.push({ name: 'solo', query: { q: question } });
+}
 function enterSession(): void {
   // LiveEntryView가 신원을 세팅한 뒤 emit하므로 라이브 가드를 통과한다.
   router.push({ name: 'live' });
@@ -105,6 +109,8 @@ const viewProps = computed<Record<string, unknown>>(() => {
       };
     case 'issue':
       return { issue: activeIssue.value };
+    case 'solo':
+      return { presetQuestion: typeof route.query.q === 'string' ? route.query.q : '' };
     case 'sets':
       return { issues: shelf.issues.value };
     case 'rediscover':
@@ -124,6 +130,7 @@ const viewHandlers = {
   navigate: onCoverNavigate,
   open: openIssue,
   openGroup,
+  write: writeQuestion,
   back: goBack,
   entered: enterSession,
   exit: leaveSession,
