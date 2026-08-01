@@ -1,14 +1,6 @@
 <template>
   <div class="roundEditor">
-    <RoundContentsList
-      :rounds="rounds"
-      :participants="participants"
-      editable
-      @edit="editRound"
-      @move="moveRound"
-      @remove="removeRound"
-    />
-
+    <!-- 쓰는 칸이 먼저다. 목차를 위에 두면 질문을 저장할 때마다 목록이 자라 이 칸을 아래로 밀어낸다. -->
     <section class="qaBox" aria-labelledby="roundEditorTitle">
       <div class="boxHead">
         <div>
@@ -29,7 +21,11 @@
         />
       </label>
 
-      <QuestionSuggest :kind="kind" :exclude="pastQuestions" @pick="setQuestion" @pick-all="addQuestions" />
+      <!-- 질문을 얻는 두 갈래를 질문 칸 바로 밑에 나란히 — 고르면 곧장 이 칸이 채워진다. -->
+      <div class="questionSources">
+        <QuestionSuggest :kind="kind" :exclude="pastQuestions" @pick="setQuestion" @pick-all="addQuestions" />
+        <PastQuestionPick v-if="pastIssues.length > 0" :issues="pastIssues" :exclude="takenQuestions" @pick="setQuestion" />
+      </div>
 
       <div v-for="(name, i) in participants" :key="name" class="answerLine">
         <ParticipantDot :color="colorAt(i)" />
@@ -46,13 +42,23 @@
 
       <button class="ghost" :disabled="!qaReady" @click="addRound">답 저장하고 다음 질문</button>
     </section>
+
+    <RoundContentsList
+      :rounds="rounds"
+      :participants="participants"
+      editable
+      @edit="editRound"
+      @move="moveRound"
+      @remove="removeRound"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { Kind, Round } from '@recoverse/shared';
+import type { Issue, Kind, Round } from '@recoverse/shared';
 import ParticipantDot from './ParticipantDot.vue';
+import PastQuestionPick from './PastQuestionPick.vue';
 import QuestionSuggest from './QuestionSuggest.vue';
 import RoundContentsList from './RoundContentsList.vue';
 import { getFormat } from '../data/formats';
@@ -66,12 +72,15 @@ const props = withDefaults(
     currentRound: SoloIssueCurrentRoundDraft;
     kind?: Kind;
     draftStateLabel?: string;
+    /** 책장의 지난 호 — 있으면 질문 칸 밑에서 한 질문만 골라 다시 쓸 수 있다. */
+    pastIssues?: readonly Issue[];
   }>(),
-  { kind: 'free', draftStateLabel: '새 질문' },
+  { kind: 'free', draftStateLabel: '새 질문', pastIssues: () => [] },
 );
 const emit = defineEmits<{ 'update:rounds': [Round[]]; 'update:currentRound': [SoloIssueCurrentRoundDraft] }>();
 
 const pastQuestions = computed(() => props.rounds.map((round) => round.question));
+const takenQuestions = computed(() => [...pastQuestions.value, props.currentRound.question]);
 
 const qaReady = computed(
   () =>
@@ -210,6 +219,18 @@ function removeRound(index: number): void {
   color: var(--dim);
   font-size: 11px;
   font-weight: 800;
+}
+
+/* 닫혀 있을 땐 링크 두 개가 한 줄에, 펼쳐지면 그 패널이 한 줄을 다 쓴다. */
+.questionSources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 4px 18px;
+}
+
+.questionSources > :deep(.open) {
+  flex: 1 0 100%;
 }
 
 .formatChips {

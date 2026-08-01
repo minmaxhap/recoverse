@@ -19,7 +19,7 @@ import { useIdentity } from './composables/useIdentity';
 import { groupByQuestion, pickRediscoveryMoment } from './lib/rediscover';
 import { sampleIssues, isSample } from './lib/samples';
 
-type CoverTarget = 'create' | 'join' | 'solo' | 'rediscover';
+type CoverTarget = 'create' | 'join' | 'solo' | 'rediscover' | 'sets';
 
 const route = useRoute();
 const router = useRouter();
@@ -46,8 +46,16 @@ function goHome(): void {
 }
 function goBack(): void {
   // 재발견 타임라인에서 뒤로가기는 목록으로, 그 외 화면은 표지로.
-  if (route.name === 'rediscover-detail') router.push({ name: 'rediscover' });
-  else goHome();
+  if (route.name === 'rediscover-detail') {
+    router.push({ name: 'rediscover' });
+    return;
+  }
+  // 질문 세트는 쓰다가도, 편집실에서도 들어온다 — 온 곳으로 돌려보낸다.
+  if (route.name === 'sets' && window.history.state?.back) {
+    router.back();
+    return;
+  }
+  goHome();
 }
 function onCoverNavigate(target: CoverTarget): void {
   router.push({ name: target });
@@ -97,6 +105,8 @@ const viewProps = computed<Record<string, unknown>>(() => {
       };
     case 'issue':
       return { issue: activeIssue.value };
+    case 'sets':
+      return { issues: shelf.issues.value };
     case 'rediscover':
       return { groups: groups.value, hasSamples: hasSamples.value, moment: moment.value };
     case 'rediscover-detail':

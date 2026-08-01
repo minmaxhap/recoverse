@@ -98,13 +98,18 @@ describe('SoloWriteView', () => {
     // When
     const wrapper = await mountSolo();
 
-    // Then
-    expect(wrapper.text()).toContain('복원됨');
+    // Then: 이어쓰기 안내가 맨 위에서 무엇이 돌아왔는지 말한다
+    const resume = wrapper.get('.resumeBanner').text();
+    expect(resume).toContain('쓰던 호를 이어서 열었어요');
+    expect(resume).toContain('목차 1개');
+    expect(resume).toContain('쓰던 질문 1개');
+    expect(resume).toContain('표지 제목');
+    expect(resume).toContain(`${savedTimeText(draft().updatedAt)} 저장`);
     expect(wrapper.find('.draftState').text()).toBe(`저장됨 ${savedTimeText(draft().updatedAt)}`);
     expect(wrapper.find('.draftState').text()).not.toBe('저장 준비 중');
     expect((wrapper.find('input[placeholder="나"]').element as HTMLInputElement).value).toBe('Mina');
     expect((wrapper.find('input[aria-label="표지 제목"]').element as HTMLInputElement).value).toBe('Recovered issue');
-    expect((wrapper.find('select').element as HTMLSelectElement).value).toBe('source-1');
+    expect(wrapper.get('.issueRow.active').text()).toContain('2025 Year End');
     const inputValues = wrapper.findAll('input.field').map((input) => (input.element as HTMLInputElement).value);
     expect(inputValues).toContain('Current question?');
     expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe('Current answer');
@@ -122,11 +127,86 @@ describe('SoloWriteView', () => {
 
     // Then
     const saved = JSON.parse(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY) ?? '{}') as SoloIssueDraftV2;
-    expect((wrapper.find('select').element as HTMLSelectElement).value).toBe('');
+    expect(wrapper.find('.issueRow.active').exists()).toBe(false);
     expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe('Current answer');
     expect(saved.sourceIssueId).toBe('');
     expect(saved.title).toBe('Recovered issue');
     expect(saved.currentRound.answers).toEqual({ Mina: 'Current answer' });
+  });
+
+  it('lays a past issue into the contents in one tap and can take it back', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+
+    // When: 지난 호 한 줄을 누르면 그 구성 그대로 깔린다
+    await wrapper.get('.issueRow').trigger('click');
+
+    // Then
+    expect(wrapper.get('.contentsList').text()).toContain('Source question?');
+    expect(wrapper.get('.importNotice').text()).toContain('질문 1개를 목차에 담았어요');
+
+    // When: 되돌린다
+    await wrapper.get('.undo').trigger('click');
+
+    // Then
+    expect(wrapper.find('.contentsList').exists()).toBe(false);
+    expect(wrapper.find('.importNotice').exists()).toBe(false);
+  });
+
+  it('says the set is already in the contents instead of piling up duplicates', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+    await wrapper.get('.issueRow').trigger('click');
+
+    // When
+    await wrapper.get('.issueRow').trigger('click');
+
+    // Then
+    expect(wrapper.findAll('.contentsList li')).toHaveLength(1);
+    expect(wrapper.get('.importNotice').text()).toContain('이미 목차에 있어요');
+    expect(wrapper.find('.undo').exists()).toBe(false);
+  });
+
+  it('answers a question waiting in the contents in place, in a full-size field', async () => {
+    // Given: 세트를 불러와 '답 대기' 질문이 목차에 깔린 상태
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+    await wrapper.get('.issueRow').trigger('click');
+    expect(wrapper.get('.contentsList').text()).toContain('답 대기');
+
+    // When: 그 줄에서 바로 답을 쓴다
+    await wrapper.get('.writeBtn').trigger('click');
+    const panel = wrapper.get('.editPanel');
+    // 새 질문 칸과 같은 크기의 칸이어야 한다 — 좁은 인라인 칸이 아니라.
+    expect(panel.get('textarea').classes()).toContain('area');
+    await panel.get('textarea').setValue('올해는 이렇게 답한다');
+    expect((panel.get('.saveEdit').element as HTMLButtonElement).disabled).toBe(false);
+    await panel.trigger('submit');
+
+    // Then: 그 자리에 그대로 실린다
+    const row = wrapper.get('.contentsList li');
+    expect(row.text()).toContain('Source question?');
+    expect(row.text()).toContain('올해는 이렇게 답한다');
+    expect(row.text()).not.toContain('답 대기');
+    expect(wrapper.findAll('.contentsList li')).toHaveLength(1);
+    expect(wrapper.get('.writeBtn').text()).toBe('고쳐 쓰기');
+  });
+
+  it('sends a past question straight to the question field without touching the contents', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+
+    // When
+    await wrapper.get('.pickOpen').trigger('click');
+    await wrapper.get('.pick').trigger('click');
+
+    // Then
+    const questionField = wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]');
+    expect((questionField.element as HTMLInputElement).value).toBe('Source question?');
+    expect(wrapper.find('.contentsList').exists()).toBe(false);
   });
 
   it('clears the full draft only after publish succeeds', async () => {
@@ -245,7 +325,7 @@ describe('SoloWriteView', () => {
     await flushDraftSave();
 
     // Then
-    expect(wrapper.text()).not.toContain('복원됨');
+    expect(wrapper.find('.resumeBanner').exists()).toBe(false);
     expect(wrapper.text()).not.toMatch(/저장됨 \d{2}:\d{2}/);
     expect(wrapper.find('.draftState').text()).toBe('저장 실패');
     expect(wrapper.find('[role="alert"]').text()).toContain('임시 저장하지 못했어요');

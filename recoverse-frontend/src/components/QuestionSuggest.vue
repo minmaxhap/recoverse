@@ -1,5 +1,5 @@
 <template>
-  <div class="suggest">
+  <div class="suggest" :class="{ open }">
     <button v-if="!open" type="button" class="suggestOpen" @click="openPanel">
       질문이 생각 안 나요
     </button>
@@ -36,7 +36,7 @@
       <div class="panelActions">
         <button type="button" class="reshuffle" @click="refresh">다른 질문 보기</button>
         <button v-if="suggestions.length > 1" type="button" class="addAll" @click="chooseAll">
-          이 질문 {{ suggestions.length }}개 목차에 담기
+          이 질문 {{ suggestions.length }}개 {{ destination }}에 담기
         </button>
       </div>
     </div>
@@ -55,8 +55,9 @@ import {
 } from '../data/questionPacks';
 
 const props = withDefaults(
-  defineProps<{ kind: Kind; exclude?: string[] }>(),
-  { exclude: () => [] },
+  // destination: 담기는 곳의 이름 — 목차(쓰는 화면)와 세트(세트 편집기)에서 같은 패널을 쓴다.
+  defineProps<{ kind: Kind; exclude?: string[]; destination?: string }>(),
+  { exclude: () => [], destination: '목차' },
 );
 const emit = defineEmits<{ pick: [string]; pickAll: [string[]] }>();
 

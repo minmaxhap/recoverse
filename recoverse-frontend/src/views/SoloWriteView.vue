@@ -7,29 +7,36 @@
       <h1 class="pageTitle">오늘의 질문을 한 호로 엮어요</h1>
     </header>
 
+    <!-- 이어쓰기 안내는 맨 위, 무엇이 돌아왔는지와 함께 — 발행 버튼 옆에서 '복원됨'만 말하면 알 수 없다. -->
+    <p v-if="restoreNotice" class="statusBanner resumeBanner" role="status">
+      <span>{{ restoreNotice }}</span>
+      <button type="button" class="statusRetry" @click="restoreNotice = ''">닫기</button>
+    </p>
+
     <details
-      v-if="shelf.issues.value.length"
       class="disclosure"
       :open="sourceOpen"
       @toggle="sourceOpen = ($event.target as HTMLDetailsElement).open"
     >
       <summary class="disclosureSummary">
-        <span class="eyebrow red">FROM THE SHELF</span>
-        <span class="disclosureText">지난 호에서 질문 가져오기</span>
+        <span class="eyebrow red">QUESTION SET</span>
+        <span class="disclosureText">질문 세트 불러오기 · 만들기</span>
         <span class="disclosureChevron" aria-hidden="true">＋</span>
       </summary>
       <div class="disclosureBody">
-        <label class="fieldGroup">
-          <span class="fieldLabel">질문을 가져올 호</span>
-          <!-- 고르는 즉시 목차에 담긴다 — 아래에서 한 번 더 고르게 하지 않는다. -->
-          <select :value="sourceIssueId" class="field selectField" @change="chooseSourceIssue">
-            <option value="">새 질문으로 시작</option>
-            <option v-for="issue in shelf.issues.value" :key="issue.id" :value="issue.id">
-              {{ issue.title }} · 질문 {{ issue.rounds.length }}개
-            </option>
-          </select>
-        </label>
-        <p v-if="importNotice" class="helper" role="status">{{ importNotice }}</p>
+        <QuestionSetPicker
+          :issues="shelf.issues.value"
+          :contents="contentsQuestions"
+          :source-issue-id="sourceIssueId"
+          :default-name="defaultIssueTitle"
+          @update:source-issue-id="sourceIssueId = $event"
+          @load="importQuestions"
+          @manage="$emit('navigate', 'sets')"
+        />
+        <p v-if="importNotice" class="importNotice" role="status">
+          <span class="helper">{{ importNotice }}</span>
+          <button v-if="lastImported.length > 0" type="button" class="undo" @click="undoImport">되돌리기</button>
+        </p>
       </div>
     </details>
 
@@ -39,6 +46,7 @@
       :current-round="currentRound"
       :kind="kind"
       :draft-state-label="draftStateLabel"
+      :past-issues="shelf.issues.value"
       @update:rounds="updateRounds"
       @update:current-round="updateCurrentRound"
     />
@@ -72,7 +80,6 @@
       </div>
     </details>
 
-    <p v-if="restoreNotice" class="helper draftNotice" role="status">{{ restoreNotice }}</p>
     <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
     <p class="helper publishHelp">{{ publishHelp }}</p>
     <button class="cta" :disabled="!canPublish || publishing" @click="publish">책장에 꽂기</button>
@@ -96,6 +103,7 @@ import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
 import KindChips from '../components/KindChips.vue';
 import PublishScene from '../components/PublishScene.vue';
+import QuestionSetPicker from '../components/QuestionSetPicker.vue';
 import RoundEditor from '../components/RoundEditor.vue';
 import {
   draftHasContent,
@@ -108,7 +116,7 @@ import {
 import { useShelf } from '../composables/useShelf';
 import { issueFromDraft, roundIsAnswered } from '../lib/issueBuilder';
 
-const emit = defineEmits<{ back: []; published: [] }>();
+const emit = defineEmits<{ back: []; published: []; navigate: ['sets'] }>();
 
 const shelf = useShelf();
 const kind = ref<Kind>('free');
@@ -121,6 +129,8 @@ const restoreNotice = ref('');
 const importNotice = ref('');
 const publishing = ref(false);
 const sourceIssueId = ref('');
+// 방금 담은 질문들 — 되돌리기가 그 줄만 골라 뺀다.
+const lastImported = ref<string[]>([]);
 // 지난 호 가져오기는 소수만 쓰는 선택 기능 — 기본은 접어두고(네이티브 details), 필요할 때 펼친다.
 const sourceOpen = ref(false);
 // 표지 정보(종류·제목·이름)도 기본값이 있어 접어둔다 — 바로 질문부터 쓰게. 값이 있으면 펼친다.
@@ -137,6 +147,7 @@ const pendingRoundCount = computed(() => rounds.value.length - answeredRoundCoun
 const canPublish = computed(() => answeredRoundCount.value > 0);
 const kindLabelText = computed(() => KIND_LABELS[kind.value]);
 const sourceIssue = computed(() => shelf.issues.value.find((issue) => issue.id === sourceIssueId.value));
+const contentsQuestions = computed(() => rounds.value.map((round) => round.question));
 const publishHelp = computed(() => {
   if (!canPublish.value) return '질문 하나와 답 하나를 목차에 실으면 발행할 수 있어요.';
   if (pendingRoundCount.value > 0) {
@@ -165,6 +176,25 @@ function savedTimeText(savedAt: string): string {
   return new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(
     new Date(savedAt),
   );
+}
+
+/**
+ * 무엇이 돌아왔는지 말한다 — '복원됨'만으로는 뭐가 살아났는지 알 수 없다.
+ * 복원 시점의 초고를 그대로 읽어 적으므로, 이어 쓰는 동안 문장이 바뀌지 않는다.
+ */
+function describeRestored(draft: SoloIssueDraftV2, migrated: boolean): string {
+  const restored: string[] = [];
+  if (draft.rounds.length > 0) restored.push(`목차 ${draft.rounds.length}개`);
+  const writing =
+    draft.currentRound.question.trim() !== '' ||
+    Object.values(draft.currentRound.answers).some((text) => text.trim() !== '');
+  if (writing) restored.push('쓰던 질문 1개');
+  if (draft.title.trim() !== '') restored.push('표지 제목');
+
+  const lead = migrated ? '이전 임시 저장을 옮겨 왔어요' : '쓰던 호를 이어서 열었어요';
+  const what = restored.length > 0 ? restored.join(' · ') : '아직 빈 초고';
+  const when = draft.updatedAt ? ` · ${savedTimeText(draft.updatedAt)} 저장` : '';
+  return `${lead} — ${what}${when}`;
 }
 
 function buildDraft(): SoloIssueDraftV2 {
@@ -199,7 +229,7 @@ function restoreDraft(): void {
   let clearedStaleSource = false;
   if (restored.ok) {
     applyDraft(restored.draft);
-    restoreNotice.value = restored.migratedFromLegacy ? '이전 질문 임시 저장을 복원했어요.' : '복원됨';
+    restoreNotice.value = describeRestored(restored.draft, restored.migratedFromLegacy);
     if (sourceIssueId.value && !sourceIssue.value) {
       sourceIssueId.value = '';
       clearedStaleSource = true;
@@ -224,38 +254,36 @@ watch(
 
 onMounted(restoreDraft);
 
-/**
- * 지난 호를 고르면 그 자리에서 질문을 목차에 "답 대기"로 깐다.
- * 아래에서 한 번 더 고르게 하면 고른 곳과 결과가 나타나는 곳이 달라 흐름이 끊긴다.
- * 사용자가 직접 고를 때만 담는다 — 초고 복원은 이미 자기 rounds를 갖고 있다.
- */
-function chooseSourceIssue(event: Event): void {
-  const id = event.target instanceof HTMLSelectElement ? event.target.value : '';
-  sourceIssueId.value = id;
-
-  const issue = shelf.issues.value.find((item) => item.id === id);
-  if (!issue) {
-    importNotice.value = '';
-    return;
-  }
-
+/** 세트의 질문을 그 구성 그대로 목차에 "답 대기"로 깐다. 이미 실린 질문은 건너뛴다. */
+function importQuestions(picked: { question: string; format?: string }[]): void {
   const existing = new Set(rounds.value.map((round) => round.question.trim()));
   const asker = participants.value[0] ?? SOLO_DEFAULT_NAME;
   const additions: Round[] = [];
-  for (const sourceRound of issue.rounds) {
-    const question = sourceRound.question.trim();
+  for (const item of picked) {
+    const question = item.question.trim();
     if (!question || existing.has(question)) continue;
     existing.add(question);
     const round: Round = { asker, question, answers: {} };
-    if (sourceRound.format) round.format = sourceRound.format;
+    if (item.format) round.format = item.format;
     additions.push(round);
   }
+  if (additions.length === 0) {
+    lastImported.value = [];
+    importNotice.value = '그 질문들은 이미 목차에 있어요.';
+    return;
+  }
 
-  if (additions.length > 0) rounds.value = [...rounds.value, ...additions];
-  importNotice.value =
-    additions.length > 0
-      ? `${issue.title}의 질문 ${additions.length}개를 목차에 담았어요.`
-      : `${issue.title}의 질문은 이미 목차에 있어요.`;
+  rounds.value = [...rounds.value, ...additions];
+  lastImported.value = additions.map((round) => round.question);
+  importNotice.value = `질문 ${additions.length}개를 목차에 담았어요.`;
+}
+
+/** 방금 담은 질문 중 아직 답이 없는 줄만 뺀다 — 담은 뒤 쓴 답은 지우지 않는다. */
+function undoImport(): void {
+  const added = new Set(lastImported.value);
+  rounds.value = rounds.value.filter((round) => !added.has(round.question) || roundIsAnswered(round));
+  lastImported.value = [];
+  importNotice.value = '';
 }
 
 function updateRounds(nextRounds: Round[]): void {
@@ -361,14 +389,37 @@ function finishPublish(): void {
   padding: 4px 2px 14px;
 }
 
+.importNotice {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+}
+
+.undo {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--vermilion);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .publishHelp {
   margin-top: 16px;
   text-align: center;
 }
 
-.draftNotice {
-  margin-top: 12px;
-  text-align: center;
+.resumeBanner {
+  align-items: flex-start;
+  margin: 0 0 18px;
+}
+
+.resumeBanner span {
+  min-width: 0;
 }
 
 .publishOverlay {

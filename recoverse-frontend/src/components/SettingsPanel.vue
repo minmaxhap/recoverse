@@ -61,6 +61,15 @@
           <ShelfArchiveActions :issues="issues" />
         </section>
 
+        <section class="settingsSection" aria-labelledby="setsTitle">
+          <div class="sectionHead">
+            <span id="setsTitle" class="sectionTitle">질문 세트</span>
+            <span class="sectionMeta">{{ sets.length }}개 보관 중</span>
+          </div>
+          <p class="fineprint">자주 쓰는 질문을 묶어두면, 다음 호를 그 구성으로 열 수 있어요.</p>
+          <button type="button" class="setsLink" @click="goToSets">질문 세트 만들기 · 정리하기 →</button>
+        </section>
+
         <section class="settingsSection" aria-labelledby="migrateTitle">
           <div class="sectionHead">
             <span id="migrateTitle" class="sectionTitle">기기 이사</span>
@@ -84,11 +93,21 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import type { Issue } from '@recoverse/shared';
 import { useThemePreference, type ThemePreference } from '../composables/useThemePreference';
 import { backupAgeLabel, useBackupStatus } from '../composables/useBackupStatus';
+import { useQuestionSets } from '../composables/useQuestionSets';
 import ShelfArchiveActions from './ShelfArchiveActions.vue';
 import MigratePanel from './MigratePanel.vue';
 import VocPanel from './VocPanel.vue';
 
 const props = defineProps<{ readonly issues: readonly Issue[] }>();
+const emit = defineEmits<{ navigate: ['sets'] }>();
+
+const { sets } = useQuestionSets();
+
+// 다이얼로그를 닫고 나가야 돌아왔을 때 편집실이 열린 채로 남지 않는다.
+function goToSets(): void {
+  close();
+  emit('navigate', 'sets');
+}
 
 const { lastBackupAt } = useBackupStatus();
 const backupStatusText = computed(() => {
@@ -281,6 +300,25 @@ onBeforeUnmount(() => { document.body.style.overflow = ''; });
   font-size: 12px;
   font-weight: 700;
   color: var(--dim);
+}
+
+.setsLink {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 10px 14px;
+  background: none;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.setsLink:hover {
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .backupStatus {
