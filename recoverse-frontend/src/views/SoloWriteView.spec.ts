@@ -261,6 +261,38 @@ describe('SoloWriteView', () => {
     expect(wrapper.get('.waitingBar').text()).toContain('답을 기다리는 질문 1개');
   });
 
+  it('lays a past issue out when arriving from "이 구성으로 쓰기"', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+
+    // When
+    const wrapper = await mountSolo({ presetIssueId: 'source-1' });
+
+    // Then
+    expect(wrapper.get('.contentsList').text()).toContain('Source question?');
+    expect(wrapper.get('.importNotice').text()).toContain('질문 1개를 목차에 담았어요');
+  });
+
+  it('counts how many of the listed questions are answered', async () => {
+    // Given
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        rounds: [
+          { asker: 'Mina', question: 'Answered?', answers: { Mina: { text: 'Yes' } } },
+          { asker: 'Mina', question: 'Waiting?', answers: {} },
+        ],
+      }),
+    );
+
+    // When
+    const wrapper = await mountSolo();
+
+    // Then
+    expect(wrapper.get('#contentsTitle').text()).toBe('질문 2개 중 1개 답했어요');
+  });
+
   it('offers where to start when nothing has been written yet', async () => {
     // Given
     localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));

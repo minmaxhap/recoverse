@@ -84,14 +84,14 @@ describe('QuestionSetManager', () => {
     expect(stored).toHaveLength(1);
     expect(stored[0].name).toBe('월간 회고');
     expect(stored[0].questions).toEqual(['이번 달 가장 좋았던 순간은?', '다음 달에 바라는 것은?']);
-    expect(wrapper.get('.setRow').text()).toContain('월간 회고');
+    expect(wrapper.get('.savedRow').text()).toContain('월간 회고');
   });
 
   it('reorders the questions in the set being written', async () => {
     // Given
     const wrapper = await mountManager();
     await writeSet(wrapper, '월간 회고', ['첫째', '둘째', '셋째']);
-    await wrapper.get('.setRow').trigger('click');
+    await wrapper.get('.savedRow').trigger('click');
 
     // When: 셋째를 한 칸 위로
     await wrapper.get('[aria-label="질문 3 위로"]').trigger('click');
@@ -107,7 +107,7 @@ describe('QuestionSetManager', () => {
     await writeSet(wrapper, '월간 회고', ['첫째', '둘째']);
 
     // When
-    await wrapper.get('.setRow').trigger('click');
+    await wrapper.get('.savedRow').trigger('click');
 
     // Then
     expect((wrapper.get('[aria-label="질문 1 위로"]').element as HTMLButtonElement).disabled).toBe(true);
@@ -121,7 +121,7 @@ describe('QuestionSetManager', () => {
     await writeSet(wrapper, '월간 회고', ['이번 달 가장 좋았던 순간은?']);
 
     // When
-    await wrapper.get('.setRow').trigger('click');
+    await wrapper.get('.savedRow').trigger('click');
     expect((wrapper.findAll('input.field')[1].element as HTMLInputElement).value).toBe('이번 달 가장 좋았던 순간은?');
     await setField(wrapper, 0, '분기 회고');
     await wrapper.get('.setEditor').trigger('submit');
@@ -130,14 +130,14 @@ describe('QuestionSetManager', () => {
     const stored = storedSets();
     expect(stored).toHaveLength(1);
     expect(stored[0].name).toBe('분기 회고');
-    expect(wrapper.findAll('.setRow')).toHaveLength(1);
+    expect(wrapper.findAll('.savedRow')).toHaveLength(1);
   });
 
   it('drops a question row from the set being written', async () => {
     // Given
     const wrapper = await mountManager();
     await writeSet(wrapper, '월간 회고', ['질문 하나?', '질문 둘?']);
-    await wrapper.get('.setRow').trigger('click');
+    await wrapper.get('.savedRow').trigger('click');
 
     // When
     await wrapper.findAll('.qDrop')[0].trigger('click');
@@ -157,7 +157,7 @@ describe('QuestionSetManager', () => {
     await wrapper.get('.setEditor').trigger('submit');
 
     // Then
-    expect(wrapper.get('.setRow').text()).toContain('내 질문 세트');
+    expect(wrapper.get('.savedRow').text()).toContain('내 질문 세트');
   });
 
   it('asks before dropping a saved set', async () => {
@@ -176,7 +176,7 @@ describe('QuestionSetManager', () => {
     await wrapper.get('.confirmYes').trigger('click');
 
     // Then
-    expect(wrapper.find('.setRow').exists()).toBe(false);
+    expect(wrapper.find('.savedRow').exists()).toBe(false);
     expect(storedSets()).toHaveLength(0);
   });
 
@@ -204,7 +204,7 @@ describe('QuestionSetManager', () => {
     const wrapper = await mountManager({ issues: [issue('a', '2025 연말호', ['첫 질문?', '둘째 질문?'])] });
 
     // When
-    await wrapper.get('.starter .setRow').trigger('click');
+    await wrapper.get('.issueRow').trigger('click');
 
     // Then: 그 호의 질문과 제목이 채워진 채로 열린다
     const values = wrapper.findAll('input.field').map((input) => (input.element as HTMLInputElement).value);
@@ -212,6 +212,49 @@ describe('QuestionSetManager', () => {
 
     await wrapper.get('.setEditor').trigger('submit');
     expect(storedSets()[0].questions).toEqual(['첫 질문?', '둘째 질문?']);
+  });
+
+  it('starts from a recommended set when the reader has nothing of their own', async () => {
+    // Given: 책장도 세트도 없는 첫 화면
+    const wrapper = await mountManager();
+
+    // When
+    await wrapper.get('.presetRow').trigger('click');
+
+    // Then: 그 팩의 질문이 채워진 편집기가 열린다
+    const values = wrapper.findAll('input.field').map((input) => (input.element as HTMLInputElement).value);
+    expect(values[0]).toBe('연말 결산 5문항');
+    expect(values).toHaveLength(6);
+
+    await wrapper.get('.setEditor').trigger('submit');
+    expect(storedSets()[0].questions).toHaveLength(5);
+  });
+
+  it('saves a copy under a free name and leaves the original alone', async () => {
+    // Given
+    const wrapper = await mountManager();
+    await writeSet(wrapper, '월간 회고', ['질문 하나?']);
+
+    // When: 기존 세트를 열어 고친 뒤 사본으로 저장
+    await wrapper.get('.savedRow').trigger('click');
+    await setField(wrapper, 1, '바꾼 질문?');
+    await wrapper.get('.copyBtn').trigger('click');
+
+    // Then: 원본은 그대로, 사본이 따로 생긴다
+    const stored = storedSets();
+    expect(stored).toHaveLength(2);
+    expect(stored.map((set) => set.name).sort()).toEqual(['월간 회고', '월간 회고 사본']);
+    expect(stored.find((set) => set.name === '월간 회고')?.questions).toEqual(['질문 하나?']);
+    expect(stored.find((set) => set.name === '월간 회고 사본')?.questions).toEqual(['바꾼 질문?']);
+  });
+
+  it('offers no copy button while writing a set that has never been saved', async () => {
+    // Given / When
+    const wrapper = await mountManager();
+    await wrapper.get('.newSetBtn').trigger('click');
+
+    // Then
+    expect(wrapper.find('.copyBtn').exists()).toBe(false);
   });
 
   it('keeps the set being written on screen when it cannot be stored', async () => {

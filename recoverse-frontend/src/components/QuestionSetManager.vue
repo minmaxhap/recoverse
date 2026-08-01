@@ -64,6 +64,10 @@
 
       <div class="saveActions">
         <button type="submit" class="saveBtn" :disabled="!canSave">세트 저장</button>
+        <!-- 원본은 두고 변형을 만들 때 — 이름이 겹치면 '사본'을 붙여 따로 남긴다. -->
+        <button v-if="editingId" type="button" class="copyBtn" :disabled="!canSave" @click="saveCopy">
+          사본으로 저장
+        </button>
         <button type="button" class="linkBtn" @click="editing = false">취소</button>
       </div>
       <p v-if="saveNotice" class="helper" role="status">{{ saveNotice }}</p>
@@ -80,7 +84,7 @@
             </p>
           </template>
           <template v-else>
-            <button type="button" class="setRow" @click="editSet(set)">
+            <button type="button" class="setRow savedRow" @click="editSet(set)">
               <span class="rowTitle">{{ set.name }}</span>
               <span class="rowMeta">질문 {{ set.questions.length }}개 · {{ preview(set) }}</span>
             </button>
@@ -97,11 +101,21 @@
 
       <button type="button" class="newSetBtn" @click="newSet">＋ 새 질문 세트 만들기</button>
 
+      <section class="starter">
+        <span class="eyebrow">추천 세트로 시작하기</span>
+        <div class="rows">
+          <button v-for="preset in STARTER_SETS" :key="preset.id" type="button" class="setRow presetRow" @click="startFromPreset(preset)">
+            <span class="rowTitle">{{ preset.name }}</span>
+            <span class="rowMeta">{{ preset.note }} · {{ preset.questions[0] }}</span>
+          </button>
+        </div>
+      </section>
+
       <!-- 빈손보다 사본이 쉽다 — 지난 호 구성을 그대로 열어 고쳐 쓰게 한다. -->
       <section v-if="issues.length > 0" class="starter">
         <span class="eyebrow">지난 호에서 시작하기</span>
         <div class="rows">
-          <button v-for="issue in starterIssues" :key="issue.id" type="button" class="setRow" @click="startFromIssue(issue)">
+          <button v-for="issue in starterIssues" :key="issue.id" type="button" class="setRow issueRow" @click="startFromIssue(issue)">
             <span class="rowTitle">{{ issue.title }}</span>
             <span class="rowMeta">질문 {{ issue.rounds.length }}개를 옮겨 담고 고치기</span>
           </button>
@@ -118,6 +132,7 @@ import { computed, nextTick, ref } from 'vue';
 import type { Issue } from '@recoverse/shared';
 import PastQuestionPick from './PastQuestionPick.vue';
 import QuestionSuggest from './QuestionSuggest.vue';
+import { STARTER_SETS, type StarterSet } from '../data/starterSets';
 import { useQuestionSets, type QuestionSet } from '../composables/useQuestionSets';
 
 const props = withDefaults(
@@ -167,6 +182,10 @@ function newSetFrom(name: string, questions: string[]): void {
   openEditor(name, questions.length > 0 ? questions : ['']);
 }
 
+function startFromPreset(preset: StarterSet): void {
+  newSetFrom(preset.name, [...preset.questions]);
+}
+
 function startFromIssue(issue: Issue): void {
   newSetFrom(
     issue.title,
@@ -208,6 +227,26 @@ function moveQuestion(index: number, direction: -1 | 1): void {
   next[index] = swapped;
   next[target] = current;
   draftQuestions.value = next;
+}
+
+/** 이미 쓰이는 이름이면 '사본', '사본 2'… 로 비켜 준다. */
+function freeName(base: string): string {
+  const taken = new Set(sets.value.map((set) => set.name));
+  if (!taken.has(base)) return base;
+  let candidate = `${base} 사본`;
+  for (let n = 2; taken.has(candidate); n += 1) candidate = `${base} 사본 ${n}`;
+  return candidate;
+}
+
+function saveCopy(): void {
+  if (!canSave.value) return;
+  const name = freeName(setName.value.trim() || props.defaultName);
+  if (!questionSets.save(name, draftQuestions.value)) {
+    saveNotice.value = '세트를 저장하지 못했어요. 브라우저 저장 공간을 비우고 다시 시도해주세요.';
+    return;
+  }
+  editing.value = false;
+  saveNotice.value = `‘${name}’ 세트를 따로 만들었어요.`;
 }
 
 function saveSet(): void {
@@ -404,6 +443,13 @@ function confirmDelete(id: string): void {
   cursor: default;
 }
 
+@media (hover: none) {
+  .qActions button {
+    width: 40px;
+    height: 40px;
+  }
+}
+
 /* 닫혀 있을 땐 링크 두 개가 한 줄에, 펼쳐지면 그 패널이 한 줄을 다 쓴다. */
 .questionSources {
   display: flex;
@@ -445,6 +491,29 @@ function confirmDelete(id: string): void {
 
 .saveBtn:disabled {
   background: none;
+  border-color: var(--hairline);
+  color: var(--dim);
+  cursor: default;
+}
+
+.copyBtn {
+  padding: 11px 15px;
+  background: none;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.copyBtn:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.copyBtn:disabled {
   border-color: var(--hairline);
   color: var(--dim);
   cursor: default;

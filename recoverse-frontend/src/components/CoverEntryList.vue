@@ -17,11 +17,23 @@
         <span class="pageNo">{{ String(i + 1).padStart(2, '0') }}</span>
       </button>
     </div>
+
+    <!-- 네 갈래 입구를 흐리지 않게 한 줄로 — 준비하는 일이지 시작하는 일이 아니라서. -->
+    <button type="button" class="setsLine" @click="$emit('navigate', 'sets')">
+      <span>질문 세트</span>
+      <span class="setsMeta">{{ setsLabel }} →</span>
+    </button>
   </div>
 </template>
 
 <script setup lang="ts">
-type CoverTarget = 'create' | 'join' | 'solo' | 'rediscover';
+import { computed } from 'vue';
+import { useQuestionSets } from '../composables/useQuestionSets';
+
+type CoverTarget = 'create' | 'join' | 'solo' | 'rediscover' | 'sets';
+
+const { sets } = useQuestionSets();
+const setsLabel = computed(() => (sets.value.length > 0 ? `${sets.value.length}개` : '만들기'));
 
 const ENTRIES = [
   { target: 'create', eyebrow: 'NEW ISSUE', title: '새 호 발행하기', sub: '코드를 만들어 친구들을 초대해요', primary: true },
@@ -79,6 +91,38 @@ defineEmits<{ navigate: [CoverTarget] }>();
   min-width: 0;
   display: grid;
   gap: 3px;
+}
+
+.setsLine {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 2px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--hairline);
+  color: var(--dim-strong);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.setsLine:hover {
+  color: var(--vermilion);
+}
+
+.setsMeta {
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+}
+
+.setsLine:hover .setsMeta {
+  color: var(--vermilion);
 }
 
 .pageNo {

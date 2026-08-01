@@ -122,9 +122,12 @@ import {
 import { useShelf } from '../composables/useShelf';
 import { issueFromDraft, roundIsAnswered } from '../lib/issueBuilder';
 
-// presetQuestion: 재발견에서 "이 질문에 올해도 답하기"로 들어올 때 실려 오는 질문.
-const props = withDefaults(defineProps<{ readonly presetQuestion?: string }>(), { presetQuestion: '' });
-const emit = defineEmits<{ back: []; published: []; navigate: ['sets'] }>();
+// preset*: 다른 화면에서 재료를 들고 들어올 때 — 재발견의 질문 하나, 지난 호 상세의 구성 한 벌.
+const props = withDefaults(
+  defineProps<{ readonly presetQuestion?: string; readonly presetIssueId?: string }>(),
+  { presetQuestion: '', presetIssueId: '' },
+);
+const emit = defineEmits<{ back: []; published: [string]; navigate: ['sets'] }>();
 
 const shelf = useShelf();
 const kind = ref<Kind>('free');
@@ -143,6 +146,7 @@ const lastImported = ref<string[]>([]);
 const carriedCount = ref(0);
 // 발행 직후 화면 상태를 다음 호로 갈아끼우므로, 연출에 쓸 제목은 발행 시점 값을 붙잡아 둔다.
 const publishedTitle = ref('');
+const publishedId = ref('');
 // 지난 호 가져오기는 소수만 쓰는 선택 기능 — 기본은 접어두고(네이티브 details), 필요할 때 펼친다.
 const sourceOpen = ref(false);
 // 표지 정보(종류·제목·이름)도 기본값이 있어 접어둔다 — 바로 질문부터 쓰게. 값이 있으면 펼친다.
@@ -267,8 +271,19 @@ function restoreDraft(): void {
       title.value.trim() !== '' || name.value !== SOLO_DEFAULT_NAME || kind.value !== 'free';
   }
   draftReady.value = true;
+  applyPresetIssue();
   applyPresetQuestion();
   if (clearedStaleSource) persistDraft();
+}
+
+/** 지난 호 상세에서 "이 구성으로 쓰기"로 들어왔을 때 — 그 호의 질문을 목차에 깐다. */
+function applyPresetIssue(): void {
+  const issue = shelf.issues.value.find((item) => item.id === props.presetIssueId);
+  if (!issue) return;
+  sourceIssueId.value = issue.id;
+  importQuestions(
+    issue.rounds.map((round) => (round.format ? { question: round.question, format: round.format } : { question: round.question })),
+  );
 }
 
 /**
@@ -365,6 +380,7 @@ function publish(): void {
   }
   carriedCount.value = carried.length;
   publishedTitle.value = issue.title;
+  publishedId.value = issue.id;
   // 화면 상태를 다음 호로 갈아끼우는 동안 자동 저장을 멈춘다 — 방금 쓴 초고를 덮어쓰지 않게.
   draftReady.value = false;
   rounds.value = carried;
@@ -379,7 +395,8 @@ function publish(): void {
 function finishPublish(): void {
   if (!publishing.value) return;
   publishing.value = false;
-  emit('published');
+  // 방금 꽂은 호가 어느 표지인지 책장에서 짚어줄 수 있게 id를 들려 보낸다.
+  emit('published', publishedId.value);
 }
 </script>
 

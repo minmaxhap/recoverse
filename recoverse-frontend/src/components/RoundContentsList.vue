@@ -2,7 +2,7 @@
   <section v-if="rounds.length > 0" class="contentsBlock" aria-labelledby="contentsTitle">
     <div class="contentsHead">
       <span class="eyebrow">CONTENTS</span>
-      <strong id="contentsTitle">{{ rounds.length }}개 질문을 실었어요</strong>
+      <strong id="contentsTitle">{{ progressLabel }}</strong>
     </div>
     <ol class="contentsList">
       <li
@@ -70,6 +70,14 @@ const props = defineProps<{
   editable?: boolean;
 }>();
 const emit = defineEmits<{ move: [number, -1 | 1]; remove: [number]; edit: [number, Round] }>();
+
+// 세트를 깔면 목차가 "할 일 목록"이 된다 — 몇 개를 채웠는지 세지 않아도 보이게.
+const answeredCount = computed(() => props.rounds.filter(roundIsAnswered).length);
+const progressLabel = computed(() =>
+  answeredCount.value === props.rounds.length
+    ? `${props.rounds.length}개 질문을 실었어요`
+    : `질문 ${props.rounds.length}개 중 ${answeredCount.value}개 답했어요`,
+);
 
 const rowEls = new Map<number, HTMLElement>();
 const editingIndex = ref<number | null>(null);
@@ -210,8 +218,8 @@ function saveEdit(index: number): void {
 .contentsActions button {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   border: 1px solid var(--hairline);
   background: var(--paper-card);
@@ -221,11 +229,24 @@ function saveEdit(index: number): void {
 .contentsActions button:hover:not(:disabled) { color: var(--vermilion); border-color: var(--vermilion); }
 .contentsActions button:disabled { opacity: .35; cursor: default; }
 
+/* 손가락으로 쓰는 기기에선 최소 40px — 목차 줄의 작은 아이콘까지. */
+@media (hover: none) {
+  .contentsActions button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .contentsActions .writeBtn {
+    width: auto;
+    height: 40px;
+  }
+}
+
 /* 답 쓰기는 이 줄의 주된 행동 — 아이콘이 아니라 말로 적는다. */
 .contentsActions .writeBtn {
   width: auto;
-  height: 28px;
-  padding: 0 11px;
+  height: 34px;
+  padding: 0 13px;
   margin-right: 2px;
   white-space: nowrap;
   font-size: 12px;

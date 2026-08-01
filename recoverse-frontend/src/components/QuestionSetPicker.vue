@@ -32,9 +32,22 @@
       </button>
     </section>
 
-    <p v-if="sets.length === 0 && issues.length === 0" class="helper">
-      아직 불러올 세트가 없어요. 자주 쓰는 질문을 세트로 묶어두면 다음 호를 그 구성으로 열 수 있어요.
-    </p>
+    <!-- 내 세트가 아직 없을 때만 — 첫 호도 한 번 탭으로 시작할 수 있게. -->
+    <section v-if="sets.length === 0" class="setGroup">
+      <span class="eyebrow">추천 세트</span>
+      <div class="rows">
+        <button
+          v-for="preset in STARTER_SETS"
+          :key="preset.id"
+          type="button"
+          class="setRow"
+          @click="loadQuestions(preset.questions)"
+        >
+          <span class="rowTitle">{{ preset.name }}</span>
+          <span class="rowMeta">{{ preset.note }} · 질문 {{ preset.questions.length }}개</span>
+        </button>
+      </div>
+    </section>
 
     <!-- 만들고 고치는 일은 이 화면의 일이 아니다 — 전용 화면으로 보낸다. -->
     <div class="manageRow">
@@ -62,6 +75,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
 import { KIND_LABELS, type Issue } from '@recoverse/shared';
+import { STARTER_SETS } from '../data/starterSets';
 import { useQuestionSets } from '../composables/useQuestionSets';
 
 interface LoadedQuestion {

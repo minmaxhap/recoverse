@@ -50,6 +50,7 @@
           <CoverEntryList @navigate="$emit('navigate', $event)" />
           <CoverBackIssues
             :issues="issues"
+            :fresh-issue-id="freshIssueId"
             @navigate="$emit('navigate', $event)"
             @open="$emit('open', $event)"
           />
@@ -70,10 +71,15 @@ import SettingsPanel from "../components/SettingsPanel.vue";
 import { peekSoloIssueDraft } from "../composables/useSoloIssueDraft";
 import type { RediscoveryMoment } from "../lib/rediscover";
 
-const props = defineProps<{
-  readonly issues: readonly Issue[];
-  readonly moment?: RediscoveryMoment | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    readonly issues: readonly Issue[];
+    readonly moment?: RediscoveryMoment | null;
+    /** 방금 발행한 호 — 책장에서 잠깐 짚어준다. */
+    readonly freshIssueId?: string;
+  }>(),
+  { moment: null, freshIssueId: '' },
+);
 defineEmits<{
   navigate: ["create" | "join" | "solo" | "rediscover" | "sets"];
   open: [string];

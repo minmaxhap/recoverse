@@ -44,6 +44,10 @@ const activeGroup = computed(() =>
 function goHome(): void {
   router.push({ name: 'cover' });
 }
+// 발행 직후 표지 — 방금 꽂은 호를 책장에서 짚어준다.
+function goHomeWithFresh(id?: string): void {
+  router.push(id ? { name: 'cover', query: { fresh: id } } : { name: 'cover' });
+}
 function goBack(): void {
   // 재발견 타임라인에서 뒤로가기는 목록으로, 그 외 화면은 표지로.
   if (route.name === 'rediscover-detail') {
@@ -70,6 +74,10 @@ function openGroup(key: string): void {
 function writeQuestion(question: string): void {
   router.push({ name: 'solo', query: { q: question } });
 }
+// 지난 호 상세에서 "이 구성으로 쓰기" — 그 호의 질문을 들고 혼자 엮기로 넘어간다.
+function reuseIssue(id: string): void {
+  router.push({ name: 'solo', query: { from: id } });
+}
 function enterSession(): void {
   // LiveEntryView가 신원을 세팅한 뒤 emit하므로 라이브 가드를 통과한다.
   router.push({ name: 'live' });
@@ -90,7 +98,11 @@ function removeSamples(): void {
 const viewProps = computed<Record<string, unknown>>(() => {
   switch (route.name) {
     case 'cover':
-      return { issues: shelf.issues.value, moment: moment.value };
+      return {
+        issues: shelf.issues.value,
+        moment: moment.value,
+        freshIssueId: typeof route.query.fresh === 'string' ? route.query.fresh : '',
+      };
     case 'create':
     case 'join':
       return {
@@ -110,7 +122,10 @@ const viewProps = computed<Record<string, unknown>>(() => {
     case 'issue':
       return { issue: activeIssue.value };
     case 'solo':
-      return { presetQuestion: typeof route.query.q === 'string' ? route.query.q : '' };
+      return {
+        presetQuestion: typeof route.query.q === 'string' ? route.query.q : '',
+        presetIssueId: typeof route.query.from === 'string' ? route.query.from : '',
+      };
     case 'sets':
       return { issues: shelf.issues.value };
     case 'rediscover':
@@ -131,10 +146,11 @@ const viewHandlers = {
   open: openIssue,
   openGroup,
   write: writeQuestion,
+  reuse: reuseIssue,
   back: goBack,
   entered: enterSession,
   exit: leaveSession,
-  published: goHome,
+  published: goHomeWithFresh,
   removed: goHome,
   start: goHome,
   addSamples,
