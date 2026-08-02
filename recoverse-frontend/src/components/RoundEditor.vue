@@ -214,6 +214,11 @@ function addRound(): void {
   const asker = props.participants[props.rounds.length % props.participants.length];
   const round: Round = { asker, question: props.currentRound.question.trim(), answers: roundAnswers };
   if (props.currentRound.formatId) round.format = props.currentRound.formatId;
+  if (props.currentRound.questionId) round.questionId = props.currentRound.questionId;
+  if (props.currentRound.questionRevision !== undefined) round.questionRevision = props.currentRound.questionRevision;
+  if (props.currentRound.pathId) round.pathId = props.currentRound.pathId;
+  if (props.currentRound.pathStep !== undefined) round.pathStep = props.currentRound.pathStep;
+  if (props.currentRound.review) round.review = props.currentRound.review;
 
   emit('update:rounds', [...props.rounds, round]);
   updateCurrentRound({ question: '', formatId: '', answers: {} });

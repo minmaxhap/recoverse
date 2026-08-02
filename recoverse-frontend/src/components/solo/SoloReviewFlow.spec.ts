@@ -129,12 +129,17 @@ describe('SoloReviewFlow', () => {
     // Then: 평범한 질문/답 한 줄로만 나간다 — format 같은 다른 계약 필드를 빌려 쓰지 않는다
     const completed = wrapper.emitted('complete');
     expect(completed).toHaveLength(1);
-    const rounds = completed![0][0] as { question: string; answer: string }[];
+    const rounds = completed![0][0] as Array<{ question: string; answer: string; review: unknown }>;
     expect(rounds).toHaveLength(1);
     expect(rounds[0].question).toContain('퇴근길 통화');
     expect(rounds[0].question).toContain('요즘');
     expect(rounds[0].answer).toBe('말끝을 흐린 게 계속 남는다');
-    expect(Object.keys(rounds[0])).toEqual(['question', 'answer']);
+    expect(Object.keys(rounds[0])).toEqual(['question', 'answer', 'review']);
+    expect(rounds[0].review).toEqual({
+      lensId: 'conversation',
+      lensRevision: 1,
+      scope: { type: 'recent' },
+    });
   });
 
   it('walks back one step at a time and hands the way out to the parent', async () => {

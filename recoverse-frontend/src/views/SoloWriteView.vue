@@ -135,7 +135,7 @@ import PublishScene from '../components/PublishScene.vue';
 import QuestionSetPicker from '../components/QuestionSetPicker.vue';
 import RoundEditor from '../components/RoundEditor.vue';
 import SoloModePicker from '../components/solo/SoloModePicker.vue';
-import SoloQuickPicker from '../components/solo/SoloQuickPicker.vue';
+import SoloQuickPicker, { type QuickStartSelection } from '../components/solo/SoloQuickPicker.vue';
 import SoloReviewFlow, { type ReviewRoundInput } from '../components/solo/SoloReviewFlow.vue';
 import { createEmptyReviewDraft, type ReviewDraft, type SoloMode } from '../components/solo/reviewContent';
 import {
@@ -145,9 +145,9 @@ import {
   useSoloIssueDraft,
   type SoloIssueCurrentRoundDraft,
   type SoloIssueDraftV2,
+  type SoloGuidedPathState,
 } from '../composables/useSoloIssueDraft';
 import { useShelf } from '../composables/useShelf';
-import { useSoloFlowState } from '../composables/useSoloFlowState';
 import { issueFromDraft, roundIsAnswered } from '../lib/issueBuilder';
 
 // preset*: 다른 화면에서 재료를 들고 들어올 때 — 재발견의 질문 하나, 지난 호 상세의 구성 한 벌.
@@ -180,13 +180,13 @@ const sourceOpen = ref(false);
 // 표지 정보(종류·제목·이름)도 기본값이 있어 접어둔다 — 바로 질문부터 쓰게. 값이 있으면 펼친다.
 const coverNoteOpen = ref(false);
 const soloDraft = useSoloIssueDraft();
-const soloFlow = useSoloFlowState();
 const draftReady = ref(false);
 const editorEl = ref<InstanceType<typeof RoundEditor> | null>(null);
 
-const activeMode = soloFlow.mode;
-const quickReady = soloFlow.quickReady;
-const reviewDraft = soloFlow.review;
+const activeMode = ref<SoloMode | ''>('');
+const quickReady = ref(false);
+const guidedPath = ref<SoloGuidedPathState | undefined>();
+const reviewDraft = ref<ReviewDraft>(createEmptyReviewDraft());
 
 const date = computed(() => kstTodayISO());
 const defaultIssueTitle = computed(() => defaultTitle(kind.value, date.value));
@@ -220,10 +220,7 @@ const draftError = computed(() => {
   if (soloDraft.error.value === 'not_found') return '';
   return '임시 저장하지 못했어요. 브라우저 저장 공간을 비우고, 이 화면을 닫기 전에 다시 시도해주세요.';
 });
-const flowError = computed(() =>
-  soloFlow.error.value ? '리뷰 선택을 임시 저장하지 못했어요. 이 화면을 닫기 전에 브라우저 저장 공간을 확인해주세요.' : '',
-);
-const editorialError = computed(() => publishError.value || draftError.value || flowError.value);
+const editorialError = computed(() => publishError.value || draftError.value);
 const showModePicker = computed(() => draftReady.value && activeMode.value === '');
 const editorVisible = computed(
   () => activeMode.value === 'free' || (activeMode.value === 'quick' && quickReady.value),
@@ -264,11 +261,17 @@ function buildDraft(): SoloIssueDraftV2 {
     sourceIssueId: sourceIssueId.value,
     rounds: rounds.value,
     currentRound: currentRound.value,
+    soloMode: activeMode.value,
+    quickReady: quickReady.value,
+    guidedPath: guidedPath.value,
+    reviewComposer: reviewDraft.value,
   };
 }
 
 /** 발행 뒤 남길 초고 — 답 대기 질문만 들고 다음 호로 넘어간다(제목은 새로 짓게 비운다). */
 function carryOverDraft(carried: Round[]): SoloIssueDraftV2 {
+  const keepsReviewComposer =
+    activeMode.value === 'review' && reviewDraft.value.phase !== 'lens' && reviewDraft.value.phase !== 'complete';
   return {
     version: SOLO_ISSUE_DRAFT_VERSION,
     updatedAt: new Date().toISOString(),
@@ -278,6 +281,10 @@ function carryOverDraft(carried: Round[]): SoloIssueDraftV2 {
     sourceIssueId: '',
     rounds: carried,
     currentRound: { question: '', formatId: '', answers: {} },
+    soloMode: keepsReviewComposer ? 'review' : 'free',
+    quickReady: false,
+    guidedPath: undefined,
+    reviewComposer: keepsReviewComposer ? reviewDraft.value : createEmptyReviewDraft(),
   };
 }
 
@@ -288,6 +295,10 @@ function applyDraft(draft: SoloIssueDraftV2): void {
   sourceIssueId.value = draft.sourceIssueId;
   rounds.value = [...draft.rounds];
   currentRound.value = draft.currentRound;
+  activeMode.value = draft.soloMode ?? '';
+  quickReady.value = draft.quickReady ?? false;
+  guidedPath.value = draft.guidedPath;
+  reviewDraft.value = draft.reviewComposer ?? createEmptyReviewDraft();
 }
 
 function persistDraft(): void {
@@ -328,7 +339,15 @@ function applyPresetIssue(): void {
   if (!issue) return;
   sourceIssueId.value = issue.id;
   importQuestions(
-    issue.rounds.map((round) => (round.format ? { question: round.question, format: round.format } : { question: round.question })),
+    issue.rounds.map((round) => ({
+      question: round.question,
+      ...(round.format ? { format: round.format } : {}),
+      ...(round.questionId ? { questionId: round.questionId } : {}),
+      ...(round.questionRevision !== undefined ? { questionRevision: round.questionRevision } : {}),
+      ...(round.pathId ? { pathId: round.pathId } : {}),
+      ...(round.pathStep !== undefined ? { pathStep: round.pathStep } : {}),
+      ...(round.review ? { review: round.review } : {}),
+    })),
   );
 }
 
@@ -350,17 +369,9 @@ function applyPresetQuestion(): void {
 }
 
 watch(
-  [kind, title, name, sourceIssueId, rounds, currentRound],
+  [kind, title, name, sourceIssueId, rounds, currentRound, activeMode, quickReady, guidedPath, reviewDraft],
   () => {
     if (draftReady.value) persistDraft();
-  },
-  { deep: true, flush: 'sync' },
-);
-
-watch(
-  [activeMode, quickReady, reviewDraft],
-  () => {
-    if (draftReady.value && activeMode.value !== '') soloFlow.save();
   },
   { deep: true, flush: 'sync' },
 );
@@ -368,7 +379,7 @@ watch(
 onMounted(restoreDraft);
 
 /** 세트의 질문을 그 구성 그대로 목차에 "답 대기"로 깐다. 이미 실린 질문은 건너뛴다. */
-function importQuestions(picked: { question: string; format?: string }[]): void {
+function importQuestions(picked: Array<Pick<Round, 'question'> & Partial<Omit<Round, 'question' | 'asker' | 'answers'>>>): void {
   const existing = new Set(rounds.value.map((round) => round.question.trim()));
   const asker = participants.value[0] ?? SOLO_DEFAULT_NAME;
   const additions: Round[] = [];
@@ -378,6 +389,11 @@ function importQuestions(picked: { question: string; format?: string }[]): void 
     existing.add(question);
     const round: Round = { asker, question, answers: {} };
     if (item.format) round.format = item.format;
+    if (item.questionId) round.questionId = item.questionId;
+    if (item.questionRevision !== undefined) round.questionRevision = item.questionRevision;
+    if (item.pathId) round.pathId = item.pathId;
+    if (item.pathStep !== undefined) round.pathStep = item.pathStep;
+    if (item.review) round.review = item.review;
     additions.push(round);
   }
   if (additions.length === 0) {
@@ -412,18 +428,31 @@ function updateCurrentRound(nextRound: SoloIssueCurrentRoundDraft): void {
 function selectMode(mode: SoloMode): void {
   activeMode.value = mode;
   quickReady.value = false;
+  guidedPath.value = undefined;
   if (mode !== 'review') reviewDraft.value = createEmptyReviewDraft();
-  soloFlow.save();
 }
 
 function resetMode(): void {
-  soloFlow.reset();
+  activeMode.value = '';
+  quickReady.value = false;
+  guidedPath.value = undefined;
+  reviewDraft.value = createEmptyReviewDraft();
 }
 
-function chooseQuickStart(question: string): void {
-  currentRound.value = { ...currentRound.value, question };
+function chooseQuickStart(selection: QuickStartSelection): void {
+  currentRound.value = {
+    ...currentRound.value,
+    question: selection.question,
+    pathId: selection.pathId,
+    pathStep: 0,
+  };
   quickReady.value = true;
-  soloFlow.save();
+  guidedPath.value = {
+    pathId: selection.pathId,
+    pathRevision: selection.pathRevision,
+    mode: selection.mode,
+    step: 0,
+  };
   // 고른 질문 바로 아래 답 칸에서 이어 쓰게 — 키보드/모바일에서 화면을 다시 찾지 않도록.
   void nextTick(() => editorEl.value?.focusQuestion());
 }
@@ -438,13 +467,13 @@ function completeReviewLens(inputs: readonly ReviewRoundInput[]): void {
     asker,
     question: input.question,
     answers: { [asker]: { text: input.answer } },
+    review: input.review,
   }));
   rounds.value = [...rounds.value, ...additions];
 }
 
 function openEditor(): void {
   activeMode.value = 'free';
-  soloFlow.save();
 }
 
 async function publishReview(): Promise<void> {
@@ -484,7 +513,10 @@ function publish(): void {
   title.value = '';
   sourceIssueId.value = '';
   currentRound.value = { question: '', formatId: '', answers: {} };
-  soloFlow.reset();
+  activeMode.value = '';
+  quickReady.value = false;
+  guidedPath.value = undefined;
+  reviewDraft.value = createEmptyReviewDraft();
 
   publishing.value = true;
   window.setTimeout(finishPublish, 1450);

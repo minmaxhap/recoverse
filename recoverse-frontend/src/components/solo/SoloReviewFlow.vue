@@ -85,6 +85,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import type { ReviewContext } from '@recoverse/shared';
 import {
   createEmptyReviewDraft,
   REVIEW_LENSES,
@@ -101,7 +102,11 @@ import {
  * 별도 계약이고, 여기에 다른 뜻을 끼워 넣으면 export/import 계약이 조용히 바뀐다.
  * 기계가 읽는 lens/scope 보존은 shared `Round.review?`(T1.1/T1.3)가 생긴 뒤에 얹는다.
  */
-export type ReviewRoundInput = { readonly question: string; readonly answer: string };
+export type ReviewRoundInput = {
+  readonly question: string;
+  readonly answer: string;
+  readonly review: ReviewContext;
+};
 
 const props = defineProps<{ readonly draft: ReviewDraft }>();
 const emit = defineEmits<{
@@ -208,6 +213,16 @@ function completeLens(): void {
   const rounds = completed.map((item) => ({
     question: `${scopeName.value} ${lens.title} · ${item.label.trim()} — ${lens.reflectionPrompt}`,
     answer: item.note.trim(),
+    review: {
+      lensId: lens.id,
+      lensRevision: lens.revision,
+      scope: {
+        type: props.draft.scopeType,
+        ...(props.draft.scopeType === 'custom' && props.draft.scopeLabel.trim()
+          ? { label: props.draft.scopeLabel.trim() }
+          : {}),
+      },
+    },
   }));
   updateDraft({ ...props.draft, phase: 'complete', items: completed });
   emit('complete', rounds);

@@ -1,4 +1,5 @@
 export * from './model';
+export * from './reflectionContent';
 export * from './protocol';
 export * from './hash';
 export * from './normalizeQuestion';

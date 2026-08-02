@@ -5,9 +5,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import type { Issue, Round } from '@recoverse/shared';
 import { SOLO_ISSUE_DRAFT_V2_KEY, type SoloIssueDraftV2 } from '../composables/useSoloIssueDraft';
-import { SOLO_FLOW_STATE_KEY } from '../composables/useSoloFlowState';
 
 const SHELF_KEY = 'recoverse_issues_v1';
+const LEGACY_SOLO_FLOW_STATE_KEY = 'recoverse_solo_flow_v1';
 
 function createMemoryStorage(): Storage {
   const values = new Map<string, string>();
@@ -368,6 +368,11 @@ describe('SoloWriteView', () => {
     // Then
     expect(wrapper.find('.roundEditor').exists()).toBe(true);
     expect((wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').element as HTMLInputElement).value).toContain('오늘');
+    const saved = JSON.parse(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY) ?? '{}') as SoloIssueDraftV2;
+    expect(saved.soloMode).toBe('quick');
+    expect(saved.guidedPath).toEqual({ pathId: 'solo-today', pathRevision: 1, mode: 'standard', step: 0 });
+    expect(saved.currentRound.pathId).toBe('solo-today');
+    expect(saved.currentRound.pathStep).toBe(0);
   });
 
   it('uses recent as the default scope and guides the writer to their own sources', async () => {
@@ -402,6 +407,11 @@ describe('SoloWriteView', () => {
     // 렌즈·범위는 질문 문장으로만 남는다. format은 열람 화면 조판 ID라는 기존 계약이라
     // 여기에 lens/scope를 실어 보내지 않는다(기계가 읽는 보존은 shared Round.review 몫).
     expect(shelved[0]?.rounds[0]?.format).toBeUndefined();
+    expect((shelved[0]?.rounds[0] as Round & { review?: unknown })?.review).toEqual({
+      lensId: 'photo',
+      lensRevision: 1,
+      scope: { type: 'recent' },
+    });
   });
 
   it('keeps the finished review when the shelf cannot be written', async () => {
@@ -429,7 +439,8 @@ describe('SoloWriteView', () => {
     expect(JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]')).toHaveLength(0);
     const kept = JSON.parse(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY) ?? '{}') as SoloIssueDraftV2;
     expect(kept.rounds?.[0]?.answers['나']?.text).toBe('혼자 먹었는데 안 외로웠다');
-    expect(localStorage.getItem(SOLO_FLOW_STATE_KEY)).not.toBe(null);
+    expect(kept.soloMode).toBe('review');
+    expect(kept.reviewComposer?.phase).toBe('complete');
   });
 
   it('adds a second lens to the same issue', async () => {
@@ -474,7 +485,7 @@ describe('SoloWriteView', () => {
     expect((restored.get('.itemLabel').element as HTMLInputElement).value).toBe('배포 회의');
   });
 
-  it('keeps the review usable and explains when flow-state saving fails', async () => {
+  it('keeps the review usable and explains when unified draft saving fails', async () => {
     // Given
     const storage = createMemoryStorage();
     Object.defineProperty(globalThis, 'localStorage', {
@@ -482,7 +493,7 @@ describe('SoloWriteView', () => {
       value: {
         ...storage,
         setItem(key: string, value: string) {
-          if (key === SOLO_FLOW_STATE_KEY) throw new DOMException('quota exceeded', 'QuotaExceededError');
+          if (key === SOLO_ISSUE_DRAFT_V2_KEY) throw new DOMException('quota exceeded', 'QuotaExceededError');
           storage.setItem(key, value);
         },
       } satisfies Storage,
@@ -494,7 +505,7 @@ describe('SoloWriteView', () => {
 
     // Then
     expect(wrapper.findAll('.lensOption')).toHaveLength(12);
-    expect(wrapper.get('[role="alert"]').text()).toContain('리뷰 선택을 임시 저장하지 못했어요');
+    expect(wrapper.get('[role="alert"]').text()).toContain('임시 저장하지 못했어요');
   });
 
   it('hides the starting routes once the writer is under way', async () => {
@@ -507,6 +518,30 @@ describe('SoloWriteView', () => {
     // Then
     expect(wrapper.find('.modePicker').exists()).toBe(false);
     expect(wrapper.find('.roundEditor').exists()).toBe(true);
+  });
+
+  it('does not let stale flow storage hide a valid issue draft', async () => {
+    localStorage.setItem(SOLO_ISSUE_DRAFT_V2_KEY, JSON.stringify(draft('')));
+    localStorage.setItem(
+      LEGACY_SOLO_FLOW_STATE_KEY,
+      JSON.stringify({
+        mode: 'review',
+        quickReady: false,
+        updatedAt: '2026-07-18T12:00:00.000Z',
+        review: {
+          phase: 'context',
+          lensId: 'photo',
+          scopeType: 'recent',
+          scopeLabel: '',
+          items: [{ id: 'stale', label: '', note: '' }],
+        },
+      }),
+    );
+
+    const wrapper = await mountSolo();
+
+    expect(wrapper.find('.roundEditor').exists()).toBe(true);
+    expect(wrapper.find('.reviewFlow').exists()).toBe(false);
   });
 
   it('folds the set list away once questions are laid into the contents', async () => {

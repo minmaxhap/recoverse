@@ -20,9 +20,9 @@
       <div class="coverSpread">
         <section class="coverLead" aria-label="Recoverse 소개">
           <p class="coverline">
-            지나온 시간을<br />
-            <em>한 권</em>으로 <br />
-            남긴다.
+            오늘을 <em>혼자</em> 적거나,<br />
+            친구들과 같이<br />
+            펼쳐보세요.
           </p>
 
           <div class="momentSlot">
@@ -69,7 +69,6 @@ import CoverEntryList from "../components/CoverEntryList.vue";
 import CoverResumeDraft from "../components/CoverResumeDraft.vue";
 import SettingsPanel from "../components/SettingsPanel.vue";
 import { peekSoloIssueDraft } from "../composables/useSoloIssueDraft";
-import { peekSoloFlowDraft } from "../composables/useSoloFlowState";
 import type { RediscoveryMoment } from "../lib/rediscover";
 
 const props = withDefaults(
@@ -105,7 +104,7 @@ const momentTeaser = computed(() => {
 // 홈에 들어올 때마다 저장소를 읽기 전용으로 훑는다. CoverView는 mode가 cover일 때마다
 // key로 재마운트되므로(App.vue), 발행으로 드래프트를 비운 뒤 돌아오면 카드가 사라진다.
 const issueDraft = peekSoloIssueDraft();
-const resumeDraft = issueDraft.resumable ? issueDraft : (peekSoloFlowDraft() ?? issueDraft);
+const resumeDraft = issueDraft;
 </script>
 
 <style scoped>

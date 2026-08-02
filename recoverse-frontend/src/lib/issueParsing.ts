@@ -1,4 +1,13 @@
-import { isKind, type Answer, type Issue, type Round } from '@recoverse/shared';
+import {
+  isKind,
+  isValidContentId,
+  isValidPathStep,
+  isValidRevision,
+  parseReviewContext,
+  type Answer,
+  type Issue,
+  type Round,
+} from '@recoverse/shared';
 
 const MAX_ISSUES = 100;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -17,6 +26,7 @@ function parseAnswer(value: unknown): Answer | null {
     return null;
   }
   const answer: Answer = { text: value.text };
+  if (typeof value.skipped === 'boolean') answer.skipped = value.skipped;
   if (Array.isArray(value.followUps)) {
     const followUps = value.followUps.filter(
       (item): item is { q: string; a: string } =>
@@ -56,6 +66,12 @@ function parseRound(value: unknown): Round | null {
     answers,
   };
   if (typeof value.format === 'string') round.format = value.format;
+  if (isValidContentId(value.questionId)) round.questionId = value.questionId;
+  if (isValidRevision(value.questionRevision)) round.questionRevision = value.questionRevision;
+  if (isValidContentId(value.pathId)) round.pathId = value.pathId;
+  if (isValidPathStep(value.pathStep)) round.pathStep = value.pathStep;
+  const review = parseReviewContext(value.review);
+  if (review) round.review = review;
   return round;
 }
 
