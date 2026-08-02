@@ -69,6 +69,7 @@ import CoverEntryList from "../components/CoverEntryList.vue";
 import CoverResumeDraft from "../components/CoverResumeDraft.vue";
 import SettingsPanel from "../components/SettingsPanel.vue";
 import { peekSoloIssueDraft } from "../composables/useSoloIssueDraft";
+import { peekSoloFlowDraft } from "../composables/useSoloFlowState";
 import type { RediscoveryMoment } from "../lib/rediscover";
 
 const props = withDefaults(
@@ -103,7 +104,8 @@ const momentTeaser = computed(() => {
 
 // 홈에 들어올 때마다 저장소를 읽기 전용으로 훑는다. CoverView는 mode가 cover일 때마다
 // key로 재마운트되므로(App.vue), 발행으로 드래프트를 비운 뒤 돌아오면 카드가 사라진다.
-const resumeDraft = peekSoloIssueDraft();
+const issueDraft = peekSoloIssueDraft();
+const resumeDraft = issueDraft.resumable ? issueDraft : (peekSoloFlowDraft() ?? issueDraft);
 </script>
 
 <style scoped>

@@ -6,17 +6,22 @@
         v-for="(item, i) in ENTRIES"
         :key="item.target"
         class="entryBtn"
-        :class="{ primary: item.primary }"
+        :class="{ featured: item.featured, together: item.target === 'create' }"
         @click="$emit('navigate', item.target)"
       >
         <span class="entryMain">
-          <span class="eyebrow" :class="{ red: !item.primary }">{{ item.eyebrow }}</span>
+          <span class="eyebrow" :class="{ red: item.target !== 'create' }">{{ item.eyebrow }}</span>
           <span class="entryTitle">{{ item.title }}</span>
           <span class="entrySub">{{ item.sub }}</span>
         </span>
         <span class="pageNo">{{ String(i + 1).padStart(2, '0') }}</span>
       </button>
     </div>
+
+    <button type="button" class="joinLine" @click="$emit('navigate', 'join')">
+      <span>초대 코드를 받았나요?</span>
+      <span class="setsMeta">코드로 참여 →</span>
+    </button>
 
     <!-- 네 갈래 입구를 흐리지 않게 한 줄로 — 준비하는 일이지 시작하는 일이 아니라서. -->
     <button type="button" class="setsLine" @click="$emit('navigate', 'sets')">
@@ -36,16 +41,15 @@ const { sets } = useQuestionSets();
 const setsLabel = computed(() => (sets.value.length > 0 ? `${sets.value.length}개` : '만들기'));
 
 const ENTRIES = [
-  { target: 'create', eyebrow: 'NEW ISSUE', title: '새 호 발행하기', sub: '코드를 만들어 친구들을 초대해요', primary: true },
-  { target: 'join', eyebrow: 'JOIN', title: '코드로 참여하기', sub: '각자 자기 폰으로 합류해요', primary: false },
-  { target: 'solo', eyebrow: 'SOLO', title: '혼자 엮기', sub: '여행이든 한 달이든, 지금 나에게 질문을 던져요', primary: false },
-  { target: 'rediscover', eyebrow: 'REDISCOVER', title: '다시 발견', sub: '같은 질문에 답한, 다른 해의 나를 만나요', primary: false },
+  { target: 'create', eyebrow: 'TOGETHER', title: '친구들과 같이 해보기', sub: '각자 답하고 함께 열어보는 5~10분 질문 놀이', featured: true },
+  { target: 'solo', eyebrow: 'SOLO', title: '혼자 기록하기', sub: '바로 쓰거나, 구체적인 대상을 골라 리뷰해요', featured: true },
+  { target: 'rediscover', eyebrow: 'REDISCOVER', title: '다시 발견', sub: '같은 질문에 답한, 다른 해의 나를 만나요', featured: false },
 ] as const satisfies readonly {
   readonly target: CoverTarget;
   readonly eyebrow: string;
   readonly title: string;
   readonly sub: string;
-  readonly primary: boolean;
+  readonly featured: boolean;
 }[];
 
 defineEmits<{ navigate: [CoverTarget] }>();
@@ -82,7 +86,7 @@ defineEmits<{ navigate: [CoverTarget] }>();
   transition: background 0.15s ease;
 }
 
-.entryBtn:not(.primary):hover {
+.entryBtn:not(.featured):hover {
   background: var(--paper-card);
 }
 
@@ -93,8 +97,10 @@ defineEmits<{ navigate: [CoverTarget] }>();
   gap: 3px;
 }
 
-.setsLine {
+.setsLine,
+.joinLine {
   width: 100%;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -111,7 +117,8 @@ defineEmits<{ navigate: [CoverTarget] }>();
   transition: color 0.15s ease;
 }
 
-.setsLine:hover {
+.setsLine:hover,
+.joinLine:hover {
   color: var(--vermilion);
 }
 
@@ -138,25 +145,29 @@ defineEmits<{ navigate: [CoverTarget] }>();
   transform: translateX(-3px);
 }
 
-.entryBtn.primary {
-  background: var(--ink);
-  color: var(--paper);
-  padding: 20px 16px;
+.entryBtn.featured {
+  padding: 20px 14px;
+  background: var(--paper-card);
 }
 
-.entryBtn.primary:hover {
+.entryBtn.featured.together {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.entryBtn.featured.together:hover {
   background: var(--ink-hover);
 }
 
-.entryBtn.primary .eyebrow {
+.entryBtn.featured.together .eyebrow {
   color: var(--gold);
 }
 
-.entryBtn.primary .pageNo {
+.entryBtn.featured.together .pageNo {
   color: var(--dim);
 }
 
-.entryBtn.primary:hover .pageNo {
+.entryBtn.featured.together:hover .pageNo {
   color: var(--gold);
 }
 
@@ -171,7 +182,7 @@ defineEmits<{ navigate: [CoverTarget] }>();
   color: var(--dim);
 }
 
-.entryBtn.primary .entrySub {
+.entryBtn.featured.together .entrySub {
   color: var(--on-ink-dim);
 }
 
@@ -189,7 +200,7 @@ defineEmits<{ navigate: [CoverTarget] }>();
     padding: clamp(11px, 1.8vh, 18px) 2px;
   }
 
-  .entryBtn.primary {
+  .entryBtn.featured {
     padding: clamp(14px, 2vh, 20px) 16px;
   }
 
@@ -211,7 +222,7 @@ defineEmits<{ navigate: [CoverTarget] }>();
     padding-bottom: 10px;
   }
 
-  .entryBtn.primary {
+  .entryBtn.featured {
     padding-top: 12px;
     padding-bottom: 12px;
   }

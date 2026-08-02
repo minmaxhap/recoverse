@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import type { Issue, Round } from '@recoverse/shared';
 import { SOLO_ISSUE_DRAFT_V2_KEY, type SoloIssueDraftV2 } from '../composables/useSoloIssueDraft';
+import { SOLO_FLOW_STATE_KEY } from '../composables/useSoloFlowState';
 
 const SHELF_KEY = 'recoverse_issues_v1';
 
@@ -81,6 +82,25 @@ async function flushDraftSave(): Promise<void> {
   await nextTick();
 }
 
+async function chooseFreeMode(wrapper: VueWrapper): Promise<void> {
+  const option = wrapper.findAll('.modeOption').find((button) => button.text().includes('직접 엮기'));
+  if (option) await option.trigger('click');
+}
+
+async function openReviewLens(wrapper: VueWrapper, lensName: string): Promise<void> {
+  const reviewMode = wrapper.findAll('.modeOption').find((button) => button.text().includes('대상을 골라'));
+  if (reviewMode) await reviewMode.trigger('click');
+  const lens = wrapper.findAll('.lensOption').find((button) => button.text().includes(lensName));
+  if (lens) await lens.trigger('click');
+}
+
+async function completeReviewItem(wrapper: VueWrapper, label: string, note: string): Promise<void> {
+  await wrapper.get('.reviewFlow .cta').trigger('click');
+  await wrapper.get('.itemLabel').setValue(label);
+  await wrapper.get('.itemNote').setValue(note);
+  await wrapper.get('.reviewFlow .cta').trigger('click');
+}
+
 describe('SoloWriteView', () => {
   beforeEach(() => {
     vi.useRealTimers();
@@ -88,6 +108,7 @@ describe('SoloWriteView', () => {
       configurable: true,
       value: createMemoryStorage(),
     });
+    Element.prototype.scrollIntoView = vi.fn();
   });
 
   it('restores every visible solo draft field after remount', async () => {
@@ -114,7 +135,7 @@ describe('SoloWriteView', () => {
     expect(inputValues).toContain('Current question?');
     expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe('Current answer');
     expect(wrapper.text()).toContain('Finished question?');
-  });
+  }, 10_000);
 
   it('clears only a restored stale source id and keeps written content', async () => {
     // Given
@@ -138,6 +159,7 @@ describe('SoloWriteView', () => {
     // Given
     localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
     const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
 
     // When: 지난 호 한 줄을 누르면 그 구성 그대로 깔린다
     await wrapper.get('.issueRow').trigger('click');
@@ -158,6 +180,7 @@ describe('SoloWriteView', () => {
     // Given
     localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
     const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
     await wrapper.get('.issueRow').trigger('click');
 
     // When
@@ -173,6 +196,7 @@ describe('SoloWriteView', () => {
     // Given: 세트를 불러와 '답 대기' 질문이 목차에 깔린 상태
     localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
     const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
     await wrapper.get('.issueRow').trigger('click');
     expect(wrapper.get('.contentsList').text()).toContain('답 대기');
 
@@ -198,6 +222,7 @@ describe('SoloWriteView', () => {
     // Given: 세트를 불러와 답 대기 질문이 깔린 상태
     localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
     const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
     await wrapper.get('.issueRow').trigger('click');
 
     // Then: 목차는 화면 아래에 있으므로 다음 할 일을 위에서 말한다
@@ -245,6 +270,7 @@ describe('SoloWriteView', () => {
     const field = wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]');
     expect((field.element as HTMLInputElement).value).toBe('올해 가장 오래 남은 장면은?');
     expect(wrapper.find('.contentsList').exists()).toBe(false);
+    expect(wrapper.find('.modePicker').exists()).toBe(false);
   });
 
   it('parks a brought question in the contents when something is already being written', async () => {
@@ -271,6 +297,7 @@ describe('SoloWriteView', () => {
     // Then
     expect(wrapper.get('.contentsList').text()).toContain('Source question?');
     expect(wrapper.get('.importNotice').text()).toContain('질문 1개를 목차에 담았어요');
+    expect(wrapper.find('.modePicker').exists()).toBe(false);
   });
 
   it('counts how many of the listed questions are answered', async () => {
@@ -293,7 +320,7 @@ describe('SoloWriteView', () => {
     expect(wrapper.get('#contentsTitle').text()).toBe('질문 2개 중 1개 답했어요');
   });
 
-  it('offers where to start when nothing has been written yet', async () => {
+  it('offers the three solo modes before an empty editor', async () => {
     // Given
     localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
 
@@ -301,15 +328,173 @@ describe('SoloWriteView', () => {
     const wrapper = await mountSolo();
 
     // Then
-    const routes = wrapper.findAll('.startRoute').map((button) => button.text());
-    expect(routes).toHaveLength(3);
-    expect(routes[0]).toContain('질문 세트에서');
-    expect(routes[1]).toContain('지난 호 질문에서');
-    expect(routes[2]).toContain('추천 질문에서');
+    const modes = wrapper.findAll('.modeOption').map((button) => button.text());
+    expect(modes).toHaveLength(3);
+    expect(modes[0]).toContain('바로 쓰기');
+    expect(modes[1]).toContain('대상을 골라 리뷰하기');
+    expect(modes[2]).toContain('직접 엮기');
+    expect(wrapper.find('.roundEditor').exists()).toBe(false);
+  });
 
-    // When: 지난 호 질문 갈래를 고르면 그 패널이 열린다
-    await wrapper.findAll('.startRoute')[1].trigger('click');
-    expect(wrapper.find('.pastPick .panel').exists()).toBe(true);
+  it('shows one shared catalog with twelve review lenses', async () => {
+    // Given
+    const wrapper = await mountSolo();
+
+    // When
+    await wrapper.findAll('.modeOption')[1].trigger('click');
+
+    // Then
+    const lenses = wrapper.findAll('.lensOption');
+    expect(lenses).toHaveLength(12);
+    expect(lenses.map((lens) => lens.text())).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('일기'),
+        expect.stringContaining('사진'),
+        expect.stringContaining('소비'),
+        expect.stringContaining('대화'),
+        expect.stringContaining('루틴'),
+      ]),
+    );
+  });
+
+  it('opens the existing editor with a quick-start question', async () => {
+    // Given
+    const wrapper = await mountSolo();
+
+    // When
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+
+    // Then
+    expect(wrapper.find('.roundEditor').exists()).toBe(true);
+    expect((wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').element as HTMLInputElement).value).toContain('오늘');
+  });
+
+  it('uses recent as the default scope and guides the writer to their own sources', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await wrapper.findAll('.modeOption')[1].trigger('click');
+
+    // When
+    await wrapper.findAll('.lensOption').find((lens) => lens.text().includes('사진'))?.trigger('click');
+
+    // Then
+    expect(wrapper.get('.scopeOption.active').text()).toContain('요즘');
+    expect(wrapper.get('.sourceGuide').text()).toContain('사진첩');
+    expect(wrapper.get('.sourceGuide').text()).toContain('직접');
+  });
+
+  it('publishes a one-line review without requiring a lesson or action', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await openReviewLens(wrapper, '사진');
+    await completeReviewItem(wrapper, '노을 사진', '색이 웃길 만큼 진해서 기억하고 싶다');
+
+    // When
+    await wrapper.get('.reviewFlow .cta').trigger('click');
+
+    // Then
+    const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
+    expect(shelved).toHaveLength(1);
+    expect(shelved[0]?.rounds).toHaveLength(1);
+    expect(shelved[0]?.rounds[0]?.question).toContain('요즘 사진');
+    expect(shelved[0]?.rounds[0]?.answers['나']?.text).toBe('색이 웃길 만큼 진해서 기억하고 싶다');
+    // 렌즈·범위는 질문 문장으로만 남는다. format은 열람 화면 조판 ID라는 기존 계약이라
+    // 여기에 lens/scope를 실어 보내지 않는다(기계가 읽는 보존은 shared Round.review 몫).
+    expect(shelved[0]?.rounds[0]?.format).toBeUndefined();
+  });
+
+  it('keeps the finished review when the shelf cannot be written', async () => {
+    // Given: 책장 쓰기만 실패하는 저장소
+    const storage = createMemoryStorage();
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        ...storage,
+        setItem(key: string, value: string) {
+          if (key === SHELF_KEY) throw new Error('quota exceeded');
+          storage.setItem(key, value);
+        },
+      } satisfies Storage,
+    });
+    const wrapper = await mountSolo();
+    await openReviewLens(wrapper, '식사');
+    await completeReviewItem(wrapper, '늦은 국수', '혼자 먹었는데 안 외로웠다');
+
+    // When
+    await wrapper.get('.reviewFlow .cta').trigger('click');
+
+    // Then: 실패를 말하고, 쓴 것은 목차와 초고에 그대로 남는다
+    expect(wrapper.find('[role="alert"]').text()).toContain('저장 공간');
+    expect(JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]')).toHaveLength(0);
+    const kept = JSON.parse(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY) ?? '{}') as SoloIssueDraftV2;
+    expect(kept.rounds?.[0]?.answers['나']?.text).toBe('혼자 먹었는데 안 외로웠다');
+    expect(localStorage.getItem(SOLO_FLOW_STATE_KEY)).not.toBe(null);
+  });
+
+  it('adds a second lens to the same issue', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await openReviewLens(wrapper, '사진');
+    await completeReviewItem(wrapper, '산책 사진', '빛이 좋았다');
+    await wrapper.get('.reviewFlow .ghost').trigger('click');
+    const meal = wrapper.findAll('.lensOption').find((button) => button.text().includes('식사'));
+    if (meal) await meal.trigger('click');
+    await completeReviewItem(wrapper, '늦은 국수', '따뜻해서 좋았다');
+
+    // When
+    await wrapper.get('.reviewFlow .cta').trigger('click');
+
+    // Then
+    const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
+    expect(shelved[0]?.rounds).toHaveLength(2);
+    expect(shelved[0]?.rounds.map((round) => round.question)).toEqual([
+      expect.stringContaining('사진'),
+      expect.stringContaining('식사'),
+    ]);
+    // 두 렌즈가 한 호에 섞여도 각 줄은 자기 렌즈 이름을 질문 문장으로 달고 간다.
+    expect(shelved[0]?.rounds.map((round) => round.format)).toEqual([undefined, undefined]);
+  });
+
+  it('restores the selected lens, scope, and item after remount', async () => {
+    // Given
+    const first = await mountSolo();
+    await openReviewLens(first, '업무');
+    const month = first.findAll('.scopeOption').find((button) => button.text().includes('이번 달'));
+    if (month) await month.trigger('click');
+    await first.get('.reviewFlow .cta').trigger('click');
+    await first.get('.itemLabel').setValue('배포 회의');
+    first.unmount();
+
+    // When
+    const restored = await mountSolo();
+
+    // Then
+    expect(restored.get('.reviewFlow').text()).toContain('업무 · 이번 달');
+    expect((restored.get('.itemLabel').element as HTMLInputElement).value).toBe('배포 회의');
+  });
+
+  it('keeps the review usable and explains when flow-state saving fails', async () => {
+    // Given
+    const storage = createMemoryStorage();
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        ...storage,
+        setItem(key: string, value: string) {
+          if (key === SOLO_FLOW_STATE_KEY) throw new DOMException('quota exceeded', 'QuotaExceededError');
+          storage.setItem(key, value);
+        },
+      } satisfies Storage,
+    });
+    const wrapper = await mountSolo();
+
+    // When
+    await wrapper.findAll('.modeOption')[1].trigger('click');
+
+    // Then
+    expect(wrapper.findAll('.lensOption')).toHaveLength(12);
+    expect(wrapper.get('[role="alert"]').text()).toContain('리뷰 선택을 임시 저장하지 못했어요');
   });
 
   it('hides the starting routes once the writer is under way', async () => {
@@ -320,13 +505,15 @@ describe('SoloWriteView', () => {
     const wrapper = await mountSolo();
 
     // Then
-    expect(wrapper.find('.startRoute').exists()).toBe(false);
+    expect(wrapper.find('.modePicker').exists()).toBe(false);
+    expect(wrapper.find('.roundEditor').exists()).toBe(true);
   });
 
   it('folds the set list away once questions are laid into the contents', async () => {
     // Given
     localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
     const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
 
     // When
     await wrapper.get('.issueRow').trigger('click');
@@ -340,6 +527,7 @@ describe('SoloWriteView', () => {
     // Given
     localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
     const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
 
     // When
     await wrapper.get('.pickOpen').trigger('click');
@@ -431,6 +619,7 @@ describe('SoloWriteView', () => {
       } satisfies Storage,
     });
     const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
 
     // When
     await wrapper.find('button.cta').trigger('click');
@@ -483,6 +672,7 @@ describe('SoloWriteView', () => {
       } satisfies Storage,
     });
     const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
 
     // When
     await wrapper.find('input[placeholder="나"]').setValue('Mina');

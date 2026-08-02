@@ -136,6 +136,9 @@ const waitingIndexes = computed(() =>
 );
 const waitingCount = computed(() => waitingIndexes.value.length);
 
+// 바깥에서 이 화면으로 들어올 때(예: 바로 쓰기에서 질문을 고른 직후) 커서를 질문 칸에 둔다.
+defineExpose({ focusQuestion: () => questionEl.value?.focus() });
+
 function openFirstWaiting(): void {
   const first = waitingIndexes.value[0];
   if (first === undefined) return;

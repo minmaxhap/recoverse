@@ -13,6 +13,25 @@
       <button type="button" class="statusRetry" @click="restoreNotice = ''">닫기</button>
     </p>
 
+    <SoloModePicker v-if="showModePicker" @select="selectMode" />
+
+    <SoloQuickPicker
+      v-else-if="activeMode === 'quick' && !quickReady"
+      @back="resetMode"
+      @choose="chooseQuickStart"
+    />
+
+    <SoloReviewFlow
+      v-else-if="activeMode === 'review'"
+      :draft="reviewDraft"
+      @back="resetMode"
+      @update:draft="updateReviewDraft"
+      @complete="completeReviewLens"
+      @edit="openEditor"
+      @publish="publishReview"
+    />
+
+    <template v-if="editorVisible">
     <details
       class="disclosure"
       :open="sourceOpen"
@@ -43,6 +62,7 @@
     </p>
 
     <RoundEditor
+      ref="editorEl"
       :participants="participants"
       :rounds="rounds"
       :current-round="currentRound"
@@ -86,6 +106,9 @@
     <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
     <p class="helper publishHelp">{{ publishHelp }}</p>
     <button class="cta" :disabled="!canPublish || publishing" @click="publish">책장에 꽂기</button>
+    </template>
+
+    <p v-if="!editorVisible && editorialError" class="error flowError" role="alert">{{ editorialError }}</p>
 
     <!-- 발행 연출: 표지가 조립되어 책장에 꽂히는 장면 (탭하면 건너뛰기) -->
     <Transition name="page">
@@ -103,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { defaultTitle, KIND_LABELS, kstTodayISO, type Kind, type Round } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
@@ -111,6 +134,10 @@ import KindChips from '../components/KindChips.vue';
 import PublishScene from '../components/PublishScene.vue';
 import QuestionSetPicker from '../components/QuestionSetPicker.vue';
 import RoundEditor from '../components/RoundEditor.vue';
+import SoloModePicker from '../components/solo/SoloModePicker.vue';
+import SoloQuickPicker from '../components/solo/SoloQuickPicker.vue';
+import SoloReviewFlow, { type ReviewRoundInput } from '../components/solo/SoloReviewFlow.vue';
+import { createEmptyReviewDraft, type ReviewDraft, type SoloMode } from '../components/solo/reviewContent';
 import {
   draftHasContent,
   SOLO_DEFAULT_NAME,
@@ -120,6 +147,7 @@ import {
   type SoloIssueDraftV2,
 } from '../composables/useSoloIssueDraft';
 import { useShelf } from '../composables/useShelf';
+import { useSoloFlowState } from '../composables/useSoloFlowState';
 import { issueFromDraft, roundIsAnswered } from '../lib/issueBuilder';
 
 // preset*: 다른 화면에서 재료를 들고 들어올 때 — 재발견의 질문 하나, 지난 호 상세의 구성 한 벌.
@@ -152,7 +180,13 @@ const sourceOpen = ref(false);
 // 표지 정보(종류·제목·이름)도 기본값이 있어 접어둔다 — 바로 질문부터 쓰게. 값이 있으면 펼친다.
 const coverNoteOpen = ref(false);
 const soloDraft = useSoloIssueDraft();
+const soloFlow = useSoloFlowState();
 const draftReady = ref(false);
+const editorEl = ref<InstanceType<typeof RoundEditor> | null>(null);
+
+const activeMode = soloFlow.mode;
+const quickReady = soloFlow.quickReady;
+const reviewDraft = soloFlow.review;
 
 const date = computed(() => kstTodayISO());
 const defaultIssueTitle = computed(() => defaultTitle(kind.value, date.value));
@@ -186,7 +220,14 @@ const draftError = computed(() => {
   if (soloDraft.error.value === 'not_found') return '';
   return '임시 저장하지 못했어요. 브라우저 저장 공간을 비우고, 이 화면을 닫기 전에 다시 시도해주세요.';
 });
-const editorialError = computed(() => publishError.value || draftError.value);
+const flowError = computed(() =>
+  soloFlow.error.value ? '리뷰 선택을 임시 저장하지 못했어요. 이 화면을 닫기 전에 브라우저 저장 공간을 확인해주세요.' : '',
+);
+const editorialError = computed(() => publishError.value || draftError.value || flowError.value);
+const showModePicker = computed(() => draftReady.value && activeMode.value === '');
+const editorVisible = computed(
+  () => activeMode.value === 'free' || (activeMode.value === 'quick' && quickReady.value),
+);
 
 function savedTimeText(savedAt: string): string {
   return new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(
@@ -270,9 +311,14 @@ function restoreDraft(): void {
     coverNoteOpen.value =
       title.value.trim() !== '' || name.value !== SOLO_DEFAULT_NAME || kind.value !== 'free';
   }
-  draftReady.value = true;
   applyPresetIssue();
   applyPresetQuestion();
+  if (props.presetQuestion.trim() || props.presetIssueId.trim()) {
+    activeMode.value = 'free';
+  } else if (hasDraftContent.value && activeMode.value === '') {
+    activeMode.value = 'free';
+  }
+  draftReady.value = true;
   if (clearedStaleSource) persistDraft();
 }
 
@@ -307,6 +353,14 @@ watch(
   [kind, title, name, sourceIssueId, rounds, currentRound],
   () => {
     if (draftReady.value) persistDraft();
+  },
+  { deep: true, flush: 'sync' },
+);
+
+watch(
+  [activeMode, quickReady, reviewDraft],
+  () => {
+    if (draftReady.value && activeMode.value !== '') soloFlow.save();
   },
   { deep: true, flush: 'sync' },
 );
@@ -355,6 +409,49 @@ function updateCurrentRound(nextRound: SoloIssueCurrentRoundDraft): void {
   currentRound.value = nextRound;
 }
 
+function selectMode(mode: SoloMode): void {
+  activeMode.value = mode;
+  quickReady.value = false;
+  if (mode !== 'review') reviewDraft.value = createEmptyReviewDraft();
+  soloFlow.save();
+}
+
+function resetMode(): void {
+  soloFlow.reset();
+}
+
+function chooseQuickStart(question: string): void {
+  currentRound.value = { ...currentRound.value, question };
+  quickReady.value = true;
+  soloFlow.save();
+  // 고른 질문 바로 아래 답 칸에서 이어 쓰게 — 키보드/모바일에서 화면을 다시 찾지 않도록.
+  void nextTick(() => editorEl.value?.focusQuestion());
+}
+
+function updateReviewDraft(next: ReviewDraft): void {
+  reviewDraft.value = next;
+}
+
+function completeReviewLens(inputs: readonly ReviewRoundInput[]): void {
+  const asker = participants.value[0] ?? SOLO_DEFAULT_NAME;
+  const additions: Round[] = inputs.map((input) => ({
+    asker,
+    question: input.question,
+    answers: { [asker]: { text: input.answer } },
+  }));
+  rounds.value = [...rounds.value, ...additions];
+}
+
+function openEditor(): void {
+  activeMode.value = 'free';
+  soloFlow.save();
+}
+
+async function publishReview(): Promise<void> {
+  await nextTick();
+  publish();
+}
+
 function publish(): void {
   if (!canPublish.value || publishing.value) return;
   publishError.value = '';
@@ -387,6 +484,7 @@ function publish(): void {
   title.value = '';
   sourceIssueId.value = '';
   currentRound.value = { question: '', formatId: '', answers: {} };
+  soloFlow.reset();
 
   publishing.value = true;
   window.setTimeout(finishPublish, 1450);
@@ -497,6 +595,10 @@ function finishPublish(): void {
 
 .resumeBanner span {
   min-width: 0;
+}
+
+.flowError {
+  margin-top: 14px;
 }
 
 .publishOverlay {
