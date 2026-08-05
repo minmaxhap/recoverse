@@ -32,6 +32,9 @@
     />
 
     <template v-if="editorVisible">
+    <!-- 쓰던 것을 그대로 둔 채 다른 시작 방식으로 건너갈 수 있게 — 없으면 한 번 고른 모드에 갇힌다. -->
+    <button type="button" class="backChoice" @click="backToModes">← 시작 방식 다시 고르기</button>
+
     <details
       class="disclosure"
       :open="sourceOpen"
@@ -295,8 +298,11 @@ function applyDraft(draft: SoloIssueDraftV2): void {
   sourceIssueId.value = draft.sourceIssueId;
   rounds.value = [...draft.rounds];
   currentRound.value = draft.currentRound;
-  activeMode.value = draft.soloMode ?? '';
-  quickReady.value = draft.quickReady ?? false;
+  // 쓴 것이 없으면 시작 방식부터 다시 묻는다 — 실수로 한 번 누른 모드가 다음 방문의
+  // 첫 화면을 대신 정해버리면, 다른 입구를 고를 기회 자체가 사라진다.
+  const resumable = draftHasContent(draft);
+  activeMode.value = resumable ? draft.soloMode ?? '' : '';
+  quickReady.value = resumable ? draft.quickReady ?? false : false;
   guidedPath.value = draft.guidedPath;
   reviewDraft.value = draft.reviewComposer ?? createEmptyReviewDraft();
 }
@@ -439,9 +445,33 @@ function resetMode(): void {
   reviewDraft.value = createEmptyReviewDraft();
 }
 
+/**
+ * 시작 방식 화면으로 돌아가되 쓰던 것은 남긴다 — 목차·쓰던 질문·리뷰 진행 모두 그대로.
+ * resetMode와 달리 되돌리기가 아니라 "다른 입구로 건너가기"라서, 지우는 일은 하지 않는다.
+ */
+function backToModes(): void {
+  activeMode.value = '';
+  quickReady.value = false;
+}
+
 function chooseQuickStart(selection: QuickStartSelection): void {
+  // 쓰던 질문이 있으면 덮어쓰지 않고 쓰던 답과 함께 목차로 옮긴다 — 시작 방식을 다시 고르고
+  // 돌아왔을 때 앞서 쓰던 것이 조용히 사라지지 않게. 재발견에서 들고 올 때와 같은 규칙.
+  const pending = currentRound.value.question.trim();
+  const carried = pending !== '' && pending !== selection.question.trim();
+  if (carried) {
+    const answers: Round['answers'] = {};
+    for (const [who, text] of Object.entries(currentRound.value.answers)) {
+      if (text.trim()) answers[who] = { text: text.trim() };
+    }
+    rounds.value = [
+      ...rounds.value,
+      { asker: participants.value[0] ?? SOLO_DEFAULT_NAME, question: pending, answers },
+    ];
+  }
   currentRound.value = {
-    ...currentRound.value,
+    // 옮긴 답까지 따라오면 새 질문 밑에 남의 답이 앉는다 — 옮겼으면 답 칸은 비우고 시작한다.
+    ...(carried ? { formatId: '', answers: {} } : currentRound.value),
     question: selection.question,
     pathId: selection.pathId,
     pathStep: 0,
@@ -535,6 +565,23 @@ function finishPublish(): void {
   display: grid;
   gap: 4px;
   margin-bottom: 18px;
+}
+
+/* 시작 방식으로 되돌아가는 줄 — 바로 쓰기·리뷰 흐름과 같은 생김새로 둔다. */
+.backChoice {
+  justify-self: start;
+  min-height: 44px;
+  padding: 8px 0;
+  background: none;
+  border: 0;
+  color: var(--dim);
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.backChoice:hover {
+  color: var(--vermilion);
 }
 
 .soloIntro .pageTitle {

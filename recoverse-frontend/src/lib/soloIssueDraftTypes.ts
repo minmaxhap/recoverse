@@ -86,6 +86,10 @@ export type SoloIssueDraftSummary = {
  * 드래프트에 "이어서 쓸 만한" 내용이 있는지 판단한다. 종류만 고른 빈 초안(기본 이름·빈 제목·
  * 라운드 없음·작성 중 질문 없음)은 이어쓰기 대상이 아니다. 홈의 peek와 혼자 쓰기의 자동저장
  * 상태 라벨이 같은 기준을 쓰도록 이 술어를 공유한다.
+ *
+ * 시작 방식만 고른 상태는 내용이 아니다 — 실수로 한 번 누른 것까지 이어쓰기로 되살리면
+ * 홈 카드가 빈 초고를 권하고, 재진입이 시작 방식 화면을 건너뛴다. 리뷰는 렌즈를 지나면
+ * 범위·장면이 쌓이므로 phase로 판정하고, 바로 쓰기가 앉힌 질문은 currentRound가 잡는다.
  */
 export function draftHasContent(draft: SoloIssueDraftV2): boolean {
   const name = draft.name.trim();
@@ -96,8 +100,6 @@ export function draftHasContent(draft: SoloIssueDraftV2): boolean {
     draft.rounds.length > 0 ||
     draft.currentRound.question.trim().length > 0 ||
     Object.values(draft.currentRound.answers).some((answer) => answer.trim().length > 0) ||
-    draft.soloMode === 'free' ||
-    (draft.soloMode === 'quick' && draft.quickReady === true) ||
     (draft.soloMode === 'review' && draft.reviewComposer?.phase !== 'lens')
   );
 }

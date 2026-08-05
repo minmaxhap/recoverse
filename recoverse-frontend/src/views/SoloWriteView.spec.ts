@@ -377,6 +377,74 @@ describe('SoloWriteView', () => {
     expect(saved.currentRound.pathStep).toBe(0);
   });
 
+  it('lets the writer go back to the starting choices without losing what they wrote', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
+    await wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').setValue('반쯤 쓰던 질문?');
+
+    // When
+    await wrapper.get('.backChoice').trigger('click');
+
+    // Then
+    expect(wrapper.findAll('.modeOption')).toHaveLength(3);
+    await wrapper.findAll('.modeOption')[2].trigger('click');
+    expect((wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').element as HTMLInputElement).value).toBe(
+      '반쯤 쓰던 질문?',
+    );
+  });
+
+  it('parks the question in progress in the contents when a quick start replaces it', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
+    await wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').setValue('먼저 쓰던 질문?');
+    await wrapper.get('textarea').setValue('먼저 쓰던 답');
+    await wrapper.get('.backChoice').trigger('click');
+
+    // When
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+
+    // Then
+    expect(wrapper.get('.roundEditor').text()).toContain('먼저 쓰던 질문?');
+    expect(wrapper.get('.roundEditor').text()).toContain('먼저 쓰던 답');
+    expect((wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').element as HTMLInputElement).value).toContain(
+      '오늘',
+    );
+    expect((wrapper.get('textarea').element as HTMLTextAreaElement).value).toBe('');
+  });
+
+  it('leaves the review flow for the starting choices once a lens is finished', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await openReviewLens(wrapper, '사진');
+    await completeReviewItem(wrapper, '노을 사진', '색이 진해서 기억하고 싶다');
+
+    // When
+    await wrapper.get('.reviewFlow .backChoice').trigger('click');
+
+    // Then
+    expect(wrapper.findAll('.modeOption')).toHaveLength(3);
+    await chooseFreeMode(wrapper);
+    expect(wrapper.get('.roundEditor').text()).toContain('노을 사진');
+  });
+
+  it('does not treat a mode picked by mistake as something to resume', async () => {
+    // Given
+    const wrapper = await mountSolo();
+
+    // When
+    await chooseFreeMode(wrapper);
+    await flushDraftSave();
+
+    // Then
+    const saved = JSON.parse(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY) ?? '{}') as SoloIssueDraftV2;
+    expect(saved.soloMode).toBe('free');
+    const remounted = await mountSolo();
+    expect(remounted.findAll('.modeOption')).toHaveLength(3);
+  });
+
   it('uses recent as the default scope and guides the writer to their own sources', async () => {
     // Given
     const wrapper = await mountSolo();

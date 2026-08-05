@@ -3,8 +3,8 @@
     <!-- 단계 이동만 한 번 읽어준다. 섹션 전체를 live region으로 두면 타이핑까지 다시 낭독된다. -->
     <p class="srOnly" role="status">{{ stepAnnouncement }}</p>
 
-    <button v-if="draft.phase !== 'complete'" type="button" class="backChoice" @click="goBack">
-      ← {{ draft.phase === 'lens' ? '시작 방식 다시 고르기' : '이전 단계' }}
+    <button type="button" class="backChoice" @click="goBack">
+      ← {{ draft.phase === 'lens' || draft.phase === 'complete' ? '시작 방식 다시 고르기' : '이전 단계' }}
     </button>
 
     <template v-if="draft.phase === 'lens'">
@@ -244,6 +244,8 @@ function goBack(): void {
       updateDraft({ ...props.draft, phase: 'context' });
       return;
     case 'complete':
+      // 마친 렌즈는 이미 목차에 실렸으므로 되돌릴 단계가 없다 — 시작 방식 화면으로 내보낸다.
+      emit('back');
       return;
   }
 }
