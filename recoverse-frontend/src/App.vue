@@ -70,11 +70,11 @@ function openIssue(id: string): void {
 function openGroup(key: string): void {
   router.push({ name: 'rediscover-detail', params: { key } });
 }
-// 재발견에서 "올해도 답하기" — 그 질문을 들고 혼자 엮기로 넘어간다.
+// 재발견에서 "올해도 답하기" — 그 질문을 들고 혼자 쓰기로 넘어간다.
 function writeQuestion(question: string): void {
   router.push({ name: 'solo', query: { q: question } });
 }
-// 지난 호 상세에서 "이 구성으로 쓰기" — 그 호의 질문을 들고 혼자 엮기로 넘어간다.
+// 지난 호 상세에서 "이 구성으로 쓰기" — 그 호의 질문을 들고 혼자 쓰기로 넘어간다.
 function reuseIssue(id: string): void {
   router.push({ name: 'solo', query: { from: id } });
 }

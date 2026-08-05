@@ -1,8 +1,10 @@
 <template>
   <AppShell variant="write">
-    <BackHeader label="혼자 엮기" @back="$emit('back')" />
+    <BackHeader label="혼자 쓰기" @back="$emit('back')" />
 
-    <header class="soloIntro">
+    <!-- 표제는 시작 방식을 고르는 첫 화면에서만. 하위 화면은 각자 제목이 있어,
+         같은 표제를 다시 얹으면 첫 행동만 화면 아래로 밀린다. -->
+    <header v-if="showModePicker" class="soloIntro">
       <span class="eyebrow red">SOLO ISSUE</span>
       <h1 class="pageTitle">오늘의 질문을 한 호로 엮어요</h1>
     </header>

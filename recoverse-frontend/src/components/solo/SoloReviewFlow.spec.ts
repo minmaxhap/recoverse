@@ -66,6 +66,30 @@ describe('SoloReviewFlow', () => {
     expect(guide).toContain('자동으로 읽거나 가져오지는 않아요');
   });
 
+  it('offers periods to choose from and leaves topics to the custom scope', async () => {
+    // Given / When
+    const wrapper = mountFlow();
+    await pickLens(wrapper, '사진');
+
+    // Then: 기간과 주제가 한 줄에 섞이지 않는다
+    expect(wrapper.findAll('.scopeOption').map((scope) => scope.text())).toEqual([
+      '요즘',
+      '오늘',
+      '이번 주',
+      '이번 달',
+      '올해',
+      '직접 정하기',
+    ]);
+  });
+
+  it('still names a topic scope kept by an older issue', async () => {
+    // Given: 여행·프로젝트·관계로 저장된 지난 초고는 계속 읽혀야 한다
+    const wrapper = mountFlow({ ...createEmptyReviewDraft(), phase: 'items', lensId: 'photo', scopeType: 'trip' });
+
+    // Then
+    expect(wrapper.get('.eyebrow').text()).toContain('여행');
+  });
+
   it('holds the writer at a custom scope until it is named', async () => {
     // Given
     const wrapper = mountFlow();
@@ -115,9 +139,11 @@ describe('SoloReviewFlow', () => {
     await wrapper.get('.reviewFlow .cta').trigger('click');
     await applyEmitted(wrapper);
 
-    // Then: 아직 실을 게 없으면 안내만 하고 막는다
+    // Then: 아직 실을 게 없으면 안내만 하고 막는다.
+    // 교훈을 요구하지 않는다는 말은 리드에서 한 번만 하고, 하단은 지금 상태만 알린다.
     expect((wrapper.get('.reviewFlow .cta').element as HTMLButtonElement).disabled).toBe(true);
-    expect(wrapper.get('.fineprint').text()).toContain('교훈이나 다음 행동은 없어도 돼요');
+    expect(wrapper.get('.reviewLead').text()).toContain('교훈이나 결론은 없어도 괜찮아요');
+    expect(wrapper.get('.fineprint').text()).toBe('장면 이름과 한 줄을 적어주세요.');
 
     // When
     await wrapper.get('.itemLabel').setValue('퇴근길 통화');

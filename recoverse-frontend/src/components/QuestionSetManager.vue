@@ -140,7 +140,7 @@ const props = withDefaults(
   { defaultName: '내 질문 세트', issues: () => [] },
 );
 
-/** 시작점으로 권할 만큼만 — 나머지는 혼자 엮기에서 그대로 불러오면 된다. */
+/** 시작점으로 권할 만큼만 — 나머지는 혼자 쓰기에서 그대로 불러오면 된다. */
 const starterIssues = computed(() => props.issues.slice(0, 3));
 
 const questionSets = useQuestionSets();
