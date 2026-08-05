@@ -454,7 +454,7 @@ function chooseQuickStart(selection: QuickStartSelection): void {
     step: 0,
   };
   // 고른 질문 바로 아래 답 칸에서 이어 쓰게 — 키보드/모바일에서 화면을 다시 찾지 않도록.
-  void nextTick(() => editorEl.value?.focusQuestion());
+  void nextTick(() => editorEl.value?.focusAnswer());
 }
 
 function updateReviewDraft(next: ReviewDraft): void {

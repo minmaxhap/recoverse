@@ -363,6 +363,8 @@ describe('SoloWriteView', () => {
 
     // When
     await wrapper.findAll('.modeOption')[0].trigger('click');
+    // 길이는 묻지 않는다 — 고른 값이 질문도 단계도 바꾸지 못했다.
+    expect(wrapper.find('.quickLength').exists()).toBe(false);
     await wrapper.findAll('.quickOption')[0].trigger('click');
 
     // Then

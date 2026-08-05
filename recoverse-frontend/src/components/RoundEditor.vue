@@ -66,6 +66,7 @@
         <label class="fieldGroup answerField">
           <span class="fieldLabel">{{ name }}의 답</span>
           <textarea
+            :ref="(el) => setAnswerEl(i, el)"
             class="field area short"
             :value="currentRound.answers[name] ?? ''"
             :placeholder="answerHint(name)"
@@ -124,8 +125,13 @@ const takenQuestions = computed(() => [...pastQuestions.value, props.currentRoun
 
 const contentsEl = ref<InstanceType<typeof RoundContentsList> | null>(null);
 const questionEl = ref<HTMLInputElement | null>(null);
+const answerEls = ref<(HTMLTextAreaElement | null)[]>([]);
 const suggestEl = ref<InstanceType<typeof QuestionSuggest> | null>(null);
 const pastPickEl = ref<InstanceType<typeof PastQuestionPick> | null>(null);
+
+function setAnswerEl(index: number, el: unknown): void {
+  answerEls.value[index] = el instanceof HTMLTextAreaElement ? el : null;
+}
 
 /** 아직 아무것도 없는 첫 화면 — 빈 칸 하나만 두면 무엇부터 할지 알 수 없다. */
 const blankStart = computed(
@@ -136,8 +142,12 @@ const waitingIndexes = computed(() =>
 );
 const waitingCount = computed(() => waitingIndexes.value.length);
 
-// 바깥에서 이 화면으로 들어올 때(예: 바로 쓰기에서 질문을 고른 직후) 커서를 질문 칸에 둔다.
-defineExpose({ focusQuestion: () => questionEl.value?.focus() });
+// 바깥에서 이 화면으로 들어올 때 커서를 데려온다. 질문을 이미 받아 온 흐름(바로 쓰기)은
+// 답 칸으로 — 남은 일이 답 쓰기뿐인데 질문 칸에 커서를 두면 받은 질문을 지우기 쉽다.
+defineExpose({
+  focusQuestion: () => questionEl.value?.focus(),
+  focusAnswer: () => answerEls.value[0]?.focus(),
+});
 
 function openFirstWaiting(): void {
   const first = waitingIndexes.value[0];
