@@ -35,7 +35,9 @@
     <!-- 쓰던 것을 그대로 둔 채 다른 시작 방식으로 건너갈 수 있게 — 없으면 한 번 고른 모드에 갇힌다. -->
     <button type="button" class="backChoice" @click="backToModes">← 시작 방식 다시 고르기</button>
 
+    <!-- 세트는 질문을 구하는 일이라 직접 엮기에서만 — 바로 쓰기는 질문을 이미 들고 들어온다. -->
     <details
+      v-if="activeMode === 'free'"
       class="disclosure"
       :open="sourceOpen"
       @toggle="sourceOpen = ($event.target as HTMLDetailsElement).open"
@@ -64,7 +66,21 @@
       <button v-if="lastImported.length > 0" type="button" class="undo" @click="undoImport">되돌리기</button>
     </p>
 
+    <!-- 바로 쓰기에서 답을 남긴 뒤: 남은 선택은 "여기서 끝낼까, 하나 더 쓸까"뿐이다. -->
+    <section v-if="quickDone" class="quickDone" aria-labelledby="quickDoneTitle">
+      <span class="eyebrow red">ANSWER SAVED</span>
+      <h2 id="quickDoneTitle">답을 목차에 실었어요</h2>
+      <p class="helper">{{ publishHelp }}</p>
+      <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
+      <div class="quickDoneActions">
+        <button class="cta" :disabled="!canPublish || publishing" @click="publish">이대로 책장에 꽂기</button>
+        <button type="button" class="ghost" @click="quickReady = false">질문 하나 더</button>
+        <button type="button" class="linkAction" @click="activeMode = 'free'">목차에서 질문과 답 고치기</button>
+      </div>
+    </section>
+
     <RoundEditor
+      v-else
       ref="editorEl"
       :participants="participants"
       :rounds="rounds"
@@ -72,43 +88,51 @@
       :kind="kind"
       :draft-state-label="draftStateLabel"
       :past-issues="shelf.issues.value"
+      :save-label="activeMode === 'quick' ? '이 답 남기기' : '답 저장하고 다음 질문'"
       @update:rounds="updateRounds"
       @update:current-round="updateCurrentRound"
       @browse-sets="sourceOpen = true"
-    />
-
-    <details
-      class="disclosure coverNote"
-      :open="coverNoteOpen"
-      @toggle="coverNoteOpen = ($event.target as HTMLDetailsElement).open"
     >
-      <summary class="disclosureSummary">
-        <span class="eyebrow red">COVER NOTE</span>
-        <span class="disclosureText">표지 정보</span>
-        <span class="disclosureChevron" aria-hidden="true">＋</span>
-      </summary>
-      <div class="disclosureBody">
-        <div class="fieldGroup">
-          <span class="fieldLabel">이번 호 종류</span>
-          <KindChips v-model="kind" />
-        </div>
+      <!-- 발행은 답이 생긴 뒤에만 — 쓰기 전부터 비활성 버튼과 표지 칸을 보여주면
+           답을 쓰면서 완성품 구성까지 동시에 생각하게 된다. -->
+      <template #publish>
+        <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
+        <p class="helper publishHelp">{{ publishHelp }}</p>
 
-        <label class="fieldGroup">
-          <span class="fieldLabel">표지 제목 선택</span>
-          <input v-model="title" class="field" aria-label="표지 제목" :placeholder="defaultIssueTitle" />
-          <span class="helper">비워두면 {{ defaultIssueTitle }}로 꽂혀요.</span>
-        </label>
+        <template v-if="canPublish">
+          <button class="cta" :disabled="publishing" @click="publish">책장에 꽂기</button>
 
-        <label class="fieldGroup">
-          <span class="fieldLabel">이 호에 실릴 이름</span>
-          <input v-model="name" class="field" placeholder="나" />
-        </label>
-      </div>
-    </details>
+          <details
+            class="disclosure coverNote"
+            :open="coverNoteOpen"
+            @toggle="coverNoteOpen = ($event.target as HTMLDetailsElement).open"
+          >
+            <summary class="disclosureSummary">
+              <span class="eyebrow red">COVER NOTE</span>
+              <span class="disclosureText">표지 정보</span>
+              <span class="disclosureChevron" aria-hidden="true">＋</span>
+            </summary>
+            <div class="disclosureBody">
+              <div class="fieldGroup">
+                <span class="fieldLabel">이번 호 종류</span>
+                <KindChips v-model="kind" />
+              </div>
 
-    <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
-    <p class="helper publishHelp">{{ publishHelp }}</p>
-    <button class="cta" :disabled="!canPublish || publishing" @click="publish">책장에 꽂기</button>
+              <label class="fieldGroup">
+                <span class="fieldLabel">표지 제목 선택</span>
+                <input v-model="title" class="field" aria-label="표지 제목" :placeholder="defaultIssueTitle" />
+                <span class="helper">비워두면 {{ defaultIssueTitle }}로 꽂혀요.</span>
+              </label>
+
+              <label class="fieldGroup">
+                <span class="fieldLabel">이 호에 실릴 이름</span>
+                <input v-model="name" class="field" placeholder="나" />
+              </label>
+            </div>
+          </details>
+        </template>
+      </template>
+    </RoundEditor>
     </template>
 
     <p v-if="!editorVisible && editorialError" class="error flowError" role="alert">{{ editorialError }}</p>
@@ -227,6 +251,18 @@ const editorialError = computed(() => publishError.value || draftError.value);
 const showModePicker = computed(() => draftReady.value && activeMode.value === '');
 const editorVisible = computed(
   () => activeMode.value === 'free' || (activeMode.value === 'quick' && quickReady.value),
+);
+/**
+ * 바로 쓰기에서 답을 저장해 쓰던 칸이 비워진 상태. 한 질문만 쓰기로 들어온 사람에게
+ * 빈 질문 칸을 다시 내밀면 "또 써야 하나"로 읽힌다 — 끝낼지 이어갈지만 묻는다.
+ * 초고 스키마는 그대로 두고 지금 값에서 파생한다.
+ */
+const quickDone = computed(
+  () =>
+    activeMode.value === 'quick' &&
+    quickReady.value &&
+    canPublish.value &&
+    currentRound.value.question.trim() === '',
 );
 
 function savedTimeText(savedAt: string): string {
@@ -665,6 +701,43 @@ function finishPublish(): void {
 .publishHelp {
   margin-top: 16px;
   text-align: center;
+}
+
+/* 답을 남긴 뒤의 갈림길 — 리뷰의 LENS COMPLETE와 같은 세로 목록. */
+.quickDone {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.quickDone h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 25px;
+  line-height: 1.45;
+}
+
+.quickDoneActions {
+  display: grid;
+  gap: 9px;
+  margin-top: 8px;
+}
+
+.linkAction {
+  justify-self: start;
+  min-height: 44px;
+  padding: 8px 0;
+  background: none;
+  border: 0;
+  color: var(--dim);
+  font-family: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.linkAction:hover {
+  color: var(--vermilion);
 }
 
 .resumeBanner {

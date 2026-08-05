@@ -75,8 +75,11 @@
         </label>
       </div>
 
-      <button class="ghost" :disabled="!qaReady" @click="addRound">답 저장하고 다음 질문</button>
+      <button class="ghost" :disabled="!qaReady" @click="addRound">{{ saveLabel }}</button>
     </section>
+
+    <!-- 발행은 쓰는 자리 바로 아래. 목차 뒤에 두면 답을 저장해 발행이 열린 순간이 화면 밖이다. -->
+    <slot name="publish" />
 
     <RoundContentsList
       ref="contentsEl"
@@ -111,8 +114,10 @@ const props = withDefaults(
     draftStateLabel?: string;
     /** 책장의 지난 호 — 있으면 질문 칸 밑에서 한 질문만 골라 다시 쓸 수 있다. */
     pastIssues?: readonly Issue[];
+    /** 답을 저장하는 버튼 문구 — 한 질문만 쓰는 흐름은 "다음 질문"을 약속하지 않는다. */
+    saveLabel?: string;
   }>(),
-  { kind: 'free', draftStateLabel: '새 질문', pastIssues: () => [] },
+  { kind: 'free', draftStateLabel: '새 질문', pastIssues: () => [], saveLabel: '답 저장하고 다음 질문' },
 );
 const emit = defineEmits<{
   'update:rounds': [Round[]];

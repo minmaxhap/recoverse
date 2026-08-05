@@ -430,6 +430,59 @@ describe('SoloWriteView', () => {
     expect(wrapper.get('.roundEditor').text()).toContain('노을 사진');
   });
 
+  it('holds back the cover fields and the publish button until an answer exists', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
+
+    // Then
+    expect(wrapper.find('.cta').exists()).toBe(false);
+    expect(wrapper.find('.coverNote').exists()).toBe(false);
+    expect(wrapper.get('.publishHelp').text()).toContain('발행할 수 있어요');
+
+    // When
+    await wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').setValue('첫 질문?');
+    await wrapper.get('.qaBox textarea').setValue('첫 답');
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    // Then
+    expect(wrapper.get('.cta').text()).toContain('책장에 꽂기');
+    expect(wrapper.find('.coverNote').exists()).toBe(true);
+  });
+
+  it('offers finishing or one more question after a quick answer, not a blank field', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+
+    // When
+    expect(wrapper.get('.qaBox .ghost').text()).toBe('이 답 남기기');
+    await wrapper.get('.qaBox textarea').setValue('오늘 남은 장면 하나');
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    // Then
+    expect(wrapper.find('.qaBox').exists()).toBe(false);
+    expect(wrapper.get('.quickDone .cta').text()).toContain('이대로 책장에 꽂기');
+
+    // And one more question brings back the purpose choices
+    await wrapper.get('.quickDone .ghost').trigger('click');
+    expect(wrapper.findAll('.quickOption')).toHaveLength(3);
+  });
+
+  it('keeps question sets out of the quick flow, where the question already arrived', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+
+    // When
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+
+    // Then
+    expect(wrapper.find('.disclosure').exists()).toBe(false);
+  });
+
   it('does not treat a mode picked by mistake as something to resume', async () => {
     // Given
     const wrapper = await mountSolo();
@@ -780,7 +833,7 @@ describe('SoloWriteView', () => {
     await chooseFreeMode(wrapper);
 
     // When
-    await wrapper.find('input[placeholder="나"]').setValue('Mina');
+    await wrapper.find('input[placeholder="지금의 나에게 묻고 싶은 것"]').setValue('저장이 막힌 질문?');
     await flushDraftSave();
 
     // Then
