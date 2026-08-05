@@ -688,13 +688,55 @@ describe('SoloWriteView', () => {
     await chooseFreeMode(wrapper);
 
     // When
-    await wrapper.get('.pickOpen').trigger('click');
+    await wrapper.get('.sourcesToggle').trigger('click');
+    await wrapper.findAll('.sourceRoute').find((route) => route.text() === '지난 호 질문')?.trigger('click');
     await wrapper.get('.pick').trigger('click');
 
     // Then
     const questionField = wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]');
     expect((questionField.element as HTMLInputElement).value).toBe('Source question?');
     expect(wrapper.find('.contentsList').exists()).toBe(false);
+  });
+
+  it('gathers every way of finding a question behind one button', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
+
+    // Then: 빈 화면에는 쓰는 칸과 문 하나뿐 — 같은 곳을 가리키는 링크가 겹치지 않고,
+    // 문을 열기 전에는 어떤 패널도 펼쳐져 있지 않다.
+    expect(wrapper.find('.startRoutes').exists()).toBe(false);
+    expect(wrapper.find('.suggestOpen').exists()).toBe(false);
+    expect(wrapper.find('.pickOpen').exists()).toBe(false);
+    expect(wrapper.find('.panel').exists()).toBe(false);
+    expect(wrapper.get('.sourcesToggle').text()).toBe('질문 고르기');
+
+    // When
+    await wrapper.get('.sourcesToggle').trigger('click');
+
+    // Then
+    expect(wrapper.findAll('.sourceRoute').map((route) => route.text())).toEqual([
+      '추천 질문',
+      '저장한 질문 세트',
+      '지난 호 질문',
+      '닫기',
+    ]);
+  });
+
+  it('opens the set list under the editor when the writer asks for it', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
+    expect((wrapper.get('details.disclosure').element as HTMLDetailsElement).open).toBe(false);
+
+    // When
+    await wrapper.get('.sourcesToggle').trigger('click');
+    await wrapper.findAll('.sourceRoute').find((route) => route.text() === '저장한 질문 세트')?.trigger('click');
+
+    // Then
+    expect((wrapper.get('details.disclosure').element as HTMLDetailsElement).open).toBe(true);
   });
 
   it('clears the full draft only after publish succeeds', async () => {

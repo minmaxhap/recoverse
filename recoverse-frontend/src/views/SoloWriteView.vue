@@ -35,31 +35,6 @@
     <!-- 쓰던 것을 그대로 둔 채 다른 시작 방식으로 건너갈 수 있게 — 없으면 한 번 고른 모드에 갇힌다. -->
     <button type="button" class="backChoice" @click="backToModes">← 시작 방식 다시 고르기</button>
 
-    <!-- 세트는 질문을 구하는 일이라 직접 엮기에서만 — 바로 쓰기는 질문을 이미 들고 들어온다. -->
-    <details
-      v-if="activeMode === 'free'"
-      class="disclosure"
-      :open="sourceOpen"
-      @toggle="sourceOpen = ($event.target as HTMLDetailsElement).open"
-    >
-      <summary class="disclosureSummary">
-        <span class="eyebrow red">QUESTION SET</span>
-        <span class="disclosureText">질문 세트 불러오기 · 만들기</span>
-        <span class="disclosureChevron" aria-hidden="true">＋</span>
-      </summary>
-      <div class="disclosureBody">
-        <QuestionSetPicker
-          :issues="shelf.issues.value"
-          :contents="contentsQuestions"
-          :source-issue-id="sourceIssueId"
-          :default-name="defaultIssueTitle"
-          @update:source-issue-id="sourceIssueId = $event"
-          @load="importQuestions"
-          @manage="$emit('navigate', 'sets')"
-        />
-      </div>
-    </details>
-
     <!-- 안내는 목록 밖에 둔다 — 담은 뒤 목록이 접혀도 무엇이 담겼는지는 계속 보이게. -->
     <p v-if="importNotice" class="importNotice" role="status">
       <span class="helper">{{ importNotice }}</span>
@@ -91,7 +66,7 @@
       :save-label="activeMode === 'quick' ? '이 답 남기기' : '답 저장하고 다음 질문'"
       @update:rounds="updateRounds"
       @update:current-round="updateCurrentRound"
-      @browse-sets="sourceOpen = true"
+      @browse-sets="openSets"
     >
       <!-- 발행은 답이 생긴 뒤에만 — 쓰기 전부터 비활성 버튼과 표지 칸을 보여주면
            답을 쓰면서 완성품 구성까지 동시에 생각하게 된다. -->
@@ -133,6 +108,32 @@
         </template>
       </template>
     </RoundEditor>
+
+    <!-- 세트는 질문을 구하는 일이라 직접 엮기에서만. 쓰는 자리 아래에 둬 첫 화면을 비워둔다. -->
+    <details
+      v-if="activeMode === 'free'"
+      ref="setsEl"
+      class="disclosure"
+      :open="sourceOpen"
+      @toggle="sourceOpen = ($event.target as HTMLDetailsElement).open"
+    >
+      <summary class="disclosureSummary">
+        <span class="eyebrow red">QUESTION SET</span>
+        <span class="disclosureText">질문 세트 불러오기 · 만들기</span>
+        <span class="disclosureChevron" aria-hidden="true">＋</span>
+      </summary>
+      <div class="disclosureBody">
+        <QuestionSetPicker
+          :issues="shelf.issues.value"
+          :contents="contentsQuestions"
+          :source-issue-id="sourceIssueId"
+          :default-name="defaultIssueTitle"
+          @update:source-issue-id="sourceIssueId = $event"
+          @load="importQuestions"
+          @manage="$emit('navigate', 'sets')"
+        />
+      </div>
+    </details>
     </template>
 
     <p v-if="!editorVisible && editorialError" class="error flowError" role="alert">{{ editorialError }}</p>
@@ -209,6 +210,13 @@ const coverNoteOpen = ref(false);
 const soloDraft = useSoloIssueDraft();
 const draftReady = ref(false);
 const editorEl = ref<InstanceType<typeof RoundEditor> | null>(null);
+const setsEl = ref<HTMLDetailsElement | null>(null);
+
+/** 세트 목록은 쓰는 자리 아래에 있다 — 열기만 하면 화면 밖이라 데려다 놓는다. */
+function openSets(): void {
+  sourceOpen.value = true;
+  void nextTick(() => setsEl.value?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+}
 
 const activeMode = ref<SoloMode | ''>('');
 const quickReady = ref(false);

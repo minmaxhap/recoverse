@@ -1,8 +1,10 @@
 <template>
   <div class="pastPick" :class="{ open }">
-    <button v-if="!open" type="button" class="pickOpen" @click="openPanel">지난 호 질문 다시 쓰기</button>
+    <button v-if="!open && !hideTrigger" type="button" class="pickOpen" @click="openPanel">
+      지난 호 질문 다시 쓰기
+    </button>
 
-    <div v-else class="panel">
+    <div v-if="open" class="panel">
       <div class="panelHead">
         <span class="eyebrow">지난 호에서 고르기</span>
         <button type="button" class="close" aria-label="닫기" @click="open = false">✕</button>
@@ -45,11 +47,16 @@ import { computed, nextTick, ref, watch } from 'vue';
 import { normalizeQuestion, type Issue } from '@recoverse/shared';
 import { filterGroups, groupByQuestion, type QuestionGroup } from '../lib/rediscover';
 
-const props = defineProps<{
-  readonly issues: readonly Issue[];
-  /** 이미 목차에 있거나 지금 쓰고 있는 질문 — 다시 권하지 않는다. */
-  readonly exclude: readonly string[];
-}>();
+const props = withDefaults(
+  defineProps<{
+    readonly issues: readonly Issue[];
+    /** 이미 목차에 있거나 지금 쓰고 있는 질문 — 다시 권하지 않는다. */
+    readonly exclude: readonly string[];
+    /** 부모가 이미 이 패널로 가는 문을 갖고 있을 때 — 같은 곳을 두 번 가리키지 않게. */
+    readonly hideTrigger?: boolean;
+  }>(),
+  { hideTrigger: false },
+);
 const emit = defineEmits<{ pick: [string] }>();
 
 /** 검색으로 좁히기 전에도 훑을 만한 길이 */
