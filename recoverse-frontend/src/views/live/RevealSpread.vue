@@ -105,6 +105,8 @@ async function onNext() {
 
 async function onEnd() {
   if (busy.value) return;
+  // 마감은 되돌릴 수 없고 남은 사람들의 세션까지 닫는다 — 한 번 묻고 간다.
+  if (!window.confirm('이번 호를 마감할까요? 지금까지 공개된 질문만 실려요.')) return;
   busy.value = true;
   try {
     emit('applied', await api.end(props.state.meta.code, props.me, props.playerToken));
