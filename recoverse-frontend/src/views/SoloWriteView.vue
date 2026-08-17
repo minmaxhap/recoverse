@@ -47,11 +47,16 @@
     <section v-if="quickDone" class="quickDone" aria-labelledby="quickDoneTitle">
       <span class="eyebrow red">ANSWER SAVED</span>
       <h2 id="quickDoneTitle">답을 목차에 실었어요</h2>
+      <blockquote
+        v-if="latestQuickAnswer"
+        class="quickAnswer"
+        :aria-label="latestQuickAnswer"
+      >{{ latestQuickAnswer }}</blockquote>
       <p class="helper">{{ publishHelp }}</p>
       <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
       <div class="quickDoneActions">
         <button class="cta" :disabled="!canPublish || publishing" @click="publish">이대로 책장에 꽂기</button>
-        <button type="button" class="ghost" @click="quickReady = false">질문 하나 더</button>
+        <button type="button" class="ghost" @click="continueQuick">질문 하나 더</button>
         <button type="button" class="linkAction" @click="activeMode = 'free'">목차에서 질문과 답 고치기</button>
       </div>
     </section>
@@ -233,6 +238,16 @@ const participants = computed(() => [name.value.trim() || SOLO_DEFAULT_NAME]);
 const answeredRoundCount = computed(() => rounds.value.filter(roundIsAnswered).length);
 const pendingRoundCount = computed(() => rounds.value.length - answeredRoundCount.value);
 const canPublish = computed(() => answeredRoundCount.value > 0);
+const latestQuickAnswer = computed(() => {
+  const participant = participants.value[0];
+  if (!participant) return '';
+  for (let index = rounds.value.length - 1; index >= 0; index -= 1) {
+    const round = rounds.value[index];
+    const answer = round?.answers[participant]?.text.trim() ?? '';
+    if (answer) return answer;
+  }
+  return '';
+});
 const kindLabelText = computed(() => KIND_LABELS[kind.value]);
 const sourceIssue = computed(() => shelf.issues.value.find((issue) => issue.id === sourceIssueId.value));
 const contentsQuestions = computed(() => rounds.value.map((round) => round.question));
@@ -501,6 +516,10 @@ function backToModes(): void {
   quickReady.value = false;
 }
 
+function continueQuick(): void {
+  quickReady.value = false;
+}
+
 function chooseQuickStart(selection: QuickStartSelection): void {
   // 쓰던 질문이 있으면 덮어쓰지 않고 쓰던 답과 함께 목차로 옮긴다 — 시작 방식을 다시 고르고
   // 돌아왔을 때 앞서 쓰던 것이 조용히 사라지지 않게. 재발견에서 들고 올 때와 같은 규칙.
@@ -726,6 +745,20 @@ function finishPublish(): void {
   font-family: var(--font-display);
   font-size: 25px;
   line-height: 1.45;
+}
+
+.quickAnswer {
+  display: -webkit-box;
+  margin: 6px 0 2px;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .quickDoneActions {

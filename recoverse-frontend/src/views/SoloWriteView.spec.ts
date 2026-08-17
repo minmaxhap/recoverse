@@ -464,10 +464,166 @@ describe('SoloWriteView', () => {
     // Then
     expect(wrapper.find('.qaBox').exists()).toBe(false);
     expect(wrapper.get('.quickDone .cta').text()).toContain('이대로 책장에 꽂기');
+    expect(wrapper.findAll('.quickDone .cta')).toHaveLength(1);
+    expect(wrapper.get('.quickDone .ghost').text()).toBe('질문 하나 더');
+    expect(wrapper.get('.quickDone .linkAction').text()).toBe('목차에서 질문과 답 고치기');
 
     // And one more question brings back the purpose choices
     await wrapper.get('.quickDone .ghost').trigger('click');
     expect(wrapper.findAll('.quickOption')).toHaveLength(3);
+  });
+
+  it('rewards the last saved solo answer with trim-only full text', async () => {
+    // Given: 복원된 Quick 초고에는 먼저 쓴 답, 가장 최근 답, 아직 저장하지 않은 현재 답이 함께 있다.
+    const latestAnswer = `  마지막 문장에는\n\n중간 빈 줄도   그대로 있다.  `;
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        rounds: [
+          { asker: 'Mina', question: 'First?', answers: { Mina: { text: '첫 문장' } } },
+          { asker: 'Mina', question: 'Latest?', answers: { Mina: { text: latestAnswer } } },
+        ],
+        currentRound: { question: '', formatId: '', answers: { Mina: '저장 전 문장' } },
+        soloMode: 'quick',
+        quickReady: true,
+      } satisfies SoloIssueDraftV2),
+    );
+
+    // When
+    const wrapper = await mountSolo();
+
+    // Then: 가장 최근에 목차에 실린 답만 가장자리 공백을 걷어 전체 DOM/접근성 이름으로 남긴다.
+    const quote = wrapper.get('blockquote.quickAnswer');
+    const expected = latestAnswer.trim();
+    expect(quote.element.textContent).toBe(expected);
+    expect(quote.attributes('aria-label')).toBe(expected);
+    expect(quote.text()).not.toContain('첫 문장');
+    expect(quote.text()).not.toContain('저장 전 문장');
+  });
+
+  it('keeps a long quick answer complete in the DOM while the style clamps only its display', async () => {
+    // Given
+    const longAnswer = `${'한 문장을 오래 남기기 위해 '.repeat(32)}끝`;
+    expect(longAnswer.length).toBeGreaterThanOrEqual(500);
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        rounds: [{ asker: 'Mina', question: 'Long?', answers: { Mina: { text: longAnswer } } }],
+        currentRound: { question: '', formatId: '', answers: {} },
+        soloMode: 'quick',
+        quickReady: true,
+      } satisfies SoloIssueDraftV2),
+    );
+
+    // When
+    const wrapper = await mountSolo();
+
+    // Then
+    const quote = wrapper.get('blockquote.quickAnswer');
+    expect(wrapper.text()).toContain(longAnswer);
+    expect(quote.element.textContent).toBe(longAnswer);
+    expect(quote.classes()).toContain('quickAnswer');
+  });
+
+  it('omits the quick quote when legacy content has no answer from the solo participant', async () => {
+    // Given: 다른 이름의 답만 남은 손상된 초고는 발행 가능 판정과 별개로 내 문장 보상을 만들 수 없다.
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        rounds: [{ asker: 'Other', question: 'Broken?', answers: { Other: { text: '남의 답' } } }],
+        currentRound: { question: '', formatId: '', answers: {} },
+        soloMode: 'quick',
+        quickReady: true,
+      } satisfies SoloIssueDraftV2),
+    );
+
+    // When
+    const wrapper = await mountSolo();
+
+    // Then
+    expect(wrapper.find('.quickDone').exists()).toBe(true);
+    expect(wrapper.find('blockquote.quickAnswer').exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('남의 답');
+  });
+
+  it('continues quick writing with saved rounds intact and restores the reward after refresh', async () => {
+    // Given
+    const first = await mountSolo();
+    await first.findAll('.modeOption')[0].trigger('click');
+    await first.findAll('.quickOption')[0].trigger('click');
+    await first.get('.qaBox textarea').setValue('다시 보고 싶은 첫 문장');
+    await first.get('.qaBox .ghost').trigger('click');
+    expect(first.get('blockquote.quickAnswer').text()).toBe('다시 보고 싶은 첫 문장');
+
+    // When: 질문을 하나 더 고르러 갔다가, 새 입력을 시작하기 전에 새로고침한다.
+    await first.get('.quickDone .ghost').trigger('click');
+    const kept = JSON.parse(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY) ?? '{}') as SoloIssueDraftV2;
+    expect(kept.rounds).toHaveLength(1);
+    await first.findAll('.quickOption')[1].trigger('click');
+    expect(first.get('.contentsList').text()).toContain('다시 보고 싶은 첫 문장');
+    first.unmount();
+
+    const restored = await mountSolo();
+    expect(restored.get('.contentsList').text()).toContain('다시 보고 싶은 첫 문장');
+  });
+
+  it('keeps the quick reward visible when unified draft saving fails', async () => {
+    // Given
+    const storage = createMemoryStorage();
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        ...storage,
+        setItem(key: string, value: string) {
+          if (key === SOLO_ISSUE_DRAFT_V2_KEY) throw new DOMException('quota exceeded', 'QuotaExceededError');
+          storage.setItem(key, value);
+        },
+      } satisfies Storage,
+    });
+    const wrapper = await mountSolo();
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+    await wrapper.get('.qaBox textarea').setValue('저장 실패에도 남아야 할 문장');
+
+    // When
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    // Then
+    expect(wrapper.get('blockquote.quickAnswer').text()).toBe('저장 실패에도 남아야 할 문장');
+    expect(wrapper.get('[role="alert"]').text()).toContain('임시 저장하지 못했어요');
+    expect(wrapper.get('.quickDone .cta').text()).toBe('이대로 책장에 꽂기');
+  });
+
+  it('keeps the quick reward and retry actions when publishing to the shelf fails', async () => {
+    // Given
+    const storage = createMemoryStorage();
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        ...storage,
+        setItem(key: string, value: string) {
+          if (key === SHELF_KEY) throw new Error('quota exceeded');
+          storage.setItem(key, value);
+        },
+      } satisfies Storage,
+    });
+    const wrapper = await mountSolo();
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+    await wrapper.get('.qaBox textarea').setValue('책장 실패에도 남아야 할 문장');
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    // When
+    await wrapper.get('.quickDone .cta').trigger('click');
+
+    // Then
+    expect(wrapper.get('blockquote.quickAnswer').text()).toBe('책장 실패에도 남아야 할 문장');
+    expect(wrapper.get('[role="alert"]').text()).toContain('저장 공간');
+    expect(wrapper.get('.quickDone .cta').text()).toBe('이대로 책장에 꽂기');
+    expect(wrapper.get('.quickDone .ghost').text()).toBe('질문 하나 더');
   });
 
   it('keeps question sets out of the quick flow, where the question already arrived', async () => {
