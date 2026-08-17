@@ -13,9 +13,17 @@
     </div>
 
     <p v-if="saveError" class="error d4" role="alert">{{ saveError }}</p>
-    <button class="cta d4" :disabled="isSaved" @click="onSave">
-      {{ isSaved ? '책장에 꽂아뒀어요' : '내 책장에 이번 호 꽂기' }}
+    <p v-if="shareError" class="error d4" role="alert">{{ shareError }}</p>
+    <button v-if="!isSaved" type="button" class="cta d4" @click="onSave">
+      내 책장에 이번 호 꽂기
     </button>
+    <button v-else type="button" class="cta d4" :disabled="sharing" @click="onShare">
+      {{ sharing ? '공유 링크 만드는 중…' : '친구에게 결과 보내기' }}
+    </button>
+    <div v-if="shareUrl" class="shareResult">
+      <p class="shareUrl">{{ shareUrl }}</p>
+      <p v-if="copied" class="fineprint" role="status">링크를 복사했어요.</p>
+    </div>
     <button v-if="isSaved" class="endLink" @click="$emit('done')">책장으로 돌아가기</button>
   </div>
 </template>
@@ -28,6 +36,7 @@ import { useShelf } from '../../composables/useShelf';
 import { totalScores, mindReaders } from '../../lib/guessing';
 import { issueFromSession } from '../../lib/issueBuilder';
 import { issueFingerprint } from '../../lib/archivePreview';
+import { api } from '../../lib/api';
 
 const props = defineProps<{ state: SessionStateResponse }>();
 
@@ -36,17 +45,20 @@ defineEmits<{
 }>();
 
 const shelf = useShelf();
-const saved = ref(false);
 const saveError = ref('');
+const sharing = ref(false);
+const shareUrl = ref('');
+const shareError = ref('');
+const copied = ref(false);
 
 // 이 세션에서 만들 호. id는 매번 새로 나지만 지문은 내용으로 결정되므로,
 // 마감 화면을 새로고침하거나 다시 저장해도 같은 호가 책장에 두 번 꽂히지 않는다.
 const pendingIssue = issueFromSession(props.state);
 const fingerprint = issueFingerprint(pendingIssue);
-const alreadyOnShelf = computed(() =>
-  shelf.issues.value.some((issue) => issueFingerprint(issue) === fingerprint),
+const savedIssue = computed(() =>
+  shelf.issues.value.find((issue) => issueFingerprint(issue) === fingerprint),
 );
-const isSaved = computed(() => saved.value || alreadyOnShelf.value);
+const isSaved = computed(() => savedIssue.value !== undefined);
 
 const issueYear = computed(() => props.state.meta.date.slice(0, 4));
 const kindLabel = computed(() => KIND_LABELS[props.state.meta.kind]);
@@ -60,8 +72,36 @@ function onSave(): void {
     saveError.value = '브라우저 저장 공간에 저장하지 못했어요. 용량을 비우고 다시 시도해주세요.';
     return;
   }
+}
 
-  saved.value = true;
+function shareLink(id: string): string {
+  return `${window.location.origin}/shared/${id}`;
+}
+
+async function onShare(): Promise<void> {
+  const issue = savedIssue.value;
+  if (!issue || sharing.value) return;
+
+  sharing.value = true;
+  shareError.value = '';
+  try {
+    let id = issue.shareId;
+    if (!id) {
+      const response = await api.createShare(issue);
+      id = response.shareId;
+      if (!shelf.update(issue.id, { shareId: id })) throw new Error('share-save-failed');
+    }
+    shareUrl.value = shareLink(id);
+    copied.value = await navigator.clipboard.writeText(shareUrl.value).then(
+      () => true,
+      () => false,
+    );
+  } catch (error) {
+    if (!(error instanceof Error)) throw error;
+    shareError.value = '공유 링크를 만들지 못했어요.';
+  } finally {
+    sharing.value = false;
+  }
 }
 </script>
 
@@ -111,6 +151,22 @@ function onSave(): void {
   font-size: 24px;
   font-weight: 700;
   margin: 2px 0 0;
+}
+
+.shareResult {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.shareUrl {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--hairline);
+  background: var(--paper-card);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-all;
 }
 
 @keyframes fadeUp {
