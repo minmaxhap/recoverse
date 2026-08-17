@@ -473,6 +473,54 @@ describe('SoloWriteView', () => {
     expect(wrapper.findAll('.quickOption')).toHaveLength(3);
   });
 
+  it('publishes a Quick note with the first answered path title', async () => {
+    // Given
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T03:00:00.000Z'));
+    const wrapper = await mountSolo();
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[2].trigger('click');
+    await wrapper.get('.qaBox textarea').setValue('내일 가장 먼저 문을 연다.');
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    // When
+    await wrapper.get('.quickDone .cta').trigger('click');
+
+    // Then
+    const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
+    expect(shelved[0]?.title).toBe('다음 한 걸음 · 8월 18일');
+  });
+
+  it('keeps an explicit cover title ahead of a derived Quick title', async () => {
+    // Given
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        title: '내가 직접 지은 제목',
+        rounds: [
+          {
+            asker: 'Mina',
+            question: '오늘의 장면은?',
+            answers: { Mina: { text: '늦은 햇빛' } },
+            pathId: 'solo-today',
+          },
+        ],
+        currentRound: { question: '', formatId: '', answers: {} },
+        soloMode: 'quick',
+        quickReady: true,
+      } satisfies SoloIssueDraftV2),
+    );
+    const wrapper = await mountSolo();
+
+    // When
+    await wrapper.get('.quickDone .cta').trigger('click');
+
+    // Then
+    const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
+    expect(shelved[0]?.title).toBe('내가 직접 지은 제목');
+  });
+
   it('rewards the last saved solo answer with trim-only full text', async () => {
     // Given: 복원된 Quick 초고에는 먼저 쓴 답, 가장 최근 답, 아직 저장하지 않은 현재 답이 함께 있다.
     const latestAnswer = `  마지막 문장에는\n\n중간 빈 줄도   그대로 있다.  `;
@@ -684,6 +732,8 @@ describe('SoloWriteView', () => {
 
   it('publishes a one-line review without requiring a lesson or action', async () => {
     // Given
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T03:00:00.000Z'));
     const wrapper = await mountSolo();
     await openReviewLens(wrapper, '사진');
     await completeReviewItem(wrapper, '노을 사진', '색이 웃길 만큼 진해서 기억하고 싶다');
@@ -694,6 +744,7 @@ describe('SoloWriteView', () => {
     // Then
     const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
     expect(shelved).toHaveLength(1);
+    expect(shelved[0]?.title).toBe('사진 리뷰 · 8월 18일');
     expect(shelved[0]?.rounds).toHaveLength(1);
     expect(shelved[0]?.rounds[0]?.question).toContain('요즘 사진');
     expect(shelved[0]?.rounds[0]?.answers['나']?.text).toBe('색이 웃길 만큼 진해서 기억하고 싶다');
@@ -738,6 +789,8 @@ describe('SoloWriteView', () => {
 
   it('adds a second lens to the same issue', async () => {
     // Given
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T03:00:00.000Z'));
     const wrapper = await mountSolo();
     await openReviewLens(wrapper, '사진');
     await completeReviewItem(wrapper, '산책 사진', '빛이 좋았다');
@@ -751,6 +804,7 @@ describe('SoloWriteView', () => {
 
     // Then
     const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
+    expect(shelved[0]?.title).toBe('사진 외 1개 리뷰 · 8월 18일');
     expect(shelved[0]?.rounds).toHaveLength(2);
     expect(shelved[0]?.rounds.map((round) => round.question)).toEqual([
       expect.stringContaining('사진'),
@@ -758,6 +812,42 @@ describe('SoloWriteView', () => {
     ]);
     // 두 렌즈가 한 호에 섞여도 각 줄은 자기 렌즈 이름을 질문 문장으로 달고 간다.
     expect(shelved[0]?.rounds.map((round) => round.format)).toEqual([undefined, undefined]);
+  });
+
+  it.each([
+    ['query', { presetQuestion: '가져온 질문?' }],
+    ['import', { presetIssueId: 'source-1' }],
+  ])('keeps the shared generic title for the %s entry route', async (_route, props) => {
+    // Given: 경로 메타데이터가 있는 초고여도 ?q / ?from 진입은 free 편집기로 우회한다.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T03:00:00.000Z'));
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        title: '',
+        rounds: [
+          {
+            asker: 'Mina',
+            question: '기존 질문?',
+            answers: { Mina: { text: '기존 답' } },
+            pathId: 'solo-today',
+          },
+        ],
+        currentRound: { question: '', formatId: '', answers: {} },
+        soloMode: 'quick',
+        quickReady: true,
+      } satisfies SoloIssueDraftV2),
+    );
+    const wrapper = await mountSolo(props);
+
+    // When
+    await wrapper.get('button.cta').trigger('click');
+
+    // Then
+    const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
+    expect(shelved[0]?.title).toBe('2026 연말호');
   });
 
   it('restores the selected lens, scope, and item after remount', async () => {

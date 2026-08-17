@@ -163,7 +163,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { defaultTitle, KIND_LABELS, kstTodayISO, type Kind, type Round } from '@recoverse/shared';
+import { KIND_LABELS, kstTodayISO, type Kind, type Round } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
 import KindChips from '../components/KindChips.vue';
@@ -185,6 +185,7 @@ import {
 } from '../composables/useSoloIssueDraft';
 import { useShelf } from '../composables/useShelf';
 import { issueFromDraft, roundIsAnswered } from '../lib/issueBuilder';
+import { deriveSoloTitle } from '../lib/soloTitle';
 
 // preset*: 다른 화면에서 재료를 들고 들어올 때 — 재발견의 질문 하나, 지난 호 상세의 구성 한 벌.
 const props = withDefaults(
@@ -232,10 +233,18 @@ const guidedPath = ref<SoloGuidedPathState | undefined>();
 const reviewDraft = ref<ReviewDraft>(createEmptyReviewDraft());
 
 const date = computed(() => kstTodayISO());
-const defaultIssueTitle = computed(() => defaultTitle(kind.value, date.value));
+const answeredRounds = computed(() => rounds.value.filter(roundIsAnswered));
+const defaultIssueTitle = computed(() =>
+  deriveSoloTitle({
+    kind: kind.value,
+    date: date.value,
+    mode: activeMode.value || 'free',
+    answeredRounds: answeredRounds.value,
+  }),
+);
 const issueTitle = computed(() => title.value.trim() || defaultIssueTitle.value);
 const participants = computed(() => [name.value.trim() || SOLO_DEFAULT_NAME]);
-const answeredRoundCount = computed(() => rounds.value.filter(roundIsAnswered).length);
+const answeredRoundCount = computed(() => answeredRounds.value.length);
 const pendingRoundCount = computed(() => rounds.value.length - answeredRoundCount.value);
 const canPublish = computed(() => answeredRoundCount.value > 0);
 const latestQuickAnswer = computed(() => {
