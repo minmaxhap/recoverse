@@ -18,20 +18,23 @@
       <div v-for="name in state.players" :key="name" class="playerRow">
         <ParticipantDot :color="colorFor(name, state.players)" />
         <span>{{ name }}</span>
-        <span v-if="state.meta.host === name" class="hostTag">발행인</span>
+        <span v-if="state.meta.host === name" class="hostTag">방장</span>
       </div>
     </div>
 
     <div class="gap" />
     <button v-if="isHost" class="cta" :disabled="state.players.length < 2 || busy" @click="onStart">
-      {{ state.players.length < 2 ? '2명 이상 모이면 시작할 수 있어요' : '이번 호 시작하기' }}
+      {{ startLabel }}
     </button>
-    <p v-else class="waiting">발행인이 시작하길 기다리는 중…</p>
+    <p v-if="isHost && state.players.length === 2" class="fineprint gameHint">
+      한 명 더 오면 ‘누가 썼게’도 열려요
+    </p>
+    <p v-else-if="!isHost" class="waiting">방장이 시작하면 첫 질문이 열려요.</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import type { SessionStateResponse } from '@recoverse/shared';
 import ParticipantDot from '../../components/ParticipantDot.vue';
 import { colorFor } from '../../lib/palette';
@@ -43,6 +46,11 @@ const emit = defineEmits<{ applied: [SessionStateResponse] }>();
 const busy = ref(false);
 const copied = ref(false);
 const shareCopied = ref(false);
+const startLabel = computed(() => {
+  if (props.state.players.length < 2) return '한 명 더 오면 시작할 수 있어요';
+  if (props.state.players.length === 2) return '지금 시작하기';
+  return '누가 썼게 시작하기';
+});
 let copyResetTimer: ReturnType<typeof setTimeout> | null = null;
 let shareCopyResetTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -170,5 +178,9 @@ async function onStart() {
   letter-spacing: 0.08em;
   color: var(--vermilion);
   margin-left: auto;
+}
+.gameHint {
+  margin-top: 10px;
+  text-align: center;
 }
 </style>
