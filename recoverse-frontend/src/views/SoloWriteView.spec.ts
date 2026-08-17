@@ -369,7 +369,8 @@ describe('SoloWriteView', () => {
 
     // Then
     expect(wrapper.find('.roundEditor').exists()).toBe(true);
-    expect((wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').element as HTMLInputElement).value).toContain('오늘');
+    expect(wrapper.get('.quickQuestion').text()).toContain('오늘');
+    expect(wrapper.find('input[placeholder="지금의 나에게 묻고 싶은 것"]').exists()).toBe(false);
     const saved = JSON.parse(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY) ?? '{}') as SoloIssueDraftV2;
     expect(saved.soloMode).toBe('quick');
     expect(saved.guidedPath).toEqual({ pathId: 'solo-today', pathRevision: 1, mode: 'standard', step: 0 });
@@ -409,9 +410,8 @@ describe('SoloWriteView', () => {
     // Then
     expect(wrapper.get('.roundEditor').text()).toContain('먼저 쓰던 질문?');
     expect(wrapper.get('.roundEditor').text()).toContain('먼저 쓰던 답');
-    expect((wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').element as HTMLInputElement).value).toContain(
-      '오늘',
-    );
+    expect(wrapper.get('.quickQuestion').text()).toContain('오늘');
+    expect(wrapper.find('input[placeholder="지금의 나에게 묻고 싶은 것"]').exists()).toBe(false);
     expect((wrapper.get('textarea').element as HTMLTextAreaElement).value).toBe('');
   });
 
@@ -481,6 +481,20 @@ describe('SoloWriteView', () => {
 
     // Then
     expect(wrapper.find('.disclosure').exists()).toBe(false);
+    expect(wrapper.getComponent({ name: 'RoundEditor' }).props('presentation')).toBe('quick');
+  });
+
+  it('uses the standard editor presentation outside quick mode', async () => {
+    // Given
+    const wrapper = await mountSolo();
+
+    // When
+    await chooseFreeMode(wrapper);
+
+    // Then
+    expect(wrapper.getComponent({ name: 'RoundEditor' }).props('presentation')).toBe('standard');
+    expect(wrapper.find('input[placeholder="지금의 나에게 묻고 싶은 것"]').exists()).toBe(true);
+    expect(wrapper.find('.questionSources').exists()).toBe(true);
   });
 
   it('does not treat a mode picked by mistake as something to resume', async () => {

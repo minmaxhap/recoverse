@@ -66,6 +66,7 @@
       :draft-state-label="draftStateLabel"
       :past-issues="shelf.issues.value"
       :save-label="activeMode === 'quick' ? '이 답 남기기' : '답 저장하고 다음 질문'"
+      :presentation="activeMode === 'quick' ? 'quick' : 'standard'"
       @update:rounds="updateRounds"
       @update:current-round="updateCurrentRound"
       @browse-sets="openSets"

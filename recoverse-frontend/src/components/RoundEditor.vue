@@ -10,13 +10,16 @@
     <section class="qaBox" aria-labelledby="roundEditorTitle">
       <div class="boxHead">
         <div>
-          <span class="eyebrow red">QUESTION {{ rounds.length + 1 }}</span>
-          <h2 id="roundEditorTitle">다음 질문을 고르거나 직접 써요</h2>
+          <span class="eyebrow red">{{ presentation === 'quick' ? 'QUICK NOTE' : `QUESTION ${rounds.length + 1}` }}</span>
+          <h2 v-if="presentation === 'quick'" id="roundEditorTitle" class="quickQuestion">
+            {{ currentRound.question }}
+          </h2>
+          <h2 v-else id="roundEditorTitle">다음 질문을 고르거나 직접 써요</h2>
         </div>
         <span class="draftState" aria-live="polite">{{ draftStateLabel }}</span>
       </div>
 
-      <label class="fieldGroup">
+      <label v-if="presentation === 'standard'" class="fieldGroup">
         <span class="fieldLabel">질문</span>
         <input
           ref="questionEl"
@@ -28,11 +31,36 @@
         />
       </label>
 
+      <div v-if="presentation === 'standard'" class="formatChips" role="radiogroup" aria-label="회고 포맷">
+        <button
+          type="button"
+          role="radio"
+          :aria-checked="currentRound.formatId === ''"
+          class="fchip"
+          :class="{ active: currentRound.formatId === '' }"
+          @click="selectFormat('')"
+        >
+          자유 질문
+        </button>
+        <button
+          v-for="format in FORMATS"
+          :key="format.id"
+          type="button"
+          role="radio"
+          :aria-checked="currentRound.formatId === format.id"
+          class="fchip"
+          :class="{ active: currentRound.formatId === format.id }"
+          @click="selectFormat(format.id)"
+        >
+          {{ format.label }}
+        </button>
+      </div>
+
       <!--
         질문을 어디서 데려올지는 결정 하나다. 빈 화면에서 시작 카드와 링크가 같은 곳을
         두 번씩 가리켜 문이 여섯 개로 보였다 — 한 버튼 뒤에 세 갈래로 접어 둔다.
       -->
-      <div class="questionSources">
+      <div v-if="presentation === 'standard'" class="questionSources">
         <button
           v-if="!sourcesOpen"
           type="button"
@@ -107,7 +135,7 @@ import ParticipantDot from './ParticipantDot.vue';
 import PastQuestionPick from './PastQuestionPick.vue';
 import QuestionSuggest from './QuestionSuggest.vue';
 import RoundContentsList from './RoundContentsList.vue';
-import { getFormat } from '../data/formats';
+import { FORMATS, getFormat } from '../data/formats';
 import { roundIsAnswered } from '../lib/issueBuilder';
 import { colorAt } from '../lib/palette';
 import type { SoloIssueCurrentRoundDraft } from '../lib/soloIssueDraftTypes';
@@ -123,8 +151,16 @@ const props = withDefaults(
     pastIssues?: readonly Issue[];
     /** 답을 저장하는 버튼 문구 — 한 질문만 쓰는 흐름은 "다음 질문"을 약속하지 않는다. */
     saveLabel?: string;
+    /** 같은 초고 상태를 표준 편집기 또는 답 하나에 집중한 Quick 화면으로 보여준다. */
+    presentation?: 'standard' | 'quick';
   }>(),
-  { kind: 'free', draftStateLabel: '새 질문', pastIssues: () => [], saveLabel: '답 저장하고 다음 질문' },
+  {
+    kind: 'free',
+    draftStateLabel: '새 질문',
+    pastIssues: () => [],
+    saveLabel: '답 저장하고 다음 질문',
+    presentation: 'standard',
+  },
 );
 const emit = defineEmits<{
   'update:rounds': [Round[]];
