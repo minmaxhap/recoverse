@@ -29,6 +29,7 @@
           :key="issue.id"
           :issue="issue"
           :no="issues.length - index"
+          :fresh="issue.id === freshIssueId && showFresh"
           :class="{ fresh: issue.id === freshIssueId && showFresh }"
           @open="$emit('open', $event)"
         />
@@ -260,6 +261,10 @@ onBeforeUnmount(() => {
 @media (prefers-reduced-motion: reduce) {
   .covers {
     scroll-behavior: auto;
+  }
+
+  .covers > .fresh {
+    animation: none;
   }
 }
 

@@ -24,7 +24,7 @@
       aria-label="다시 발견 검색"
     />
 
-    <p v-if="groups.length > 0 && filteredGroups.length === 0" class="empty">찾는 결과가 없어요.</p>
+    <p v-if="hasSearch && filteredGroups.length === 0" class="empty">찾는 결과가 없어요.</p>
 
     <button v-for="g in filteredGroups" :key="g.key" class="redisRow" @click="$emit('open-group', g.key)">
       <span class="redisQ">{{ g.question }}</span>
@@ -57,7 +57,12 @@ const props = defineProps<{
 defineEmits<{ back: []; 'open-group': [string]; addSamples: []; removeSamples: [] }>();
 
 const searchQuery = ref('');
-const filteredGroups = computed(() => filterGroups(props.groups, searchQuery.value));
+const hasSearch = computed(() => searchQuery.value.trim().length > 0);
+const filteredGroups = computed(() => {
+  const matches = filterGroups(props.groups, searchQuery.value);
+  if (hasSearch.value || !props.moment) return matches;
+  return matches.filter((group) => group.key !== props.moment?.groupKey);
+});
 
 const momentLabel = computed(() => {
   const m = props.moment;

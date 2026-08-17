@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Issue } from '@recoverse/shared';
 import { pickRediscoveryMoment } from './rediscover';
 
-const TODAY = new Date('2026-08-05T09:00:00');
+const TODAY = new Date('2026-08-05T09:00:00Z');
 
 function issue(id: string, date: string, question = '올해 가장 큰 변화는?'): Issue {
   return {
@@ -26,12 +26,20 @@ describe('pickRediscoveryMoment', () => {
   });
 
   it('keeps quiet until enough time has passed, then speaks up', () => {
-    // Given / Then — 29일은 아직 이르고
-    expect(pickRediscoveryMoment([issue('recent', '2026-07-08')], TODAY)).toBeNull();
+    expect(pickRediscoveryMoment([issue('recent', '2026-07-07')], TODAY)).toBeNull();
 
     // 30일이 지나면 후보가 된다
     const moment = pickRediscoveryMoment([issue('aged', '2026-07-06')], TODAY);
     expect(moment?.question).toBe('올해 가장 큰 변화는?');
+  });
+
+  it('uses the KST date key on both sides of midnight', () => {
+    const beforeKstMidnight = new Date('2026-08-04T14:59:00Z');
+    const afterKstMidnight = new Date('2026-08-04T15:01:00Z');
+
+    expect(pickRediscoveryMoment([issue('jul-6', '2026-07-06')], beforeKstMidnight)).toBeNull();
+    expect(pickRediscoveryMoment([issue('jul-6', '2026-07-06')], afterKstMidnight)?.date).toBe('2026-07-06');
+    expect(pickRediscoveryMoment([issue('jul-7', '2026-07-07')], afterKstMidnight)).toBeNull();
   });
 
   it('still prefers a past year around today over an older random pick', () => {
