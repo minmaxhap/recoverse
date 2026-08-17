@@ -7,7 +7,7 @@
       <KindChips v-if="creating" v-model="kind" />
 
       <div v-if="!creating" class="fieldGroup">
-        <label class="fieldLabel" for="sessionCode">세션 코드</label>
+        <label class="fieldLabel" for="sessionCode">초대 코드</label>
         <input
           id="sessionCode"
           v-model="codeDraft"

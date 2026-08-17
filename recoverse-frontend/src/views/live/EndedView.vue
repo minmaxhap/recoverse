@@ -16,7 +16,7 @@
     <button class="cta d4" :disabled="isSaved" @click="onSave">
       {{ isSaved ? '책장에 꽂아뒀어요' : '내 책장에 이번 호 꽂기' }}
     </button>
-    <button v-if="isSaved" class="endLink" @click="$emit('done')">서재로 돌아가기</button>
+    <button v-if="isSaved" class="endLink" @click="$emit('done')">책장으로 돌아가기</button>
   </div>
 </template>
 

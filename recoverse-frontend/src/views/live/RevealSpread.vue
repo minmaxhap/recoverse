@@ -40,7 +40,7 @@
 
     <div v-if="isHost" class="stack hostActions">
       <button class="cta" :disabled="busy" @click="onNext">
-        다음 헤드라인으로 ({{ nextAsker }} 차례)
+        다음 질문으로 ({{ nextAsker }} 차례)
       </button>
       <button class="ghost" :disabled="busy" @click="onEnd">이번 호 마감하기</button>
     </div>
