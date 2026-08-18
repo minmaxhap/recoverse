@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 import type { Round } from '@recoverse/shared';
 import RoundEditor from './RoundEditor.vue';
+import RoundQuestionControls from './RoundQuestionControls.vue';
 import type { SoloIssueCurrentRoundDraft } from '../composables/useSoloIssueDraft';
 
 const currentRound: SoloIssueCurrentRoundDraft = {
@@ -46,7 +47,10 @@ describe('RoundEditor', () => {
     });
 
     // When — 팩 질문 묶음을 담는다(중복 포함)
-    wrapper.findComponent({ name: 'QuestionSuggest' }).vm.$emit('pickAll', ['Already here?', '새 질문 A', '새 질문 B']);
+    wrapper.findComponent(RoundQuestionControls).vm.$emit(
+      'add-questions',
+      ['Already here?', '새 질문 A', '새 질문 B'],
+    );
 
     // Then — 중복은 빠지고 나머지는 답 없는 라운드로 목차에 붙는다
     const emitted = wrapper.emitted('update:rounds')?.[0]?.[0] as Round[] | undefined;
@@ -72,6 +76,7 @@ describe('RoundEditor', () => {
           review: { lensId: 'photo', lensRevision: 1, scope: { type: 'recent' } },
         },
       },
+      attachTo: document.body,
     });
 
     // When
@@ -93,6 +98,8 @@ describe('RoundEditor', () => {
     });
     const currentRoundEvents = wrapper.emitted('update:currentRound') ?? [];
     expect(currentRoundEvents[currentRoundEvents.length - 1]?.[0]).toEqual({ question: '', formatId: '', answers: {} });
+    expect(document.activeElement).toBe(wrapper.get('input.field').element);
+    wrapper.unmount();
   });
 
   it('shows a read-only question and the same typed save path in quick presentation', async () => {

@@ -8,93 +8,19 @@
 
     <!-- 쓰는 칸이 먼저다. 목차를 위에 두면 질문을 저장할 때마다 목록이 자라 이 칸을 아래로 밀어낸다. -->
     <section class="qaBox" aria-labelledby="roundEditorTitle">
-      <div class="boxHead">
-        <div>
-          <span class="eyebrow red">{{ presentation === 'quick' ? 'QUICK NOTE' : `QUESTION ${rounds.length + 1}` }}</span>
-          <h2 v-if="presentation === 'quick'" id="roundEditorTitle" class="quickQuestion">
-            {{ currentRound.question }}
-          </h2>
-          <h2 v-else id="roundEditorTitle">다음 질문을 고르거나 직접 써요</h2>
-        </div>
-        <span class="draftState" aria-live="polite">{{ draftStateLabel }}</span>
-      </div>
-
-      <label v-if="presentation === 'standard'" class="fieldGroup">
-        <span class="fieldLabel">질문</span>
-        <input
-          ref="questionEl"
-          class="field"
-          :value="currentRound.question"
-          :readonly="!!currentRound.formatId"
-          placeholder="지금의 나에게 묻고 싶은 것"
-          @input="setQuestion"
-        />
-      </label>
-
-      <div v-if="presentation === 'standard'" class="formatChips" role="radiogroup" aria-label="회고 포맷">
-        <button
-          type="button"
-          role="radio"
-          :aria-checked="currentRound.formatId === ''"
-          class="fchip"
-          :class="{ active: currentRound.formatId === '' }"
-          @click="selectFormat('')"
-        >
-          자유 질문
-        </button>
-        <button
-          v-for="format in FORMATS"
-          :key="format.id"
-          type="button"
-          role="radio"
-          :aria-checked="currentRound.formatId === format.id"
-          class="fchip"
-          :class="{ active: currentRound.formatId === format.id }"
-          @click="selectFormat(format.id)"
-        >
-          {{ format.label }}
-        </button>
-      </div>
-
-      <!--
-        질문을 어디서 데려올지는 결정 하나다. 빈 화면에서 시작 카드와 링크가 같은 곳을
-        두 번씩 가리켜 문이 여섯 개로 보였다 — 한 버튼 뒤에 세 갈래로 접어 둔다.
-      -->
-      <div v-if="presentation === 'standard'" class="questionSources">
-        <button
-          v-if="!sourcesOpen"
-          type="button"
-          class="sourcesToggle"
-          :aria-expanded="false"
-          @click="sourcesOpen = true"
-        >질문 고르기</button>
-
-        <div v-else class="sourceList">
-          <button type="button" class="sourceRoute" @click="openSuggest">추천 질문</button>
-          <button type="button" class="sourceRoute" @click="$emit('browse-sets')">저장한 질문 세트</button>
-          <button v-if="pastIssues.length > 0" type="button" class="sourceRoute" @click="openPastPick">
-            지난 호 질문
-          </button>
-          <button type="button" class="sourceRoute close" @click="sourcesOpen = false">닫기</button>
-        </div>
-
-        <QuestionSuggest
-          ref="suggestEl"
-          :kind="kind"
-          :exclude="pastQuestions"
-          hide-trigger
-          @pick="setQuestion"
-          @pick-all="addQuestions"
-        />
-        <PastQuestionPick
-          v-if="pastIssues.length > 0"
-          ref="pastPickEl"
-          :issues="pastIssues"
-          :exclude="takenQuestions"
-          hide-trigger
-          @pick="setQuestion"
-        />
-      </div>
+      <RoundQuestionControls
+        ref="questionControlsEl"
+        :presentation="presentation"
+        :question-number="rounds.length + 1"
+        :current-round="currentRound"
+        :kind="kind"
+        :past-issues="pastIssues"
+        :past-questions="pastQuestions"
+        :draft-state-label="draftStateLabel"
+        @update:current-round="updateCurrentRound"
+        @add-questions="addQuestions"
+        @browse-sets="emit('browse-sets')"
+      />
 
       <div v-for="(name, i) in participants" :key="name" class="answerLine">
         <ParticipantDot :color="colorAt(i)" />
@@ -132,10 +58,9 @@
 import { computed, nextTick, ref } from 'vue';
 import type { Issue, Kind, Round } from '@recoverse/shared';
 import ParticipantDot from './ParticipantDot.vue';
-import PastQuestionPick from './PastQuestionPick.vue';
-import QuestionSuggest from './QuestionSuggest.vue';
 import RoundContentsList from './RoundContentsList.vue';
-import { FORMATS, getFormat } from '../data/formats';
+import RoundQuestionControls from './RoundQuestionControls.vue';
+import { getFormat } from '../data/formats';
 import { roundIsAnswered } from '../lib/issueBuilder';
 import { colorAt } from '../lib/palette';
 import type { SoloIssueCurrentRoundDraft } from '../lib/soloIssueDraftTypes';
@@ -169,29 +94,13 @@ const emit = defineEmits<{
 }>();
 
 const pastQuestions = computed(() => props.rounds.map((round) => round.question));
-const takenQuestions = computed(() => [...pastQuestions.value, props.currentRound.question]);
 
 const contentsEl = ref<InstanceType<typeof RoundContentsList> | null>(null);
-const questionEl = ref<HTMLInputElement | null>(null);
+const questionControlsEl = ref<InstanceType<typeof RoundQuestionControls> | null>(null);
 const answerEls = ref<(HTMLTextAreaElement | null)[]>([]);
-const suggestEl = ref<InstanceType<typeof QuestionSuggest> | null>(null);
-const pastPickEl = ref<InstanceType<typeof PastQuestionPick> | null>(null);
 
 function setAnswerEl(index: number, el: unknown): void {
   answerEls.value[index] = el instanceof HTMLTextAreaElement ? el : null;
-}
-
-// 질문 출처 목록은 고르는 동안만 편다 — 고른 뒤에는 쓰는 칸이 화면을 되찾는다.
-const sourcesOpen = ref(false);
-
-function openSuggest(): void {
-  sourcesOpen.value = false;
-  suggestEl.value?.open();
-}
-
-function openPastPick(): void {
-  sourcesOpen.value = false;
-  pastPickEl.value?.open();
 }
 
 const waitingIndexes = computed(() =>
@@ -202,7 +111,7 @@ const waitingCount = computed(() => waitingIndexes.value.length);
 // 바깥에서 이 화면으로 들어올 때 커서를 데려온다. 질문을 이미 받아 온 흐름(바로 쓰기)은
 // 답 칸으로 — 남은 일이 답 쓰기뿐인데 질문 칸에 커서를 두면 받은 질문을 지우기 쉽다.
 defineExpose({
-  focusQuestion: () => questionEl.value?.focus(),
+  focusQuestion: () => questionControlsEl.value?.focusQuestion(),
   focusAnswer: () => answerEls.value[0]?.focus(),
 });
 
@@ -226,22 +135,6 @@ function eventValue(event: Event): string {
 
 function updateCurrentRound(next: SoloIssueCurrentRoundDraft): void {
   emit('update:currentRound', next);
-}
-
-function setQuestion(value: string | Event): void {
-  updateCurrentRound({
-    ...props.currentRound,
-    question: typeof value === 'string' ? value : eventValue(value),
-  });
-}
-
-function selectFormat(id: string): void {
-  const format = getFormat(id);
-  updateCurrentRound({
-    ...props.currentRound,
-    formatId: id,
-    question: format ? format.prompt : props.currentRound.question,
-  });
 }
 
 function answerHint(name: string): string {
@@ -290,7 +183,7 @@ function addRound(): void {
   emit('update:rounds', [...props.rounds, round]);
   updateCurrentRound({ question: '', formatId: '', answers: {} });
   // 버튼이 약속한 "다음 질문" 자리로 커서를 옮긴다 — 모바일에서 키보드가 닫혔다 다시 열리지 않게.
-  void nextTick(() => questionEl.value?.focus());
+  void nextTick(() => questionControlsEl.value?.focusQuestion());
 }
 
 function moveRound(index: number, direction: -1 | 1): void {
@@ -361,114 +254,6 @@ function removeRound(index: number): void {
   background: var(--paper-card);
 }
 
-.boxHead {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
-}
-
-.boxHead > div {
-  min-width: 0;
-}
-
-.boxHead h2 {
-  margin: 3px 0 0;
-  font-family: var(--font-display);
-  font-size: 19px;
-  line-height: 1.4;
-}
-
-.draftState {
-  justify-self: start;
-  padding: 4px 6px;
-  border: 1px solid var(--hairline);
-  color: var(--dim);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-/* 닫혀 있을 땐 버튼 하나가 한 줄에, 펼쳐지면 그 패널이 한 줄을 다 쓴다. */
-.questionSources {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 4px 18px;
-}
-
-.sourcesToggle {
-  min-height: 44px;
-  padding: 8px 0;
-  background: none;
-  border: none;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--vermilion);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.sourceList {
-  flex: 1 0 100%;
-  display: grid;
-  border-top: 1px solid var(--hairline);
-}
-
-.sourceRoute {
-  min-height: 44px;
-  padding: 11px 2px;
-  text-align: left;
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--hairline);
-  color: inherit;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: color 0.12s ease;
-}
-
-.sourceRoute:hover {
-  color: var(--vermilion);
-}
-
-.sourceRoute.close {
-  color: var(--dim);
-  font-size: 13px;
-}
-
-.questionSources > :deep(.open) {
-  flex: 1 0 100%;
-}
-
-.formatChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.fchip {
-  padding: 6px 11px;
-  font-size: 12px;
-  font-weight: 700;
-  background: var(--paper);
-  color: var(--ink);
-  border: 1px solid var(--ink);
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
-}
-
-.fchip:hover,
-.fchip.active {
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.fchip:active {
-  transform: translate(1px, 1px);
-}
-
 .answerLine {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -484,14 +269,4 @@ function removeRound(index: number): void {
   min-width: 0;
 }
 
-@media (min-width: 520px) {
-  .boxHead {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-  }
-
-  .draftState {
-    justify-self: end;
-  }
-}
 </style>
