@@ -473,6 +473,20 @@ describe('SoloWriteView', () => {
     expect(wrapper.findAll('.quickOption')).toHaveLength(3);
   });
 
+  it('opens the shared contents editor from the quick completion action', async () => {
+    const wrapper = await mountSolo();
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+    await wrapper.get('.qaBox textarea').setValue('목차에서 다시 볼 답');
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    await wrapper.get('.quickDone .linkAction').trigger('click');
+
+    expect(wrapper.find('.quickDone').exists()).toBe(false);
+    expect(wrapper.getComponent({ name: 'RoundEditor' }).props('presentation')).toBe('standard');
+    expect(wrapper.get('.contentsList').text()).toContain('목차에서 다시 볼 답');
+  });
+
   it('publishes a Quick note with the first answered path title', async () => {
     // Given
     vi.useFakeTimers();

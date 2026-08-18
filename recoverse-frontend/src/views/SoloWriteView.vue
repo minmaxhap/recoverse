@@ -1,3 +1,4 @@
+<!-- // allow: SIZE_OK — one persisted Solo draft state machine; mode, autosave, carry-over, and publish share one closure -->
 <template>
   <AppShell variant="write">
     <BackHeader label="혼자 쓰기" @back="$emit('back')" />
@@ -44,22 +45,17 @@
     </p>
 
     <!-- 바로 쓰기에서 답을 남긴 뒤: 남은 선택은 "여기서 끝낼까, 하나 더 쓸까"뿐이다. -->
-    <section v-if="quickDone" class="quickDone" aria-labelledby="quickDoneTitle">
-      <span class="eyebrow red">ANSWER SAVED</span>
-      <h2 id="quickDoneTitle">답을 목차에 실었어요</h2>
-      <blockquote
-        v-if="latestQuickAnswer"
-        class="quickAnswer"
-        :aria-label="latestQuickAnswer"
-      >{{ latestQuickAnswer }}</blockquote>
-      <p class="helper">{{ publishHelp }}</p>
-      <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
-      <div class="quickDoneActions">
-        <button class="cta" :disabled="!canPublish || publishing" @click="publish">이대로 책장에 꽂기</button>
-        <button type="button" class="ghost" @click="continueQuick">질문 하나 더</button>
-        <button type="button" class="linkAction" @click="activeMode = 'free'">목차에서 질문과 답 고치기</button>
-      </div>
-    </section>
+    <SoloQuickCompletion
+      v-if="quickDone"
+      :latest-answer="latestQuickAnswer"
+      :publish-help="publishHelp"
+      :error="editorialError"
+      :can-publish="canPublish"
+      :publishing="publishing"
+      @publish="publish"
+      @continue="continueQuick"
+      @edit="activeMode = 'free'"
+    />
 
     <RoundEditor
       v-else
@@ -171,6 +167,7 @@ import PublishScene from '../components/PublishScene.vue';
 import QuestionSetPicker from '../components/QuestionSetPicker.vue';
 import RoundEditor from '../components/RoundEditor.vue';
 import SoloModePicker from '../components/solo/SoloModePicker.vue';
+import SoloQuickCompletion from '../components/solo/SoloQuickCompletion.vue';
 import SoloQuickPicker, { type QuickStartSelection } from '../components/solo/SoloQuickPicker.vue';
 import SoloReviewFlow, { type ReviewRoundInput } from '../components/solo/SoloReviewFlow.vue';
 import { createEmptyReviewDraft, type ReviewDraft, type SoloMode } from '../components/solo/reviewContent';
@@ -183,9 +180,9 @@ import {
   type SoloIssueDraftV2,
   type SoloGuidedPathState,
 } from '../composables/useSoloIssueDraft';
+import { useSoloIssuePresentation } from '../composables/useSoloIssuePresentation';
 import { useShelf } from '../composables/useShelf';
 import { issueFromDraft, roundIsAnswered } from '../lib/issueBuilder';
-import { deriveSoloTitle } from '../lib/soloTitle';
 
 // preset*: 다른 화면에서 재료를 들고 들어올 때 — 재발견의 질문 하나, 지난 호 상세의 구성 한 벌.
 const props = withDefaults(
@@ -233,40 +230,27 @@ const guidedPath = ref<SoloGuidedPathState | undefined>();
 const reviewDraft = ref<ReviewDraft>(createEmptyReviewDraft());
 
 const date = computed(() => kstTodayISO());
-const answeredRounds = computed(() => rounds.value.filter(roundIsAnswered));
-const defaultIssueTitle = computed(() =>
-  deriveSoloTitle({
-    kind: kind.value,
-    date: date.value,
-    mode: activeMode.value || 'free',
-    answeredRounds: answeredRounds.value,
-  }),
-);
-const issueTitle = computed(() => title.value.trim() || defaultIssueTitle.value);
 const participants = computed(() => [name.value.trim() || SOLO_DEFAULT_NAME]);
-const answeredRoundCount = computed(() => answeredRounds.value.length);
-const pendingRoundCount = computed(() => rounds.value.length - answeredRoundCount.value);
-const canPublish = computed(() => answeredRoundCount.value > 0);
-const latestQuickAnswer = computed(() => {
-  const participant = participants.value[0];
-  if (!participant) return '';
-  for (let index = rounds.value.length - 1; index >= 0; index -= 1) {
-    const round = rounds.value[index];
-    const answer = round?.answers[participant]?.text.trim() ?? '';
-    if (answer) return answer;
-  }
-  return '';
+const {
+  defaultIssueTitle,
+  issueTitle,
+  canPublish,
+  latestQuickAnswer,
+  publishHelp,
+  quickDone,
+} = useSoloIssuePresentation({
+  kind,
+  date,
+  mode: activeMode,
+  title,
+  participants,
+  rounds,
+  currentRound,
+  quickReady,
 });
 const kindLabelText = computed(() => KIND_LABELS[kind.value]);
 const sourceIssue = computed(() => shelf.issues.value.find((issue) => issue.id === sourceIssueId.value));
 const contentsQuestions = computed(() => rounds.value.map((round) => round.question));
-const publishHelp = computed(() => {
-  if (!canPublish.value) return '질문 하나와 답 하나를 목차에 실으면 발행할 수 있어요.';
-  if (pendingRoundCount.value > 0) {
-    return `지금 발행하면 답을 쓴 ${answeredRoundCount.value}개 질문만 실려요. 답 대기 중인 ${pendingRoundCount.value}개는 다음 호 초고로 남겨둬요.`;
-  }
-  return '지금 발행하면 이 호가 내 책장에 저장돼요.';
-});
 // 홈의 이어쓰기 peek와 같은 기준(draftHasContent)을 쓰도록 draft 객체로 판정한다.
 const hasDraftContent = computed(() => draftHasContent(buildDraft()));
 const draftStatusMessage = computed(() =>
@@ -287,19 +271,6 @@ const showModePicker = computed(() => draftReady.value && activeMode.value === '
 const editorVisible = computed(
   () => activeMode.value === 'free' || (activeMode.value === 'quick' && quickReady.value),
 );
-/**
- * 바로 쓰기에서 답을 저장해 쓰던 칸이 비워진 상태. 한 질문만 쓰기로 들어온 사람에게
- * 빈 질문 칸을 다시 내밀면 "또 써야 하나"로 읽힌다 — 끝낼지 이어갈지만 묻는다.
- * 초고 스키마는 그대로 두고 지금 값에서 파생한다.
- */
-const quickDone = computed(
-  () =>
-    activeMode.value === 'quick' &&
-    quickReady.value &&
-    canPublish.value &&
-    currentRound.value.question.trim() === '',
-);
-
 function savedTimeText(savedAt: string): string {
   return new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(
     new Date(savedAt),
@@ -740,57 +711,6 @@ function finishPublish(): void {
 .publishHelp {
   margin-top: 16px;
   text-align: center;
-}
-
-/* 답을 남긴 뒤의 갈림길 — 리뷰의 LENS COMPLETE와 같은 세로 목록. */
-.quickDone {
-  display: grid;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.quickDone h2 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 25px;
-  line-height: 1.45;
-}
-
-.quickAnswer {
-  display: -webkit-box;
-  margin: 6px 0 2px;
-  overflow: hidden;
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 20px;
-  line-height: 1.65;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.quickDoneActions {
-  display: grid;
-  gap: 9px;
-  margin-top: 8px;
-}
-
-.linkAction {
-  justify-self: start;
-  min-height: 44px;
-  padding: 8px 0;
-  background: none;
-  border: 0;
-  color: var(--dim);
-  font-family: inherit;
-  font-weight: 700;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.linkAction:hover {
-  color: var(--vermilion);
 }
 
 .resumeBanner {
