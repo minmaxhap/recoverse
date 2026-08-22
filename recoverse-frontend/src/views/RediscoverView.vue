@@ -10,13 +10,8 @@
       <span class="momentMeta">{{ moment.year }} · {{ moment.issueTitle }} →</span>
     </button>
 
-    <div v-if="groups.length === 0" class="stack">
-      <p class="empty">아직 책장이 비어 있어요. 세션을 열거나 혼자 엮은 호를 꽂으면 여기서 이어져요.</p>
-      <button class="ghost" @click="$emit('addSamples')">예시 지난 호 3권 꽂아보기</button>
-    </div>
-
     <input
-      v-else
+      v-if="groups.length > 0"
       v-model="searchQuery"
       class="field searchField"
       type="text"
@@ -33,6 +28,15 @@
         <b v-if="g.years.length > 1">{{ g.years.length }}개의 해</b>
       </span>
     </button>
+
+    <!-- 내 질문이 먼저, 예시는 그 아래. 진짜 재발견이 생기면 이 제안은 물러난다. -->
+    <div v-if="!hasRediscovery && !hasSamples" class="stack sampleInvite">
+      <p class="empty">
+        {{ groups.length === 0 ? '아직 책장이 비어 있어요.' : '여러 해에 걸친 질문은 아직 없어요.' }}
+        예시로 먼저 볼 수 있어요.
+      </p>
+      <button class="ghost" @click="$emit('addSamples')">예시 지난 호 3권 꽂아보기</button>
+    </div>
 
     <template v-if="hasSamples">
       <div class="gap" />
@@ -60,9 +64,19 @@ const searchQuery = ref('');
 const hasSearch = computed(() => searchQuery.value.trim().length > 0);
 const filteredGroups = computed(() => {
   const matches = filterGroups(props.groups, searchQuery.value);
-  if (hasSearch.value || !props.moment) return matches;
+  // 위 카드와 겹치지 않게 그 질문은 목록에서 뺀다. 다만 질문이 하나뿐이면 빼는 순간
+  // 목록이 통째로 사라져 화면이 침묵한다 — 그럴 땐 겹치더라도 남긴다. 카드는 한 해의
+  // 답을, 목록 줄은 몇 개의 해에 걸쳤는지를 말하므로 서로 다른 것을 알려준다.
+  if (hasSearch.value || !props.moment || matches.length <= 1) return matches;
   return matches.filter((group) => group.key !== props.moment?.groupKey);
 });
+
+/**
+ * 이 화면이 약속하는 것은 "다른 해의 나"인데, 여러 해에 걸친 질문이 아직 없으면
+ * 보여줄 게 없다. 예시 세 권이 그 약속을 3초에 설명하므로, 진짜 재발견이 생기기
+ * 전까지는 계속 권한다. 책장이 빌 때만 권하면 첫 호를 쓰는 순간 사라진다.
+ */
+const hasRediscovery = computed(() => props.groups.some((group) => group.years.length > 1));
 
 const momentLabel = computed(() => {
   const m = props.moment;
@@ -118,7 +132,13 @@ const momentTeaser = computed(() => {
 }
 .empty {
   font-size: 14px;
+  line-height: 1.6;
   color: var(--dim);
+}
+.sampleInvite {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--hairline);
 }
 .searchField {
   margin-bottom: 18px;
