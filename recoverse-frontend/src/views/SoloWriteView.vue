@@ -10,7 +10,9 @@
       <h1 class="pageTitle">오늘의 질문을 한 호로 엮어요</h1>
     </header>
 
-    <!-- 이어쓰기 안내는 맨 위, 무엇이 돌아왔는지와 함께 — 발행 버튼 옆에서 '복원됨'만 말하면 알 수 없다. -->
+    <!-- 이어서 열렸다는 사실은 홈 카드와 쓰는 칸의 저장 표시가 이미 두 번 말한다.
+         여기서 한 번 더 말하지 않는다. 다만 옛 임시 저장을 옮겨 온 것은 사용자가
+         모르는 일회성 사건이라 그때만 알린다. -->
     <p v-if="restoreNotice" class="statusBanner resumeBanner" role="status">
       <span>{{ restoreNotice }}</span>
       <button type="button" class="statusRetry" @click="restoreNotice = ''">닫기</button>
@@ -278,10 +280,10 @@ function savedTimeText(savedAt: string): string {
 }
 
 /**
- * 무엇이 돌아왔는지 말한다 — '복원됨'만으로는 뭐가 살아났는지 알 수 없다.
- * 복원 시점의 초고를 그대로 읽어 적으므로, 이어 쓰는 동안 문장이 바뀌지 않는다.
+ * 옛 형식으로 저장돼 있던 초고를 옮겨 왔을 때만 말한다. 사용자가 모르는 사이 일어난
+ * 일이라 한 번은 알려야 한다. 평범하게 이어 여는 것은 홈 카드와 저장 표시가 이미 말한다.
  */
-function describeRestored(draft: SoloIssueDraftV2, migrated: boolean): string {
+function describeMigrated(draft: SoloIssueDraftV2): string {
   const restored: string[] = [];
   if (draft.rounds.length > 0) restored.push(`목차 ${draft.rounds.length}개`);
   const writing =
@@ -290,10 +292,8 @@ function describeRestored(draft: SoloIssueDraftV2, migrated: boolean): string {
   if (writing) restored.push('쓰던 질문 1개');
   if (draft.title.trim() !== '') restored.push('표지 제목');
 
-  const lead = migrated ? '이전 임시 저장을 옮겨 왔어요' : '쓰던 호를 이어서 열었어요';
   const what = restored.length > 0 ? restored.join(' · ') : '아직 빈 초고';
-  const when = draft.updatedAt ? ` · ${savedTimeText(draft.updatedAt)} 저장` : '';
-  return `${lead} — ${what}${when}`;
+  return `이전 임시 저장을 옮겨 왔어요. ${what}가 그대로 있어요.`;
 }
 
 function buildDraft(): SoloIssueDraftV2 {
@@ -359,7 +359,7 @@ function restoreDraft(): void {
   let clearedStaleSource = false;
   if (restored.ok) {
     applyDraft(restored.draft);
-    restoreNotice.value = describeRestored(restored.draft, restored.migratedFromLegacy);
+    restoreNotice.value = restored.migratedFromLegacy ? describeMigrated(restored.draft) : '';
     if (sourceIssueId.value && !sourceIssue.value) {
       sourceIssueId.value = '';
       clearedStaleSource = true;

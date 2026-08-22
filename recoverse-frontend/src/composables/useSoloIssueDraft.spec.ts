@@ -442,7 +442,28 @@ describe('peekSoloIssueDraft', () => {
       updatedAt: '2026-07-19T12:00:00.000Z',
       savedRoundCount: 1,
       hasPendingQuestion: true,
+      // 쓰던 질문이 목차의 첫 질문보다 먼저다 — 지금 손이 가 있던 자리라서
+      leadQuestion: 'What scene stayed with me?',
+      answeredRoundCount: 1,
     });
+  });
+
+  it('separates questions that have an answer from ones still waiting', () => {
+    // Given — 답을 쓴 질문 하나, 답 없이 담아둔 질문 하나
+    const draft: SoloIssueDraftV2 = {
+      ...createDefaultSoloIssueDraft('2026-07-20T01:00:00.000Z'),
+      rounds: [
+        { asker: 'Mina', question: 'Answered?', answers: { Mina: { text: 'Yes' } } },
+        { asker: 'Mina', question: 'Waiting?', answers: {} },
+      ],
+    };
+    localStorage.setItem(SOLO_ISSUE_DRAFT_V2_KEY, JSON.stringify(draft));
+
+    // Then
+    const summary = peekSoloIssueDraft();
+    expect(summary.savedRoundCount).toBe(2);
+    expect(summary.answeredRoundCount).toBe(1);
+    expect(summary.leadQuestion).toBe('Answered?');
   });
 
   it('marks a draft resumable when only the in-progress question is filled', () => {
