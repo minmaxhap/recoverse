@@ -6,7 +6,7 @@
     <button v-if="moment" class="momentCard" @click="$emit('open-group', moment.groupKey)">
       <span class="eyebrow gold">{{ momentLabel }}</span>
       <span class="momentQ">{{ moment.question }}</span>
-      <span class="momentA">“{{ momentTeaser }}”</span>
+      <span class="momentA">{{ momentTeaser ? `“${momentTeaser}”` : '그때 뭐라고 답했을까요?' }}</span>
       <span class="momentMeta">{{ moment.year }} · {{ moment.issueTitle }} →</span>
     </button>
 
@@ -85,9 +85,10 @@ const momentLabel = computed(() => {
   return '오늘의 재발견';
 });
 
+// 표지와 같은 규칙 — 지난 해의 답은 타임라인에서 열어보게 두고 여기서 흘리지 않는다.
 const momentTeaser = computed(() => {
   const m = props.moment;
-  if (!m) return '';
+  if (!m || m.year !== String(new Date().getFullYear())) return '';
   const first = Object.values(m.answers).find((answer) => answer.text.trim());
   return first?.text ?? '';
 });

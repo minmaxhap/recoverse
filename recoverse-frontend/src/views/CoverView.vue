@@ -33,7 +33,7 @@
             >
               <span class="eyebrow gold">{{ momentLabel }}</span>
               <span class="momentQ">{{ moment.question }}</span>
-              <span class="momentA">“{{ momentTeaser }}”</span>
+              <span class="momentA">{{ momentTeaser ? `“${momentTeaser}”` : '그때 뭐라고 답했을까요?' }}</span>
               <span class="momentMeta"
                 >{{ moment.year }} · {{ moment.issueTitle }} →</span
               >
@@ -94,9 +94,11 @@ const momentLabel = computed(() => {
   return "오늘의 재발견";
 });
 
+// 지난 해의 답은 여기서 미리 보여주지 않는다 — 타임라인이 그 답을 봉인해 두는데
+// 표지가 먼저 읽어버리면 열어볼 이유가 사라진다. 올해 답만 인용한다.
 const momentTeaser = computed(() => {
   const m = props.moment;
-  if (!m) return "";
+  if (!m || m.year !== String(new Date().getFullYear())) return "";
   const first = Object.values(m.answers).find((answer) => answer.text.trim());
   return first?.text ?? "";
 });
