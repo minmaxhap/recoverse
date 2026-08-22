@@ -132,11 +132,13 @@ defineEmits<{ navigate: [CoverTarget] }>();
   color: var(--vermilion);
 }
 
+/* 목차 번호는 이 표지의 서명이다 — hairline은 카드 배경과 거의 같은 값이라
+   라이트 1.46:1, 다크 1.33:1로 사실상 사라졌다. 읽히는 것이 먼저다. */
 .pageNo {
   font-family: var(--font-display);
   font-size: 18px;
   font-weight: 700;
-  color: var(--hairline);
+  color: var(--dim);
   transition: color 0.15s ease, transform 0.15s ease;
 }
 
@@ -163,12 +165,13 @@ defineEmits<{ navigate: [CoverTarget] }>();
   color: var(--gold);
 }
 
+/* 잉크 블록 위에서는 잉크 위 보조색을 쓴다. --dim은 이 배경에서 2.43:1까지 떨어진다. */
 .entryBtn.featured.together .pageNo {
-  color: var(--dim);
+  color: var(--on-ink-dim);
 }
 
 .entryBtn.featured.together:hover .pageNo {
-  color: var(--gold);
+  color: var(--paper);
 }
 
 .entryTitle {
