@@ -25,9 +25,11 @@
             펼쳐보세요.
           </p>
 
+          <!-- 쓰던 초고가 있으면 이 카드는 펴지 않는다. 이어서 쓸 자리와 나란히 놓인
+               두 번째 카드는 고르는 일을 만들고, 지금 할 일은 하나여야 한다. -->
           <div class="momentSlot">
             <button
-              v-if="moment"
+              v-if="moment && !resumeDraft.resumable"
               class="momentCard"
               @click="$emit('open-group', moment.groupKey)"
             >
@@ -46,7 +48,22 @@
           :class="{ hasResume: resumeDraft.resumable }"
           aria-label="홈 목차와 지난 호"
         >
-          <CoverResumeDraft :summary="resumeDraft" @resume="$emit('navigate', 'solo')" />
+          <CoverResumeDraft
+            :summary="resumeDraft"
+            :error="discardError"
+            @resume="$emit('navigate', 'solo')"
+            @discard="discardDraft"
+          />
+          <!-- 접혔어도 사라지지는 않는다. 이어쓰기 아래 한 줄로 남아, 돌아올 자리를 지운다는
+               인상을 주지 않으면서 이어 쓰던 손을 먼저 세우지 않는다. -->
+          <button
+            v-if="moment && resumeDraft.resumable"
+            class="momentFolded"
+            @click="$emit('open-group', moment.groupKey)"
+          >
+            <span class="eyebrow gold">{{ momentLabel }}</span>
+            <span class="momentFoldedQ">{{ moment.question }} →</span>
+          </button>
           <CoverEntryList @navigate="$emit('navigate', $event)" />
           <CoverBackIssues
             :issues="issues"
@@ -61,14 +78,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import type { Issue } from "@recoverse/shared";
 import AppShell from "../components/AppShell.vue";
 import CoverBackIssues from "../components/CoverBackIssues.vue";
 import CoverEntryList from "../components/CoverEntryList.vue";
 import CoverResumeDraft from "../components/CoverResumeDraft.vue";
 import SettingsPanel from "../components/SettingsPanel.vue";
-import { peekSoloIssueDraft } from "../composables/useSoloIssueDraft";
+import { clearSoloIssueDraft, peekSoloIssueDraft } from "../composables/useSoloIssueDraft";
 import type { RediscoveryMoment } from "../lib/rediscover";
 
 const props = withDefaults(
@@ -105,8 +122,18 @@ const momentTeaser = computed(() => {
 
 // 홈에 들어올 때마다 저장소를 읽기 전용으로 훑는다. CoverView는 mode가 cover일 때마다
 // key로 재마운트되므로(App.vue), 발행으로 드래프트를 비운 뒤 돌아오면 카드가 사라진다.
-const issueDraft = peekSoloIssueDraft();
-const resumeDraft = issueDraft;
+// 여기서 버릴 수도 있으므로 값은 붙잡아 두고, 버린 뒤 다시 훑는다.
+const resumeDraft = ref(peekSoloIssueDraft());
+const discardError = ref('');
+
+function discardDraft(): void {
+  if (!clearSoloIssueDraft().ok) {
+    discardError.value = '초고를 비우지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해주세요.';
+    return;
+  }
+  discardError.value = '';
+  resumeDraft.value = peekSoloIssueDraft();
+}
 </script>
 
 <style scoped>
@@ -153,6 +180,34 @@ const resumeDraft = issueDraft;
 .momentSlot:empty {
   display: none;
 }
+/* 접힌 재발견 — 카드가 아니라 한 줄. 잉크 보더 없이 왼쪽 실선만으로 자리만 표시한다. */
+.momentFolded {
+  width: 100%;
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+  text-align: left;
+  padding: 10px 12px;
+  background: none;
+  border: 0;
+  border-left: 2px solid var(--vermilion);
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.momentFolded:hover .momentFoldedQ {
+  color: var(--vermilion);
+}
+
+.momentFoldedQ {
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--dim-strong);
+  overflow-wrap: anywhere;
+}
+
 .momentCard:hover {
   border-color: var(--vermilion);
   box-shadow: inset 0 -3px 0 var(--vermilion);

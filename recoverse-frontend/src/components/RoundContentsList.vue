@@ -67,7 +67,7 @@ import type { Round } from '@recoverse/shared';
 import { roundIsAnswered } from '../lib/issueBuilder';
 
 const props = defineProps<{
-  rounds: Round[];
+  rounds: readonly Round[];
   participants: string[];
   editable?: boolean;
 }>();

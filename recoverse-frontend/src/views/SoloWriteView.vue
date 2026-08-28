@@ -183,9 +183,9 @@ import SoloQuickPicker, { type QuickStartSelection } from '../components/solo/So
 import SoloReviewFlow, { type ReviewRoundInput } from '../components/solo/SoloReviewFlow.vue';
 import { createEmptyReviewDraft, type ReviewDraft, type SoloMode } from '../components/solo/reviewContent';
 import {
+  createDefaultSoloIssueDraft,
   draftHasContent,
   SOLO_DEFAULT_NAME,
-  SOLO_ISSUE_DRAFT_VERSION,
   useSoloIssueDraft,
   type SoloIssueCurrentRoundDraft,
   type SoloIssueDraftV2,
@@ -206,16 +206,62 @@ const emit = defineEmits<{ back: []; published: [string]; navigate: ['sets'] }>(
 
 const shelf = useShelf();
 const questionSets = useQuestionSets();
-const kind = ref<Kind>('free');
-const title = ref('');
-const name = ref(SOLO_DEFAULT_NAME);
-const rounds = ref<Round[]>([]);
-const currentRound = ref<SoloIssueCurrentRoundDraft>({ question: '', formatId: '', answers: {} });
+
+/**
+ * 초고는 객체 하나다. 예전에는 같은 초고를 ref 열 개로 흩어 두고 buildDraft·applyDraft로
+ * 매번 조립했는데, 칸을 하나 더하려면 다섯 곳을 고쳐야 했고 한 곳을 빠뜨리면 화면은 멀쩡한 채
+ * 저장만 조용히 빠졌다. 이제 저장되는 것과 화면이 읽는 것이 같은 객체다.
+ *
+ * 칸마다 쓰기 가능한 computed를 두는 이유는 v-model과 기존 호출부(`kind.value = ...`)를
+ * 그대로 두기 위해서다 — 담기는 그릇만 바뀌고 쓰는 법은 그대로다.
+ */
+const draft = ref<SoloIssueDraftV2>({
+  ...createDefaultSoloIssueDraft(new Date().toISOString()),
+  name: SOLO_DEFAULT_NAME,
+});
+
+function setDraft(patch: Partial<SoloIssueDraftV2>): void {
+  draft.value = { ...draft.value, ...patch };
+}
+
+const kind = computed<Kind>({ get: () => draft.value.kind, set: (value) => setDraft({ kind: value }) });
+const title = computed<string>({ get: () => draft.value.title, set: (value) => setDraft({ title: value }) });
+const name = computed<string>({ get: () => draft.value.name, set: (value) => setDraft({ name: value }) });
+const sourceIssueId = computed<string>({
+  get: () => draft.value.sourceIssueId,
+  set: (value) => setDraft({ sourceIssueId: value }),
+});
+const rounds = computed<readonly Round[]>({
+  get: () => draft.value.rounds,
+  set: (value) => setDraft({ rounds: value }),
+});
+const currentRound = computed<SoloIssueCurrentRoundDraft>({
+  get: () => draft.value.currentRound,
+  set: (value) => setDraft({ currentRound: value }),
+});
+// 아래 넷은 저장된 JSON에서 빠져 있을 수 있는 칸이다. 읽는 자리에서 한 번만 메워
+// 화면 쪽 코드가 `?? ''`를 되풀이하지 않게 한다.
+const activeMode = computed<SoloMode | ''>({
+  get: () => draft.value.soloMode ?? '',
+  set: (value) => setDraft({ soloMode: value }),
+});
+const quickReady = computed<boolean>({
+  get: () => draft.value.quickReady ?? false,
+  set: (value) => setDraft({ quickReady: value }),
+});
+const guidedPath = computed<SoloGuidedPathState | undefined>({
+  get: () => draft.value.guidedPath,
+  set: (value) => setDraft({ guidedPath: value }),
+});
+const reviewDraft = computed<ReviewDraft>({
+  get: () => draft.value.reviewComposer ?? createEmptyReviewDraft(),
+  set: (value) => setDraft({ reviewComposer: value }),
+});
+
 const publishError = ref('');
 const restoreNotice = ref('');
 const importNotice = ref('');
 const publishing = ref(false);
-const sourceIssueId = ref('');
 // 방금 담은 질문들 — 되돌리기가 그 줄만 골라 뺀다.
 const lastImported = ref<string[]>([]);
 // 발행하며 다음 호로 넘긴 답 대기 질문 수 — 발행 연출에서 어디로 갔는지 알린다.
@@ -241,11 +287,6 @@ function openSets(): void {
   void nextTick(() => setsEl.value?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
 }
 
-const activeMode = ref<SoloMode | ''>('');
-const quickReady = ref(false);
-const guidedPath = ref<SoloGuidedPathState | undefined>();
-const reviewDraft = ref<ReviewDraft>(createEmptyReviewDraft());
-
 const date = computed(() => kstTodayISO());
 const participants = computed(() => [name.value.trim() || SOLO_DEFAULT_NAME]);
 const {
@@ -269,7 +310,7 @@ const kindLabelText = computed(() => KIND_LABELS[kind.value]);
 const sourceIssue = computed(() => shelf.issues.value.find((issue) => issue.id === sourceIssueId.value));
 const contentsQuestions = computed(() => rounds.value.map((round) => round.question));
 // 홈의 이어쓰기 peek와 같은 기준(draftHasContent)을 쓰도록 draft 객체로 판정한다.
-const hasDraftContent = computed(() => draftHasContent(buildDraft()));
+const hasDraftContent = computed(() => draftHasContent(draft.value));
 const draftStatusMessage = computed(() =>
   soloDraft.savedAt.value && soloDraft.status.value === 'saved' ? `저장됨 ${savedTimeText(soloDraft.savedAt.value)}` : '',
 );
@@ -311,33 +352,17 @@ function describeMigrated(draft: SoloIssueDraftV2): string {
   return `이전 임시 저장을 옮겨 왔어요. ${what}가 그대로 있어요.`;
 }
 
-function buildDraft(): SoloIssueDraftV2 {
-  return {
-    version: SOLO_ISSUE_DRAFT_VERSION,
-    updatedAt: new Date().toISOString(),
-    kind: kind.value,
-    title: title.value,
-    name: name.value,
-    sourceIssueId: sourceIssueId.value,
-    rounds: rounds.value,
-    currentRound: currentRound.value,
-    soloMode: activeMode.value,
-    quickReady: quickReady.value,
-    guidedPath: guidedPath.value,
-    reviewComposer: reviewDraft.value,
-  };
-}
-
-/** 발행 뒤 남길 초고 — 답 대기 질문만 들고 다음 호로 넘어간다(제목은 새로 짓게 비운다). */
+/**
+ * 발행 뒤 남길 초고 — 답 대기 질문만 들고 다음 호로 넘어간다(제목은 새로 짓게 비운다).
+ * 종류와 이름은 펼침으로 따라온다: 다음 호도 같은 사람이 같은 종류로 쓸 가능성이 높다.
+ */
 function carryOverDraft(carried: Round[]): SoloIssueDraftV2 {
   const keepsReviewComposer =
     activeMode.value === 'review' && reviewDraft.value.phase !== 'lens' && reviewDraft.value.phase !== 'complete';
   return {
-    version: SOLO_ISSUE_DRAFT_VERSION,
+    ...draft.value,
     updatedAt: new Date().toISOString(),
-    kind: kind.value,
     title: '',
-    name: name.value,
     sourceIssueId: '',
     rounds: carried,
     currentRound: { question: '', formatId: '', answers: {} },
@@ -348,24 +373,8 @@ function carryOverDraft(carried: Round[]): SoloIssueDraftV2 {
   };
 }
 
-function applyDraft(draft: SoloIssueDraftV2): void {
-  kind.value = draft.kind;
-  title.value = draft.title;
-  name.value = draft.name || SOLO_DEFAULT_NAME;
-  sourceIssueId.value = draft.sourceIssueId;
-  rounds.value = [...draft.rounds];
-  currentRound.value = draft.currentRound;
-  // 쓴 것이 없으면 시작 방식부터 다시 묻는다 — 실수로 한 번 누른 모드가 다음 방문의
-  // 첫 화면을 대신 정해버리면, 다른 입구를 고를 기회 자체가 사라진다.
-  const resumable = draftHasContent(draft);
-  activeMode.value = resumable ? draft.soloMode ?? '' : '';
-  quickReady.value = resumable ? draft.quickReady ?? false : false;
-  guidedPath.value = draft.guidedPath;
-  reviewDraft.value = draft.reviewComposer ?? createEmptyReviewDraft();
-}
-
 function persistDraft(): void {
-  const result = soloDraft.save(buildDraft());
+  const result = soloDraft.save({ ...draft.value, updatedAt: new Date().toISOString() });
   if (!result.ok) restoreNotice.value = '';
 }
 
@@ -373,7 +382,16 @@ function restoreDraft(): void {
   const restored = soloDraft.load({ legacy: { kind: kind.value, roundCount: rounds.value.length } });
   let clearedStaleSource = false;
   if (restored.ok) {
-    applyDraft(restored.draft);
+    // 쓴 것이 없으면 시작 방식부터 다시 묻는다 — 실수로 한 번 누른 모드가 다음 방문의
+    // 첫 화면을 대신 정해버리면, 다른 입구를 고를 기회 자체가 사라진다.
+    const resumable = draftHasContent(restored.draft);
+    draft.value = {
+      ...restored.draft,
+      name: restored.draft.name || SOLO_DEFAULT_NAME,
+      rounds: [...restored.draft.rounds],
+      soloMode: resumable ? restored.draft.soloMode ?? '' : '',
+      quickReady: resumable ? restored.draft.quickReady ?? false : false,
+    };
     restoreNotice.value = restored.migratedFromLegacy ? describeMigrated(restored.draft) : '';
     if (sourceIssueId.value && !sourceIssue.value) {
       sourceIssueId.value = '';
@@ -431,8 +449,9 @@ function applyPresetQuestion(): void {
   }
 }
 
+// 초고가 하나뿐이라 지켜볼 것도 하나다 — 칸을 더해도 이 줄은 그대로다.
 watch(
-  [kind, title, name, sourceIssueId, rounds, currentRound, activeMode, quickReady, guidedPath, reviewDraft],
+  draft,
   () => {
     if (draftReady.value) persistDraft();
   },
@@ -602,15 +621,19 @@ function publish(): void {
   // 방금 꽂혀서 늘어난 권수가 곧 이 호의 번호다. 책장 표지의 No.와 같은 셈법.
   publishedNo.value = shelf.issues.value.length;
   // 화면 상태를 다음 호로 갈아끼우는 동안 자동 저장을 멈춘다 — 방금 쓴 초고를 덮어쓰지 않게.
+  // 화면은 시작 방식부터 다시 묻는다(soloMode: ''). 저장된 초고는 carryOverDraft가 따로 정하며,
+  // 리뷰를 쓰던 중이었다면 그쪽만 렌즈를 붙잡고 있는다.
   draftReady.value = false;
-  rounds.value = carried;
-  title.value = '';
-  sourceIssueId.value = '';
-  currentRound.value = { question: '', formatId: '', answers: {} };
-  activeMode.value = '';
-  quickReady.value = false;
-  guidedPath.value = undefined;
-  reviewDraft.value = createEmptyReviewDraft();
+  setDraft({
+    title: '',
+    sourceIssueId: '',
+    rounds: carried,
+    currentRound: { question: '', formatId: '', answers: {} },
+    soloMode: '',
+    quickReady: false,
+    guidedPath: undefined,
+    reviewComposer: createEmptyReviewDraft(),
+  });
 
   publishing.value = true;
   window.setTimeout(finishPublish, 1450);

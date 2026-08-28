@@ -33,8 +33,50 @@ describe('CoverResumeDraft', () => {
     expect(wrapper.text()).toContain('2026 독서 특집호');
     expect(wrapper.text()).toContain('질문 2개 실었어요');
 
-    await wrapper.find('button').trigger('click');
+    await wrapper.get('.resumeCard').trigger('click');
     expect(wrapper.emitted('resume')).toHaveLength(1);
+  });
+
+  it('asks before throwing the draft away, and lets the writer back out', async () => {
+    // Given: 초고는 하나뿐이라 버리기가 되돌릴 수 없다 — 그래서 한 번 묻는다
+    const wrapper = mount(CoverResumeDraft, { props: { summary: summary({ savedRoundCount: 1 }) } });
+
+    // When
+    await wrapper.get('.discardLink').trigger('click');
+
+    // Then
+    expect(wrapper.get('.discardConfirm').text()).toContain('쓰던 초고를 버릴까요?');
+    expect(wrapper.emitted('discard')).toBeUndefined();
+
+    // When: 마음이 바뀌면 그 자리에서 물러난다
+    await wrapper.get('.discardNo').trigger('click');
+
+    // Then
+    expect(wrapper.find('.discardConfirm').exists()).toBe(false);
+    expect(wrapper.find('.discardLink').exists()).toBe(true);
+    expect(wrapper.emitted('discard')).toBeUndefined();
+
+    // When
+    await wrapper.get('.discardLink').trigger('click');
+    await wrapper.get('.discardYes').trigger('click');
+
+    // Then
+    expect(wrapper.emitted('discard')).toHaveLength(1);
+  });
+
+  it('never puts the discard control inside the button that resumes writing', () => {
+    // 이어 쓰려던 손이 버리기를 스치면 안 된다 — 카드 안에 넣으면 중첩 버튼이라 눌리는 곳도 불분명해진다.
+    const wrapper = mount(CoverResumeDraft, { props: { summary: summary() } });
+    expect(wrapper.get('.resumeCard').find('.discardLink').exists()).toBe(false);
+  });
+
+  it('says so when the draft could not be emptied', () => {
+    const wrapper = mount(CoverResumeDraft, {
+      props: { summary: summary(), error: '초고를 비우지 못했어요.' },
+    });
+
+    expect(wrapper.get('[role="alert"]').text()).toBe('초고를 비우지 못했어요.');
+    expect(wrapper.find('.discardLink').exists()).toBe(false);
   });
 
   it('says a question is still waiting rather than claiming it was carried', () => {

@@ -1,18 +1,38 @@
 <template>
-  <button v-if="summary.resumable" class="resumeCard" type="button" @click="$emit('resume')">
-    <span class="eyebrow red">이어서 쓰기</span>
-    <span class="resumeTitle">{{ titleText }}</span>
-    <span class="resumeMeta">{{ metaText }} →</span>
-  </button>
+  <div v-if="summary.resumable" class="resumeSlot">
+    <button class="resumeCard" type="button" @click="$emit('resume')">
+      <span class="eyebrow red">이어서 쓰기</span>
+      <span class="resumeTitle">{{ titleText }}</span>
+      <span class="resumeMeta">{{ metaText }} →</span>
+    </button>
+
+    <!-- 초고는 하나뿐이라, 마음에 안 드는 것을 버리지 못하면 질문을 손으로 지워야 했다.
+         묻는 자리를 카드 밖에 두는 이유는 이어 쓰려던 손이 버리기를 스치지 않게 하기 위해서다. -->
+    <p v-if="error" class="resumeError" role="alert">{{ error }}</p>
+    <div v-else-if="confirming" class="discardConfirm" role="group" aria-label="초고 버리기 확인">
+      <span>쓰던 초고를 버릴까요?</span>
+      <button type="button" class="discardYes" @click="$emit('discard')">버리기</button>
+      <button type="button" class="discardNo" @click="confirming = false">그대로 두기</button>
+    </div>
+    <button v-else type="button" class="discardLink" @click="confirming = true">새로 시작</button>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { KIND_LABELS } from '@recoverse/shared';
 import type { SoloIssueDraftSummary } from '../composables/useSoloIssueDraft';
 
-const props = defineProps<{ readonly summary: SoloIssueDraftSummary }>();
-defineEmits<{ resume: [] }>();
+const props = withDefaults(
+  defineProps<{ readonly summary: SoloIssueDraftSummary; readonly error?: string }>(),
+  { error: '' },
+);
+defineEmits<{ resume: []; discard: [] }>();
+
+const confirming = ref(false);
+
+// 버려졌든 다른 초고로 갈렸든, 카드가 달라지면 묻던 상태는 남지 않는다.
+watch(() => props.summary.updatedAt, () => { confirming.value = false; });
 
 /**
  * 표지 제목 → 쓰던 질문 → 종류 순으로 부른다. "자유 쓰는 중"은 종류 이름일 뿐이라
@@ -55,13 +75,19 @@ function relativeTime(iso: string): string {
 </script>
 
 <style scoped>
+.resumeSlot {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
 .resumeCard {
   width: 100%;
   display: grid;
   gap: 5px;
   text-align: left;
   padding: 14px;
-  margin-bottom: 20px;
   border: 1px solid var(--ink);
   border-left: 3px solid var(--vermilion);
   background: var(--paper-card);
@@ -88,9 +114,65 @@ function relativeTime(iso: string): string {
   color: var(--dim);
 }
 
+.discardLink,
+.discardNo {
+  min-height: 44px;
+  padding: 8px 0;
+  background: none;
+  border: 0;
+  color: var(--dim-strong);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.discardLink:hover,
+.discardNo:hover {
+  color: var(--vermilion);
+}
+
+.discardConfirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dim-strong);
+}
+
+.discardYes {
+  min-height: 44px;
+  padding: 8px 13px;
+  background: var(--paper-card);
+  border: 1px solid var(--vermilion);
+  color: var(--vermilion);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.discardYes:hover {
+  background: var(--vermilion);
+  color: var(--vermilion-ink);
+}
+
+.resumeError {
+  margin: 0;
+  color: var(--vermilion);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
 @media (min-width: 1024px) {
-  .resumeCard {
+  .resumeSlot {
     margin-bottom: 0;
+  }
+  .resumeCard {
     padding: clamp(10px, 1.6vh, 14px) 14px;
   }
   .resumeTitle {
