@@ -10,7 +10,7 @@
     <template v-if="draft.phase === 'lens'">
       <span class="eyebrow red">REVIEW LENS</span>
       <h2 id="lensTitle" ref="flowTitle" tabindex="-1">무엇을 펼쳐볼까요?</h2>
-      <p class="reviewLead">한꺼번에 고르지 않아도 돼요. 지금 눈에 걸리는 대상 하나만 선택하세요.</p>
+      <p class="reviewLead">지금 눈에 걸리는 것 하나만.</p>
       <div class="lensCatalog" aria-labelledby="lensTitle">
         <button v-for="lens in REVIEW_LENSES" :key="lens.id" type="button" class="lensOption" @click="selectLens(lens.id)">
           <b>{{ lens.title }}</b><small>{{ lens.promise }}</small>
@@ -50,10 +50,12 @@
     <template v-else-if="draft.phase === 'items' && selectedLens">
       <span class="eyebrow red">{{ selectedLens.title }} · {{ scopeName }}</span>
       <h2 ref="flowTitle" tabindex="-1">기억할 장면을 1~3개 남겨요</h2>
-      <p class="reviewLead">교훈이나 결론은 없어도 괜찮아요. 맛있어서, 웃겨서, 그냥 기억하고 싶어서도 충분해요.</p>
+      <!-- 안심시키는 문장을 길게 늘어놓으면 오히려 못 미더워 보인다. 이유를 나열해 끊는다. -->
+      <p class="reviewLead">맛있어서. 웃겨서. 그냥.</p>
       <div class="reviewItems">
         <fieldset v-for="(item, index) in draft.items" :key="item.id" class="reviewItem">
-          <legend>{{ String(index + 1).padStart(2, '0') }}</legend>
+          <!-- 장면은 차례가 아니라 목록이다. 번호를 붙이면 목차의 번호가 값싸진다. -->
+          <legend class="srOnly">장면 {{ index + 1 }}</legend>
           <label class="fieldGroup">
             <span class="fieldLabel">{{ selectedLens.selectionPrompt }}</span>
             <input class="field itemLabel" :value="item.label" placeholder="짧은 이름이나 장면" @input="updateItem(index, 'label', $event)" />
@@ -273,7 +275,6 @@ function goBack(): void {
 .sourceGuide small { color: var(--dim); font-size: 12px; }
 .reviewItems { display: grid; gap: 12px; }
 .reviewItem { min-width: 0; display: grid; gap: 12px; margin: 0; padding: 14px; border: 1px solid var(--ink); background: var(--paper-card); }
-.reviewItem legend { padding: 0 6px; color: var(--vermilion); font-family: var(--font-display); font-weight: 700; }
 .removeItem, .addItem, .editContents { min-height: 44px; justify-self: start; padding: 8px 0; background: none; border: 0; color: var(--dim); font-weight: 700; text-decoration: underline; cursor: pointer; }
 .removeItem:hover, .addItem:hover, .editContents:hover { color: var(--vermilion); }
 .completeActions { display: grid; gap: 9px; margin-top: 8px; }

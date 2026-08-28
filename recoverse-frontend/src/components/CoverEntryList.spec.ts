@@ -13,8 +13,10 @@ describe('CoverEntryList', () => {
     const featured = wrapper.findAll('.entryBtn.featured').map((button) => button.text());
     expect(featured).toHaveLength(2);
     expect(featured[0]).toContain('친구들과 같이 해보기');
-    expect(featured[0]).toContain('3명부터 답의 주인을 맞히는 ‘누가 썼게’가 열려요.');
+    expect(featured[0]).toContain('3명부터');
     expect(featured[1]).toContain('혼자 쓰기');
+    // 이름이 곧 설명인 줄은 부제를 비워 세 줄이 같은 박자로 끝나지 않게 한다.
+    expect(wrapper.findAll('.entryBtn')[1].find('.entrySub').exists()).toBe(false);
     expect(wrapper.get('.joinLine').text()).toContain('초대 코드를 받았나요?');
   });
 

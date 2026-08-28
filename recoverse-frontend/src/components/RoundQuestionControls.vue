@@ -5,7 +5,10 @@
       <h2 v-if="presentation === 'quick'" id="roundEditorTitle" class="quickQuestion">
         {{ currentRound.question }}
       </h2>
-      <h2 v-else id="roundEditorTitle">다음 질문을 고르거나 직접 써요</h2>
+      <!-- 첫 질문 앞에서 "다음 질문"이라고 하면 있지도 않은 앞 질문을 가리킨다. -->
+      <h2 v-else id="roundEditorTitle">
+        {{ questionNumber === 1 ? '첫 질문을 고르거나 직접 써요' : '다음 질문을 고르거나 직접 써요' }}
+      </h2>
     </div>
     <span class="draftState" aria-live="polite">{{ draftStateLabel }}</span>
   </div>

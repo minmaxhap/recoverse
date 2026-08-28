@@ -4,7 +4,7 @@
 
     <template v-if="iGuessed">
       <div class="center small" role="status">
-        <p class="waiting">추측 완료 — {{ state.guessed.length }}/{{ state.players.length }}명</p>
+        <p class="waiting">{{ state.guessed.length }}/{{ state.players.length }}명 추측했어요</p>
         <p v-if="pendingGuessNames.length > 0" class="fineprint">{{ pendingGuessNames.join(', ') }} 님 추측 기다리는 중</p>
         <p class="fineprint">모두 추측하면 작성자가 공개돼요</p>
         <p v-if="error" class="error" role="alert">{{ error }}</p>
