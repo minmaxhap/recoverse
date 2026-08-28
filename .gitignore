@@ -1,9 +1,18 @@
 /.claude
 
+# 에이전트 작업 폴더 — 계획·초안·수집한 근거가 쌓이는 곳
+/.omo
+
 node_modules
 dist
 *.log
 .DS_Store
+
+# pnpm 콘텐츠 저장소 인덱스
+/.pnpm-store
+
+# 화면을 확인하며 남긴 스크린샷과 로그 — 필요하면 다시 찍는다
+/recoverse-frontend/evidence
 
 # wrangler 로컬 상태 (dev용 KV 시뮬레이터)
 .wrangler
