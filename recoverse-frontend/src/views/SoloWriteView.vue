@@ -7,40 +7,71 @@
       <h1 class="pageTitle">오늘의 질문을 한 호로 엮어요</h1>
     </header>
 
+    <!-- 이어쓰기 안내는 맨 위, 무엇이 돌아왔는지와 함께 — 발행 버튼 옆에서 '복원됨'만 말하면 알 수 없다. -->
+    <p v-if="restoreNotice" class="statusBanner resumeBanner" role="status">
+      <span>{{ restoreNotice }}</span>
+      <button type="button" class="statusRetry" @click="restoreNotice = ''">닫기</button>
+    </p>
+
+    <SoloModePicker v-if="showModePicker" @select="selectMode" />
+
+    <SoloQuickPicker
+      v-else-if="activeMode === 'quick' && !quickReady"
+      @back="resetMode"
+      @choose="chooseQuickStart"
+    />
+
+    <SoloReviewFlow
+      v-else-if="activeMode === 'review'"
+      :draft="reviewDraft"
+      @back="resetMode"
+      @update:draft="updateReviewDraft"
+      @complete="completeReviewLens"
+      @edit="openEditor"
+      @publish="publishReview"
+    />
+
+    <template v-if="editorVisible">
     <details
-      v-if="shelf.issues.value.length"
       class="disclosure"
       :open="sourceOpen"
       @toggle="sourceOpen = ($event.target as HTMLDetailsElement).open"
     >
       <summary class="disclosureSummary">
-        <span class="eyebrow red">FROM THE SHELF</span>
-        <span class="disclosureText">지난 호에서 질문 가져오기</span>
+        <span class="eyebrow red">QUESTION SET</span>
+        <span class="disclosureText">질문 세트 불러오기 · 만들기</span>
         <span class="disclosureChevron" aria-hidden="true">＋</span>
       </summary>
       <div class="disclosureBody">
-        <label class="fieldGroup">
-          <span class="fieldLabel">질문을 가져올 호</span>
-          <!-- 고르는 즉시 목차에 담긴다 — 아래에서 한 번 더 고르게 하지 않는다. -->
-          <select :value="sourceIssueId" class="field selectField" @change="chooseSourceIssue">
-            <option value="">새 질문으로 시작</option>
-            <option v-for="issue in shelf.issues.value" :key="issue.id" :value="issue.id">
-              {{ issue.title }} · 질문 {{ issue.rounds.length }}개
-            </option>
-          </select>
-        </label>
-        <p v-if="importNotice" class="helper" role="status">{{ importNotice }}</p>
+        <QuestionSetPicker
+          :issues="shelf.issues.value"
+          :contents="contentsQuestions"
+          :source-issue-id="sourceIssueId"
+          :default-name="defaultIssueTitle"
+          @update:source-issue-id="sourceIssueId = $event"
+          @load="importQuestions"
+          @manage="$emit('navigate', 'sets')"
+        />
       </div>
     </details>
 
+    <!-- 안내는 목록 밖에 둔다 — 담은 뒤 목록이 접혀도 무엇이 담겼는지는 계속 보이게. -->
+    <p v-if="importNotice" class="importNotice" role="status">
+      <span class="helper">{{ importNotice }}</span>
+      <button v-if="lastImported.length > 0" type="button" class="undo" @click="undoImport">되돌리기</button>
+    </p>
+
     <RoundEditor
+      ref="editorEl"
       :participants="participants"
       :rounds="rounds"
       :current-round="currentRound"
       :kind="kind"
       :draft-state-label="draftStateLabel"
+      :past-issues="shelf.issues.value"
       @update:rounds="updateRounds"
       @update:current-round="updateCurrentRound"
+      @browse-sets="sourceOpen = true"
     />
 
     <details
@@ -72,17 +103,22 @@
       </div>
     </details>
 
-    <p v-if="restoreNotice" class="helper draftNotice" role="status">{{ restoreNotice }}</p>
     <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
     <p class="helper publishHelp">{{ publishHelp }}</p>
     <button class="cta" :disabled="!canPublish || publishing" @click="publish">책장에 꽂기</button>
+    </template>
+
+    <p v-if="!editorVisible && editorialError" class="error flowError" role="alert">{{ editorialError }}</p>
 
     <!-- 발행 연출: 표지가 조립되어 책장에 꽂히는 장면 (탭하면 건너뛰기) -->
     <Transition name="page">
       <div v-if="publishing" class="publishOverlay" role="status" @click="finishPublish">
         <span class="eyebrow gold">이번 호 발행</span>
         <PublishScene :year="date.slice(0, 4)" :kind-label="kindLabelText" />
-        <p class="pageTitle centered overlayTitle">{{ issueTitle }},<br />책장에 꽂는 중</p>
+        <p class="pageTitle centered overlayTitle">{{ publishedTitle }},<br />책장에 꽂는 중</p>
+        <p v-if="carriedCount > 0" class="fineprint carried">
+          답 대기 {{ carriedCount }}개는 다음 호 초고로 옮겼어요
+        </p>
         <p class="fineprint">탭하면 바로 책장으로 가요</p>
       </div>
     </Transition>
@@ -90,13 +126,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { defaultTitle, KIND_LABELS, kstTodayISO, type Kind, type Round } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
 import KindChips from '../components/KindChips.vue';
 import PublishScene from '../components/PublishScene.vue';
+import QuestionSetPicker from '../components/QuestionSetPicker.vue';
 import RoundEditor from '../components/RoundEditor.vue';
+import SoloModePicker from '../components/solo/SoloModePicker.vue';
+import SoloQuickPicker, { type QuickStartSelection } from '../components/solo/SoloQuickPicker.vue';
+import SoloReviewFlow, { type ReviewRoundInput } from '../components/solo/SoloReviewFlow.vue';
+import { createEmptyReviewDraft, type ReviewDraft, type SoloMode } from '../components/solo/reviewContent';
 import {
   draftHasContent,
   SOLO_DEFAULT_NAME,
@@ -104,11 +145,17 @@ import {
   useSoloIssueDraft,
   type SoloIssueCurrentRoundDraft,
   type SoloIssueDraftV2,
+  type SoloGuidedPathState,
 } from '../composables/useSoloIssueDraft';
 import { useShelf } from '../composables/useShelf';
 import { issueFromDraft, roundIsAnswered } from '../lib/issueBuilder';
 
-const emit = defineEmits<{ back: []; published: [] }>();
+// preset*: 다른 화면에서 재료를 들고 들어올 때 — 재발견의 질문 하나, 지난 호 상세의 구성 한 벌.
+const props = withDefaults(
+  defineProps<{ readonly presetQuestion?: string; readonly presetIssueId?: string }>(),
+  { presetQuestion: '', presetIssueId: '' },
+);
+const emit = defineEmits<{ back: []; published: [string]; navigate: ['sets'] }>();
 
 const shelf = useShelf();
 const kind = ref<Kind>('free');
@@ -121,12 +168,25 @@ const restoreNotice = ref('');
 const importNotice = ref('');
 const publishing = ref(false);
 const sourceIssueId = ref('');
+// 방금 담은 질문들 — 되돌리기가 그 줄만 골라 뺀다.
+const lastImported = ref<string[]>([]);
+// 발행하며 다음 호로 넘긴 답 대기 질문 수 — 발행 연출에서 어디로 갔는지 알린다.
+const carriedCount = ref(0);
+// 발행 직후 화면 상태를 다음 호로 갈아끼우므로, 연출에 쓸 제목은 발행 시점 값을 붙잡아 둔다.
+const publishedTitle = ref('');
+const publishedId = ref('');
 // 지난 호 가져오기는 소수만 쓰는 선택 기능 — 기본은 접어두고(네이티브 details), 필요할 때 펼친다.
 const sourceOpen = ref(false);
 // 표지 정보(종류·제목·이름)도 기본값이 있어 접어둔다 — 바로 질문부터 쓰게. 값이 있으면 펼친다.
 const coverNoteOpen = ref(false);
 const soloDraft = useSoloIssueDraft();
 const draftReady = ref(false);
+const editorEl = ref<InstanceType<typeof RoundEditor> | null>(null);
+
+const activeMode = ref<SoloMode | ''>('');
+const quickReady = ref(false);
+const guidedPath = ref<SoloGuidedPathState | undefined>();
+const reviewDraft = ref<ReviewDraft>(createEmptyReviewDraft());
 
 const date = computed(() => kstTodayISO());
 const defaultIssueTitle = computed(() => defaultTitle(kind.value, date.value));
@@ -137,10 +197,11 @@ const pendingRoundCount = computed(() => rounds.value.length - answeredRoundCoun
 const canPublish = computed(() => answeredRoundCount.value > 0);
 const kindLabelText = computed(() => KIND_LABELS[kind.value]);
 const sourceIssue = computed(() => shelf.issues.value.find((issue) => issue.id === sourceIssueId.value));
+const contentsQuestions = computed(() => rounds.value.map((round) => round.question));
 const publishHelp = computed(() => {
   if (!canPublish.value) return '질문 하나와 답 하나를 목차에 실으면 발행할 수 있어요.';
   if (pendingRoundCount.value > 0) {
-    return `지금 발행하면 답을 쓴 ${answeredRoundCount.value}개 질문만 실려요. 답 대기 중인 ${pendingRoundCount.value}개는 빠져요.`;
+    return `지금 발행하면 답을 쓴 ${answeredRoundCount.value}개 질문만 실려요. 답 대기 중인 ${pendingRoundCount.value}개는 다음 호 초고로 남겨둬요.`;
   }
   return '지금 발행하면 이 호가 내 책장에 저장돼요.';
 });
@@ -160,11 +221,34 @@ const draftError = computed(() => {
   return '임시 저장하지 못했어요. 브라우저 저장 공간을 비우고, 이 화면을 닫기 전에 다시 시도해주세요.';
 });
 const editorialError = computed(() => publishError.value || draftError.value);
+const showModePicker = computed(() => draftReady.value && activeMode.value === '');
+const editorVisible = computed(
+  () => activeMode.value === 'free' || (activeMode.value === 'quick' && quickReady.value),
+);
 
 function savedTimeText(savedAt: string): string {
   return new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }).format(
     new Date(savedAt),
   );
+}
+
+/**
+ * 무엇이 돌아왔는지 말한다 — '복원됨'만으로는 뭐가 살아났는지 알 수 없다.
+ * 복원 시점의 초고를 그대로 읽어 적으므로, 이어 쓰는 동안 문장이 바뀌지 않는다.
+ */
+function describeRestored(draft: SoloIssueDraftV2, migrated: boolean): string {
+  const restored: string[] = [];
+  if (draft.rounds.length > 0) restored.push(`목차 ${draft.rounds.length}개`);
+  const writing =
+    draft.currentRound.question.trim() !== '' ||
+    Object.values(draft.currentRound.answers).some((text) => text.trim() !== '');
+  if (writing) restored.push('쓰던 질문 1개');
+  if (draft.title.trim() !== '') restored.push('표지 제목');
+
+  const lead = migrated ? '이전 임시 저장을 옮겨 왔어요' : '쓰던 호를 이어서 열었어요';
+  const what = restored.length > 0 ? restored.join(' · ') : '아직 빈 초고';
+  const when = draft.updatedAt ? ` · ${savedTimeText(draft.updatedAt)} 저장` : '';
+  return `${lead} — ${what}${when}`;
 }
 
 function buildDraft(): SoloIssueDraftV2 {
@@ -177,6 +261,30 @@ function buildDraft(): SoloIssueDraftV2 {
     sourceIssueId: sourceIssueId.value,
     rounds: rounds.value,
     currentRound: currentRound.value,
+    soloMode: activeMode.value,
+    quickReady: quickReady.value,
+    guidedPath: guidedPath.value,
+    reviewComposer: reviewDraft.value,
+  };
+}
+
+/** 발행 뒤 남길 초고 — 답 대기 질문만 들고 다음 호로 넘어간다(제목은 새로 짓게 비운다). */
+function carryOverDraft(carried: Round[]): SoloIssueDraftV2 {
+  const keepsReviewComposer =
+    activeMode.value === 'review' && reviewDraft.value.phase !== 'lens' && reviewDraft.value.phase !== 'complete';
+  return {
+    version: SOLO_ISSUE_DRAFT_VERSION,
+    updatedAt: new Date().toISOString(),
+    kind: kind.value,
+    title: '',
+    name: name.value,
+    sourceIssueId: '',
+    rounds: carried,
+    currentRound: { question: '', formatId: '', answers: {} },
+    soloMode: keepsReviewComposer ? 'review' : 'free',
+    quickReady: false,
+    guidedPath: undefined,
+    reviewComposer: keepsReviewComposer ? reviewDraft.value : createEmptyReviewDraft(),
   };
 }
 
@@ -187,6 +295,10 @@ function applyDraft(draft: SoloIssueDraftV2): void {
   sourceIssueId.value = draft.sourceIssueId;
   rounds.value = [...draft.rounds];
   currentRound.value = draft.currentRound;
+  activeMode.value = draft.soloMode ?? '';
+  quickReady.value = draft.quickReady ?? false;
+  guidedPath.value = draft.guidedPath;
+  reviewDraft.value = draft.reviewComposer ?? createEmptyReviewDraft();
 }
 
 function persistDraft(): void {
@@ -199,7 +311,7 @@ function restoreDraft(): void {
   let clearedStaleSource = false;
   if (restored.ok) {
     applyDraft(restored.draft);
-    restoreNotice.value = restored.migratedFromLegacy ? '이전 질문 임시 저장을 복원했어요.' : '복원됨';
+    restoreNotice.value = describeRestored(restored.draft, restored.migratedFromLegacy);
     if (sourceIssueId.value && !sourceIssue.value) {
       sourceIssueId.value = '';
       clearedStaleSource = true;
@@ -210,12 +322,54 @@ function restoreDraft(): void {
     coverNoteOpen.value =
       title.value.trim() !== '' || name.value !== SOLO_DEFAULT_NAME || kind.value !== 'free';
   }
+  applyPresetIssue();
+  applyPresetQuestion();
+  if (props.presetQuestion.trim() || props.presetIssueId.trim()) {
+    activeMode.value = 'free';
+  } else if (hasDraftContent.value && activeMode.value === '') {
+    activeMode.value = 'free';
+  }
   draftReady.value = true;
   if (clearedStaleSource) persistDraft();
 }
 
+/** 지난 호 상세에서 "이 구성으로 쓰기"로 들어왔을 때 — 그 호의 질문을 목차에 깐다. */
+function applyPresetIssue(): void {
+  const issue = shelf.issues.value.find((item) => item.id === props.presetIssueId);
+  if (!issue) return;
+  sourceIssueId.value = issue.id;
+  importQuestions(
+    issue.rounds.map((round) => ({
+      question: round.question,
+      ...(round.format ? { format: round.format } : {}),
+      ...(round.questionId ? { questionId: round.questionId } : {}),
+      ...(round.questionRevision !== undefined ? { questionRevision: round.questionRevision } : {}),
+      ...(round.pathId ? { pathId: round.pathId } : {}),
+      ...(round.pathStep !== undefined ? { pathStep: round.pathStep } : {}),
+      ...(round.review ? { review: round.review } : {}),
+    })),
+  );
+}
+
+/**
+ * 재발견에서 들고 온 질문을 쓰는 칸에 앉힌다.
+ * 쓰던 질문이 있으면 건드리지 않고 목차에 "답 대기"로 더한다 — 초고를 덮어쓰지 않게.
+ */
+function applyPresetQuestion(): void {
+  const question = props.presetQuestion.trim();
+  if (!question) return;
+  if (rounds.value.some((round) => round.question.trim() === question)) return;
+
+  if (currentRound.value.question.trim() === '' && !currentRound.value.formatId) {
+    currentRound.value = { ...currentRound.value, question };
+  } else {
+    rounds.value = [...rounds.value, { asker: participants.value[0] ?? SOLO_DEFAULT_NAME, question, answers: {} }];
+    importNotice.value = '재발견에서 가져온 질문을 목차에 담았어요.';
+  }
+}
+
 watch(
-  [kind, title, name, sourceIssueId, rounds, currentRound],
+  [kind, title, name, sourceIssueId, rounds, currentRound, activeMode, quickReady, guidedPath, reviewDraft],
   () => {
     if (draftReady.value) persistDraft();
   },
@@ -224,38 +378,43 @@ watch(
 
 onMounted(restoreDraft);
 
-/**
- * 지난 호를 고르면 그 자리에서 질문을 목차에 "답 대기"로 깐다.
- * 아래에서 한 번 더 고르게 하면 고른 곳과 결과가 나타나는 곳이 달라 흐름이 끊긴다.
- * 사용자가 직접 고를 때만 담는다 — 초고 복원은 이미 자기 rounds를 갖고 있다.
- */
-function chooseSourceIssue(event: Event): void {
-  const id = event.target instanceof HTMLSelectElement ? event.target.value : '';
-  sourceIssueId.value = id;
-
-  const issue = shelf.issues.value.find((item) => item.id === id);
-  if (!issue) {
-    importNotice.value = '';
-    return;
-  }
-
+/** 세트의 질문을 그 구성 그대로 목차에 "답 대기"로 깐다. 이미 실린 질문은 건너뛴다. */
+function importQuestions(picked: Array<Pick<Round, 'question'> & Partial<Omit<Round, 'question' | 'asker' | 'answers'>>>): void {
   const existing = new Set(rounds.value.map((round) => round.question.trim()));
   const asker = participants.value[0] ?? SOLO_DEFAULT_NAME;
   const additions: Round[] = [];
-  for (const sourceRound of issue.rounds) {
-    const question = sourceRound.question.trim();
+  for (const item of picked) {
+    const question = item.question.trim();
     if (!question || existing.has(question)) continue;
     existing.add(question);
     const round: Round = { asker, question, answers: {} };
-    if (sourceRound.format) round.format = sourceRound.format;
+    if (item.format) round.format = item.format;
+    if (item.questionId) round.questionId = item.questionId;
+    if (item.questionRevision !== undefined) round.questionRevision = item.questionRevision;
+    if (item.pathId) round.pathId = item.pathId;
+    if (item.pathStep !== undefined) round.pathStep = item.pathStep;
+    if (item.review) round.review = item.review;
     additions.push(round);
   }
+  if (additions.length === 0) {
+    lastImported.value = [];
+    importNotice.value = '그 질문들은 이미 목차에 있어요.';
+    return;
+  }
 
-  if (additions.length > 0) rounds.value = [...rounds.value, ...additions];
-  importNotice.value =
-    additions.length > 0
-      ? `${issue.title}의 질문 ${additions.length}개를 목차에 담았어요.`
-      : `${issue.title}의 질문은 이미 목차에 있어요.`;
+  rounds.value = [...rounds.value, ...additions];
+  lastImported.value = additions.map((round) => round.question);
+  importNotice.value = `질문 ${additions.length}개를 목차에 담았어요.`;
+  // 고르는 일은 끝났다 — 목록을 접어 쓰는 자리와 대기 안내를 화면 위로 끌어올린다.
+  sourceOpen.value = false;
+}
+
+/** 방금 담은 질문 중 아직 답이 없는 줄만 뺀다 — 담은 뒤 쓴 답은 지우지 않는다. */
+function undoImport(): void {
+  const added = new Set(lastImported.value);
+  rounds.value = rounds.value.filter((round) => !added.has(round.question) || roundIsAnswered(round));
+  lastImported.value = [];
+  importNotice.value = '';
 }
 
 function updateRounds(nextRounds: Round[]): void {
@@ -264,6 +423,62 @@ function updateRounds(nextRounds: Round[]): void {
 
 function updateCurrentRound(nextRound: SoloIssueCurrentRoundDraft): void {
   currentRound.value = nextRound;
+}
+
+function selectMode(mode: SoloMode): void {
+  activeMode.value = mode;
+  quickReady.value = false;
+  guidedPath.value = undefined;
+  if (mode !== 'review') reviewDraft.value = createEmptyReviewDraft();
+}
+
+function resetMode(): void {
+  activeMode.value = '';
+  quickReady.value = false;
+  guidedPath.value = undefined;
+  reviewDraft.value = createEmptyReviewDraft();
+}
+
+function chooseQuickStart(selection: QuickStartSelection): void {
+  currentRound.value = {
+    ...currentRound.value,
+    question: selection.question,
+    pathId: selection.pathId,
+    pathStep: 0,
+  };
+  quickReady.value = true;
+  guidedPath.value = {
+    pathId: selection.pathId,
+    pathRevision: selection.pathRevision,
+    mode: selection.mode,
+    step: 0,
+  };
+  // 고른 질문 바로 아래 답 칸에서 이어 쓰게 — 키보드/모바일에서 화면을 다시 찾지 않도록.
+  void nextTick(() => editorEl.value?.focusQuestion());
+}
+
+function updateReviewDraft(next: ReviewDraft): void {
+  reviewDraft.value = next;
+}
+
+function completeReviewLens(inputs: readonly ReviewRoundInput[]): void {
+  const asker = participants.value[0] ?? SOLO_DEFAULT_NAME;
+  const additions: Round[] = inputs.map((input) => ({
+    asker,
+    question: input.question,
+    answers: { [asker]: { text: input.answer } },
+    review: input.review,
+  }));
+  rounds.value = [...rounds.value, ...additions];
+}
+
+function openEditor(): void {
+  activeMode.value = 'free';
+}
+
+async function publishReview(): Promise<void> {
+  await nextTick();
+  publish();
 }
 
 function publish(): void {
@@ -278,11 +493,30 @@ function publish(): void {
     publishError.value = '브라우저 저장 공간에 저장하지 못했어요. 용량을 비우고 다시 시도해주세요.';
     return;
   }
-  if (!soloDraft.clear().ok) {
+
+  // 답을 기다리던 질문은 발행에서 빠질 뿐 사라지면 안 된다 — 다음 호 초고로 넘긴다.
+  const carried = rounds.value.filter((round) => !roundIsAnswered(round));
+  const kept = carried.length > 0 ? soloDraft.save(carryOverDraft(carried)) : soloDraft.clear();
+  if (!kept.ok) {
     publishError.value =
-      '책장에는 꽂았지만 임시 저장을 비우지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해주세요.';
+      carried.length > 0
+        ? '책장에는 꽂았지만 답 대기 질문을 다음 호로 남기지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해주세요.'
+        : '책장에는 꽂았지만 임시 저장을 비우지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해주세요.';
     return;
   }
+  carriedCount.value = carried.length;
+  publishedTitle.value = issue.title;
+  publishedId.value = issue.id;
+  // 화면 상태를 다음 호로 갈아끼우는 동안 자동 저장을 멈춘다 — 방금 쓴 초고를 덮어쓰지 않게.
+  draftReady.value = false;
+  rounds.value = carried;
+  title.value = '';
+  sourceIssueId.value = '';
+  currentRound.value = { question: '', formatId: '', answers: {} };
+  activeMode.value = '';
+  quickReady.value = false;
+  guidedPath.value = undefined;
+  reviewDraft.value = createEmptyReviewDraft();
 
   publishing.value = true;
   window.setTimeout(finishPublish, 1450);
@@ -291,7 +525,8 @@ function publish(): void {
 function finishPublish(): void {
   if (!publishing.value) return;
   publishing.value = false;
-  emit('published');
+  // 방금 꽂은 호가 어느 표지인지 책장에서 짚어줄 수 있게 id를 들려 보낸다.
+  emit('published', publishedId.value);
 }
 </script>
 
@@ -361,14 +596,41 @@ function finishPublish(): void {
   padding: 4px 2px 14px;
 }
 
+.importNotice {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 12px 0 0;
+}
+
+.undo {
+  flex: 0 0 auto;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--vermilion);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .publishHelp {
   margin-top: 16px;
   text-align: center;
 }
 
-.draftNotice {
-  margin-top: 12px;
-  text-align: center;
+.resumeBanner {
+  align-items: flex-start;
+  margin: 0 0 18px;
+}
+
+.resumeBanner span {
+  min-width: 0;
+}
+
+.flowError {
+  margin-top: 14px;
 }
 
 .publishOverlay {

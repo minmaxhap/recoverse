@@ -3,6 +3,14 @@
     <div class="sectionHead">
       <h2>지난 호</h2>
       <span class="count">{{ issues.length }}권</span>
+      <div v-if="paged" class="pager noPrint">
+        <button type="button" class="pageBtn" :disabled="!canPrev" aria-label="이전 표지 보기" @click="page(-1)">
+          ‹
+        </button>
+        <button type="button" class="pageBtn" :disabled="!canNext" aria-label="다음 표지 보기" @click="page(1)">
+          ›
+        </button>
+      </div>
     </div>
 
     <button v-if="issues.length === 0" class="emptyInvite" @click="$emit('navigate', 'create')">
@@ -13,32 +21,103 @@
       <span class="inviteCta">첫 호 발행하러 가기</span>
     </button>
 
-    <!-- 가로 스크롤 대신 줄바꿈 그리드 — 모든 표지가 한눈에 펼쳐진다 -->
-    <div v-else class="covers">
-      <IssueCover
-        v-for="(issue, index) in issues"
-        :key="issue.id"
-        :issue="issue"
-        :no="issues.length - index"
-        @open="$emit('open', $event)"
-      />
+    <!-- 서가 한 칸: 표지를 가로로 꽂아두고 넘겨본다. 넘길 게 있을 때만 화살표와 잉크 레일이 나온다. -->
+    <div v-else class="shelfViewport" :class="{ hasPrev: canPrev, hasNext: canNext }">
+      <div ref="coversEl" class="covers" @scroll.passive="measure">
+        <IssueCover
+          v-for="(issue, index) in issues"
+          :key="issue.id"
+          :issue="issue"
+          :no="issues.length - index"
+          :class="{ fresh: issue.id === freshIssueId && showFresh }"
+          @open="$emit('open', $event)"
+        />
+      </div>
+      <!-- 기본 스크롤바 대신 잉크 레일 — 어디쯤 보고 있는지만 얇게 알린다. -->
+      <div v-if="paged" class="rail" aria-hidden="true">
+        <span class="railInk" :style="railStyle" />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { Issue } from '@recoverse/shared';
 import IssueCover from './IssueCover.vue';
 
-defineProps<{ readonly issues: readonly Issue[] }>();
+const props = withDefaults(
+  // freshIssueId: 방금 발행하고 돌아온 호 — 어느 표지가 새로 꽂혔는지 잠깐 짚어준다.
+  defineProps<{ readonly issues: readonly Issue[]; readonly freshIssueId?: string }>(),
+  { freshIssueId: '' },
+);
 defineEmits<{ navigate: ['create']; open: [string] }>();
+
+const showFresh = ref(true);
+let freshTimer = 0;
+
+const coversEl = ref<HTMLElement | null>(null);
+const scrolled = ref(0);
+const viewWidth = ref(0);
+const shelfWidth = ref(0);
+let observer: ResizeObserver | null = null;
+
+// 표지가 한 칸을 넘칠 때만 넘기기 장치를 붙인다 — 몇 권 없으면 그냥 다 보인다.
+const paged = computed(() => shelfWidth.value - viewWidth.value > 4);
+const canPrev = computed(() => paged.value && scrolled.value > 4);
+const canNext = computed(() => paged.value && scrolled.value + viewWidth.value < shelfWidth.value - 4);
+
+// 레일 잉크의 폭·위치는 트랙 너비 기준 퍼센트 — 퍼센트 margin이 트랙 폭을 기준으로 잡힌다.
+const railStyle = computed(() => {
+  const total = shelfWidth.value || 1;
+  return {
+    width: `${Math.min(100, (viewWidth.value / total) * 100)}%`,
+    marginLeft: `${(scrolled.value / total) * 100}%`,
+  };
+});
+
+function measure(): void {
+  const el = coversEl.value;
+  if (!el) return;
+  scrolled.value = el.scrollLeft;
+  viewWidth.value = el.clientWidth;
+  shelfWidth.value = el.scrollWidth;
+}
+
+// behavior를 넘기지 않고 CSS scroll-behavior에 맡긴다 — prefers-reduced-motion에서 바로 튀게 하려고.
+function page(direction: number): void {
+  const el = coversEl.value;
+  if (!el) return;
+  el.scrollBy({ left: direction * Math.max(140, el.clientWidth * 0.8) });
+  measure();
+}
+
+watch(
+  () => props.issues.length,
+  () => void nextTick(measure),
+);
+
+onMounted(() => {
+  void nextTick(measure);
+  // 새로 꽂힌 표지는 잠깐만 짚어준다 — 계속 표시가 남으면 그게 무슨 뜻인지 알 수 없게 된다.
+  if (props.freshIssueId) freshTimer = window.setTimeout(() => (showFresh.value = false), 3200);
+  if (typeof ResizeObserver === 'undefined') return;
+  observer = new ResizeObserver(() => measure());
+  if (coversEl.value) observer.observe(coversEl.value);
+});
+
+onBeforeUnmount(() => {
+  observer?.disconnect();
+  observer = null;
+  window.clearTimeout(freshTimer);
+});
 </script>
 
 <style scoped>
 .sectionHead {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 6px;
 }
 
@@ -50,16 +129,138 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
 }
 
 .count {
+  margin-right: auto;
   font-size: 12px;
   color: var(--dim);
 }
 
-.covers {
+.pager {
+  display: flex;
+  gap: 6px;
+}
+
+.pageBtn {
+  width: 34px;
+  height: 34px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-  gap: 12px;
-  padding: 8px 0 4px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.pageBtn:disabled {
+  border-color: var(--hairline);
+  color: var(--hairline);
+  cursor: default;
+}
+
+/* 손가락으로 넘기는 기기에선 화살표도 손가락 크기로 */
+@media (hover: none) {
+  .pageBtn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.shelfViewport {
+  position: relative;
+  min-width: 0;
   margin-top: 8px;
+}
+
+.covers {
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* 표지가 떠오르고(hover) 옵셋 그림자가 앉을 자리 */
+  padding: 8px 2px 10px;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
+  /* 기본 스크롤바는 숨기고 아래 잉크 레일로 대신한다 */
+  scrollbar-width: none;
+}
+
+.covers::-webkit-scrollbar {
+  display: none;
+}
+
+.covers > * {
+  flex: 0 0 92px;
+  scroll-snap-align: start;
+}
+
+/* 방금 꽂은 표지 — 다홍 테두리와 한 번의 들썩임으로 어느 것인지 알린다. */
+.covers > .fresh {
+  outline: 2px solid var(--vermilion);
+  outline-offset: 2px;
+  animation: freshCover 0.5s ease 2;
+}
+
+@keyframes freshCover {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* 양끝 페이드 — 이쪽으로 더 있다는 힌트 */
+.shelfViewport::before,
+.shelfViewport::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 10px;
+  width: 24px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.shelfViewport::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--paper), transparent);
+}
+
+.shelfViewport::after {
+  right: 0;
+  background: linear-gradient(270deg, var(--paper), transparent);
+}
+
+.shelfViewport.hasPrev::before,
+.shelfViewport.hasNext::after {
+  opacity: 1;
+}
+
+.rail {
+  position: relative;
+  height: 2px;
+  background: var(--hairline);
+  overflow: hidden;
+}
+
+.railInk {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .covers {
+    scroll-behavior: auto;
+  }
 }
 
 .emptyInvite {
@@ -133,9 +334,13 @@ defineEmits<{ navigate: ['create']; open: [string] }>();
     margin-bottom: clamp(4px, 1vh, 8px);
   }
 
-  .covers {
+  .shelfViewport {
     margin-top: 10px;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    max-width: 100%;
+  }
+
+  .covers > * {
+    flex: 0 0 88px;
   }
 
   .emptyInvite {

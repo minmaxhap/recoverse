@@ -3,6 +3,7 @@ import CoverView from '../views/CoverView.vue';
 import LiveEntryView from '../views/live/LiveEntryView.vue';
 import LiveSessionView from '../views/live/LiveSessionView.vue';
 import SoloWriteView from '../views/SoloWriteView.vue';
+import QuestionSetsView from '../views/QuestionSetsView.vue';
 import IssueDetailView from '../views/IssueDetailView.vue';
 import RediscoverView from '../views/RediscoverView.vue';
 import RediscoverDetailView from '../views/RediscoverDetailView.vue';
@@ -32,6 +33,7 @@ const routes: RouteRecordRaw[] = [
   { path: '/join', name: 'join', component: LiveEntryView },
   { path: '/live', name: 'live', component: LiveSessionView, meta: { requiresIdentity: true } },
   { path: '/solo', name: 'solo', component: SoloWriteView },
+  { path: '/sets', name: 'sets', component: QuestionSetsView },
   { path: '/issues/:id', name: 'issue', component: IssueDetailView, meta: { requiresIssue: true } },
   { path: '/rediscover', name: 'rediscover', component: RediscoverView },
   {

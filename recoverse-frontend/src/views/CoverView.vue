@@ -3,7 +3,7 @@
     <div class="coverHome">
       <div class="coverTop">
         <div class="coverTools noPrint">
-          <SettingsPanel :issues="issues" />
+          <SettingsPanel :issues="issues" @navigate="$emit('navigate', $event)" />
         </div>
 
         <header class="masthead">
@@ -20,25 +20,40 @@
       <div class="coverSpread">
         <section class="coverLead" aria-label="Recoverse 소개">
           <p class="coverline">
-            지나온 시간을<br />
-            <em>한 권</em>으로 <br/>
-            남긴다.
+            오늘을 <em>혼자</em> 적거나,<br />
+            친구들과 같이<br />
+            펼쳐보세요.
           </p>
 
           <div class="momentSlot">
-            <button v-if="moment" class="momentCard" @click="$emit('open-group', moment.groupKey)">
+            <button
+              v-if="moment"
+              class="momentCard"
+              @click="$emit('open-group', moment.groupKey)"
+            >
               <span class="eyebrow gold">{{ momentLabel }}</span>
               <span class="momentQ">{{ moment.question }}</span>
               <span class="momentA">“{{ momentTeaser }}”</span>
-              <span class="momentMeta">{{ moment.year }} · {{ moment.issueTitle }} →</span>
+              <span class="momentMeta"
+                >{{ moment.year }} · {{ moment.issueTitle }} →</span
+              >
             </button>
           </div>
         </section>
 
-        <aside class="coverDesk" :class="{ hasResume: resumeDraft.resumable }" aria-label="홈 목차와 지난 호">
+        <aside
+          class="coverDesk"
+          :class="{ hasResume: resumeDraft.resumable }"
+          aria-label="홈 목차와 지난 호"
+        >
           <CoverResumeDraft :summary="resumeDraft" @resume="$emit('navigate', 'solo')" />
           <CoverEntryList @navigate="$emit('navigate', $event)" />
-          <CoverBackIssues :issues="issues" @navigate="$emit('navigate', $event)" @open="$emit('open', $event)" />
+          <CoverBackIssues
+            :issues="issues"
+            :fresh-issue-id="freshIssueId"
+            @navigate="$emit('navigate', $event)"
+            @open="$emit('open', $event)"
+          />
         </aside>
       </div>
     </div>
@@ -46,40 +61,50 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { Issue } from '@recoverse/shared';
-import AppShell from '../components/AppShell.vue';
-import CoverBackIssues from '../components/CoverBackIssues.vue';
-import CoverEntryList from '../components/CoverEntryList.vue';
-import CoverResumeDraft from '../components/CoverResumeDraft.vue';
-import SettingsPanel from '../components/SettingsPanel.vue';
-import { peekSoloIssueDraft } from '../composables/useSoloIssueDraft';
-import type { RediscoveryMoment } from '../lib/rediscover';
+import { computed } from "vue";
+import type { Issue } from "@recoverse/shared";
+import AppShell from "../components/AppShell.vue";
+import CoverBackIssues from "../components/CoverBackIssues.vue";
+import CoverEntryList from "../components/CoverEntryList.vue";
+import CoverResumeDraft from "../components/CoverResumeDraft.vue";
+import SettingsPanel from "../components/SettingsPanel.vue";
+import { peekSoloIssueDraft } from "../composables/useSoloIssueDraft";
+import type { RediscoveryMoment } from "../lib/rediscover";
 
-const props = defineProps<{ readonly issues: readonly Issue[]; readonly moment?: RediscoveryMoment | null }>();
+const props = withDefaults(
+  defineProps<{
+    readonly issues: readonly Issue[];
+    readonly moment?: RediscoveryMoment | null;
+    /** 방금 발행한 호 — 책장에서 잠깐 짚어준다. */
+    readonly freshIssueId?: string;
+  }>(),
+  { moment: null, freshIssueId: '' },
+);
 defineEmits<{
-  navigate: ['create' | 'join' | 'solo' | 'rediscover'];
+  navigate: ["create" | "join" | "solo" | "rediscover" | "sets"];
   open: [string];
-  'open-group': [string];
+  "open-group": [string];
 }>();
 
 const momentLabel = computed(() => {
   const m = props.moment;
-  if (!m) return '';
-  if (m.anniversary) return m.yearsAgo <= 1 ? '1년 전 오늘 즈음' : `${m.yearsAgo}년 전 오늘 즈음`;
-  return '오늘의 재발견';
+  if (!m) return "";
+  if (m.anniversary)
+    return m.yearsAgo <= 1 ? "1년 전 오늘 즈음" : `${m.yearsAgo}년 전 오늘 즈음`;
+  return "오늘의 재발견";
 });
 
 const momentTeaser = computed(() => {
   const m = props.moment;
-  if (!m) return '';
+  if (!m) return "";
   const first = Object.values(m.answers).find((answer) => answer.text.trim());
-  return first?.text ?? '';
+  return first?.text ?? "";
 });
 
 // 홈에 들어올 때마다 저장소를 읽기 전용으로 훑는다. CoverView는 mode가 cover일 때마다
 // key로 재마운트되므로(App.vue), 발행으로 드래프트를 비운 뒤 돌아오면 카드가 사라진다.
-const resumeDraft = peekSoloIssueDraft();
+const issueDraft = peekSoloIssueDraft();
+const resumeDraft = issueDraft;
 </script>
 
 <style scoped>
@@ -157,7 +182,8 @@ const resumeDraft = peekSoloIssueDraft();
 .coverline em {
   font-style: normal;
   color: var(--vermilion);
-  background: linear-gradient(var(--vermilion), var(--vermilion)) left bottom / 0% 3px no-repeat;
+  background: linear-gradient(var(--vermilion), var(--vermilion)) left bottom / 0% 3px
+    no-repeat;
   animation: drawUnderline 0.7s ease 0.5s both;
   padding-bottom: 2px;
 }
@@ -168,8 +194,8 @@ const resumeDraft = peekSoloIssueDraft();
 }
 
 /* 데스크톱: 화면을 꽉 채우되(min-height:100%) 콘텐츠가 많으면 페이지가 자연스럽게 흐른다.
-   고정 높이로 눌러 담다 목차가 표지 위로 겹치던 문제를 없애고, 지난 호는 줄바꿈 그리드로
-   가로 스크롤 없이 펼쳐진다. */
+   고정 높이로 눌러 담다 목차가 표지 위로 겹치던 문제를 없애고, 지난 호는 한 줄 서가로
+   가로로 넘겨본다(화살표·잉크 레일). */
 @media (min-width: 1024px) {
   .coverHome {
     min-height: 100%;

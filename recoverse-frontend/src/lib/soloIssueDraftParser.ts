@@ -1,8 +1,21 @@
-import { isKind, type Answer, type Round } from '@recoverse/shared';
+import {
+  isKind,
+  isReviewLensId,
+  isReviewScopeType,
+  isValidContentId,
+  isValidPathStep,
+  isValidRevision,
+  parseReviewContext,
+  type Answer,
+  type Round,
+  type SoloMode,
+} from '@recoverse/shared';
+import type { ReviewDraft, ReviewItemDraft } from '../components/solo/reviewContent';
 import {
   SOLO_ISSUE_DRAFT_VERSION,
   type SoloIssueCurrentRoundDraft,
   type SoloIssueDraftV2,
+  type SoloGuidedPathState,
 } from './soloIssueDraftTypes';
 
 type JsonParseResult = { readonly ok: true; readonly value: unknown } | { readonly ok: false };
@@ -61,6 +74,7 @@ function parseAnswer(value: unknown): Answer | null {
   const followUps = parseFollowUps(value.followUps);
   if (!media || !followUps) return null;
   const answer: Answer = { text: value.text };
+  if (typeof value.skipped === 'boolean') answer.skipped = value.skipped;
   if (media.length > 0) answer.media = [...media];
   if (followUps.length > 0) answer.followUps = followUps;
   return answer;
@@ -84,6 +98,12 @@ function parseRound(value: unknown): Round | null {
   if (value.format !== undefined && typeof value.format !== 'string') return null;
   const round: Round = { asker: value.asker, question: value.question, answers };
   if (typeof value.format === 'string') round.format = value.format;
+  if (isValidContentId(value.questionId)) round.questionId = value.questionId;
+  if (isValidRevision(value.questionRevision)) round.questionRevision = value.questionRevision;
+  if (isValidContentId(value.pathId)) round.pathId = value.pathId;
+  if (isValidPathStep(value.pathStep)) round.pathStep = value.pathStep;
+  const review = parseReviewContext(value.review);
+  if (review) round.review = review;
   return round;
 }
 
@@ -102,7 +122,17 @@ export function parseCurrentRound(value: unknown): SoloIssueCurrentRoundDraft | 
   if (!isRecord(value) || typeof value.question !== 'string' || typeof value.formatId !== 'string') return null;
   const answers = parseStringRecord(value.answers);
   if (!answers) return null;
-  return { question: value.question, formatId: value.formatId, answers };
+  const review = parseReviewContext(value.review);
+  return {
+    question: value.question,
+    formatId: value.formatId,
+    answers,
+    ...(isValidContentId(value.questionId) ? { questionId: value.questionId } : {}),
+    ...(isValidRevision(value.questionRevision) ? { questionRevision: value.questionRevision } : {}),
+    ...(isValidContentId(value.pathId) ? { pathId: value.pathId } : {}),
+    ...(isValidPathStep(value.pathStep) ? { pathStep: value.pathStep } : {}),
+    ...(review ? { review } : {}),
+  };
 }
 
 export function parseLegacyCurrentRound(value: unknown): SoloIssueCurrentRoundDraft | null {
@@ -110,6 +140,50 @@ export function parseLegacyCurrentRound(value: unknown): SoloIssueCurrentRoundDr
   const answers = parseStringRecord(value.answers);
   if (!answers) return null;
   return { question: value.q, formatId: value.formatId, answers };
+}
+
+function parseSoloMode(value: unknown): SoloMode | '' {
+  return value === 'quick' || value === 'review' || value === 'free' ? value : '';
+}
+
+function parseReviewItem(value: unknown): ReviewItemDraft | null {
+  if (!isRecord(value) || typeof value.id !== 'string' || typeof value.label !== 'string' || typeof value.note !== 'string') {
+    return null;
+  }
+  return { id: value.id, label: value.label, note: value.note };
+}
+
+function parseReviewComposer(value: unknown): ReviewDraft | undefined {
+  if (!isRecord(value)) return undefined;
+  if (value.phase !== 'lens' && value.phase !== 'context' && value.phase !== 'items' && value.phase !== 'complete') {
+    return undefined;
+  }
+  if (value.lensId !== '' && !isReviewLensId(value.lensId)) return undefined;
+  if (!isReviewScopeType(value.scopeType) || typeof value.scopeLabel !== 'string' || !Array.isArray(value.items)) {
+    return undefined;
+  }
+  const items = value.items.map(parseReviewItem);
+  if (items.some((item) => item === null)) return undefined;
+  return {
+    phase: value.phase,
+    lensId: value.lensId,
+    scopeType: value.scopeType,
+    scopeLabel: value.scopeLabel,
+    items: items.filter((item): item is ReviewItemDraft => item !== null),
+  };
+}
+
+function parseGuidedPath(value: unknown): SoloGuidedPathState | undefined {
+  if (!isRecord(value) || !isValidContentId(value.pathId)) return undefined;
+  if (!isValidRevision(value.pathRevision)) return undefined;
+  if (value.mode !== 'short' && value.mode !== 'standard' && value.mode !== 'extended') return undefined;
+  if (!isValidPathStep(value.step)) return undefined;
+  return {
+    pathId: value.pathId,
+    pathRevision: value.pathRevision,
+    mode: value.mode,
+    step: value.step,
+  };
 }
 
 export function parseSoloIssueDraftV2(value: unknown): SoloIssueDraftV2 | null {
@@ -128,6 +202,9 @@ export function parseSoloIssueDraftV2(value: unknown): SoloIssueDraftV2 | null {
   const rounds = parseRounds(value.rounds);
   const currentRound = parseCurrentRound(value.currentRound);
   if (!rounds || !currentRound) return null;
+  const soloMode = parseSoloMode(value.soloMode);
+  const guidedPath = parseGuidedPath(value.guidedPath);
+  const reviewComposer = parseReviewComposer(value.reviewComposer);
   return {
     version: SOLO_ISSUE_DRAFT_VERSION,
     updatedAt: value.updatedAt,
@@ -137,5 +214,9 @@ export function parseSoloIssueDraftV2(value: unknown): SoloIssueDraftV2 | null {
     sourceIssueId: value.sourceIssueId,
     rounds,
     currentRound,
+    ...(soloMode ? { soloMode } : {}),
+    ...(typeof value.quickReady === 'boolean' ? { quickReady: value.quickReady } : {}),
+    ...(guidedPath ? { guidedPath } : {}),
+    ...(reviewComposer ? { reviewComposer } : {}),
   };
 }

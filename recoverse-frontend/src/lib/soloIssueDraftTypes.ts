@@ -1,4 +1,5 @@
-import type { Kind, Round } from '@recoverse/shared';
+import type { Kind, ReviewContext, Round, SoloMode } from '@recoverse/shared';
+import type { ReviewDraft } from '../components/solo/reviewContent';
 
 export const SOLO_ISSUE_DRAFT_V2_KEY = 'recoverse_solo_issue_draft_v2';
 export const SOLO_ISSUE_DRAFT_VERSION = 2;
@@ -10,6 +11,18 @@ export type SoloIssueCurrentRoundDraft = {
   readonly question: string;
   readonly formatId: string;
   readonly answers: Readonly<Record<string, string>>;
+  readonly questionId?: string;
+  readonly questionRevision?: number;
+  readonly pathId?: string;
+  readonly pathStep?: number;
+  readonly review?: ReviewContext;
+};
+
+export type SoloGuidedPathState = {
+  readonly pathId: string;
+  readonly pathRevision: number;
+  readonly mode: 'short' | 'standard' | 'extended';
+  readonly step: number;
 };
 
 export type SoloIssueDraftV2 = {
@@ -21,6 +34,10 @@ export type SoloIssueDraftV2 = {
   readonly sourceIssueId: string;
   readonly rounds: readonly Round[];
   readonly currentRound: SoloIssueCurrentRoundDraft;
+  readonly soloMode?: SoloMode | '';
+  readonly quickReady?: boolean;
+  readonly guidedPath?: SoloGuidedPathState;
+  readonly reviewComposer?: ReviewDraft;
 };
 
 export type SoloIssueDraftFailureReason =
@@ -78,7 +95,10 @@ export function draftHasContent(draft: SoloIssueDraftV2): boolean {
     draft.sourceIssueId.length > 0 ||
     draft.rounds.length > 0 ||
     draft.currentRound.question.trim().length > 0 ||
-    Object.values(draft.currentRound.answers).some((answer) => answer.trim().length > 0)
+    Object.values(draft.currentRound.answers).some((answer) => answer.trim().length > 0) ||
+    draft.soloMode === 'free' ||
+    (draft.soloMode === 'quick' && draft.quickReady === true) ||
+    (draft.soloMode === 'review' && draft.reviewComposer?.phase !== 'lens')
   );
 }
 

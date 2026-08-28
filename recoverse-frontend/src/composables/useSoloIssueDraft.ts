@@ -27,6 +27,7 @@ export {
 } from '../lib/soloIssueDraftTypes';
 export type {
   SoloIssueCurrentRoundDraft,
+  SoloGuidedPathState,
   SoloIssueDraftFailureReason,
   SoloIssueDraftLoadOptions,
   SoloIssueDraftLoadResult,

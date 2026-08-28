@@ -1,4 +1,4 @@
-/* 스펙 §3 데이터 모델 — 전 Phase 공용. 필드 추가/변경 금지 (옵셔널은 Phase 2·3용) */
+import type { ReviewContext } from './reflectionContent';
 
 export type Phase = 'lobby' | 'question' | 'answer' | 'guess' | 'ended';
 export type Kind = 'yearend' | 'travel' | 'monthly' | 'project' | 'reading' | 'couple' | 'free';
@@ -14,6 +14,11 @@ export interface SessionMeta {
   question: string | null;
   format?: string | null;
   history: Round[];
+  pathId?: string;
+  pathRevision?: number;
+  pathStep?: number;
+  questionId?: string | null;
+  questionRevision?: number | null;
 }
 
 export interface Round {
@@ -21,10 +26,16 @@ export interface Round {
   question: string;
   format?: string;         // Phase 3: 포맷 ID (예: 'three-scenes'). 없으면 일반 문답
   answers: Record<string, Answer>;
+  questionId?: string;
+  questionRevision?: number;
+  pathId?: string;
+  pathStep?: number;
+  review?: ReviewContext;
 }
 
 export interface Answer {
   text: string;
+  skipped?: boolean;
   media?: string[];        // Phase 3: 사진 URL
   followUps?: { q: string; a: string }[]; // Phase 2: AI 생각 확장 문답
 }

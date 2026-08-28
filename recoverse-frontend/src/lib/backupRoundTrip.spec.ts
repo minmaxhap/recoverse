@@ -23,6 +23,9 @@ function issue(id: string, title: string): Issue {
 describe('backup round-trip', () => {
   it('restores every exported issue into an empty shelf', () => {
     const shelf = [issue('a', '호 A'), issue('b', '호 B')];
+    Object.assign(shelf[0]?.rounds[0] ?? {}, {
+      review: { lensId: 'photo', lensRevision: 1, scope: { type: 'recent' } },
+    });
 
     // export → (초기화된 새 기기라 가정) → import
     const parsed = parseReflectionBackup(shelfBackupJson(shelf));
@@ -32,6 +35,11 @@ describe('backup round-trip', () => {
     expect(preview.newCount).toBe(2);
     expect(preview.duplicateCount).toBe(0);
     expect(preview.items.map((item) => item.issue.title)).toEqual(['호 A', '호 B']);
+    expect((preview.items[0]?.issue.rounds[0] as Issue['rounds'][number] & { review?: unknown })?.review).toEqual({
+      lensId: 'photo',
+      lensRevision: 1,
+      scope: { type: 'recent' },
+    });
   });
 
   it('re-importing the same backup into a populated shelf detects duplicates, not new copies', () => {
@@ -43,5 +51,18 @@ describe('backup round-trip', () => {
 
     expect(preview.newCount).toBe(0);
     expect(preview.duplicateCount).toBe(2);
+  });
+
+  it('keeps valid issue text and drops malformed optional review metadata', () => {
+    const source = issue('a', '호 A');
+    Object.assign(source.rounds[0] ?? {}, {
+      review: { lensId: 'unknown', lensRevision: 0, scope: { type: 'forever' } },
+    });
+
+    const [parsed] = parseReflectionBackup(shelfBackupJson([source]));
+
+    expect(parsed?.title).toBe('호 A');
+    expect(parsed?.rounds[0]?.question).toBe(source.rounds[0]?.question);
+    expect(parsed?.rounds[0]?.review).toBeUndefined();
   });
 });

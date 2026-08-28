@@ -58,6 +58,16 @@ function completeDraft(updatedAt: string): SoloIssueDraftV2 {
       formatId: 'keyword',
       answers: { Mina: 'Train station', Joon: 'Late dinner' },
     },
+    soloMode: 'review',
+    quickReady: false,
+    guidedPath: { pathId: 'solo-today', pathRevision: 1, mode: 'standard', step: 0 },
+    reviewComposer: {
+      phase: 'items',
+      lensId: 'photo',
+      scopeType: 'recent',
+      scopeLabel: '',
+      items: [{ id: 'scene-1', label: 'Train station', note: 'The light stayed with me.' }],
+    },
   };
 }
 
@@ -100,6 +110,27 @@ describe('useSoloIssueDraft', () => {
       migratedFromLegacy: false,
       draft: createDefaultSoloIssueDraft(result.draft.updatedAt),
     });
+  });
+
+  it('drops malformed optional flow metadata without deleting valid draft text', () => {
+    const fixture = {
+      ...completeDraft('2026-07-19T12:00:00.000Z'),
+      soloMode: 'unknown-mode',
+      quickReady: 'yes',
+      reviewComposer: { phase: 'items', lensId: 'unknown-lens' },
+    };
+    localStorage.setItem(SOLO_ISSUE_DRAFT_V2_KEY, JSON.stringify(fixture));
+
+    const result = loadSoloIssueDraft();
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.draft.title).toBe('2026 Year End');
+      expect(result.draft.currentRound.question).toBe('What scene stayed with me?');
+      expect(result.draft.soloMode).toBeUndefined();
+      expect(result.draft.quickReady).toBeUndefined();
+      expect(result.draft.reviewComposer).toBeUndefined();
+    }
   });
 
   it('keeps a clean first visit idle when no draft exists', () => {

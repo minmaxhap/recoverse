@@ -5,6 +5,7 @@
       <div class="issueKicker"><span class="eyebrow red">{{ issue.date.slice(0, 4) }} ISSUE</span><div class="issueToolbar noPrint">
         <button class="toolButton" type="button" :aria-label="editing ? '수정 취소' : '호 편집'" @click="editing ? cancelEdit() : startEdit()"><Pencil v-if="!editing" :size="17" /><X v-else :size="17" /><span>{{ editing ? '취소' : '편집' }}</span></button>
         <button class="toolButton" type="button" aria-label="PDF로 저장하거나 인쇄" @click="printIssue"><Printer :size="17" /><span>PDF / 인쇄</span></button>
+        <button v-if="!editing && issue.rounds.length > 0" class="toolButton" type="button" aria-label="이 호의 질문 구성으로 새 호 쓰기" @click="$emit('reuse', issue.id)"><Copy :size="17" /><span>이 구성으로 쓰기</span></button>
         <button v-if="!editing" class="toolButton" type="button" :disabled="sharing" aria-label="읽기 전용 공유 링크" @click="onShare"><Share2 :size="17" /><span>{{ sharing ? '준비 중' : '공유' }}</span></button>
         <button v-if="!editing" class="toolButton dangerTool" type="button" aria-label="이 호를 책장에서 비우기" @click="onRemove"><Trash2 :size="17" /><span>비우기</span></button>
       </div></div>
@@ -61,13 +62,13 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
-import { ArrowDown, ArrowUp, Pencil, Printer, Share2, Trash2, X } from 'lucide-vue-next';
+import { ArrowDown, ArrowUp, Copy, Pencil, Printer, Share2, Trash2, X } from 'lucide-vue-next';
 import { normalizeQuestion, type Issue, type Round } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue'; import BackHeader from '../components/BackHeader.vue'; import Headline from '../components/Headline.vue'; import RoundAnswers from '../components/RoundAnswers.vue'; import SpreadLayout from '../components/SpreadLayout.vue';
 import { useShelf } from '../composables/useShelf'; import { groupByQuestion } from '../lib/rediscover'; import { api, ApiError } from '../lib/api';
 
 const props = defineProps<{ issue: Issue }>();
-const emit = defineEmits<{ back: []; removed: []; openGroup: [string] }>();
+const emit = defineEmits<{ back: []; removed: []; openGroup: [string]; reuse: [string] }>();
 
 // 같은 질문에 다른 해의 내가 답했으면(여러 해에 걸친 질문) "다시 발견"으로 잇는다 — 이 앱의 핵심.
 const rediscoverByRound = computed(() => {

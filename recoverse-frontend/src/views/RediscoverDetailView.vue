@@ -26,6 +26,15 @@
         </div>
       </section>
     </div>
+
+    <!-- 지난 해의 답을 읽고 나면 하고 싶은 건 하나다 — 올해의 답을 쓰는 것. -->
+    <section class="answerAgain">
+      <div class="rule" />
+      <p class="againLead">{{ againLead }}</p>
+      <button type="button" class="againCta" @click="$emit('write', group.question)">
+        이 질문에 올해도 답하기 →
+      </button>
+    </section>
   </AppShell>
 </template>
 
@@ -37,12 +46,19 @@ import BackHeader from '../components/BackHeader.vue';
 import RediscoverEntryAnswers from '../components/RediscoverEntryAnswers.vue';
 
 const props = defineProps<{ group: QuestionGroup }>();
-defineEmits<{ back: [] }>();
+defineEmits<{ back: []; write: [string] }>();
 
 const acrossLabel = computed(() => {
   const ys = props.group.years;
   if (ys.length <= 1) return `ACROSS ${ys[0] ?? ''}`;
   return `ACROSS ${ys[0]}–${ys[ys.length - 1]}`;
+});
+
+const againLead = computed(() => {
+  const last = props.group.years[props.group.years.length - 1];
+  const thisYear = String(new Date().getFullYear());
+  if (last === thisYear) return '올해도 이 질문에 한 번 더 답해볼까요.';
+  return `${last}년의 답이 마지막이에요. 지금의 나는 뭐라고 답할까요.`;
 });
 </script>
 
@@ -51,6 +67,35 @@ const acrossLabel = computed(() => {
   margin: 8px 0 20px;
   display: grid;
   gap: 8px;
+}
+.answerAgain {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  margin-top: 26px;
+}
+.againLead {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--dim-strong);
+}
+.againCta {
+  padding: 13px 18px;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.againCta:hover {
+  background: var(--vermilion);
+  border-color: var(--vermilion);
+  color: var(--vermilion-ink);
 }
 .yearBlock {
   margin-bottom: 30px;

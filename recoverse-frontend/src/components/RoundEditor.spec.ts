@@ -62,7 +62,7 @@ describe('RoundEditor', () => {
         participants: ['Mina'],
         rounds: [],
         kind: 'free',
-        currentRound,
+        currentRound: { ...currentRound, pathId: 'solo-today', pathStep: 0 },
       },
     });
 
@@ -76,6 +76,8 @@ describe('RoundEditor', () => {
       asker: 'Mina',
       question: 'What stayed with you?',
       answers: { Mina: { text: 'The train platform' } },
+      pathId: 'solo-today',
+      pathStep: 0,
     });
     const currentRoundEvents = wrapper.emitted('update:currentRound') ?? [];
     expect(currentRoundEvents[currentRoundEvents.length - 1]?.[0]).toEqual({ question: '', formatId: '', answers: {} });

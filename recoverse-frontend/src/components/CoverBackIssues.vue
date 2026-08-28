@@ -1,6 +1,11 @@
 <template>
   <section class="backissues">
-    <CoverShelf :issues="issues" @navigate="$emit('navigate', $event)" @open="$emit('open', $event)" />
+    <CoverShelf
+      :issues="issues"
+      :fresh-issue-id="freshIssueId"
+      @navigate="$emit('navigate', $event)"
+      @open="$emit('open', $event)"
+    />
   </section>
 </template>
 
@@ -8,7 +13,9 @@
 import type { Issue } from '@recoverse/shared';
 import CoverShelf from './CoverShelf.vue';
 
-defineProps<{ readonly issues: readonly Issue[] }>();
+withDefaults(defineProps<{ readonly issues: readonly Issue[]; readonly freshIssueId?: string }>(), {
+  freshIssueId: '',
+});
 defineEmits<{ navigate: ['create']; open: [string] }>();
 </script>
 
