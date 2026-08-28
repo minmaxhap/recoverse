@@ -42,7 +42,7 @@ const setsLabel = computed(() => (sets.value.length > 0 ? `${sets.value.length}�
 
 const ENTRIES = [
   { target: 'create', eyebrow: 'TOGETHER', title: '친구들과 같이 해보기', sub: '각자 답하고 함께 열어보는 5~10분 질문 놀이', featured: true },
-  { target: 'solo', eyebrow: 'SOLO', title: '혼자 기록하기', sub: '바로 쓰거나, 구체적인 대상을 골라 리뷰해요', featured: true },
+  { target: 'solo', eyebrow: 'SOLO', title: '혼자 쓰기', sub: '바로 쓰거나, 구체적인 대상을 골라 리뷰해요', featured: true },
   { target: 'rediscover', eyebrow: 'REDISCOVER', title: '다시 발견', sub: '같은 질문에 답한, 다른 해의 나를 만나요', featured: false },
 ] as const satisfies readonly {
   readonly target: CoverTarget;

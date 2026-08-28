@@ -2,7 +2,7 @@
   <section class="modePicker" aria-labelledby="soloModeTitle">
     <span class="eyebrow red">START A PAGE</span>
     <h2 id="soloModeTitle">지금 무엇부터 남길까요?</h2>
-    <p class="modeLead">정답을 고르는 일이 아니에요. 지금 가장 가벼운 입구 하나만 골라보세요.</p>
+    <p class="modeLead">지금 가장 가벼운 입구 하나만 골라보세요.</p>
     <div class="modeList">
       <button v-for="option in options" :key="option.id" type="button" class="modeOption" @click="$emit('select', option.id)">
         <span class="modeNo">{{ option.no }}</span>

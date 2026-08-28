@@ -3,8 +3,8 @@
     <!-- 단계 이동만 한 번 읽어준다. 섹션 전체를 live region으로 두면 타이핑까지 다시 낭독된다. -->
     <p class="srOnly" role="status">{{ stepAnnouncement }}</p>
 
-    <button v-if="draft.phase !== 'complete'" type="button" class="backChoice" @click="goBack">
-      ← {{ draft.phase === 'lens' ? '시작 방식 다시 고르기' : '이전 단계' }}
+    <button type="button" class="backChoice" @click="goBack">
+      ← {{ draft.phase === 'lens' || draft.phase === 'complete' ? '시작 방식 다시 고르기' : '이전 단계' }}
     </button>
 
     <template v-if="draft.phase === 'lens'">
@@ -21,11 +21,11 @@
     <template v-else-if="draft.phase === 'context' && selectedLens">
       <span class="eyebrow red">{{ selectedLens.title }} REVIEW</span>
       <h2 ref="flowTitle" tabindex="-1">어느 장면을 살펴볼까요?</h2>
-      <p class="reviewLead">범위는 렌즈와 별개예요. 정하기 어렵다면 ‘요즘’ 그대로 시작하세요.</p>
+      <p class="reviewLead">정하기 어렵다면 ‘요즘’ 그대로 시작하세요.</p>
       <!-- 하나만 고르는 자리이므로 toggle(aria-pressed)이 아니라 radio 의미를 쓴다. -->
       <div class="scopeList" role="radiogroup" aria-label="리뷰 범위">
         <button
-          v-for="scope in REVIEW_SCOPES"
+          v-for="scope in SELECTABLE_REVIEW_SCOPES"
           :key="scope.id"
           type="button"
           role="radio"
@@ -89,7 +89,7 @@ import type { ReviewContext } from '@recoverse/shared';
 import {
   createEmptyReviewDraft,
   REVIEW_LENSES,
-  REVIEW_SCOPES,
+  SELECTABLE_REVIEW_SCOPES,
   scopeDisplayName,
   type ReviewDraft,
   type ReviewLensId,
@@ -124,9 +124,10 @@ const selectedLens = computed(() => REVIEW_LENSES.find((lens) => lens.id === pro
 const scopeName = computed(() => scopeDisplayName(props.draft.scopeType, props.draft.scopeLabel));
 const scopeReady = computed(() => props.draft.scopeType !== 'custom' || props.draft.scopeLabel.trim().length > 0);
 const completedItemCount = computed(() => props.draft.items.filter((item) => item.label.trim() && item.note.trim()).length);
+// 안심시키는 말은 위 리드에서 한 번만 한다 — 여기서는 지금 상태만 알린다.
 const itemHint = computed(() =>
   completedItemCount.value === 0
-    ? '장면 이름과 한 줄만 적으면 목차에 실려요. 교훈이나 다음 행동은 없어도 돼요.'
+    ? '장면 이름과 한 줄을 적어주세요.'
     : `${completedItemCount.value}개 장면을 실을 수 있어요.`,
 );
 
@@ -244,6 +245,8 @@ function goBack(): void {
       updateDraft({ ...props.draft, phase: 'context' });
       return;
     case 'complete':
+      // 마친 렌즈는 이미 목차에 실렸으므로 되돌릴 단계가 없다 — 시작 방식 화면으로 내보낸다.
+      emit('back');
       return;
   }
 }

@@ -16,21 +16,6 @@
         <span class="draftState" aria-live="polite">{{ draftStateLabel }}</span>
       </div>
 
-      <!-- 첫 질문 앞에서는 빈 칸만 두지 않는다 — 어디서 질문을 데려올지 세 갈래로 편다. -->
-      <div v-if="blankStart" class="startRoutes">
-        <span class="startLead">어디서 시작할까요?</span>
-        <button type="button" class="startRoute" @click="$emit('browse-sets')">
-          <b>질문 세트에서</b><small>저장한 세트나 지난 호 구성을 그대로 목차에</small>
-        </button>
-        <button v-if="pastIssues.length > 0" type="button" class="startRoute" @click="pastPickEl?.open()">
-          <b>지난 호 질문에서</b><small>그때 그 질문에 지금의 나로 답하기</small>
-        </button>
-        <button type="button" class="startRoute" @click="suggestEl?.open()">
-          <b>추천 질문에서</b><small>오늘 답할 만한 질문을 골라 받기</small>
-        </button>
-        <span class="startOr">또는 아래에 직접 써요</span>
-      </div>
-
       <label class="fieldGroup">
         <span class="fieldLabel">질문</span>
         <input
@@ -43,12 +28,33 @@
         />
       </label>
 
-      <!-- 질문을 얻는 두 갈래를 질문 칸 바로 밑에 나란히 — 고르면 곧장 이 칸이 채워진다. -->
+      <!--
+        질문을 어디서 데려올지는 결정 하나다. 빈 화면에서 시작 카드와 링크가 같은 곳을
+        두 번씩 가리켜 문이 여섯 개로 보였다 — 한 버튼 뒤에 세 갈래로 접어 둔다.
+      -->
       <div class="questionSources">
+        <button
+          v-if="!sourcesOpen"
+          type="button"
+          class="sourcesToggle"
+          :aria-expanded="false"
+          @click="sourcesOpen = true"
+        >질문 고르기</button>
+
+        <div v-else class="sourceList">
+          <button type="button" class="sourceRoute" @click="openSuggest">추천 질문</button>
+          <button type="button" class="sourceRoute" @click="$emit('browse-sets')">저장한 질문 세트</button>
+          <button v-if="pastIssues.length > 0" type="button" class="sourceRoute" @click="openPastPick">
+            지난 호 질문
+          </button>
+          <button type="button" class="sourceRoute close" @click="sourcesOpen = false">닫기</button>
+        </div>
+
         <QuestionSuggest
           ref="suggestEl"
           :kind="kind"
           :exclude="pastQuestions"
+          hide-trigger
           @pick="setQuestion"
           @pick-all="addQuestions"
         />
@@ -57,6 +63,7 @@
           ref="pastPickEl"
           :issues="pastIssues"
           :exclude="takenQuestions"
+          hide-trigger
           @pick="setQuestion"
         />
       </div>
@@ -66,6 +73,7 @@
         <label class="fieldGroup answerField">
           <span class="fieldLabel">{{ name }}의 답</span>
           <textarea
+            :ref="(el) => setAnswerEl(i, el)"
             class="field area short"
             :value="currentRound.answers[name] ?? ''"
             :placeholder="answerHint(name)"
@@ -74,8 +82,11 @@
         </label>
       </div>
 
-      <button class="ghost" :disabled="!qaReady" @click="addRound">답 저장하고 다음 질문</button>
+      <button class="ghost" :disabled="!qaReady" @click="addRound">{{ saveLabel }}</button>
     </section>
+
+    <!-- 발행은 쓰는 자리 바로 아래. 목차 뒤에 두면 답을 저장해 발행이 열린 순간이 화면 밖이다. -->
+    <slot name="publish" />
 
     <RoundContentsList
       ref="contentsEl"
@@ -110,8 +121,10 @@ const props = withDefaults(
     draftStateLabel?: string;
     /** 책장의 지난 호 — 있으면 질문 칸 밑에서 한 질문만 골라 다시 쓸 수 있다. */
     pastIssues?: readonly Issue[];
+    /** 답을 저장하는 버튼 문구 — 한 질문만 쓰는 흐름은 "다음 질문"을 약속하지 않는다. */
+    saveLabel?: string;
   }>(),
-  { kind: 'free', draftStateLabel: '새 질문', pastIssues: () => [] },
+  { kind: 'free', draftStateLabel: '새 질문', pastIssues: () => [], saveLabel: '답 저장하고 다음 질문' },
 );
 const emit = defineEmits<{
   'update:rounds': [Round[]];
@@ -124,20 +137,38 @@ const takenQuestions = computed(() => [...pastQuestions.value, props.currentRoun
 
 const contentsEl = ref<InstanceType<typeof RoundContentsList> | null>(null);
 const questionEl = ref<HTMLInputElement | null>(null);
+const answerEls = ref<(HTMLTextAreaElement | null)[]>([]);
 const suggestEl = ref<InstanceType<typeof QuestionSuggest> | null>(null);
 const pastPickEl = ref<InstanceType<typeof PastQuestionPick> | null>(null);
 
-/** 아직 아무것도 없는 첫 화면 — 빈 칸 하나만 두면 무엇부터 할지 알 수 없다. */
-const blankStart = computed(
-  () => props.rounds.length === 0 && props.currentRound.question.trim() === '' && !props.currentRound.formatId,
-);
+function setAnswerEl(index: number, el: unknown): void {
+  answerEls.value[index] = el instanceof HTMLTextAreaElement ? el : null;
+}
+
+// 질문 출처 목록은 고르는 동안만 편다 — 고른 뒤에는 쓰는 칸이 화면을 되찾는다.
+const sourcesOpen = ref(false);
+
+function openSuggest(): void {
+  sourcesOpen.value = false;
+  suggestEl.value?.open();
+}
+
+function openPastPick(): void {
+  sourcesOpen.value = false;
+  pastPickEl.value?.open();
+}
+
 const waitingIndexes = computed(() =>
   props.rounds.flatMap((round, index) => (roundIsAnswered(round) ? [] : [index])),
 );
 const waitingCount = computed(() => waitingIndexes.value.length);
 
-// 바깥에서 이 화면으로 들어올 때(예: 바로 쓰기에서 질문을 고른 직후) 커서를 질문 칸에 둔다.
-defineExpose({ focusQuestion: () => questionEl.value?.focus() });
+// 바깥에서 이 화면으로 들어올 때 커서를 데려온다. 질문을 이미 받아 온 흐름(바로 쓰기)은
+// 답 칸으로 — 남은 일이 답 쓰기뿐인데 질문 칸에 커서를 두면 받은 질문을 지우기 쉽다.
+defineExpose({
+  focusQuestion: () => questionEl.value?.focus(),
+  focusAnswer: () => answerEls.value[0]?.focus(),
+});
 
 function openFirstWaiting(): void {
   const first = waitingIndexes.value[0];
@@ -320,64 +351,55 @@ function removeRound(index: number): void {
   font-weight: 800;
 }
 
-.startRoutes {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.startLead,
-.startOr {
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: var(--dim);
-}
-
-.startOr {
-  margin-top: 2px;
-  font-weight: 700;
-}
-
-.startRoute {
-  display: grid;
-  gap: 3px;
-  text-align: left;
-  padding: 11px 13px;
-  background: var(--paper);
-  border: 1px solid var(--ink);
-  color: inherit;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-}
-
-.startRoute:hover {
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.startRoute b {
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.startRoute small {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--dim);
-}
-
-.startRoute:hover small {
-  color: var(--on-ink-dim);
-}
-
-/* 닫혀 있을 땐 링크 두 개가 한 줄에, 펼쳐지면 그 패널이 한 줄을 다 쓴다. */
+/* 닫혀 있을 땐 버튼 하나가 한 줄에, 펼쳐지면 그 패널이 한 줄을 다 쓴다. */
 .questionSources {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: 4px 18px;
+}
+
+.sourcesToggle {
+  min-height: 44px;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--vermilion);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.sourceList {
+  flex: 1 0 100%;
+  display: grid;
+  border-top: 1px solid var(--hairline);
+}
+
+.sourceRoute {
+  min-height: 44px;
+  padding: 11px 2px;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--hairline);
+  color: inherit;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+
+.sourceRoute:hover {
+  color: var(--vermilion);
+}
+
+.sourceRoute.close {
+  color: var(--dim);
+  font-size: 13px;
 }
 
 .questionSources > :deep(.open) {

@@ -27,6 +27,10 @@ export type ReviewDraft = {
   readonly items: readonly ReviewItemDraft[];
 };
 
+/**
+ * 표시명 표 — 이미 발행된 호가 가진 범위(여행·프로젝트·관계 포함)를 계속 읽어야 하므로
+ * 전부 남긴다. 고르는 자리에 내미는 목록은 SELECTABLE_REVIEW_SCOPES가 따로 정한다.
+ */
 export const REVIEW_SCOPES = [
   { id: 'recent', label: '요즘' },
   { id: 'today', label: '오늘' },
@@ -38,6 +42,14 @@ export const REVIEW_SCOPES = [
   { id: 'relationship', label: '관계' },
   { id: 'custom', label: '직접 정하기' },
 ] as const satisfies readonly { readonly id: ReviewScopeType; readonly label: string }[];
+
+/**
+ * 고르는 자리에는 기간만 — 여행·프로젝트·관계는 기간이 아니라 주제라, 한 줄에 섞이면
+ * "언제"와 "무엇"을 같은 질문으로 착각하게 된다. 주제는 '직접 정하기'의 예시로 안내한다.
+ */
+export const SELECTABLE_REVIEW_SCOPES = REVIEW_SCOPES.filter(
+  (scope) => !(['trip', 'project', 'relationship'] as readonly ReviewScopeType[]).includes(scope.id),
+);
 
 export const REVIEW_LENSES = [
   {

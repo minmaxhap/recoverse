@@ -1,10 +1,10 @@
 <template>
   <div class="suggest" :class="{ open }">
-    <button v-if="!open" type="button" class="suggestOpen" @click="openPanel">
+    <button v-if="!open && !hideTrigger" type="button" class="suggestOpen" @click="openPanel">
       질문이 생각 안 나요
     </button>
 
-    <div v-else class="panel">
+    <div v-if="open" class="panel">
       <div class="panelHead">
         <span class="eyebrow">이런 질문은 어때요</span>
         <button type="button" class="close" @click="open = false" aria-label="닫기">✕</button>
@@ -56,8 +56,9 @@ import {
 
 const props = withDefaults(
   // destination: 담기는 곳의 이름 — 목차(쓰는 화면)와 세트(세트 편집기)에서 같은 패널을 쓴다.
-  defineProps<{ kind: Kind; exclude?: string[]; destination?: string }>(),
-  { exclude: () => [], destination: '목차' },
+  // hideTrigger: 부모가 이미 이 패널로 가는 문을 갖고 있을 때 — 같은 곳을 두 번 가리키지 않게.
+  defineProps<{ kind: Kind; exclude?: string[]; destination?: string; hideTrigger?: boolean }>(),
+  { exclude: () => [], destination: '목차', hideTrigger: false },
 );
 const emit = defineEmits<{ pick: [string]; pickAll: [string[]] }>();
 

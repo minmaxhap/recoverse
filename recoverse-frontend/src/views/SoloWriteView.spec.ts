@@ -363,6 +363,8 @@ describe('SoloWriteView', () => {
 
     // When
     await wrapper.findAll('.modeOption')[0].trigger('click');
+    // 길이는 묻지 않는다 — 고른 값이 질문도 단계도 바꾸지 못했다.
+    expect(wrapper.find('.quickLength').exists()).toBe(false);
     await wrapper.findAll('.quickOption')[0].trigger('click');
 
     // Then
@@ -373,6 +375,127 @@ describe('SoloWriteView', () => {
     expect(saved.guidedPath).toEqual({ pathId: 'solo-today', pathRevision: 1, mode: 'standard', step: 0 });
     expect(saved.currentRound.pathId).toBe('solo-today');
     expect(saved.currentRound.pathStep).toBe(0);
+  });
+
+  it('lets the writer go back to the starting choices without losing what they wrote', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
+    await wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').setValue('반쯤 쓰던 질문?');
+
+    // When
+    await wrapper.get('.backChoice').trigger('click');
+
+    // Then
+    expect(wrapper.findAll('.modeOption')).toHaveLength(3);
+    await wrapper.findAll('.modeOption')[2].trigger('click');
+    expect((wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').element as HTMLInputElement).value).toBe(
+      '반쯤 쓰던 질문?',
+    );
+  });
+
+  it('parks the question in progress in the contents when a quick start replaces it', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
+    await wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').setValue('먼저 쓰던 질문?');
+    await wrapper.get('textarea').setValue('먼저 쓰던 답');
+    await wrapper.get('.backChoice').trigger('click');
+
+    // When
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+
+    // Then
+    expect(wrapper.get('.roundEditor').text()).toContain('먼저 쓰던 질문?');
+    expect(wrapper.get('.roundEditor').text()).toContain('먼저 쓰던 답');
+    expect((wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').element as HTMLInputElement).value).toContain(
+      '오늘',
+    );
+    expect((wrapper.get('textarea').element as HTMLTextAreaElement).value).toBe('');
+  });
+
+  it('leaves the review flow for the starting choices once a lens is finished', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await openReviewLens(wrapper, '사진');
+    await completeReviewItem(wrapper, '노을 사진', '색이 진해서 기억하고 싶다');
+
+    // When
+    await wrapper.get('.reviewFlow .backChoice').trigger('click');
+
+    // Then
+    expect(wrapper.findAll('.modeOption')).toHaveLength(3);
+    await chooseFreeMode(wrapper);
+    expect(wrapper.get('.roundEditor').text()).toContain('노을 사진');
+  });
+
+  it('holds back the cover fields and the publish button until an answer exists', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
+
+    // Then
+    expect(wrapper.find('.cta').exists()).toBe(false);
+    expect(wrapper.find('.coverNote').exists()).toBe(false);
+    expect(wrapper.get('.publishHelp').text()).toContain('발행할 수 있어요');
+
+    // When
+    await wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').setValue('첫 질문?');
+    await wrapper.get('.qaBox textarea').setValue('첫 답');
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    // Then
+    expect(wrapper.get('.cta').text()).toContain('책장에 꽂기');
+    expect(wrapper.find('.coverNote').exists()).toBe(true);
+  });
+
+  it('offers finishing or one more question after a quick answer, not a blank field', async () => {
+    // Given
+    const wrapper = await mountSolo();
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+
+    // When
+    expect(wrapper.get('.qaBox .ghost').text()).toBe('이 답 남기기');
+    await wrapper.get('.qaBox textarea').setValue('오늘 남은 장면 하나');
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    // Then
+    expect(wrapper.find('.qaBox').exists()).toBe(false);
+    expect(wrapper.get('.quickDone .cta').text()).toContain('이대로 책장에 꽂기');
+
+    // And one more question brings back the purpose choices
+    await wrapper.get('.quickDone .ghost').trigger('click');
+    expect(wrapper.findAll('.quickOption')).toHaveLength(3);
+  });
+
+  it('keeps question sets out of the quick flow, where the question already arrived', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+
+    // When
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+
+    // Then
+    expect(wrapper.find('.disclosure').exists()).toBe(false);
+  });
+
+  it('does not treat a mode picked by mistake as something to resume', async () => {
+    // Given
+    const wrapper = await mountSolo();
+
+    // When
+    await chooseFreeMode(wrapper);
+    await flushDraftSave();
+
+    // Then
+    const saved = JSON.parse(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY) ?? '{}') as SoloIssueDraftV2;
+    expect(saved.soloMode).toBe('free');
+    const remounted = await mountSolo();
+    expect(remounted.findAll('.modeOption')).toHaveLength(3);
   });
 
   it('uses recent as the default scope and guides the writer to their own sources', async () => {
@@ -565,13 +688,55 @@ describe('SoloWriteView', () => {
     await chooseFreeMode(wrapper);
 
     // When
-    await wrapper.get('.pickOpen').trigger('click');
+    await wrapper.get('.sourcesToggle').trigger('click');
+    await wrapper.findAll('.sourceRoute').find((route) => route.text() === '지난 호 질문')?.trigger('click');
     await wrapper.get('.pick').trigger('click');
 
     // Then
     const questionField = wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]');
     expect((questionField.element as HTMLInputElement).value).toBe('Source question?');
     expect(wrapper.find('.contentsList').exists()).toBe(false);
+  });
+
+  it('gathers every way of finding a question behind one button', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
+
+    // Then: 빈 화면에는 쓰는 칸과 문 하나뿐 — 같은 곳을 가리키는 링크가 겹치지 않고,
+    // 문을 열기 전에는 어떤 패널도 펼쳐져 있지 않다.
+    expect(wrapper.find('.startRoutes').exists()).toBe(false);
+    expect(wrapper.find('.suggestOpen').exists()).toBe(false);
+    expect(wrapper.find('.pickOpen').exists()).toBe(false);
+    expect(wrapper.find('.panel').exists()).toBe(false);
+    expect(wrapper.get('.sourcesToggle').text()).toBe('질문 고르기');
+
+    // When
+    await wrapper.get('.sourcesToggle').trigger('click');
+
+    // Then
+    expect(wrapper.findAll('.sourceRoute').map((route) => route.text())).toEqual([
+      '추천 질문',
+      '저장한 질문 세트',
+      '지난 호 질문',
+      '닫기',
+    ]);
+  });
+
+  it('opens the set list under the editor when the writer asks for it', async () => {
+    // Given
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    const wrapper = await mountSolo();
+    await chooseFreeMode(wrapper);
+    expect((wrapper.get('details.disclosure').element as HTMLDetailsElement).open).toBe(false);
+
+    // When
+    await wrapper.get('.sourcesToggle').trigger('click');
+    await wrapper.findAll('.sourceRoute').find((route) => route.text() === '저장한 질문 세트')?.trigger('click');
+
+    // Then
+    expect((wrapper.get('details.disclosure').element as HTMLDetailsElement).open).toBe(true);
   });
 
   it('clears the full draft only after publish succeeds', async () => {
@@ -710,7 +875,7 @@ describe('SoloWriteView', () => {
     await chooseFreeMode(wrapper);
 
     // When
-    await wrapper.find('input[placeholder="나"]').setValue('Mina');
+    await wrapper.find('input[placeholder="지금의 나에게 묻고 싶은 것"]').setValue('저장이 막힌 질문?');
     await flushDraftSave();
 
     // Then

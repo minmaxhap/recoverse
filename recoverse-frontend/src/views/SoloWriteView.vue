@@ -1,8 +1,10 @@
 <template>
   <AppShell variant="write">
-    <BackHeader label="혼자 엮기" @back="$emit('back')" />
+    <BackHeader label="혼자 쓰기" @back="$emit('back')" />
 
-    <header class="soloIntro">
+    <!-- 표제는 시작 방식을 고르는 첫 화면에서만. 하위 화면은 각자 제목이 있어,
+         같은 표제를 다시 얹으면 첫 행동만 화면 아래로 밀린다. -->
+    <header v-if="showModePicker" class="soloIntro">
       <span class="eyebrow red">SOLO ISSUE</span>
       <h1 class="pageTitle">오늘의 질문을 한 호로 엮어요</h1>
     </header>
@@ -32,7 +34,87 @@
     />
 
     <template v-if="editorVisible">
+    <!-- 쓰던 것을 그대로 둔 채 다른 시작 방식으로 건너갈 수 있게 — 없으면 한 번 고른 모드에 갇힌다. -->
+    <button type="button" class="backChoice" @click="backToModes">← 시작 방식 다시 고르기</button>
+
+    <!-- 안내는 목록 밖에 둔다 — 담은 뒤 목록이 접혀도 무엇이 담겼는지는 계속 보이게. -->
+    <p v-if="importNotice" class="importNotice" role="status">
+      <span class="helper">{{ importNotice }}</span>
+      <button v-if="lastImported.length > 0" type="button" class="undo" @click="undoImport">되돌리기</button>
+    </p>
+
+    <!-- 바로 쓰기에서 답을 남긴 뒤: 남은 선택은 "여기서 끝낼까, 하나 더 쓸까"뿐이다. -->
+    <section v-if="quickDone" class="quickDone" aria-labelledby="quickDoneTitle">
+      <span class="eyebrow red">ANSWER SAVED</span>
+      <h2 id="quickDoneTitle">답을 목차에 실었어요</h2>
+      <p class="helper">{{ publishHelp }}</p>
+      <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
+      <div class="quickDoneActions">
+        <button class="cta" :disabled="!canPublish || publishing" @click="publish">이대로 책장에 꽂기</button>
+        <button type="button" class="ghost" @click="quickReady = false">질문 하나 더</button>
+        <button type="button" class="linkAction" @click="activeMode = 'free'">목차에서 질문과 답 고치기</button>
+      </div>
+    </section>
+
+    <RoundEditor
+      v-else
+      ref="editorEl"
+      :participants="participants"
+      :rounds="rounds"
+      :current-round="currentRound"
+      :kind="kind"
+      :draft-state-label="draftStateLabel"
+      :past-issues="shelf.issues.value"
+      :save-label="activeMode === 'quick' ? '이 답 남기기' : '답 저장하고 다음 질문'"
+      @update:rounds="updateRounds"
+      @update:current-round="updateCurrentRound"
+      @browse-sets="openSets"
+    >
+      <!-- 발행은 답이 생긴 뒤에만 — 쓰기 전부터 비활성 버튼과 표지 칸을 보여주면
+           답을 쓰면서 완성품 구성까지 동시에 생각하게 된다. -->
+      <template #publish>
+        <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
+        <p class="helper publishHelp">{{ publishHelp }}</p>
+
+        <template v-if="canPublish">
+          <button class="cta" :disabled="publishing" @click="publish">책장에 꽂기</button>
+
+          <details
+            class="disclosure coverNote"
+            :open="coverNoteOpen"
+            @toggle="coverNoteOpen = ($event.target as HTMLDetailsElement).open"
+          >
+            <summary class="disclosureSummary">
+              <span class="eyebrow red">COVER NOTE</span>
+              <span class="disclosureText">표지 정보</span>
+              <span class="disclosureChevron" aria-hidden="true">＋</span>
+            </summary>
+            <div class="disclosureBody">
+              <div class="fieldGroup">
+                <span class="fieldLabel">이번 호 종류</span>
+                <KindChips v-model="kind" />
+              </div>
+
+              <label class="fieldGroup">
+                <span class="fieldLabel">표지 제목 선택</span>
+                <input v-model="title" class="field" aria-label="표지 제목" :placeholder="defaultIssueTitle" />
+                <span class="helper">비워두면 {{ defaultIssueTitle }}로 꽂혀요.</span>
+              </label>
+
+              <label class="fieldGroup">
+                <span class="fieldLabel">이 호에 실릴 이름</span>
+                <input v-model="name" class="field" placeholder="나" />
+              </label>
+            </div>
+          </details>
+        </template>
+      </template>
+    </RoundEditor>
+
+    <!-- 세트는 질문을 구하는 일이라 직접 엮기에서만. 쓰는 자리 아래에 둬 첫 화면을 비워둔다. -->
     <details
+      v-if="activeMode === 'free'"
+      ref="setsEl"
       class="disclosure"
       :open="sourceOpen"
       @toggle="sourceOpen = ($event.target as HTMLDetailsElement).open"
@@ -54,58 +136,6 @@
         />
       </div>
     </details>
-
-    <!-- 안내는 목록 밖에 둔다 — 담은 뒤 목록이 접혀도 무엇이 담겼는지는 계속 보이게. -->
-    <p v-if="importNotice" class="importNotice" role="status">
-      <span class="helper">{{ importNotice }}</span>
-      <button v-if="lastImported.length > 0" type="button" class="undo" @click="undoImport">되돌리기</button>
-    </p>
-
-    <RoundEditor
-      ref="editorEl"
-      :participants="participants"
-      :rounds="rounds"
-      :current-round="currentRound"
-      :kind="kind"
-      :draft-state-label="draftStateLabel"
-      :past-issues="shelf.issues.value"
-      @update:rounds="updateRounds"
-      @update:current-round="updateCurrentRound"
-      @browse-sets="sourceOpen = true"
-    />
-
-    <details
-      class="disclosure coverNote"
-      :open="coverNoteOpen"
-      @toggle="coverNoteOpen = ($event.target as HTMLDetailsElement).open"
-    >
-      <summary class="disclosureSummary">
-        <span class="eyebrow red">COVER NOTE</span>
-        <span class="disclosureText">표지 정보</span>
-        <span class="disclosureChevron" aria-hidden="true">＋</span>
-      </summary>
-      <div class="disclosureBody">
-        <div class="fieldGroup">
-          <span class="fieldLabel">이번 호 종류</span>
-          <KindChips v-model="kind" />
-        </div>
-
-        <label class="fieldGroup">
-          <span class="fieldLabel">표지 제목 선택</span>
-          <input v-model="title" class="field" aria-label="표지 제목" :placeholder="defaultIssueTitle" />
-          <span class="helper">비워두면 {{ defaultIssueTitle }}로 꽂혀요.</span>
-        </label>
-
-        <label class="fieldGroup">
-          <span class="fieldLabel">이 호에 실릴 이름</span>
-          <input v-model="name" class="field" placeholder="나" />
-        </label>
-      </div>
-    </details>
-
-    <p v-if="editorialError" class="error" role="alert">{{ editorialError }}</p>
-    <p class="helper publishHelp">{{ publishHelp }}</p>
-    <button class="cta" :disabled="!canPublish || publishing" @click="publish">책장에 꽂기</button>
     </template>
 
     <p v-if="!editorVisible && editorialError" class="error flowError" role="alert">{{ editorialError }}</p>
@@ -182,6 +212,13 @@ const coverNoteOpen = ref(false);
 const soloDraft = useSoloIssueDraft();
 const draftReady = ref(false);
 const editorEl = ref<InstanceType<typeof RoundEditor> | null>(null);
+const setsEl = ref<HTMLDetailsElement | null>(null);
+
+/** 세트 목록은 쓰는 자리 아래에 있다 — 열기만 하면 화면 밖이라 데려다 놓는다. */
+function openSets(): void {
+  sourceOpen.value = true;
+  void nextTick(() => setsEl.value?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+}
 
 const activeMode = ref<SoloMode | ''>('');
 const quickReady = ref(false);
@@ -224,6 +261,18 @@ const editorialError = computed(() => publishError.value || draftError.value);
 const showModePicker = computed(() => draftReady.value && activeMode.value === '');
 const editorVisible = computed(
   () => activeMode.value === 'free' || (activeMode.value === 'quick' && quickReady.value),
+);
+/**
+ * 바로 쓰기에서 답을 저장해 쓰던 칸이 비워진 상태. 한 질문만 쓰기로 들어온 사람에게
+ * 빈 질문 칸을 다시 내밀면 "또 써야 하나"로 읽힌다 — 끝낼지 이어갈지만 묻는다.
+ * 초고 스키마는 그대로 두고 지금 값에서 파생한다.
+ */
+const quickDone = computed(
+  () =>
+    activeMode.value === 'quick' &&
+    quickReady.value &&
+    canPublish.value &&
+    currentRound.value.question.trim() === '',
 );
 
 function savedTimeText(savedAt: string): string {
@@ -295,8 +344,11 @@ function applyDraft(draft: SoloIssueDraftV2): void {
   sourceIssueId.value = draft.sourceIssueId;
   rounds.value = [...draft.rounds];
   currentRound.value = draft.currentRound;
-  activeMode.value = draft.soloMode ?? '';
-  quickReady.value = draft.quickReady ?? false;
+  // 쓴 것이 없으면 시작 방식부터 다시 묻는다 — 실수로 한 번 누른 모드가 다음 방문의
+  // 첫 화면을 대신 정해버리면, 다른 입구를 고를 기회 자체가 사라진다.
+  const resumable = draftHasContent(draft);
+  activeMode.value = resumable ? draft.soloMode ?? '' : '';
+  quickReady.value = resumable ? draft.quickReady ?? false : false;
   guidedPath.value = draft.guidedPath;
   reviewDraft.value = draft.reviewComposer ?? createEmptyReviewDraft();
 }
@@ -439,9 +491,33 @@ function resetMode(): void {
   reviewDraft.value = createEmptyReviewDraft();
 }
 
+/**
+ * 시작 방식 화면으로 돌아가되 쓰던 것은 남긴다 — 목차·쓰던 질문·리뷰 진행 모두 그대로.
+ * resetMode와 달리 되돌리기가 아니라 "다른 입구로 건너가기"라서, 지우는 일은 하지 않는다.
+ */
+function backToModes(): void {
+  activeMode.value = '';
+  quickReady.value = false;
+}
+
 function chooseQuickStart(selection: QuickStartSelection): void {
+  // 쓰던 질문이 있으면 덮어쓰지 않고 쓰던 답과 함께 목차로 옮긴다 — 시작 방식을 다시 고르고
+  // 돌아왔을 때 앞서 쓰던 것이 조용히 사라지지 않게. 재발견에서 들고 올 때와 같은 규칙.
+  const pending = currentRound.value.question.trim();
+  const carried = pending !== '' && pending !== selection.question.trim();
+  if (carried) {
+    const answers: Round['answers'] = {};
+    for (const [who, text] of Object.entries(currentRound.value.answers)) {
+      if (text.trim()) answers[who] = { text: text.trim() };
+    }
+    rounds.value = [
+      ...rounds.value,
+      { asker: participants.value[0] ?? SOLO_DEFAULT_NAME, question: pending, answers },
+    ];
+  }
   currentRound.value = {
-    ...currentRound.value,
+    // 옮긴 답까지 따라오면 새 질문 밑에 남의 답이 앉는다 — 옮겼으면 답 칸은 비우고 시작한다.
+    ...(carried ? { formatId: '', answers: {} } : currentRound.value),
     question: selection.question,
     pathId: selection.pathId,
     pathStep: 0,
@@ -454,7 +530,7 @@ function chooseQuickStart(selection: QuickStartSelection): void {
     step: 0,
   };
   // 고른 질문 바로 아래 답 칸에서 이어 쓰게 — 키보드/모바일에서 화면을 다시 찾지 않도록.
-  void nextTick(() => editorEl.value?.focusQuestion());
+  void nextTick(() => editorEl.value?.focusAnswer());
 }
 
 function updateReviewDraft(next: ReviewDraft): void {
@@ -535,6 +611,23 @@ function finishPublish(): void {
   display: grid;
   gap: 4px;
   margin-bottom: 18px;
+}
+
+/* 시작 방식으로 되돌아가는 줄 — 바로 쓰기·리뷰 흐름과 같은 생김새로 둔다. */
+.backChoice {
+  justify-self: start;
+  min-height: 44px;
+  padding: 8px 0;
+  background: none;
+  border: 0;
+  color: var(--dim);
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.backChoice:hover {
+  color: var(--vermilion);
 }
 
 .soloIntro .pageTitle {
@@ -618,6 +711,43 @@ function finishPublish(): void {
 .publishHelp {
   margin-top: 16px;
   text-align: center;
+}
+
+/* 답을 남긴 뒤의 갈림길 — 리뷰의 LENS COMPLETE와 같은 세로 목록. */
+.quickDone {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.quickDone h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 25px;
+  line-height: 1.45;
+}
+
+.quickDoneActions {
+  display: grid;
+  gap: 9px;
+  margin-top: 8px;
+}
+
+.linkAction {
+  justify-self: start;
+  min-height: 44px;
+  padding: 8px 0;
+  background: none;
+  border: 0;
+  color: var(--dim);
+  font-family: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.linkAction:hover {
+  color: var(--vermilion);
 }
 
 .resumeBanner {

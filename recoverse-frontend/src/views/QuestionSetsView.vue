@@ -5,7 +5,7 @@
     <header class="setsIntro">
       <span class="eyebrow red">QUESTION SET</span>
       <h1 class="pageTitle">다음 호에 그대로 쓸<br />질문 묶음</h1>
-      <p class="lede">한 번 짜두면 혼자 엮기에서 탭 한 번으로 그 구성이 목차에 깔려요.</p>
+      <p class="lede">한 번 짜두면 혼자 쓰기에서 탭 한 번으로 그 구성이 목차에 깔려요.</p>
     </header>
 
     <QuestionSetManager :issues="issues" />

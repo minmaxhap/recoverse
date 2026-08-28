@@ -13,7 +13,7 @@ describe('CoverEntryList', () => {
     const featured = wrapper.findAll('.entryBtn.featured').map((button) => button.text());
     expect(featured).toHaveLength(2);
     expect(featured[0]).toContain('친구들과 같이 해보기');
-    expect(featured[1]).toContain('혼자 기록하기');
+    expect(featured[1]).toContain('혼자 쓰기');
     expect(wrapper.get('.joinLine').text()).toContain('초대 코드를 받았나요?');
   });
 
