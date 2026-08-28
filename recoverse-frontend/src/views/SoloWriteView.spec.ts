@@ -90,6 +90,9 @@ async function chooseFreeMode(wrapper: VueWrapper): Promise<void> {
 async function openReviewLens(wrapper: VueWrapper, lensName: string): Promise<void> {
   const reviewMode = wrapper.findAll('.modeOption').find((button) => button.text().includes('대상을 골라'));
   if (reviewMode) await reviewMode.trigger('click');
+  // 첫 화면에는 오늘의 렌즈 셋만 보인다. 이름으로 고르려면 나머지를 펼친 뒤 찾는다.
+  const more = wrapper.find('.moreLenses');
+  if (more.exists()) await more.trigger('click');
   const lens = wrapper.findAll('.lensOption').find((button) => button.text().includes(lensName));
   if (lens) await lens.trigger('click');
 }
@@ -347,12 +350,18 @@ describe('SoloWriteView', () => {
     expect(wrapper.find('.roundEditor').exists()).toBe(false);
   });
 
-  it('shows one shared catalog with twelve review lenses', async () => {
+  it('starts with a few lenses and opens the full catalog on request', async () => {
     // Given
     const wrapper = await mountSolo();
 
     // When
     await wrapper.findAll('.modeOption')[1].trigger('click');
+
+    // Then
+    expect(wrapper.findAll('.lensOption')).toHaveLength(3);
+
+    // When
+    await wrapper.get('.moreLenses').trigger('click');
 
     // Then
     const lenses = wrapper.findAll('.lensOption');
@@ -911,8 +920,8 @@ describe('SoloWriteView', () => {
     // When
     await wrapper.findAll('.modeOption')[1].trigger('click');
 
-    // Then
-    expect(wrapper.findAll('.lensOption')).toHaveLength(12);
+    // Then — 저장이 막혀도 고를 렌즈는 그대로 있고, 무엇이 잘못됐는지 말해준다
+    expect(wrapper.findAll('.lensOption')).toHaveLength(3);
     expect(wrapper.get('[role="alert"]').text()).toContain('임시 저장하지 못했어요');
   });
 
