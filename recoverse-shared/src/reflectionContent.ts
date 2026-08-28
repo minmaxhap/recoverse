@@ -60,10 +60,16 @@ export interface ReviewLensDefinition {
   tags: string[];
 }
 
+/**
+ * 리뷰 렌즈로 쓴 라운드의 출처. `subject`는 그 답이 붙은 장면 이름("한강 야경 사진")이다.
+ * 장면 이름을 question에 붙이면 해마다 글자가 달라져 재발견이 절대 묶이지 않는다 —
+ * question은 렌즈의 고정 질문만 두고, 매번 달라지는 이름은 여기로 옮긴다.
+ */
 export interface ReviewContext {
   lensId: ReviewLensId;
   lensRevision: number;
   scope: ReviewScope;
+  subject?: string;
 }
 
 export interface QuestionDefinition {
@@ -132,9 +138,14 @@ export function parseReviewContext(value: unknown): ReviewContext | null {
   if (value.scope.from !== undefined && typeof value.scope.from !== 'string') return null;
   if (value.scope.to !== undefined && typeof value.scope.to !== 'string') return null;
 
+  if (value.subject !== undefined && typeof value.subject !== 'string') return null;
+
   const scope: ReviewScope = { type: value.scope.type };
   if (typeof value.scope.label === 'string') scope.label = value.scope.label;
   if (typeof value.scope.from === 'string') scope.from = value.scope.from;
   if (typeof value.scope.to === 'string') scope.to = value.scope.to;
-  return { lensId: value.lensId, lensRevision: value.lensRevision, scope };
+  const context: ReviewContext = { lensId: value.lensId, lensRevision: value.lensRevision, scope };
+  // 빈 문자열은 없는 것과 같다 — 화면에 빈 꼬리표가 남지 않게 여기서 떨군다.
+  if (typeof value.subject === 'string' && value.subject.trim()) context.subject = value.subject.trim();
+  return context;
 }

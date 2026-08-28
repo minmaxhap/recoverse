@@ -18,5 +18,19 @@ describe('reflection content metadata validation', () => {
     expect(isValidRevision(0)).toBe(false);
     expect(isValidPathStep(-1)).toBe(false);
     expect(parseReviewContext({ lensId: 'photo', lensRevision: 0, scope: { type: 'recent' } })).toBeNull();
+    expect(parseReviewContext({ lensId: 'photo', lensRevision: 1, scope: { type: 'recent' }, subject: 3 })).toBeNull();
+  });
+
+  it('carries the scene name across a save and drops it when blank', () => {
+    const base = { lensId: 'photo', lensRevision: 1, scope: { type: 'recent' } };
+
+    expect(parseReviewContext({ ...base, subject: ' 한강 야경 사진 ' })).toEqual({
+      lensId: 'photo',
+      lensRevision: 1,
+      scope: { type: 'recent' },
+      subject: '한강 야경 사진',
+    });
+    // 빈 이름은 없는 것과 같다 — 화면에 빈 꼬리표가 남지 않게 여기서 떨군다.
+    expect(parseReviewContext({ ...base, subject: '   ' })).toEqual(base);
   });
 });

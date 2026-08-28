@@ -111,7 +111,7 @@ import {
  * 발행되는 것은 평범한 질문/답 한 줄이다.
  * 렌즈·범위를 `Round.format`에 실어 보내지 않는다 — format은 열람 화면의 조판 ID라는
  * 별도 계약이고, 여기에 다른 뜻을 끼워 넣으면 export/import 계약이 조용히 바뀐다.
- * 기계가 읽는 lens/scope 보존은 shared `Round.review?`(T1.1/T1.3)가 생긴 뒤에 얹는다.
+ * 렌즈·범위·장면 이름은 `Round.review`가 받는다.
  */
 export type ReviewRoundInput = {
   readonly question: string;
@@ -228,8 +228,11 @@ function completeLens(): void {
   if (!lens) return;
   const completed = props.draft.items.filter((item) => item.label.trim() && item.note.trim());
   if (completed.length === 0) return;
+  // 질문은 렌즈의 고정 질문 그대로다. 예전엔 여기에 범위와 장면 이름을 붙였는데,
+  // 재발견은 질문 글자를 정규화해 묶으므로 매년 달라지는 장면 이름이 섞이면 한 해도 묶이지 않았다.
+  // 달라지는 것(범위·장면 이름)은 review로 옮기고 화면이 답 옆에 꼬리표로 보여준다.
   const rounds = completed.map((item) => ({
-    question: `${scopeName.value} ${lens.title} · ${item.label.trim()} — ${lens.reflectionPrompt}`,
+    question: lens.reflectionPrompt,
     answer: item.note.trim(),
     review: {
       lensId: lens.id,
@@ -240,6 +243,7 @@ function completeLens(): void {
           ? { label: props.draft.scopeLabel.trim() }
           : {}),
       },
+      subject: item.label.trim(),
     },
   }));
   updateDraft({ ...props.draft, phase: 'complete', items: completed });

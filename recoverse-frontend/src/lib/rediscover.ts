@@ -1,5 +1,5 @@
 import { fnv1a32, kstTodayISO, normalizeQuestion } from '@recoverse/shared';
-import type { Answer, Issue } from '@recoverse/shared';
+import type { Answer, Issue, ReviewContext } from '@recoverse/shared';
 
 export interface RediscoverEntry {
   date: string;
@@ -7,6 +7,7 @@ export interface RediscoverEntry {
   issueTitle: string;
   question: string; // 이 호에서의 원본 표기
   format?: string; // 이 라운드의 포맷 ID (있으면)
+  review?: ReviewContext; // 리뷰 렌즈로 쓴 라운드의 장면 이름·범위 (있으면)
   participants: string[];
   answers: Record<string, Answer>;
 }
@@ -37,6 +38,7 @@ export function groupByQuestion(issues: Issue[]): QuestionGroup[] {
         issueTitle: issue.title,
         question: round.question,
         format: round.format,
+        review: round.review,
         participants: issue.participants,
         answers: round.answers,
       });
@@ -73,8 +75,12 @@ export function filterGroups(groups: QuestionGroup[], query: string): QuestionGr
   if (!q) return groups;
   return groups.filter((g) => {
     if (g.question.toLowerCase().replace(/\s+/g, '').includes(q)) return true;
-    return g.entries.some((entry) =>
-      Object.values(entry.answers).some((a) => a.text.toLowerCase().replace(/\s+/g, '').includes(q))
+    // 리뷰 렌즈로 쓴 답은 '한강 야경 사진' 같은 장면 이름이 질문이 아니라 review에 있다.
+    // 찾는 사람에게는 여전히 그 이름이 손잡이라, 검색 대상에 함께 둔다.
+    return g.entries.some(
+      (entry) =>
+        (entry.review?.subject ?? '').toLowerCase().replace(/\s+/g, '').includes(q) ||
+        Object.values(entry.answers).some((a) => a.text.toLowerCase().replace(/\s+/g, '').includes(q))
     );
   });
 }

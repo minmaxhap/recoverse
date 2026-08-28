@@ -780,15 +780,16 @@ describe('SoloWriteView', () => {
     expect(shelved).toHaveLength(1);
     expect(shelved[0]?.title).toBe('사진 리뷰 · 8월 18일');
     expect(shelved[0]?.rounds).toHaveLength(1);
-    expect(shelved[0]?.rounds[0]?.question).toContain('요즘 사진');
+    // 질문은 렌즈의 고정 한 줄 — 장면 이름이 섞이지 않아야 내년에 같은 질문으로 묶인다.
+    expect(shelved[0]?.rounds[0]?.question).toBe('사진 밖에서 함께 기억나는 것은 무엇인가요?');
     expect(shelved[0]?.rounds[0]?.answers['나']?.text).toBe('색이 웃길 만큼 진해서 기억하고 싶다');
-    // 렌즈·범위는 질문 문장으로만 남는다. format은 열람 화면 조판 ID라는 기존 계약이라
-    // 여기에 lens/scope를 실어 보내지 않는다(기계가 읽는 보존은 shared Round.review 몫).
+    // format은 열람 화면 조판 ID라는 기존 계약이라 여기에 lens/scope를 실어 보내지 않는다.
     expect(shelved[0]?.rounds[0]?.format).toBeUndefined();
     expect((shelved[0]?.rounds[0] as Round & { review?: unknown })?.review).toEqual({
       lensId: 'photo',
       lensRevision: 1,
       scope: { type: 'recent' },
+      subject: '노을 사진',
     });
   });
 
@@ -841,10 +842,13 @@ describe('SoloWriteView', () => {
     expect(shelved[0]?.title).toBe('사진 외 1개 리뷰 · 8월 18일');
     expect(shelved[0]?.rounds).toHaveLength(2);
     expect(shelved[0]?.rounds.map((round) => round.question)).toEqual([
-      expect.stringContaining('사진'),
-      expect.stringContaining('식사'),
+      '사진 밖에서 함께 기억나는 것은 무엇인가요?',
+      '맛과 상황에서 무엇이 남았나요?',
     ]);
-    // 두 렌즈가 한 호에 섞여도 각 줄은 자기 렌즈 이름을 질문 문장으로 달고 간다.
+    // 두 렌즈가 한 호에 섞여도 각 줄은 자기 렌즈와 장면 이름을 review로 달고 간다.
+    expect(
+      shelved[0]?.rounds.map((round) => (round as Round & { review?: { subject?: string } }).review?.subject),
+    ).toEqual(['산책 사진', '늦은 국수']);
     expect(shelved[0]?.rounds.map((round) => round.format)).toEqual([undefined, undefined]);
   });
 

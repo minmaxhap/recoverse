@@ -30,11 +30,13 @@
             <span class="sealedAsk">{{ entry.year }}년의 나는<br />뭐라고 했을까?</span>
             <span class="sealedOpen">열어보기</span>
           </button>
-          <RediscoverEntryAnswers
-            v-else
-            :participants="entry.participants"
-            :answers="entry.answers"
-          />
+          <template v-else>
+            <ReviewSubjectTag :review="entry.review" />
+            <RediscoverEntryAnswers
+              :participants="entry.participants"
+              :answers="entry.answers"
+            />
+          </template>
         </div>
       </section>
     </div>
@@ -56,6 +58,7 @@ import type { QuestionGroup } from '../lib/rediscover';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
 import RediscoverEntryAnswers from '../components/RediscoverEntryAnswers.vue';
+import ReviewSubjectTag from '../components/ReviewSubjectTag.vue';
 
 const props = defineProps<{ group: QuestionGroup }>();
 defineEmits<{ back: []; write: [string] }>();

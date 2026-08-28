@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Issue } from '@recoverse/shared';
-import { pickRediscoveryMoment } from './rediscover';
+import { filterGroups, groupByQuestion, pickRediscoveryMoment } from './rediscover';
 
 const TODAY = new Date('2026-08-05T09:00:00Z');
 
@@ -15,6 +15,28 @@ function issue(id: string, date: string, question = '올해 가장 큰 변화는
     source: 'solo',
   };
 }
+
+describe('filterGroups', () => {
+  it('finds a review answer by the scene it was written about', () => {
+    // Given: 장면 이름이 질문이 아니라 review에 있는 라운드 — 찾는 사람에게는 여전히 그 이름이 손잡이다.
+    const reviewed: Issue = {
+      ...issue('r', '2026-08-20', '사진 밖에서 함께 기억나는 것은 무엇인가요?'),
+      rounds: [
+        {
+          asker: '민아',
+          question: '사진 밖에서 함께 기억나는 것은 무엇인가요?',
+          answers: { 민아: { text: '바람이 셌다' } },
+          review: { lensId: 'photo', lensRevision: 1, scope: { type: 'recent' }, subject: '한강 야경 사진' },
+        },
+      ],
+    };
+    const groups = groupByQuestion([reviewed]);
+
+    // Then
+    expect(filterGroups(groups, '한강')).toHaveLength(1);
+    expect(filterGroups(groups, '남산')).toHaveLength(0);
+  });
+});
 
 describe('pickRediscoveryMoment', () => {
   it('does not offer an issue published today as something to rediscover', () => {
