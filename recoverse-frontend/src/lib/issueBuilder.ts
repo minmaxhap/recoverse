@@ -24,7 +24,8 @@ export interface EditorDraft {
   date: string; // ISO
   title: string;
   participants: string[];
-  rounds: Round[];
+  // 읽어서 거르기만 한다 — 부르는 쪽이 자기 목록을 내주고도 안심하게 readonly로 받는다.
+  rounds: readonly Round[];
 }
 
 /**

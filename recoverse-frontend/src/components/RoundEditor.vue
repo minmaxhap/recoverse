@@ -68,7 +68,7 @@ import type { SoloIssueCurrentRoundDraft } from '../lib/soloIssueDraftTypes';
 const props = withDefaults(
   defineProps<{
     participants: string[];
-    rounds: Round[];
+    rounds: readonly Round[];
     currentRound: SoloIssueCurrentRoundDraft;
     kind?: Kind;
     draftStateLabel?: string;
