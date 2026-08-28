@@ -15,6 +15,8 @@
 
         <template v-if="editingIndex !== i">
           <span class="contentText">
+            <!-- 한 렌즈로 장면 셋을 적으면 질문 줄이 셋 다 같다 — 어느 줄이 어느 장면인지는 이 이름이 알려준다. -->
+            <em v-if="subjectOf(round)" class="subjectTag">{{ subjectOf(round) }}</em>
             <b>{{ round.question }}</b>
             <small :class="{ pending: !isAnswered(round) }">{{ answerPreview(round) }}</small>
           </span>
@@ -89,6 +91,10 @@ const editReady = computed(
 
 function isAnswered(round: Round): boolean {
   return roundIsAnswered(round);
+}
+
+function subjectOf(round: Round): string {
+  return round.review?.subject?.trim() ?? '';
 }
 
 function answerPreview(round: Round): string {
@@ -279,6 +285,16 @@ function saveEdit(index: number): void {
   min-width: 0;
   display: grid;
   gap: 3px;
+}
+
+/* 다홍은 11px에서 대비가 3.78:1까지 떨어진다 — 장식이 아니라 어느 장면인지 읽어야 하는 줄이라 잉크 쪽으로. */
+.contentText .subjectTag {
+  color: var(--dim-strong);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
 }
 
 .contentText b {

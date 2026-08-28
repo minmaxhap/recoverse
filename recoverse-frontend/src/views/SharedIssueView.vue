@@ -27,6 +27,7 @@
             <Headline :no="i + 1" :question="round.question" :asker="round.asker" />
           </template>
           <template #right>
+            <ReviewSubjectTag :review="round.review" />
             <RoundAnswers
               :participants="issue.participants"
               :answers="round.answers"
@@ -49,6 +50,7 @@ import type { Issue } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import Headline from '../components/Headline.vue';
 import MagazineSkeleton from '../components/MagazineSkeleton.vue';
+import ReviewSubjectTag from '../components/ReviewSubjectTag.vue';
 import RoundAnswers from '../components/RoundAnswers.vue';
 import SpreadLayout from '../components/SpreadLayout.vue';
 import { api, ApiError } from '../lib/api';

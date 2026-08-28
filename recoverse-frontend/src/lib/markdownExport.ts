@@ -21,7 +21,10 @@ function roundToMarkdown(issue: Issue, round: Issue['rounds'][number]): string {
     .filter((entry) => entry.text.length > 0)
     .map((entry) => `> **${entry.name}**\n${blockquote(entry.text)}`);
   const answers = answered.length > 0 ? answered.join('\n>\n') : '> _(아직 빈 답)_';
-  return `## ${round.question}\n\n${answers}`;
+  // 리뷰 렌즈로 쓴 답은 질문이 렌즈의 고정 한 줄이라, 장면 이름 없이는 셋이 똑같아 보인다.
+  const subject = round.review?.subject?.trim();
+  const head = subject ? `## ${round.question}\n\n_${subject}_` : `## ${round.question}`;
+  return `${head}\n\n${answers}`;
 }
 
 export function issueToMarkdown(issue: Issue): string {

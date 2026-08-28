@@ -2,8 +2,10 @@
 
 import { mount, type VueWrapper } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Issue, Round } from '@recoverse/shared';
 import SoloReviewFlow from './SoloReviewFlow.vue';
 import { createEmptyReviewDraft, REVIEW_LENS_IDS, REVIEW_LENSES, type ReviewDraft } from './reviewContent';
+import { groupByQuestion } from '../../lib/rediscover';
 
 /** 부모가 하는 일(상태 보관)을 대신해 emit된 draft를 그대로 되먹인다 — 한 state machine을 그대로 검증한다. */
 function mountFlow(initial: ReviewDraft = createEmptyReviewDraft()): VueWrapper {
@@ -167,15 +169,57 @@ describe('SoloReviewFlow', () => {
     expect(completed).toHaveLength(1);
     const rounds = completed![0][0] as Array<{ question: string; answer: string; review: unknown }>;
     expect(rounds).toHaveLength(1);
-    expect(rounds[0].question).toContain('퇴근길 통화');
-    expect(rounds[0].question).toContain('요즘');
+    // 질문에는 렌즈의 고정 질문만 — 장면 이름과 범위가 섞이면 해마다 글자가 달라져
+    // 재발견이 같은 질문으로 묶지 못한다.
+    expect(rounds[0].question).toBe('그 장면이 왜 아직 남아 있나요?');
+    expect(rounds[0].question).not.toContain('퇴근길 통화');
     expect(rounds[0].answer).toBe('말끝을 흐린 게 계속 남는다');
     expect(Object.keys(rounds[0])).toEqual(['question', 'answer', 'review']);
     expect(rounds[0].review).toEqual({
       lensId: 'conversation',
       lensRevision: 1,
       scope: { type: 'recent' },
+      subject: '퇴근길 통화',
     });
+  });
+
+  it('writes a question that will still match itself next year', async () => {
+    // Given: 같은 렌즈로 두 해에 한 번씩 쓴 사람. 장면 이름은 해마다 다르다.
+    async function writeOneScene(sceneName: string, note: string): Promise<Round> {
+      const wrapper = mountFlow();
+      await pickLens(wrapper, '사진');
+      await wrapper.get('.reviewFlow .cta').trigger('click');
+      await applyEmitted(wrapper);
+      await wrapper.get('.itemLabel').setValue(sceneName);
+      await applyEmitted(wrapper);
+      await wrapper.get('.itemNote').setValue(note);
+      await applyEmitted(wrapper);
+      await wrapper.get('.reviewFlow .cta').trigger('click');
+      const input = (wrapper.emitted('complete')![0][0] as Array<{ question: string; answer: string; review: unknown }>)[0];
+      return { asker: '나', question: input.question, answers: { 나: { text: input.answer } }, review: input.review as Round['review'] };
+    }
+
+    const rounds = [
+      await writeOneScene('한강 야경 사진', '바람이 셌다'),
+      await writeOneScene('제주 돌담 사진', '아무도 없었다'),
+    ];
+    const issues: Issue[] = rounds.map((round, index) => ({
+      id: `i${index}`,
+      kind: 'free',
+      date: `${2025 + index}-08-20`,
+      title: `${2025 + index} 사진`,
+      participants: ['나'],
+      rounds: [round],
+      source: 'solo',
+    }));
+
+    // When
+    const groups = groupByQuestion(issues);
+
+    // Then: 두 해가 한 질문으로 묶인다 — 예전처럼 장면 이름이 질문에 박혀 있었다면 둘로 갈렸다.
+    expect(groups).toHaveLength(1);
+    expect(groups[0].years).toEqual(['2025', '2026']);
+    expect(groups[0].entries.map((entry) => entry.review?.subject)).toEqual(['한강 야경 사진', '제주 돌담 사진']);
   });
 
   it('walks back one step at a time and hands the way out to the parent', async () => {

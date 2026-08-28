@@ -49,7 +49,10 @@
           <div v-if="editing" class="editAnswers">
             <label v-for="person in draftAnswerPeople(draftRounds[i])" :key="person.key" class="editAnswer"><span class="editAnswerName">{{ person.name }}</span><textarea v-model="draftRounds[i].answers[person.key].text" class="field area short editorAnswerArea" @input="resizeTextarea" /></label>
           </div>
-          <RoundAnswers v-else :participants="issue.participants" :answers="round.answers" :format="round.format" still />
+          <template v-else>
+            <ReviewSubjectTag :review="round.review" />
+            <RoundAnswers :participants="issue.participants" :answers="round.answers" :format="round.format" still />
+          </template>
         </template>
       </SpreadLayout>
     </article>
@@ -64,7 +67,7 @@
 import { computed, nextTick, ref } from 'vue';
 import { ArrowDown, ArrowUp, Copy, Pencil, Printer, Share2, Trash2, X } from 'lucide-vue-next';
 import { normalizeQuestion, type Issue, type Round } from '@recoverse/shared';
-import AppShell from '../components/AppShell.vue'; import BackHeader from '../components/BackHeader.vue'; import Headline from '../components/Headline.vue'; import RoundAnswers from '../components/RoundAnswers.vue'; import SpreadLayout from '../components/SpreadLayout.vue';
+import AppShell from '../components/AppShell.vue'; import BackHeader from '../components/BackHeader.vue'; import Headline from '../components/Headline.vue'; import ReviewSubjectTag from '../components/ReviewSubjectTag.vue'; import RoundAnswers from '../components/RoundAnswers.vue'; import SpreadLayout from '../components/SpreadLayout.vue';
 import { useShelf } from '../composables/useShelf'; import { groupByQuestion } from '../lib/rediscover'; import { api, ApiError } from '../lib/api';
 
 const props = defineProps<{ issue: Issue }>();

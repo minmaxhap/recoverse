@@ -30,6 +30,24 @@ describe('issueToMarkdown', () => {
     expect(md).toContain('> **지원**\n> 이직했다.');
   });
 
+  it('names the scene a review round was written about', () => {
+    // 리뷰 렌즈는 세 장면에 같은 질문을 쓴다 — 장면 이름이 없으면 10년 뒤 파일에서 셋이 구별되지 않는다.
+    const md = issueToMarkdown(
+      issue({
+        rounds: [
+          {
+            asker: '민희',
+            question: '사진 밖에서 함께 기억나는 것은 무엇인가요?',
+            answers: { 민희: { text: '바람이 셌다.' } },
+            review: { lensId: 'photo', lensRevision: 1, scope: { type: 'recent' }, subject: '한강 야경 사진' },
+          },
+        ],
+      }),
+    );
+    expect(md).toContain('## 사진 밖에서 함께 기억나는 것은 무엇인가요?');
+    expect(md).toContain('_한강 야경 사진_');
+  });
+
   it('falls back to the default kind-based title when none is set', () => {
     const md = issueToMarkdown(issue({ title: '   ' }));
     expect(md).toContain('# 2026 연말호');
