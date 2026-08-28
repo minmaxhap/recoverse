@@ -142,7 +142,7 @@ describe('SoloReviewFlow', () => {
     // Then: 아직 실을 게 없으면 안내만 하고 막는다.
     // 교훈을 요구하지 않는다는 말은 리드에서 한 번만 하고, 하단은 지금 상태만 알린다.
     expect((wrapper.get('.reviewFlow .cta').element as HTMLButtonElement).disabled).toBe(true);
-    expect(wrapper.get('.reviewLead').text()).toContain('교훈이나 결론은 없어도 괜찮아요');
+    expect(wrapper.get('.reviewLead').text()).toBe('맛있어서. 웃겨서. 그냥.');
     expect(wrapper.get('.fineprint').text()).toBe('장면 이름과 한 줄을 적어주세요.');
 
     // When

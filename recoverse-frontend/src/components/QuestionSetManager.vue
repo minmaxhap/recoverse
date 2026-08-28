@@ -419,11 +419,12 @@ function confirmDelete(id: string): void {
   gap: 6px;
 }
 
+/* 손가락으로 누르는 자리라 40px 아래로 내려가지 않는다. */
 .qActions button {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   background: none;
   border: 1px solid var(--hairline);

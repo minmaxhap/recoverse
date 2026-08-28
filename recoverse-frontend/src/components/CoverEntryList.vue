@@ -12,7 +12,7 @@
         <span class="entryMain">
           <span class="eyebrow" :class="{ red: item.target !== 'create' }">{{ item.eyebrow }}</span>
           <span class="entryTitle">{{ item.title }}</span>
-          <span class="entrySub">{{ item.sub }}</span>
+          <span v-if="item.sub" class="entrySub">{{ item.sub }}</span>
         </span>
         <span class="pageNo">{{ String(i + 1).padStart(2, '0') }}</span>
       </button>
@@ -41,9 +41,11 @@ const { sets } = useQuestionSets();
 const setsLabel = computed(() => (sets.value.length > 0 ? `${sets.value.length}개` : '만들기'));
 
 const ENTRIES = [
-  { target: 'create', eyebrow: 'TOGETHER', title: '친구들과 같이 해보기', sub: '3명부터 답의 주인을 맞히는 ‘누가 썼게’가 열려요.', featured: true },
-  { target: 'solo', eyebrow: 'SOLO', title: '혼자 쓰기', sub: '바로 쓰거나, 구체적인 대상을 골라 리뷰해요', featured: true },
-  { target: 'rediscover', eyebrow: 'REDISCOVER', title: '다시 발견', sub: '같은 질문에 답한, 다른 해의 나를 만나요', featured: false },
+  // 세 줄이 모두 같은 박자로 끝나면 목차가 아니라 안내문이 된다. 혼자 쓰기는 이름이
+  // 곧 설명이라 부제를 비우고, 남은 둘은 문장 대신 명사로 끊는다.
+  { target: 'create', eyebrow: 'TOGETHER', title: '친구들과 같이 해보기', sub: '3명부터 열리는 ‘누가 썼게’', featured: true },
+  { target: 'solo', eyebrow: 'SOLO', title: '혼자 쓰기', sub: '', featured: true },
+  { target: 'rediscover', eyebrow: 'REDISCOVER', title: '다시 발견', sub: '다른 해의 나', featured: false },
 ] as const satisfies readonly {
   readonly target: CoverTarget;
   readonly eyebrow: string;

@@ -4,7 +4,7 @@
 
     <template v-if="iAnswered">
       <div class="center small" role="status">
-        <p class="waiting">제출 완료 — {{ state.answered.length }}/{{ state.players.length }}명 답했어요</p>
+        <p class="waiting">{{ state.answered.length }}/{{ state.players.length }}명 답했어요</p>
         <div class="dotRow">
           <ParticipantDot
             v-for="name in state.players"
