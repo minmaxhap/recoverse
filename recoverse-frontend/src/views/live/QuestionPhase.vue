@@ -1,7 +1,7 @@
 <template>
   <div>
     <template v-if="myTurn">
-      <h1 class="pageTitle">{{ roundNo }}번째 헤드라인,<br />내 차례</h1>
+      <h1 class="pageTitle">{{ roundNo }}번째 질문,<br />내 차례</h1>
       <div class="formatChips" role="radiogroup" aria-label="회고 포맷">
         <button
           type="button"
@@ -44,7 +44,7 @@
       <p v-if="error" id="questionError" class="error" role="alert">{{ error }}</p>
       <p v-else-if="busy" class="inlineNotice" role="status">질문을 싣고 있어요.</p>
       <button type="button" class="cta" :disabled="!draft.trim() || busy" :aria-busy="busy" @click="onSubmit">
-        {{ busy ? '확정 중…' : '헤드라인 확정' }}
+        {{ busy ? '확정 중…' : '이 질문으로 정하기' }}
       </button>
     </template>
 

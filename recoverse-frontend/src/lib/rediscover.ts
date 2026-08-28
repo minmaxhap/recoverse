@@ -112,10 +112,23 @@ function mdDistance(a: string, b: string): number {
 }
 
 /**
+ * "다시 발견"이라 부를 만큼은 지나야 한다. 이보다 최근의 호는 재발견이 아니라
+ * 방금 쓴 글이고, 그걸 "오늘의 재발견"으로 내밀면 이 앱의 약속이 우스워진다.
+ */
+const REDISCOVERY_MIN_DAYS = 30;
+
+/** 발행일로부터 오늘까지 지난 날 수. 형식이 깨진 날짜는 0으로 봐서 후보에서 빠진다. */
+function daysSince(dateISO: string, now: Date): number {
+  const then = Date.parse(`${dateISO}T00:00:00`);
+  if (Number.isNaN(then)) return 0;
+  return Math.floor((now.getTime() - then) / 86_400_000);
+}
+
+/**
  * 오늘 열어볼 만한 재발견 한 조각을 고른다.
  * - 우선순위: 오늘(±3일) 즈음의 지난 해 기록(1년 전 오늘)
  * - 없으면 아무 과거 기록에서 랜덤 (날짜 시드로 하루 동안 고정)
- * rounds가 있는 호만 대상. 후보 없으면 null.
+ * rounds가 있고 충분히 지난 호만 대상. 후보 없으면 null.
  */
 export function pickRediscoveryMoment(issues: Issue[], now: Date = new Date()): RediscoveryMoment | null {
   const { md, year, seed } = localToday(now);
@@ -128,6 +141,7 @@ export function pickRediscoveryMoment(issues: Issue[], now: Date = new Date()): 
   }
   const all: Cand[] = [];
   for (const issue of issues) {
+    if (daysSince(issue.date, now) < REDISCOVERY_MIN_DAYS) continue;
     const iYear = Number(issue.date.slice(0, 4));
     const iMd = issue.date.slice(5, 10);
     const rounds = issue.rounds ?? [];

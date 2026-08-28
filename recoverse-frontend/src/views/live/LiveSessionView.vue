@@ -6,7 +6,7 @@
         이 호를 더 이상 찾을 수 없어요. 만료됐거나 종료된 세션이에요.<br />
         함께 발행한 호는 각자의 책장에 저장돼 있어요.
       </p>
-      <button type="button" class="cta leaveBtn" @click="$emit('exit')">서재로 가기</button>
+      <button type="button" class="cta leaveBtn" @click="$emit('exit')">책장으로 가기</button>
     </div>
 
     <template v-else-if="state">
@@ -67,7 +67,9 @@
 
       <EndedView v-else-if="state.meta.phase === 'ended'" :state="state" @done="$emit('exit')" />
 
-      <template v-if="isHost && state.meta.phase !== 'ended'">
+      <!-- 공개 화면은 자기 출구("이번 호 마감하기")를 갖고 있고 그것도 같은 end 호출이다.
+           둘을 함께 두면 이름이 다른 같은 문이 나란히 서서 고르게 만든다. -->
+      <template v-if="isHost && state.meta.phase !== 'ended' && !showReveal">
         <div class="gap big" />
         <p v-if="endError" class="error" role="alert">{{ endError }}</p>
         <button class="endLink" :disabled="ending" @click="onEnd">세션 종료하기</button>

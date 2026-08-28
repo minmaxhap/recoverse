@@ -6,7 +6,7 @@
           <span class="eyebrow red">VOC ADMIN</span>
           <h1>의견 상태 관리</h1>
         </div>
-        <button class="cta ghost" type="button" @click="$emit('back')">서재로</button>
+        <button class="cta ghost" type="button" @click="$emit('back')">책장으로</button>
       </header>
 
       <div class="adminAuth">

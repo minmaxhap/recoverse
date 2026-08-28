@@ -1,6 +1,6 @@
 <template>
   <div v-if="history.length > 0" class="pastQ" :class="{ centered }">
-    <span class="eyebrow">지금까지의 헤드라인</span>
+    <span class="eyebrow">지금까지의 질문</span>
     <div v-for="(round, i) in history" :key="i">{{ i + 1 }}. {{ round.question }}</div>
   </div>
 </template>
