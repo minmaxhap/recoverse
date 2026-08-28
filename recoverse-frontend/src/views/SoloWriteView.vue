@@ -147,8 +147,8 @@
     <!-- 발행 연출: 표지가 조립되어 책장에 꽂히는 장면 (탭하면 건너뛰기) -->
     <Transition name="page">
       <div v-if="publishing" class="publishOverlay" role="status" @click="finishPublish">
-        <span class="eyebrow gold">이번 호 발행</span>
-        <PublishScene :year="date.slice(0, 4)" :kind-label="kindLabelText" />
+        <span class="eyebrow gold">{{ issueNumberLabel(publishedNo) }} 발행</span>
+        <PublishScene :year="date.slice(0, 4)" :kind-label="kindLabelText" :no="publishedNo" />
         <p class="pageTitle centered overlayTitle">{{ publishedTitle }},<br />책장에 꽂는 중</p>
         <p v-if="carriedCount > 0" class="fineprint carried">
           답 대기 {{ carriedCount }}개는 다음 호 초고로 옮겼어요
@@ -185,6 +185,7 @@ import {
 import { useSoloIssuePresentation } from '../composables/useSoloIssuePresentation';
 import { useShelf } from '../composables/useShelf';
 import { issueFromDraft, roundIsAnswered } from '../lib/issueBuilder';
+import { issueNumberLabel } from '../lib/issueNumber';
 
 // preset*: 다른 화면에서 재료를 들고 들어올 때 — 재발견의 질문 하나, 지난 호 상세의 구성 한 벌.
 const props = withDefaults(
@@ -211,6 +212,7 @@ const carriedCount = ref(0);
 // 발행 직후 화면 상태를 다음 호로 갈아끼우므로, 연출에 쓸 제목은 발행 시점 값을 붙잡아 둔다.
 const publishedTitle = ref('');
 const publishedId = ref('');
+const publishedNo = ref(0);
 // 지난 호 가져오기는 소수만 쓰는 선택 기능 — 기본은 접어두고(네이티브 details), 필요할 때 펼친다.
 const sourceOpen = ref(false);
 // 표지 정보(종류·제목·이름)도 기본값이 있어 접어둔다 — 바로 질문부터 쓰게. 값이 있으면 펼친다.
@@ -583,6 +585,8 @@ function publish(): void {
   carriedCount.value = carried.length;
   publishedTitle.value = issue.title;
   publishedId.value = issue.id;
+  // 방금 꽂혀서 늘어난 권수가 곧 이 호의 번호다. 책장 표지의 No.와 같은 셈법.
+  publishedNo.value = shelf.issues.value.length;
   // 화면 상태를 다음 호로 갈아끼우는 동안 자동 저장을 멈춘다 — 방금 쓴 초고를 덮어쓰지 않게.
   draftReady.value = false;
   rounds.value = carried;
