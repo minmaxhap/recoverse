@@ -267,11 +267,12 @@ function saveEdit(index: number): void {
   color: var(--vermilion-ink);
 }
 
+/* 표지 목차와 같은 이유로 hairline을 쓰지 않는다 — 배경과 구분되지 않는다. */
 .pageNo {
   font-family: var(--font-display);
   font-size: 18px;
   font-weight: 700;
-  color: var(--hairline);
+  color: var(--dim);
 }
 
 .contentText {

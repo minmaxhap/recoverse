@@ -80,6 +80,10 @@ export type SoloIssueDraftSummary = {
   readonly updatedAt: string;
   readonly savedRoundCount: number;
   readonly hasPendingQuestion: boolean;
+  /** 쓰던 질문(없으면 목차의 첫 질문) — 제목 없는 초고를 종류 이름 대신 이걸로 부른다. */
+  readonly leadQuestion: string;
+  /** 답까지 쓴 질문 수. 답 없이 담아둔 질문을 "실었어요"라고 부르지 않기 위해 나눈다. */
+  readonly answeredRoundCount: number;
 };
 
 /**

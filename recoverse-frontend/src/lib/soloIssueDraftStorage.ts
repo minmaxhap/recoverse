@@ -21,6 +21,8 @@ const EMPTY_SUMMARY: SoloIssueDraftSummary = {
   updatedAt: '',
   savedRoundCount: 0,
   hasPendingQuestion: false,
+  leadQuestion: '',
+  answeredRoundCount: 0,
 };
 
 const LEGACY_KEY_PATTERN = /^recoverse_draft_round_(.+)_(\d+)$/;
@@ -120,13 +122,19 @@ export function peekSoloIssueDraft(): SoloIssueDraftSummary {
   if (!json.ok) return EMPTY_SUMMARY;
   const draft = parseSoloIssueDraftV2(json.value);
   if (!draft || !draftHasContent(draft)) return EMPTY_SUMMARY;
+  const pending = draft.currentRound.question.trim();
   return {
     resumable: true,
     kind: draft.kind,
     title: draft.title.trim(),
     updatedAt: draft.updatedAt,
     savedRoundCount: draft.rounds.length,
-    hasPendingQuestion: draft.currentRound.question.trim().length > 0,
+    hasPendingQuestion: pending.length > 0,
+    // 쓰던 질문이 먼저다 — 지금 손이 가 있던 자리라 다시 열었을 때 알아본다.
+    leadQuestion: pending || (draft.rounds[0]?.question ?? '').trim(),
+    answeredRoundCount: draft.rounds.filter((round) =>
+      Object.values(round.answers).some((answer) => answer.text.trim() !== ''),
+    ).length,
   };
 }
 

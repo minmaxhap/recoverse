@@ -1,3 +1,4 @@
+<!-- // allow: SIZE_OK — one horizontal shelf scroller; measurement, pager, observer, and rail share coversEl -->
 <template>
   <div class="shelfBlock">
     <div class="sectionHead">
@@ -24,13 +25,12 @@
     <!-- 서가 한 칸: 표지를 가로로 꽂아두고 넘겨본다. 넘길 게 있을 때만 화살표와 잉크 레일이 나온다. -->
     <div v-else class="shelfViewport" :class="{ hasPrev: canPrev, hasNext: canNext }">
       <div ref="coversEl" class="covers" @scroll.passive="measure">
-        <IssueCover
+        <FreshIssueCover
           v-for="(issue, index) in issues"
           :key="issue.id"
           :issue="issue"
           :no="issues.length - index"
-          :fresh="issue.id === freshIssueId && showFresh"
-          :class="{ fresh: issue.id === freshIssueId && showFresh }"
+          :fresh="issue.id === freshIssueId"
           @open="$emit('open', $event)"
         />
       </div>
@@ -45,7 +45,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { Issue } from '@recoverse/shared';
-import IssueCover from './IssueCover.vue';
+import FreshIssueCover from './FreshIssueCover.vue';
 
 const props = withDefaults(
   // freshIssueId: 방금 발행하고 돌아온 호 — 어느 표지가 새로 꽂혔는지 잠깐 짚어준다.
@@ -53,9 +53,6 @@ const props = withDefaults(
   { freshIssueId: '' },
 );
 defineEmits<{ navigate: ['create']; open: [string] }>();
-
-const showFresh = ref(true);
-let freshTimer = 0;
 
 const coversEl = ref<HTMLElement | null>(null);
 const scrolled = ref(0);
@@ -100,8 +97,6 @@ watch(
 
 onMounted(() => {
   void nextTick(measure);
-  // 새로 꽂힌 표지는 잠깐만 짚어준다 — 계속 표시가 남으면 그게 무슨 뜻인지 알 수 없게 된다.
-  if (props.freshIssueId) freshTimer = window.setTimeout(() => (showFresh.value = false), 3200);
   if (typeof ResizeObserver === 'undefined') return;
   observer = new ResizeObserver(() => measure());
   if (coversEl.value) observer.observe(coversEl.value);
@@ -110,7 +105,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   observer?.disconnect();
   observer = null;
-  window.clearTimeout(freshTimer);
 });
 </script>
 
@@ -204,19 +198,6 @@ onBeforeUnmount(() => {
   scroll-snap-align: start;
 }
 
-/* 방금 꽂은 표지 — 다홍 테두리와 한 번의 들썩임으로 어느 것인지 알린다. */
-.covers > .fresh {
-  outline: 2px solid var(--vermilion);
-  outline-offset: 2px;
-  animation: freshCover 0.5s ease 2;
-}
-
-@keyframes freshCover {
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
 /* 양끝 페이드 — 이쪽으로 더 있다는 힌트 */
 .shelfViewport::before,
 .shelfViewport::after {
@@ -263,9 +244,6 @@ onBeforeUnmount(() => {
     scroll-behavior: auto;
   }
 
-  .covers > .fresh {
-    animation: none;
-  }
 }
 
 .emptyInvite {

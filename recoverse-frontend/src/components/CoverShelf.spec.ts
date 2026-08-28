@@ -64,4 +64,12 @@ describe('CoverShelf fresh issue', () => {
     expect(wrapper.get('[aria-label*="새 기록"]').classes()).not.toContain('fresh');
     expect(wrapper.find('.freshFlag').exists()).toBe(false);
   });
+
+  it('starts one fresh timer and forwards the selected cover id once', async () => {
+    const wrapper = mount(CoverShelf, { props: { issues, freshIssueId: 'fresh' } });
+
+    expect(vi.getTimerCount()).toBe(1);
+    await wrapper.get('[aria-label*="새 기록"]').trigger('click');
+    expect(wrapper.emitted('open')).toEqual([['fresh']]);
+  });
 });

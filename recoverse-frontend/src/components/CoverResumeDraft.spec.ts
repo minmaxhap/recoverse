@@ -13,6 +13,8 @@ function summary(overrides: Partial<SoloIssueDraftSummary> = {}): SoloIssueDraft
     updatedAt: '',
     savedRoundCount: 0,
     hasPendingQuestion: false,
+    leadQuestion: '',
+    answeredRoundCount: 0,
     ...overrides,
   };
 }
@@ -25,7 +27,7 @@ describe('CoverResumeDraft', () => {
 
   it('shows the draft title and saved-round progress, and emits resume on click', async () => {
     const wrapper = mount(CoverResumeDraft, {
-      props: { summary: summary({ title: '2026 독서 특집호', savedRoundCount: 2 }) },
+      props: { summary: summary({ title: '2026 독서 특집호', savedRoundCount: 2, answeredRoundCount: 2 }) },
     });
 
     expect(wrapper.text()).toContain('2026 독서 특집호');
@@ -35,8 +37,23 @@ describe('CoverResumeDraft', () => {
     expect(wrapper.emitted('resume')).toHaveLength(1);
   });
 
-  it('falls back to a kind-based title when the draft has no title yet', () => {
-    const wrapper = mount(CoverResumeDraft, { props: { summary: summary({ title: '' }) } });
+  it('says a question is still waiting rather than claiming it was carried', () => {
+    const wrapper = mount(CoverResumeDraft, {
+      props: { summary: summary({ savedRoundCount: 2, answeredRoundCount: 0 }) },
+    });
+    expect(wrapper.text()).toContain('질문 2개 답 기다리는 중');
+  });
+
+  it('calls the draft by the question being written when it has no title', () => {
+    const wrapper = mount(CoverResumeDraft, {
+      props: { summary: summary({ title: '', leadQuestion: '올해 가장 잘한 선택은?' }) },
+    });
+    expect(wrapper.text()).toContain('올해 가장 잘한 선택은?');
+    expect(wrapper.text()).not.toContain('독서 쓰는 중');
+  });
+
+  it('falls back to a kind-based title when there is no title and no question yet', () => {
+    const wrapper = mount(CoverResumeDraft, { props: { summary: summary({ title: '', leadQuestion: '' }) } });
     expect(wrapper.text()).toContain('독서 쓰는 중');
   });
 

@@ -119,13 +119,8 @@ describe('SoloWriteView', () => {
     // When
     const wrapper = await mountSolo();
 
-    // Then: 이어쓰기 안내가 맨 위에서 무엇이 돌아왔는지 말한다
-    const resume = wrapper.get('.resumeBanner').text();
-    expect(resume).toContain('쓰던 호를 이어서 열었어요');
-    expect(resume).toContain('목차 1개');
-    expect(resume).toContain('쓰던 질문 1개');
-    expect(resume).toContain('표지 제목');
-    expect(resume).toContain(`${savedTimeText(draft().updatedAt)} 저장`);
+    // Then: 돌아온 것은 글 자체와 저장 표시가 말한다 — 배너로 한 번 더 말하지 않는다
+    expect(wrapper.find('.resumeBanner').exists()).toBe(false);
     expect(wrapper.find('.draftState').text()).toBe(`저장됨 ${savedTimeText(draft().updatedAt)}`);
     expect(wrapper.find('.draftState').text()).not.toBe('저장 준비 중');
     expect((wrapper.find('input[placeholder="나"]').element as HTMLInputElement).value).toBe('Mina');
@@ -136,6 +131,22 @@ describe('SoloWriteView', () => {
     expect((wrapper.find('textarea').element as HTMLTextAreaElement).value).toBe('Current answer');
     expect(wrapper.text()).toContain('Finished question?');
   }, 10_000);
+
+  it('speaks up only when an older draft had to be moved across', async () => {
+    // Given — v2는 없고 옛 형식 초고만 남아 있다
+    localStorage.setItem(
+      'recoverse_draft_round_free_0',
+      JSON.stringify({ q: '옛 형식에 남아 있던 질문?', formatId: '', answers: { 나: '옛 답' } }),
+    );
+
+    // When
+    const wrapper = await mountSolo();
+
+    // Then — 사용자가 모르는 사이 벌어진 일이라 한 번은 알린다
+    const banner = wrapper.get('.resumeBanner').text();
+    expect(banner).toContain('이전 임시 저장을 옮겨 왔어요');
+    expect(banner).toContain('쓰던 질문 1개');
+  });
 
   it('clears only a restored stale source id and keeps written content', async () => {
     // Given
@@ -471,6 +482,20 @@ describe('SoloWriteView', () => {
     // And one more question brings back the purpose choices
     await wrapper.get('.quickDone .ghost').trigger('click');
     expect(wrapper.findAll('.quickOption')).toHaveLength(3);
+  });
+
+  it('opens the shared contents editor from the quick completion action', async () => {
+    const wrapper = await mountSolo();
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+    await wrapper.get('.qaBox textarea').setValue('목차에서 다시 볼 답');
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    await wrapper.get('.quickDone .linkAction').trigger('click');
+
+    expect(wrapper.find('.quickDone').exists()).toBe(false);
+    expect(wrapper.getComponent({ name: 'RoundEditor' }).props('presentation')).toBe('standard');
+    expect(wrapper.get('.contentsList').text()).toContain('목차에서 다시 볼 답');
   });
 
   it('publishes a Quick note with the first answered path title', async () => {
