@@ -1,10 +1,18 @@
 <template>
   <AppShell variant="write">
-    <BackHeader :label="creating ? '새 호 발행' : '코드로 참여'" @back="$emit('back')" />
-    <h1 class="pageTitle">{{ creating ? '이번 호의 발행인은?' : '어느 호에 합류해요?' }}</h1>
+    <BackHeader :label="creating ? '친구들과 시작' : '코드로 참여'" @back="$emit('back')" />
+    <h1 class="pageTitle">{{ creating ? '누구와 질문 놀이를 시작할까요?' : '초대 코드로 들어가기' }}</h1>
 
     <div class="stack">
-      <KindChips v-if="creating" v-model="kind" />
+      <details v-if="creating" class="kindDisclosure">
+        <summary class="kindSummary">
+          <span>모임 성격 (선택)</span>
+          <span class="kindChevron" aria-hidden="true">＋</span>
+        </summary>
+        <div class="kindBody">
+          <KindChips v-model="kind" />
+        </div>
+      </details>
 
       <div v-if="!creating" class="fieldGroup">
         <label class="fieldLabel" for="sessionCode">초대 코드</label>
@@ -18,6 +26,7 @@
           autocapitalize="characters"
           autocomplete="one-time-code"
           spellcheck="false"
+          aria-label="초대 코드"
           :aria-invalid="Boolean(error)"
           aria-describedby="sessionCodeHelp entryError"
           @input="codeDraft = codeDraft.toUpperCase()"
@@ -26,7 +35,7 @@
       </div>
 
       <div class="fieldGroup">
-        <label class="fieldLabel" for="playerName">{{ creating ? '발행인 이름' : '내 이름' }}</label>
+        <label class="fieldLabel" for="playerName">내 이름</label>
         <input
           id="playerName"
           v-model="nameDraft"
@@ -34,6 +43,7 @@
           placeholder="이름"
           maxlength="12"
           autocomplete="name"
+          aria-label="내 이름"
           :aria-invalid="Boolean(error)"
           aria-describedby="entryError"
         />
@@ -42,11 +52,12 @@
       <p v-if="error" id="entryError" class="error" role="alert">{{ error }}</p>
       <p v-else-if="busy" class="inlineNotice" role="status">세션과 연결하고 있어요.</p>
       <button type="button" class="cta" :disabled="busy || !canSubmit" :aria-busy="busy" @click="submit">
-        {{ busy ? '연결 중…' : creating ? '발행 준비' : '합류하기' }}
+        {{ busy ? '연결 중…' : creating ? '방 만들기' : '들어가기' }}
       </button>
-      <p v-if="creating" class="fineprint">
-        세션 내용은 이 프로토타입의 공유 저장소에 올라가요 — 코드를 아는 사람은 볼 수 있어요.
-      </p>
+      <div v-if="creating" class="entryPromise">
+        <p class="fineprint">초대 코드를 받은 사람들과 답을 함께 봐요.</p>
+        <p class="bonusLine">둘이서도 시작할 수 있어요. 3명부터 ‘누가 썼게’도 열려요.</p>
+      </div>
     </div>
   </AppShell>
 </template>
@@ -99,3 +110,62 @@ async function submit() {
   }
 }
 </script>
+
+<style scoped>
+.kindDisclosure {
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.kindSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 4px 2px;
+  color: var(--dim-strong);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  list-style: none;
+  cursor: pointer;
+}
+
+.kindSummary::-webkit-details-marker {
+  display: none;
+}
+
+.kindSummary:focus-visible {
+  outline: 2px solid var(--vermilion);
+  outline-offset: 3px;
+}
+
+.kindChevron {
+  color: var(--dim);
+  font-size: 18px;
+  transition: transform 0.18s ease;
+}
+
+.kindDisclosure[open] .kindChevron {
+  transform: rotate(45deg);
+}
+
+.kindBody {
+  padding: 4px 2px 14px;
+}
+
+.entryPromise {
+  display: grid;
+  gap: 4px;
+}
+
+.bonusLine {
+  margin: 0;
+  color: var(--dim-strong);
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 1.6;
+}
+</style>

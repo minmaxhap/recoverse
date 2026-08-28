@@ -2,6 +2,7 @@
   <button type="button" class="issueCover" :aria-label="coverLabel" :title="coverLabel" @click="$emit('open', issue.id)">
     <canvas ref="canvasEl" class="coverArt" aria-hidden="true" />
     <span class="coverScrim" aria-hidden="true" />
+    <span v-if="fresh" class="freshFlag" aria-hidden="true">방금 남긴 기록</span>
     <span class="coverText" aria-hidden="true">
       <span class="coverNo">No.{{ no }}</span>
       <span class="coverTitle">{{ issue.title }}</span>
@@ -16,7 +17,10 @@ import { KIND_LABELS, type Issue } from '@recoverse/shared';
 import { kindColor } from '../lib/palette';
 import { drawRisoCover } from '../lib/coverArt';
 
-const props = defineProps<{ readonly issue: Issue; readonly no: number }>();
+const props = withDefaults(
+  defineProps<{ readonly issue: Issue; readonly no: number; readonly fresh?: boolean }>(),
+  { fresh: false },
+);
 defineEmits<{ open: [string] }>();
 
 // 표지엔 제목·종류·연도만 보이지만, 참여자·질문 수까지 접근 가능한 이름/툴팁으로 되살린다.
@@ -26,6 +30,7 @@ const coverLabel = computed(() => {
     props.issue.title,
     `${KIND_LABELS[props.issue.kind]} · ${props.issue.date.slice(0, 4)}`,
   ];
+  if (props.fresh) parts.unshift('방금 남긴 기록');
   if (people.length > 0) parts.push(people.join(', '));
   parts.push(`질문 ${props.issue.rounds.length}개`);
   return parts.join(' · ');
@@ -95,6 +100,23 @@ onBeforeUnmount(() => {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, transparent 42%, rgba(18, 12, 7, 0.14) 60%, rgba(18, 12, 7, 0.74) 100%);
+}
+
+.freshFlag {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  padding: 4px;
+  border: 1px solid var(--vermilion-ink);
+  background: var(--vermilion);
+  color: var(--vermilion-ink);
+  font-family: var(--font-ui);
+  font-size: 8.5px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  text-align: center;
 }
 
 .coverText {

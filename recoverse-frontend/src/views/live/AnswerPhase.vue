@@ -83,7 +83,7 @@ const roundNo = computed(() => props.state.meta.roundIdx + 1);
 const iAnswered = computed(() => sent.value || props.state.answered.includes(props.me));
 const answerPlaceholder = computed(() => getFormat(props.state.meta.format ?? '')?.hint ?? '지금 떠오르는 그대로, 짧아도 좋아요');
 const waitingHint = computed(() =>
-  props.state.players.length >= 3 ? '모두 제출하면 누가 썼게가 시작돼요' : '모두 제출하면 스프레드가 열려요',
+  props.state.players.length >= 3 ? '모두 제출하면 누가 썼게가 시작돼요' : '모두 제출하면 결과가 열려요',
 );
 const pendingAnswerNames = computed(() => props.state.players.filter((n) => !props.state.answered.includes(n)));
 

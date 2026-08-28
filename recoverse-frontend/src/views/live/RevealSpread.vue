@@ -40,11 +40,11 @@
 
     <div v-if="isHost" class="stack hostActions">
       <button class="cta" :disabled="busy" @click="onNext">
-        다음 질문으로 ({{ nextAsker }} 차례)
+        다음 질문 시작하기 ({{ nextAsker }} 차례)
       </button>
       <button class="ghost" :disabled="busy" @click="onEnd">이번 호 마감하기</button>
     </div>
-    <p v-else class="waiting">발행인이 다음 페이지를 넘기길 기다리는 중…</p>
+    <p v-else class="waiting">방장이 다음 질문을 시작하길 기다리는 중…</p>
   </div>
 </template>
 

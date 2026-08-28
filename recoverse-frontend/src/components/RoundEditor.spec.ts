@@ -4,7 +4,6 @@ import { mount } from '@vue/test-utils';
 import { describe, expect, it } from 'vitest';
 import type { Round } from '@recoverse/shared';
 import RoundEditor from './RoundEditor.vue';
-import QuestionSuggest from './QuestionSuggest.vue';
 import type { SoloIssueCurrentRoundDraft } from '../composables/useSoloIssueDraft';
 
 const currentRound: SoloIssueCurrentRoundDraft = {
@@ -14,7 +13,7 @@ const currentRound: SoloIssueCurrentRoundDraft = {
 };
 
 describe('RoundEditor', () => {
-  it('renders the controlled current round and emits typed updates when the answer changes', async () => {
+  it('keeps question, format, and source controls in the standard presentation', async () => {
     // Given
     const wrapper = mount(RoundEditor, {
       props: {
@@ -26,16 +25,17 @@ describe('RoundEditor', () => {
     });
 
     // When
-    await wrapper.find('textarea').setValue('The late dinner');
+    await wrapper.get('input.field').setValue('What changed?');
+    await wrapper.get('.sourcesToggle').trigger('click');
+    await wrapper.findAll('.fchip')[1]?.trigger('click');
 
     // Then
-    expect((wrapper.find('input.field').element as HTMLInputElement).value).toBe('What stayed with you?');
     const currentRoundEvents = wrapper.emitted('update:currentRound') ?? [];
-    expect(currentRoundEvents[currentRoundEvents.length - 1]?.[0]).toEqual({
-      question: 'What stayed with you?',
-      formatId: '',
-      answers: { Mina: 'The late dinner' },
-    });
+    expect(currentRoundEvents[0]?.[0]).toMatchObject({ question: 'What changed?' });
+    expect(currentRoundEvents[currentRoundEvents.length - 1]?.[0]).toMatchObject({ formatId: 'year-keyword' });
+    expect(wrapper.find('.questionSources').exists()).toBe(true);
+    expect(wrapper.find('.formatChips').exists()).toBe(true);
+    expect(wrapper.findAll('.sourceRoute').map((route) => route.text())).toContain('추천 질문');
   });
 
   it('adds a batch of pack questions as answer-less rounds, skipping ones already in the contents', () => {
@@ -46,7 +46,7 @@ describe('RoundEditor', () => {
     });
 
     // When — 팩 질문 묶음을 담는다(중복 포함)
-    wrapper.findComponent(QuestionSuggest).vm.$emit('pickAll', ['Already here?', '새 질문 A', '새 질문 B']);
+    wrapper.findComponent({ name: 'QuestionSuggest' }).vm.$emit('pickAll', ['Already here?', '새 질문 A', '새 질문 B']);
 
     // Then — 중복은 빠지고 나머지는 답 없는 라운드로 목차에 붙는다
     const emitted = wrapper.emitted('update:rounds')?.[0]?.[0] as Round[] | undefined;
@@ -62,7 +62,15 @@ describe('RoundEditor', () => {
         participants: ['Mina'],
         rounds: [],
         kind: 'free',
-        currentRound: { ...currentRound, pathId: 'solo-today', pathStep: 0 },
+        currentRound: {
+          ...currentRound,
+          formatId: 'three-scenes',
+          questionId: 'question-1',
+          questionRevision: 2,
+          pathId: 'solo-today',
+          pathStep: 0,
+          review: { lensId: 'photo', lensRevision: 1, scope: { type: 'recent' } },
+        },
       },
     });
 
@@ -76,10 +84,69 @@ describe('RoundEditor', () => {
       asker: 'Mina',
       question: 'What stayed with you?',
       answers: { Mina: { text: 'The train platform' } },
+      format: 'three-scenes',
+      questionId: 'question-1',
+      questionRevision: 2,
       pathId: 'solo-today',
       pathStep: 0,
+      review: { lensId: 'photo', lensRevision: 1, scope: { type: 'recent' } },
     });
     const currentRoundEvents = wrapper.emitted('update:currentRound') ?? [];
     expect(currentRoundEvents[currentRoundEvents.length - 1]?.[0]).toEqual({ question: '', formatId: '', answers: {} });
+  });
+
+  it('shows a read-only question and the same typed save path in quick presentation', async () => {
+    // Given
+    const quickRound: SoloIssueCurrentRoundDraft = {
+      ...currentRound,
+      formatId: 'letter-future',
+      questionId: 'question-quick',
+      questionRevision: 3,
+      pathId: 'solo-next-action',
+      pathStep: 1,
+      review: { lensId: 'work', lensRevision: 1, scope: { type: 'month' } },
+    };
+    const wrapper = mount(RoundEditor, {
+      props: {
+        participants: ['Mina'],
+        rounds: [],
+        currentRound: quickRound,
+        presentation: 'quick',
+        saveLabel: '이 답 남기기',
+      },
+      attachTo: document.body,
+    });
+
+    // Then
+    expect(wrapper.get('.quickQuestion').text()).toBe('What stayed with you?');
+    expect(wrapper.get('.boxHead').text()).toContain('QUICK NOTE');
+    expect(wrapper.find('input.field').exists()).toBe(false);
+    expect(wrapper.find('.questionSources').exists()).toBe(false);
+    expect(wrapper.find('.formatChips').exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('다음 질문을 고르거나 직접 써요');
+
+    // When
+    wrapper.vm.focusAnswer();
+    expect(document.activeElement).toBe(wrapper.get('textarea').element);
+    await wrapper.get('textarea').setValue('Take the first step');
+    await wrapper.setProps({
+      currentRound: { ...quickRound, answers: { Mina: 'Take the first step' } },
+    });
+    await wrapper.get('button.ghost').trigger('click');
+
+    // Then
+    const emittedRounds = wrapper.emitted('update:rounds')?.[0]?.[0] as Round[] | undefined;
+    expect(emittedRounds?.[0]).toEqual({
+      asker: 'Mina',
+      question: 'What stayed with you?',
+      answers: { Mina: { text: 'Take the first step' } },
+      format: 'letter-future',
+      questionId: 'question-quick',
+      questionRevision: 3,
+      pathId: 'solo-next-action',
+      pathStep: 1,
+      review: { lensId: 'work', lensRevision: 1, scope: { type: 'month' } },
+    });
+    wrapper.unmount();
   });
 });

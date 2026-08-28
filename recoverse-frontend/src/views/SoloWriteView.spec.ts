@@ -369,7 +369,8 @@ describe('SoloWriteView', () => {
 
     // Then
     expect(wrapper.find('.roundEditor').exists()).toBe(true);
-    expect((wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').element as HTMLInputElement).value).toContain('오늘');
+    expect(wrapper.get('.quickQuestion').text()).toContain('오늘');
+    expect(wrapper.find('input[placeholder="지금의 나에게 묻고 싶은 것"]').exists()).toBe(false);
     const saved = JSON.parse(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY) ?? '{}') as SoloIssueDraftV2;
     expect(saved.soloMode).toBe('quick');
     expect(saved.guidedPath).toEqual({ pathId: 'solo-today', pathRevision: 1, mode: 'standard', step: 0 });
@@ -409,9 +410,8 @@ describe('SoloWriteView', () => {
     // Then
     expect(wrapper.get('.roundEditor').text()).toContain('먼저 쓰던 질문?');
     expect(wrapper.get('.roundEditor').text()).toContain('먼저 쓰던 답');
-    expect((wrapper.get('input[placeholder="지금의 나에게 묻고 싶은 것"]').element as HTMLInputElement).value).toContain(
-      '오늘',
-    );
+    expect(wrapper.get('.quickQuestion').text()).toContain('오늘');
+    expect(wrapper.find('input[placeholder="지금의 나에게 묻고 싶은 것"]').exists()).toBe(false);
     expect((wrapper.get('textarea').element as HTMLTextAreaElement).value).toBe('');
   });
 
@@ -464,10 +464,214 @@ describe('SoloWriteView', () => {
     // Then
     expect(wrapper.find('.qaBox').exists()).toBe(false);
     expect(wrapper.get('.quickDone .cta').text()).toContain('이대로 책장에 꽂기');
+    expect(wrapper.findAll('.quickDone .cta')).toHaveLength(1);
+    expect(wrapper.get('.quickDone .ghost').text()).toBe('질문 하나 더');
+    expect(wrapper.get('.quickDone .linkAction').text()).toBe('목차에서 질문과 답 고치기');
 
     // And one more question brings back the purpose choices
     await wrapper.get('.quickDone .ghost').trigger('click');
     expect(wrapper.findAll('.quickOption')).toHaveLength(3);
+  });
+
+  it('publishes a Quick note with the first answered path title', async () => {
+    // Given
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T03:00:00.000Z'));
+    const wrapper = await mountSolo();
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[2].trigger('click');
+    await wrapper.get('.qaBox textarea').setValue('내일 가장 먼저 문을 연다.');
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    // When
+    await wrapper.get('.quickDone .cta').trigger('click');
+
+    // Then
+    const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
+    expect(shelved[0]?.title).toBe('다음 한 걸음 · 8월 18일');
+  });
+
+  it('keeps an explicit cover title ahead of a derived Quick title', async () => {
+    // Given
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        title: '내가 직접 지은 제목',
+        rounds: [
+          {
+            asker: 'Mina',
+            question: '오늘의 장면은?',
+            answers: { Mina: { text: '늦은 햇빛' } },
+            pathId: 'solo-today',
+          },
+        ],
+        currentRound: { question: '', formatId: '', answers: {} },
+        soloMode: 'quick',
+        quickReady: true,
+      } satisfies SoloIssueDraftV2),
+    );
+    const wrapper = await mountSolo();
+
+    // When
+    await wrapper.get('.quickDone .cta').trigger('click');
+
+    // Then
+    const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
+    expect(shelved[0]?.title).toBe('내가 직접 지은 제목');
+  });
+
+  it('rewards the last saved solo answer with trim-only full text', async () => {
+    // Given: 복원된 Quick 초고에는 먼저 쓴 답, 가장 최근 답, 아직 저장하지 않은 현재 답이 함께 있다.
+    const latestAnswer = `  마지막 문장에는\n\n중간 빈 줄도   그대로 있다.  `;
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        rounds: [
+          { asker: 'Mina', question: 'First?', answers: { Mina: { text: '첫 문장' } } },
+          { asker: 'Mina', question: 'Latest?', answers: { Mina: { text: latestAnswer } } },
+        ],
+        currentRound: { question: '', formatId: '', answers: { Mina: '저장 전 문장' } },
+        soloMode: 'quick',
+        quickReady: true,
+      } satisfies SoloIssueDraftV2),
+    );
+
+    // When
+    const wrapper = await mountSolo();
+
+    // Then: 가장 최근에 목차에 실린 답만 가장자리 공백을 걷어 전체 DOM/접근성 이름으로 남긴다.
+    const quote = wrapper.get('blockquote.quickAnswer');
+    const expected = latestAnswer.trim();
+    expect(quote.element.textContent).toBe(expected);
+    expect(quote.attributes('aria-label')).toBe(expected);
+    expect(quote.text()).not.toContain('첫 문장');
+    expect(quote.text()).not.toContain('저장 전 문장');
+  });
+
+  it('keeps a long quick answer complete in the DOM while the style clamps only its display', async () => {
+    // Given
+    const longAnswer = `${'한 문장을 오래 남기기 위해 '.repeat(32)}끝`;
+    expect(longAnswer.length).toBeGreaterThanOrEqual(500);
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        rounds: [{ asker: 'Mina', question: 'Long?', answers: { Mina: { text: longAnswer } } }],
+        currentRound: { question: '', formatId: '', answers: {} },
+        soloMode: 'quick',
+        quickReady: true,
+      } satisfies SoloIssueDraftV2),
+    );
+
+    // When
+    const wrapper = await mountSolo();
+
+    // Then
+    const quote = wrapper.get('blockquote.quickAnswer');
+    expect(wrapper.text()).toContain(longAnswer);
+    expect(quote.element.textContent).toBe(longAnswer);
+    expect(quote.classes()).toContain('quickAnswer');
+  });
+
+  it('omits the quick quote when legacy content has no answer from the solo participant', async () => {
+    // Given: 다른 이름의 답만 남은 손상된 초고는 발행 가능 판정과 별개로 내 문장 보상을 만들 수 없다.
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        rounds: [{ asker: 'Other', question: 'Broken?', answers: { Other: { text: '남의 답' } } }],
+        currentRound: { question: '', formatId: '', answers: {} },
+        soloMode: 'quick',
+        quickReady: true,
+      } satisfies SoloIssueDraftV2),
+    );
+
+    // When
+    const wrapper = await mountSolo();
+
+    // Then
+    expect(wrapper.find('.quickDone').exists()).toBe(true);
+    expect(wrapper.find('blockquote.quickAnswer').exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('남의 답');
+  });
+
+  it('continues quick writing with saved rounds intact and restores the reward after refresh', async () => {
+    // Given
+    const first = await mountSolo();
+    await first.findAll('.modeOption')[0].trigger('click');
+    await first.findAll('.quickOption')[0].trigger('click');
+    await first.get('.qaBox textarea').setValue('다시 보고 싶은 첫 문장');
+    await first.get('.qaBox .ghost').trigger('click');
+    expect(first.get('blockquote.quickAnswer').text()).toBe('다시 보고 싶은 첫 문장');
+
+    // When: 질문을 하나 더 고르러 갔다가, 새 입력을 시작하기 전에 새로고침한다.
+    await first.get('.quickDone .ghost').trigger('click');
+    const kept = JSON.parse(localStorage.getItem(SOLO_ISSUE_DRAFT_V2_KEY) ?? '{}') as SoloIssueDraftV2;
+    expect(kept.rounds).toHaveLength(1);
+    await first.findAll('.quickOption')[1].trigger('click');
+    expect(first.get('.contentsList').text()).toContain('다시 보고 싶은 첫 문장');
+    first.unmount();
+
+    const restored = await mountSolo();
+    expect(restored.get('.contentsList').text()).toContain('다시 보고 싶은 첫 문장');
+  });
+
+  it('keeps the quick reward visible when unified draft saving fails', async () => {
+    // Given
+    const storage = createMemoryStorage();
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        ...storage,
+        setItem(key: string, value: string) {
+          if (key === SOLO_ISSUE_DRAFT_V2_KEY) throw new DOMException('quota exceeded', 'QuotaExceededError');
+          storage.setItem(key, value);
+        },
+      } satisfies Storage,
+    });
+    const wrapper = await mountSolo();
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+    await wrapper.get('.qaBox textarea').setValue('저장 실패에도 남아야 할 문장');
+
+    // When
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    // Then
+    expect(wrapper.get('blockquote.quickAnswer').text()).toBe('저장 실패에도 남아야 할 문장');
+    expect(wrapper.get('[role="alert"]').text()).toContain('임시 저장하지 못했어요');
+    expect(wrapper.get('.quickDone .cta').text()).toBe('이대로 책장에 꽂기');
+  });
+
+  it('keeps the quick reward and retry actions when publishing to the shelf fails', async () => {
+    // Given
+    const storage = createMemoryStorage();
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: {
+        ...storage,
+        setItem(key: string, value: string) {
+          if (key === SHELF_KEY) throw new Error('quota exceeded');
+          storage.setItem(key, value);
+        },
+      } satisfies Storage,
+    });
+    const wrapper = await mountSolo();
+    await wrapper.findAll('.modeOption')[0].trigger('click');
+    await wrapper.findAll('.quickOption')[0].trigger('click');
+    await wrapper.get('.qaBox textarea').setValue('책장 실패에도 남아야 할 문장');
+    await wrapper.get('.qaBox .ghost').trigger('click');
+
+    // When
+    await wrapper.get('.quickDone .cta').trigger('click');
+
+    // Then
+    expect(wrapper.get('blockquote.quickAnswer').text()).toBe('책장 실패에도 남아야 할 문장');
+    expect(wrapper.get('[role="alert"]').text()).toContain('저장 공간');
+    expect(wrapper.get('.quickDone .cta').text()).toBe('이대로 책장에 꽂기');
+    expect(wrapper.get('.quickDone .ghost').text()).toBe('질문 하나 더');
   });
 
   it('keeps question sets out of the quick flow, where the question already arrived', async () => {
@@ -481,6 +685,20 @@ describe('SoloWriteView', () => {
 
     // Then
     expect(wrapper.find('.disclosure').exists()).toBe(false);
+    expect(wrapper.getComponent({ name: 'RoundEditor' }).props('presentation')).toBe('quick');
+  });
+
+  it('uses the standard editor presentation outside quick mode', async () => {
+    // Given
+    const wrapper = await mountSolo();
+
+    // When
+    await chooseFreeMode(wrapper);
+
+    // Then
+    expect(wrapper.getComponent({ name: 'RoundEditor' }).props('presentation')).toBe('standard');
+    expect(wrapper.find('input[placeholder="지금의 나에게 묻고 싶은 것"]').exists()).toBe(true);
+    expect(wrapper.find('.questionSources').exists()).toBe(true);
   });
 
   it('does not treat a mode picked by mistake as something to resume', async () => {
@@ -514,6 +732,8 @@ describe('SoloWriteView', () => {
 
   it('publishes a one-line review without requiring a lesson or action', async () => {
     // Given
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T03:00:00.000Z'));
     const wrapper = await mountSolo();
     await openReviewLens(wrapper, '사진');
     await completeReviewItem(wrapper, '노을 사진', '색이 웃길 만큼 진해서 기억하고 싶다');
@@ -524,6 +744,7 @@ describe('SoloWriteView', () => {
     // Then
     const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
     expect(shelved).toHaveLength(1);
+    expect(shelved[0]?.title).toBe('사진 리뷰 · 8월 18일');
     expect(shelved[0]?.rounds).toHaveLength(1);
     expect(shelved[0]?.rounds[0]?.question).toContain('요즘 사진');
     expect(shelved[0]?.rounds[0]?.answers['나']?.text).toBe('색이 웃길 만큼 진해서 기억하고 싶다');
@@ -568,6 +789,8 @@ describe('SoloWriteView', () => {
 
   it('adds a second lens to the same issue', async () => {
     // Given
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T03:00:00.000Z'));
     const wrapper = await mountSolo();
     await openReviewLens(wrapper, '사진');
     await completeReviewItem(wrapper, '산책 사진', '빛이 좋았다');
@@ -581,6 +804,7 @@ describe('SoloWriteView', () => {
 
     // Then
     const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
+    expect(shelved[0]?.title).toBe('사진 외 1개 리뷰 · 8월 18일');
     expect(shelved[0]?.rounds).toHaveLength(2);
     expect(shelved[0]?.rounds.map((round) => round.question)).toEqual([
       expect.stringContaining('사진'),
@@ -588,6 +812,42 @@ describe('SoloWriteView', () => {
     ]);
     // 두 렌즈가 한 호에 섞여도 각 줄은 자기 렌즈 이름을 질문 문장으로 달고 간다.
     expect(shelved[0]?.rounds.map((round) => round.format)).toEqual([undefined, undefined]);
+  });
+
+  it.each([
+    ['query', { presetQuestion: '가져온 질문?' }],
+    ['import', { presetIssueId: 'source-1' }],
+  ])('keeps the shared generic title for the %s entry route', async (_route, props) => {
+    // Given: 경로 메타데이터가 있는 초고여도 ?q / ?from 진입은 free 편집기로 우회한다.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T03:00:00.000Z'));
+    localStorage.setItem(SHELF_KEY, JSON.stringify([issue('source-1')]));
+    localStorage.setItem(
+      SOLO_ISSUE_DRAFT_V2_KEY,
+      JSON.stringify({
+        ...draft(''),
+        title: '',
+        rounds: [
+          {
+            asker: 'Mina',
+            question: '기존 질문?',
+            answers: { Mina: { text: '기존 답' } },
+            pathId: 'solo-today',
+          },
+        ],
+        currentRound: { question: '', formatId: '', answers: {} },
+        soloMode: 'quick',
+        quickReady: true,
+      } satisfies SoloIssueDraftV2),
+    );
+    const wrapper = await mountSolo(props);
+
+    // When
+    await wrapper.get('button.cta').trigger('click');
+
+    // Then
+    const shelved = JSON.parse(localStorage.getItem(SHELF_KEY) ?? '[]') as Issue[];
+    expect(shelved[0]?.title).toBe('2026 연말호');
   });
 
   it('restores the selected lens, scope, and item after remount', async () => {

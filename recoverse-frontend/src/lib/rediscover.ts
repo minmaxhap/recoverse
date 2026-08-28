@@ -1,4 +1,4 @@
-import { fnv1a32, normalizeQuestion } from '@recoverse/shared';
+import { fnv1a32, kstTodayISO, normalizeQuestion } from '@recoverse/shared';
 import type { Answer, Issue } from '@recoverse/shared';
 
 export interface RediscoverEntry {
@@ -93,13 +93,6 @@ export interface RediscoveryMoment {
   anniversary: boolean; // 오늘 즈음(±3일)의 지난 기록이면 true
 }
 
-function localToday(now: Date): { md: string; year: number; seed: string } {
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  return { md: `${m}-${d}`, year: y, seed: `${y}-${m}-${d}` };
-}
-
 /** MM-DD 두 날짜의 연중 거리(일). 연말↔연초 래핑 고려 */
 function mdDistance(a: string, b: string): number {
   const toDoy = (md: string) => {
@@ -116,12 +109,21 @@ function mdDistance(a: string, b: string): number {
  * 방금 쓴 글이고, 그걸 "오늘의 재발견"으로 내밀면 이 앱의 약속이 우스워진다.
  */
 const REDISCOVERY_MIN_DAYS = 30;
+const DAY_MS = 86_400_000;
 
 /** 발행일로부터 오늘까지 지난 날 수. 형식이 깨진 날짜는 0으로 봐서 후보에서 빠진다. */
-function daysSince(dateISO: string, now: Date): number {
-  const then = Date.parse(`${dateISO}T00:00:00`);
-  if (Number.isNaN(then)) return 0;
-  return Math.floor((now.getTime() - then) / 86_400_000);
+function dayOrdinal(dateISO: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return null;
+  const timestamp = Date.parse(`${dateISO}T00:00:00Z`);
+  if (Number.isNaN(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== dateISO) return null;
+  return timestamp / DAY_MS;
+}
+
+function daysSince(dateISO: string, todayISO: string): number {
+  const issueDay = dayOrdinal(dateISO);
+  const today = dayOrdinal(todayISO);
+  if (issueDay === null || today === null) return 0;
+  return today - issueDay;
 }
 
 /**
@@ -131,7 +133,9 @@ function daysSince(dateISO: string, now: Date): number {
  * rounds가 있고 충분히 지난 호만 대상. 후보 없으면 null.
  */
 export function pickRediscoveryMoment(issues: Issue[], now: Date = new Date()): RediscoveryMoment | null {
-  const { md, year, seed } = localToday(now);
+  const todayISO = kstTodayISO(now.getTime());
+  const md = todayISO.slice(5, 10);
+  const year = Number(todayISO.slice(0, 4));
 
   interface Cand {
     issue: Issue;
@@ -141,7 +145,7 @@ export function pickRediscoveryMoment(issues: Issue[], now: Date = new Date()): 
   }
   const all: Cand[] = [];
   for (const issue of issues) {
-    if (daysSince(issue.date, now) < REDISCOVERY_MIN_DAYS) continue;
+    if (daysSince(issue.date, todayISO) < REDISCOVERY_MIN_DAYS) continue;
     const iYear = Number(issue.date.slice(0, 4));
     const iMd = issue.date.slice(5, 10);
     const rounds = issue.rounds ?? [];
@@ -155,7 +159,7 @@ export function pickRediscoveryMoment(issues: Issue[], now: Date = new Date()): 
   const anniversary = all.filter((c) => c.past && c.dist <= 3);
   const pool = anniversary.length > 0 ? anniversary : all;
   // 날짜 시드로 하루 동안 고정된 선택 (매 렌더마다 바뀌지 않게)
-  const idx = fnv1a32(seed) % pool.length;
+  const idx = fnv1a32(todayISO) % pool.length;
   const pick = pool[idx];
 
   const round = pick.issue.rounds[pick.roundIdx];

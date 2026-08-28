@@ -50,7 +50,8 @@
 
     <div v-else class="center" role="status">
       <ParticipantDot :color="colorFor(state.meta.asker ?? '', state.players)" :size="56" pulse />
-      <h1 class="pageTitle centered">{{ state.meta.asker }}이(가)<br />질문을 쓰는 중</h1>
+      <span class="eyebrow">지금 질문을 쓰는 사람</span>
+      <h1 class="pageTitle centered" data-testid="current-asker">{{ state.meta.asker }}</h1>
       <PastQuestions :history="state.meta.history" centered />
     </div>
   </div>

@@ -23,6 +23,7 @@ function issue(id: string, title: string): Issue {
 describe('backup round-trip', () => {
   it('restores every exported issue into an empty shelf', () => {
     const shelf = [issue('a', '호 A'), issue('b', '호 B')];
+    if (shelf[0]?.rounds[0]) shelf[0].rounds[0].pathId = 'solo-today';
     Object.assign(shelf[0]?.rounds[0] ?? {}, {
       review: { lensId: 'photo', lensRevision: 1, scope: { type: 'recent' } },
     });
@@ -35,6 +36,7 @@ describe('backup round-trip', () => {
     expect(preview.newCount).toBe(2);
     expect(preview.duplicateCount).toBe(0);
     expect(preview.items.map((item) => item.issue.title)).toEqual(['호 A', '호 B']);
+    expect(preview.items[0]?.issue.rounds[0]?.pathId).toBe('solo-today');
     expect((preview.items[0]?.issue.rounds[0] as Issue['rounds'][number] & { review?: unknown })?.review).toEqual({
       lensId: 'photo',
       lensRevision: 1,
