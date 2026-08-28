@@ -1,7 +1,7 @@
 <template>
   <div class="center completing">
-    <span class="eyebrow gold pressEyebrow">이번 호 발행</span>
-    <PublishScene :year="issueYear" :kind-label="kindLabel" />
+    <span class="eyebrow gold pressEyebrow">{{ isSaved ? `${issueNumberLabel(savedNo)} 발행` : '이번 호 발행' }}</span>
+    <PublishScene :year="issueYear" :kind-label="kindLabel" :no="savedNo" />
 
     <h1 class="pageTitle centered d1">{{ issueYear }} {{ kindLabel }},<br />발행 완료</h1>
     <p class="waiting d2">질문 {{ state.meta.history.length }}개 · {{ state.players.join(' · ') }}</p>
@@ -56,6 +56,7 @@ import { useShelf } from '../../composables/useShelf';
 import { totalScores, mindReaders } from '../../lib/guessing';
 import { issueFromSession } from '../../lib/issueBuilder';
 import { issueFingerprint } from '../../lib/archivePreview';
+import { issueNumberLabel } from '../../lib/issueNumber';
 import { api, ApiError } from '../../lib/api';
 
 const props = defineProps<{ state: SessionStateResponse }>();
@@ -84,6 +85,12 @@ const savedIssue = computed(() =>
   shelf.issues.value.find((issue) => issueFingerprint(issue) === fingerprint),
 );
 const isSaved = computed(() => savedIssue.value !== undefined);
+
+// 꽂히기 전에는 번호가 없다. 책장이 최신 순이라 표지와 같은 셈법(총 권수 - 자리)을 쓴다.
+const savedNo = computed(() => {
+  const index = shelf.issues.value.findIndex((issue) => issueFingerprint(issue) === fingerprint);
+  return index === -1 ? 0 : shelf.issues.value.length - index;
+});
 
 const issueYear = computed(() => props.state.meta.date.slice(0, 4));
 const kindLabel = computed(() => KIND_LABELS[props.state.meta.kind]);

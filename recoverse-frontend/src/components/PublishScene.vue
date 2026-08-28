@@ -7,6 +7,9 @@
         <span class="coverKicker">RECOVERSE</span>
         <strong>{{ year }}</strong>
         <span>{{ kindLabel }}</span>
+        <!-- 책장의 표지가 달고 있는 것과 같은 호수. 조립되는 표지에도 붙여야
+             방금 꽂은 것이 몇 번째인지 이 장면에서 바로 읽힌다. -->
+        <span v-if="no" class="coverNo">No.{{ no }}</span>
       </div>
     </div>
     <div class="shelfRail">
@@ -22,6 +25,8 @@
 defineProps<{
   year: string;
   kindLabel: string;
+  /** 책장에 꽂히는 순번. 아직 꽂기 전이면 비운다. */
+  no?: number;
 }>();
 </script>
 
@@ -83,6 +88,15 @@ defineProps<{
   inset: 0 auto 0 0;
   width: 7px;
   background: var(--vermilion);
+}
+
+/* 책장 표지와 같은 자리, 같은 조판 — 꽂히고 나서도 같은 번호를 달고 있다는 걸 보이게. */
+.coverNo {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+  color: var(--dim-strong);
 }
 
 .issueCover::after {
