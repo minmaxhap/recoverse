@@ -19,6 +19,9 @@ async function applyEmitted(wrapper: VueWrapper): Promise<void> {
 }
 
 async function pickLens(wrapper: VueWrapper, title: string): Promise<void> {
+  // 첫 화면에는 오늘의 렌즈 셋만 있다. 이름을 지정해 고르려면 먼저 전부 펼친다.
+  const more = wrapper.find('.moreLenses');
+  if (more.exists()) await more.trigger('click');
   const lens = wrapper.findAll('.lensOption').find((button) => button.text().includes(title));
   expect(lens, `${title} 렌즈가 있어야 한다`).toBeDefined();
   await lens!.trigger('click');
@@ -30,14 +33,21 @@ describe('SoloReviewFlow', () => {
     Element.prototype.scrollIntoView = vi.fn();
   });
 
-  it('offers all twelve lenses once, as one catalog', () => {
+  it('shows a few lenses to start with, and keeps the rest a tap away', async () => {
     // Given / When
     const wrapper = mountFlow();
 
-    // Then
-    expect(wrapper.findAll('.lensOption')).toHaveLength(12);
+    // Then — 열둘을 한꺼번에 내밀면 고르는 일이 일이 된다
+    expect(wrapper.findAll('.lensOption')).toHaveLength(3);
     expect(new Set(REVIEW_LENS_IDS)).toHaveLength(12);
     expect(REVIEW_LENSES.every((lens) => lens.sourceHints.length > 0 && lens.selectionPrompt && lens.reflectionPrompt)).toBe(true);
+
+    // When
+    await wrapper.get('.moreLenses').trigger('click');
+
+    // Then
+    expect(wrapper.findAll('.lensOption')).toHaveLength(12);
+    expect(wrapper.find('.moreLenses').exists()).toBe(false);
   });
 
   it('moves one chosen lens into scope, and only that lens', async () => {

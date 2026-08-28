@@ -11,11 +11,19 @@
       <span class="eyebrow red">REVIEW LENS</span>
       <h2 id="lensTitle" ref="flowTitle" tabindex="-1">무엇을 펼쳐볼까요?</h2>
       <p class="reviewLead">지금 눈에 걸리는 것 하나만.</p>
+      <!-- 열두 개를 한꺼번에 펼치면 고르는 일이 일이 된다. 오늘 볼 셋만 앞에 둔다. -->
       <div class="lensCatalog" aria-labelledby="lensTitle">
-        <button v-for="lens in REVIEW_LENSES" :key="lens.id" type="button" class="lensOption" @click="selectLens(lens.id)">
+        <button v-for="lens in shownLenses" :key="lens.id" type="button" class="lensOption" @click="selectLens(lens.id)">
           <b>{{ lens.title }}</b><small>{{ lens.promise }}</small>
         </button>
       </div>
+      <button
+        v-if="!allLensesShown"
+        type="button"
+        class="moreLenses"
+        :aria-expanded="false"
+        @click="allLensesShown = true"
+      >다른 렌즈 보기 ({{ REVIEW_LENSES.length - shownLenses.length }})</button>
     </template>
 
     <template v-else-if="draft.phase === 'context' && selectedLens">
@@ -87,7 +95,8 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import type { ReviewContext } from '@recoverse/shared';
+import { kstTodayISO, type ReviewContext } from '@recoverse/shared';
+import { todaysLenses } from '../../lib/todaysLenses';
 import {
   createEmptyReviewDraft,
   REVIEW_LENSES,
@@ -118,6 +127,12 @@ const emit = defineEmits<{
   complete: [readonly ReviewRoundInput[]];
   'update:draft': [ReviewDraft];
 }>();
+
+// 하루 동안 고정된 셋. 열 때마다 바뀌면 방금 본 렌즈를 다시 찾지 못한다.
+const allLensesShown = ref(false);
+const shownLenses = computed(() =>
+  allLensesShown.value ? REVIEW_LENSES : todaysLenses(kstTodayISO()),
+);
 
 const flowRoot = ref<HTMLElement | null>(null);
 const flowTitle = ref<HTMLHeadingElement | null>(null);
@@ -259,6 +274,7 @@ function goBack(): void {
 .reviewFlow h2 { margin: 0; font-family: var(--font-display); font-size: 25px; line-height: 1.45; text-wrap: balance; }
 .reviewLead { max-width: 40rem; margin: 0 0 6px; color: var(--dim); font-size: 14px; line-height: 1.65; }
 .backChoice { justify-self: start; min-height: 44px; padding: 8px 0; background: none; border: 0; color: var(--dim); font-weight: 700; cursor: pointer; }
+.moreLenses { justify-self: start; min-height: 44px; padding: 8px 0; background: none; border: 0; color: var(--vermilion); font-family: inherit; font-size: 13px; font-weight: 700; text-decoration: underline; cursor: pointer; }
 .backChoice:hover { color: var(--vermilion); }
 .lensCatalog { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--ink); border-left: 1px solid var(--ink); }
 .lensOption { min-width: 0; min-height: 94px; display: grid; align-content: start; gap: 5px; padding: 13px; text-align: left; background: var(--paper-card); border: 0; border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink); color: inherit; cursor: pointer; }
