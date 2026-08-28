@@ -1,9 +1,20 @@
 <template>
   <div class="setPicker">
-    <section v-if="sets.length > 0" class="setGroup">
+    <!-- 발행할 때 "내년에도 물어볼까요?"에 담아둔 질문. 맨 위에 따로 서야 그때의 약속이 지켜진다. -->
+    <section v-if="askAgainSet" class="setGroup">
+      <span class="eyebrow red">다시 물기로 한 질문</span>
+      <div class="rows">
+        <button type="button" class="setRow askAgainRow" @click="loadQuestions(askAgainSet.questions)">
+          <span class="rowTitle">{{ askAgainSet.name }}</span>
+          <span class="rowMeta">질문 {{ askAgainSet.questions.length }}개</span>
+        </button>
+      </div>
+    </section>
+
+    <section v-if="mySets.length > 0" class="setGroup">
       <span class="eyebrow">내가 만든 세트</span>
       <div class="rows">
-        <button v-for="set in sets" :key="set.id" type="button" class="setRow" @click="loadQuestions(set.questions)">
+        <button v-for="set in mySets" :key="set.id" type="button" class="setRow" @click="loadQuestions(set.questions)">
           <span class="rowTitle">{{ set.name }}</span>
           <span class="rowMeta">질문 {{ set.questions.length }}개</span>
         </button>
@@ -76,7 +87,7 @@
 import { computed, nextTick, ref } from 'vue';
 import { KIND_LABELS, type Issue } from '@recoverse/shared';
 import { STARTER_SETS } from '../data/starterSets';
-import { useQuestionSets } from '../composables/useQuestionSets';
+import { useQuestionSets, ASK_AGAIN_SET_NAME } from '../composables/useQuestionSets';
 
 interface LoadedQuestion {
   question: string;
@@ -102,6 +113,8 @@ const INITIAL_ISSUES = 4;
 
 const questionSets = useQuestionSets();
 const sets = questionSets.sets;
+const askAgainSet = computed(() => sets.value.find((set) => set.name === ASK_AGAIN_SET_NAME));
+const mySets = computed(() => sets.value.filter((set) => set.name !== ASK_AGAIN_SET_NAME));
 const showAllIssues = ref(false);
 const saving = ref(false);
 const setName = ref('');
@@ -178,6 +191,10 @@ function saveSet(): void {
 .setRow:hover {
   background: var(--paper);
   color: var(--vermilion);
+}
+
+.askAgainRow {
+  box-shadow: inset 3px 0 0 var(--vermilion);
 }
 
 /* 마지막으로 가져온 호에만 얇은 표시 — 고르는 상태가 아니라 자국이다. */

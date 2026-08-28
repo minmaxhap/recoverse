@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
 import type { Issue, Round } from '@recoverse/shared';
 import { SOLO_ISSUE_DRAFT_V2_KEY, type SoloIssueDraftV2 } from '../composables/useSoloIssueDraft';
+import { ASK_AGAIN_SET_NAME, QUESTION_SETS_KEY, type QuestionSet } from '../composables/useQuestionSets';
 
 const SHELF_KEY = 'recoverse_issues_v1';
 const LEGACY_SOLO_FLOW_STATE_KEY = 'recoverse_solo_flow_v1';
@@ -102,6 +103,18 @@ async function completeReviewItem(wrapper: VueWrapper, label: string, note: stri
   await wrapper.get('.itemLabel').setValue(label);
   await wrapper.get('.itemNote').setValue(note);
   await wrapper.get('.reviewFlow .cta').trigger('click');
+}
+
+/** 발행 연출(1450ms)을 지나 그 다음 화면까지 데려간다. */
+async function passPublishScene(wrapper: VueWrapper): Promise<void> {
+  vi.advanceTimersByTime(1500);
+  await nextTick();
+  await nextTick();
+}
+
+function keptQuestions(): readonly string[] {
+  const sets = JSON.parse(localStorage.getItem(QUESTION_SETS_KEY) ?? '[]') as QuestionSet[];
+  return sets.find((set) => set.name === ASK_AGAIN_SET_NAME)?.questions ?? [];
 }
 
 describe('SoloWriteView', () => {
@@ -791,6 +804,88 @@ describe('SoloWriteView', () => {
       scope: { type: 'recent' },
       subject: '노을 사진',
     });
+  });
+
+  it('asks once whether this question is worth asking again, and keeps what was picked', async () => {
+    // Given: 앱에는 반복이라는 개념이 없다 — 같은 질문을 다시 만나려면 사람이 기억해야 했다.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T03:00:00.000Z'));
+    const wrapper = await mountSolo();
+    await openReviewLens(wrapper, '사진');
+    await completeReviewItem(wrapper, '노을 사진', '색이 진했다');
+    await wrapper.get('.reviewFlow .cta').trigger('click');
+
+    // When: 발행 연출이 끝나면
+    await passPublishScene(wrapper);
+
+    // Then: 책장으로 바로 넘기지 않고 딱 한 번 묻는다
+    expect(wrapper.find('.askAgain').exists()).toBe(true);
+    expect(wrapper.get('.askAgain h2').text()).toBe('이 질문, 내년에도 물어볼까요?');
+    expect(wrapper.findAll('.askRow').map((row) => row.text())).toEqual([
+      '사진 밖에서 함께 기억나는 것은 무엇인가요?',
+    ]);
+    expect(wrapper.emitted('published')).toBeUndefined();
+
+    // When
+    await wrapper.get('.askAgain .cta').trigger('click');
+
+    // Then: 세트 하나에 담기고, 그제서야 책장으로 간다
+    expect(keptQuestions()).toEqual(['사진 밖에서 함께 기억나는 것은 무엇인가요?']);
+    expect(wrapper.emitted('published')).toHaveLength(1);
+  });
+
+  it('lets the writer leave without keeping anything, and never asks twice for the same question', async () => {
+    // Given: 이미 담아둔 질문 하나
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T03:00:00.000Z'));
+    localStorage.setItem(
+      QUESTION_SETS_KEY,
+      JSON.stringify([
+        {
+          id: 'set-kept',
+          name: ASK_AGAIN_SET_NAME,
+          questions: ['사진 밖에서 함께 기억나는 것은 무엇인가요?'],
+          updatedAt: '2026-08-01T00:00:00.000Z',
+        },
+      ] satisfies QuestionSet[]),
+    );
+    const wrapper = await mountSolo();
+    await openReviewLens(wrapper, '사진');
+    await completeReviewItem(wrapper, '노을 사진', '색이 진했다');
+
+    // When
+    await wrapper.get('.reviewFlow .cta').trigger('click');
+    await passPublishScene(wrapper);
+
+    // Then: 한 번 마음먹은 질문을 발행할 때마다 다시 묻는 건 확인이 아니라 잔소리다
+    expect(wrapper.find('.askAgain').exists()).toBe(false);
+    expect(wrapper.emitted('published')).toHaveLength(1);
+    expect(keptQuestions()).toEqual(['사진 밖에서 함께 기억나는 것은 무엇인가요?']);
+  });
+
+  it('keeps nothing when the writer unticks the question and walks on', async () => {
+    // Given
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-08-18T03:00:00.000Z'));
+    const wrapper = await mountSolo();
+    await openReviewLens(wrapper, '사진');
+    await completeReviewItem(wrapper, '노을 사진', '색이 진했다');
+    await wrapper.get('.reviewFlow .cta').trigger('click');
+    await passPublishScene(wrapper);
+
+    // When: 담김이 기본이지만 무엇이 담기는지는 버튼의 개수로 늘 보인다
+    expect(wrapper.get('.askAgain .cta').text()).toBe('1개 담고 책장으로');
+    await wrapper.get('.askRow input').setValue(false);
+
+    // Then
+    expect((wrapper.get('.askAgain .cta').element as HTMLButtonElement).disabled).toBe(true);
+
+    // When
+    await wrapper.get('.askAgain .linkBtn').trigger('click');
+
+    // Then
+    expect(keptQuestions()).toEqual([]);
+    expect(wrapper.emitted('published')).toHaveLength(1);
   });
 
   it('keeps the finished review when the shelf cannot be written', async () => {

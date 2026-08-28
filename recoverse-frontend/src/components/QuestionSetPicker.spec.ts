@@ -3,7 +3,7 @@
 import { mount, type VueWrapper } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Issue } from '@recoverse/shared';
-import { QUESTION_SETS_KEY, type QuestionSet } from '../composables/useQuestionSets';
+import { ASK_AGAIN_SET_NAME, QUESTION_SETS_KEY, type QuestionSet } from '../composables/useQuestionSets';
 
 function createMemoryStorage(): Storage {
   const values = new Map<string, string>();
@@ -67,6 +67,32 @@ describe('QuestionSetPicker', () => {
       { question: '둘째 질문?', format: 'three-scenes' },
     ]);
     expect(wrapper.emitted('update:sourceIssueId')![0]).toEqual(['a']);
+  });
+
+  it('stands the ask-again set apart, above the sets made by hand', async () => {
+    // Given: 발행할 때 "내년에도 물어볼까요?"에 담은 질문과, 손으로 만든 세트 하나
+    localStorage.setItem(
+      QUESTION_SETS_KEY,
+      JSON.stringify([
+        { id: 'set-mine', name: '월간 회고', questions: ['이번 달 좋았던 일은?'], updatedAt: '2026-08-02T00:00:00.000Z' },
+        { id: 'set-again', name: ASK_AGAIN_SET_NAME, questions: ['올해 가장 잘한 선택은?'], updatedAt: '2026-08-01T00:00:00.000Z' },
+      ] satisfies QuestionSet[]),
+    );
+
+    // When
+    const wrapper = await mountPicker();
+
+    // Then: 최근순으로는 아래일 세트가, 그때의 약속이라 맨 위에 선다
+    const rows = wrapper.findAll('.setRow');
+    expect(rows[0].classes()).toContain('askAgainRow');
+    expect(rows[0].text()).toContain(ASK_AGAIN_SET_NAME);
+    expect(rows[1].text()).toContain('월간 회고');
+
+    // When
+    await rows[0].trigger('click');
+
+    // Then
+    expect(wrapper.emitted('load')![0][0]).toEqual([{ question: '올해 가장 잘한 선택은?' }]);
   });
 
   it('loads a saved set in one tap', async () => {

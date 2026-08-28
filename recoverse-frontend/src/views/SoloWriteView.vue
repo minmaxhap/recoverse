@@ -36,6 +36,14 @@
       @publish="publishReview"
     />
 
+    <!-- 발행 연출이 끝난 자리. 책장으로 넘어가기 전 딱 한 번, 다시 물을 질문을 고른다. -->
+    <AskAgainPrompt
+      v-else-if="!publishing && askAgainQuestions.length > 0"
+      :questions="askAgainQuestions"
+      @kept="finishAskAgain"
+      @skip="finishAskAgain"
+    />
+
     <template v-if="editorVisible">
     <!-- 쓰던 것을 그대로 둔 채 다른 시작 방식으로 건너갈 수 있게 — 없으면 한 번 고른 모드에 갇힌다. -->
     <button type="button" class="backChoice" @click="backToModes">← 시작 방식 다시 고르기</button>
@@ -153,7 +161,7 @@
         <p v-if="carriedCount > 0" class="fineprint carried">
           답 대기 {{ carriedCount }}개는 다음 호 초고로 옮겼어요
         </p>
-        <p class="fineprint">탭하면 바로 책장으로 가요</p>
+        <p class="fineprint">{{ askAgainQuestions.length > 0 ? '탭하면 바로 넘어가요' : '탭하면 바로 책장으로 가요' }}</p>
       </div>
     </Transition>
   </AppShell>
@@ -161,13 +169,14 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { KIND_LABELS, kstTodayISO, type Kind, type Round } from '@recoverse/shared';
+import { KIND_LABELS, kstTodayISO, normalizeQuestion, type Kind, type Round } from '@recoverse/shared';
 import AppShell from '../components/AppShell.vue';
 import BackHeader from '../components/BackHeader.vue';
 import KindChips from '../components/KindChips.vue';
 import PublishScene from '../components/PublishScene.vue';
 import QuestionSetPicker from '../components/QuestionSetPicker.vue';
 import RoundEditor from '../components/RoundEditor.vue';
+import AskAgainPrompt from '../components/solo/AskAgainPrompt.vue';
 import SoloModePicker from '../components/solo/SoloModePicker.vue';
 import SoloQuickCompletion from '../components/solo/SoloQuickCompletion.vue';
 import SoloQuickPicker, { type QuickStartSelection } from '../components/solo/SoloQuickPicker.vue';
@@ -182,6 +191,7 @@ import {
   type SoloIssueDraftV2,
   type SoloGuidedPathState,
 } from '../composables/useSoloIssueDraft';
+import { useQuestionSets, ASK_AGAIN_SET_NAME } from '../composables/useQuestionSets';
 import { useSoloIssuePresentation } from '../composables/useSoloIssuePresentation';
 import { useShelf } from '../composables/useShelf';
 import { issueFromDraft, roundIsAnswered } from '../lib/issueBuilder';
@@ -195,6 +205,7 @@ const props = withDefaults(
 const emit = defineEmits<{ back: []; published: [string]; navigate: ['sets'] }>();
 
 const shelf = useShelf();
+const questionSets = useQuestionSets();
 const kind = ref<Kind>('free');
 const title = ref('');
 const name = ref(SOLO_DEFAULT_NAME);
@@ -213,6 +224,8 @@ const carriedCount = ref(0);
 const publishedTitle = ref('');
 const publishedId = ref('');
 const publishedNo = ref(0);
+/** 발행 직후 "내년에도 물어볼까요?"로 내밀 질문. 비어 있으면 그 화면은 뜨지 않는다. */
+const askAgainQuestions = ref<readonly string[]>([]);
 // 지난 호 가져오기는 소수만 쓰는 선택 기능 — 기본은 접어두고(네이티브 details), 필요할 때 펼친다.
 const sourceOpen = ref(false);
 // 표지 정보(종류·제목·이름)도 기본값이 있어 접어둔다 — 바로 질문부터 쓰게. 값이 있으면 펼친다.
@@ -582,6 +595,7 @@ function publish(): void {
         : '책장에는 꽂았지만 임시 저장을 비우지 못했어요. 브라우저 저장 공간을 확인하고 다시 시도해주세요.';
     return;
   }
+  askAgainQuestions.value = questionsWorthAskingAgain(issue.rounds);
   carriedCount.value = carried.length;
   publishedTitle.value = issue.title;
   publishedId.value = issue.id;
@@ -602,10 +616,38 @@ function publish(): void {
   window.setTimeout(finishPublish, 1450);
 }
 
+/**
+ * 이 호에 실린 질문 중 다시 물을 만한 것. 이미 "다시 물을 질문"에 담긴 것은 뺀다 —
+ * 한 번 마음먹은 질문을 발행할 때마다 다시 묻는 건 확인이 아니라 잔소리다.
+ */
+function questionsWorthAskingAgain(published: readonly Round[]): readonly string[] {
+  const alreadyKept = new Set(
+    (questionSets.sets.value.find((set) => set.name === ASK_AGAIN_SET_NAME)?.questions ?? []).map((question) =>
+      normalizeQuestion(question),
+    ),
+  );
+  const seen = new Set<string>();
+  return published
+    .map((round) => round.question.trim())
+    .filter((question) => {
+      const key = normalizeQuestion(question);
+      if (!key || alreadyKept.has(key) || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
 function finishPublish(): void {
   if (!publishing.value) return;
   publishing.value = false;
+  // 물어볼 게 남아 있으면 이 화면에 머문다 — 책장으로는 그 답을 받고 나서.
+  if (askAgainQuestions.value.length > 0) return;
   // 방금 꽂은 호가 어느 표지인지 책장에서 짚어줄 수 있게 id를 들려 보낸다.
+  emit('published', publishedId.value);
+}
+
+function finishAskAgain(): void {
+  askAgainQuestions.value = [];
   emit('published', publishedId.value);
 }
 </script>
